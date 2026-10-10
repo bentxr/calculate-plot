@@ -97,6 +97,7 @@ transforms::TransformPtr Spine::spineTransform() {
 }
 
 void Spine::adjustLocation() {
+    axes_.unstaleViewLim();  // _get_bounds_or_viewLim reads axes.viewLim
     const auto v = axes_.viewLim->points();
     std::vector<double> vertices = *path_.vertices;
     if (type == "left" || type == "right") {
@@ -337,13 +338,82 @@ void Axis::setViewInterval(double vmin, double vmax) {
 }
 
 void Axis::setLim(double v0, double v1, bool autoscale) {
+    if (scale_ == "log" && (v0 <= 0 || v1 <= 0)) {  // non-positive limits are ignored (with a warning)
+        const auto old = viewInterval();
+        if (v0 <= 0) v0 = old[0];
+        if (v1 <= 0) v1 = old[1];
+    }
     const bool reverse = v0 > v1;
-    std::tie(v0, v1) = axes::nonsingular(v0, v1, 0.05);  // Locator.nonsingular
-    // limit_range_for_scale: linear scales keep the range; then sorted(..., reverse=reverse)
+    std::tie(v0, v1) = locatorNonsingular(v0, v1);
+    if (scale_ == "log") {  // LogScale.limit_range_for_scale
+        double mp = minpos();
+        if (!std::isfinite(mp)) mp = 1e-300;
+        v0 = v0 <= 0 ? mp : v0;
+        v1 = v1 <= 0 ? mp : v1;
+    }
+    // sorted([v0, v1], reverse=reverse)
     if ((v0 > v1) != reverse && v0 != v1) std::swap(v0, v1);
     setViewInterval(v0, v1);
+    axes_.clearStale(isX_);  // _stale_viewlims[name] = False
     autoscaleOn = autoscale;
 }
+
+void Axis::setScale(const std::string& name) {
+    scale_ = name;
+    if (name == "log") {  // LogScale.set_default_locators_and_formatters
+        logLocator = axes::LogLocator();
+        logMinorLocator = axes::LogLocator();
+        logMinorLocator.subs.clear();
+        logMinorLocator.autoSubs = true;
+        logFormatter = axes::LogFormatterSciNotation();
+        logMinorFormatter = axes::LogFormatterSciNotation();
+    } else {
+        locator = axes::MaxNLocator::autoLocator();
+        locator.roundNumbers = rc_.text("axes.autolimit_mode") == "round_numbers";
+        formatter = axes::ScalarFormatter();
+    }
+}
+
+transforms::TransformPtr Axis::scaleTransform() const {
+    if (scale_ == "log") return std::make_shared<transforms::LogTransform>(10.0);
+    return std::make_shared<transforms::IdentityTransform>();
+}
+
+double Axis::scaleForward(double v) const { return scale_ == "log" ? transforms::LogTransform(10.0).transform1d(v) : v; }
+double Axis::scaleInverse(double v) const { return scale_ == "log" ? transforms::LogTransform(10.0).inverse1d(v) : v; }
+double Axis::minpos() const { return axes_.minpos[isX_ ? 0 : 1]; }
+
+std::pair<double, double> Axis::locatorNonsingular(double v0, double v1) {
+    if (scale_ == "log") {
+        logLocator.minpos = minpos();
+        return logLocator.nonsingular(v0, v1);
+    }
+    return axes::nonsingular(v0, v1, 0.05);  // Locator.nonsingular
+}
+
+std::pair<double, double> Axis::locatorViewLimits(double v0, double v1) {
+    if (scale_ == "log") {
+        logLocator.minpos = minpos();
+        return logLocator.viewLimits(v0, v1, rc_.text("axes.autolimit_mode") == "round_numbers");
+    }
+    locator.tickSpace = tickSpace();  // the locator's axis
+    return locator.viewLimits(v0, v1);
+}
+
+void Axis::setMinorTickSwitches(const TickSwitches& sw) {
+    minorTickKw_ = sw;
+    for (auto& t : minorTicks_) t->applySwitches(sw);
+}
+
+std::vector<Tick*> Axis::minorTicks(std::size_t count) {
+    while (minorTicks_.size() < count)
+        minorTicks_.push_back(std::make_unique<Tick>(rc_, axes_, isX_, false, minorTickKw_));
+    std::vector<Tick*> out;
+    for (std::size_t i = 0; i < count; ++i) out.push_back(minorTicks_[i].get());
+    return out;
+}
+
+std::string Axis::offsetString() const { return scale_ == "log" ? std::string() : formatter.offsetText(); }
 
 void Axis::setLabelText(const std::string& t, const std::string& loc) {
     label.text = t;
@@ -421,6 +491,7 @@ void Axis::updateOffsetTextPosition(const std::vector<transforms::Bbox>& bboxes,
 }
 
 std::array<double, 2> Axis::viewInterval() const {
+    axes_.unstaleViewLim();
     const auto p = axes_.viewLim->points();
     return isX_ ? std::array<double, 2>{p[0], p[2]} : std::array<double, 2>{p[1], p[3]};
 }
@@ -451,21 +522,56 @@ int Axis::tickSpace() const {
 
 std::vector<Tick*> Axis::updateTicks() {
     const auto view = viewInterval();
-    locator.tickSpace = tickSpace();
-    const std::vector<double> locs = locator.tickValues(view[0], view[1]);
-    formatter.setViewInterval(view[0], view[1]);
-    formatter.setLocs(locs);
-    const std::vector<Tick*> ticks = majorTicks(locs.size());
-    for (std::size_t i = 0; i < locs.size(); ++i) {
-        ticks[i]->updatePosition(locs[i]);
-        ticks[i]->label1.text = formatter(locs[i]);
-        ticks[i]->label2.text = ticks[i]->label1.text;
+    const auto groupVisible = [](const TickSwitches& kw) {
+        return kw.tick1On || kw.tick2On || kw.label1On || kw.label2On || kw.gridOn;
+    };
+    std::vector<Tick*> ticks;
+    if (groupVisible(majorTickKw_)) {
+        std::vector<double> locs;
+        std::vector<std::string> labels;
+        if (scale_ == "log") {
+            logLocator.tickSpace = tickSpace();
+            logLocator.minpos = minpos();
+            locs = logLocator.tickValues(view[0], view[1]);
+            logFormatter.setLocs(view[0], view[1]);
+            for (double v : locs) labels.push_back(logFormatter(v));
+        } else {
+            locator.tickSpace = tickSpace();
+            locs = locator.tickValues(view[0], view[1]);
+            formatter.setViewInterval(view[0], view[1]);
+            formatter.setLocs(locs);
+            for (double v : locs) labels.push_back(formatter(v));
+        }
+        const std::vector<Tick*> major = majorTicks(locs.size());
+        for (std::size_t i = 0; i < locs.size(); ++i) {
+            major[i]->updatePosition(locs[i]);
+            major[i]->label1.text = major[i]->label2.text = labels[i];
+            ticks.push_back(major[i]);
+        }
     }
+    // The minor locator: LogLocator(subs='auto') on log scales, NullLocator otherwise
+    if (groupVisible(minorTickKw_) && scale_ == "log") {
+        logMinorLocator.tickSpace = tickSpace();
+        logMinorLocator.minpos = minpos();
+        logLocator.tickSpace = tickSpace();
+        logLocator.minpos = minpos();
+        const auto locs = axes::withoutMajorTicks(logMinorLocator.tickValues(view[0], view[1]),
+                                                  logLocator.tickValues(view[0], view[1]), view[0], view[1], 10.0);
+        logMinorFormatter.setLocs(view[0], view[1]);
+        const std::vector<Tick*> minor = minorTicks(locs.size());
+        for (std::size_t i = 0; i < locs.size(); ++i) {
+            minor[i]->updatePosition(locs[i]);
+            minor[i]->label1.text = minor[i]->label2.text = logMinorFormatter(locs[i]);
+            ticks.push_back(minor[i]);
+        }
+    }
+    if (ticks.empty()) return {};
     double low = view[0], high = view[1];
     if (low > high) std::swap(low, high);
-    std::vector<Tick*> toDraw;  // the linear scale's transform is the identity
+    const double lowT = scaleForward(low), highT = scaleForward(high);
+    std::vector<Tick*> toDraw;
     for (Tick* t : ticks)
-        if (intervalContainsClose(low, high, t->loc())) toDraw.push_back(t);
+        if (intervalContainsClose(lowT, highT, scaleForward(t->loc()))) toDraw.push_back(t);
     return toDraw;
 }
 
@@ -478,7 +584,7 @@ void Axis::draw(Renderer& renderer) {
     updateLabelPosition(renderer);
     label.draw(renderer);
     updateOffsetTextPosition(tlb1, tlb2);
-    offsetText.text = formatter.offsetText();
+    offsetText.text = offsetString();
     offsetText.draw(renderer);
     renderer.closeGroup("matplotlib.axis");
 }
@@ -548,6 +654,26 @@ Axes::Axes(const rc::Params& rc, Figure& fig, const SubplotSpec& spec)
     };
     xaxis->setTickSwitches(sw(true));
     yaxis->setTickSwitches(sw(false));
+    const auto minorSw = [&](bool isX) {  // tick_params(which='minor', ...)
+        TickSwitches s;
+        if (isX) {
+            s.tick2On = rc.boolean("xtick.top") && rc.boolean("xtick.minor.top");
+            s.tick1On = rc.boolean("xtick.bottom") && rc.boolean("xtick.minor.bottom");
+            s.label2On = rc.boolean("xtick.labeltop") && rc.boolean("xtick.minor.top");
+            s.label1On = rc.boolean("xtick.labelbottom") && rc.boolean("xtick.minor.bottom");
+        } else {
+            s.tick1On = rc.boolean("ytick.left") && rc.boolean("ytick.minor.left");
+            s.tick2On = rc.boolean("ytick.right") && rc.boolean("ytick.minor.right");
+            s.label1On = rc.boolean("ytick.labelleft") && rc.boolean("ytick.minor.left");
+            s.label2On = rc.boolean("ytick.labelright") && rc.boolean("ytick.minor.right");
+        }
+        s.gridOn = rc.boolean("axes.grid") && (rc.text("axes.grid.which") == "both" || rc.text("axes.grid.which") == "minor");
+        return s;
+    };
+    updateTransScale();  // the end of clear()
+    xaxis->setMinorTickSwitches(minorSw(true));
+    yaxis->setMinorTickSwitches(minorSw(false));
+    if (rc.boolean("xtick.minor.visible") || rc.boolean("ytick.minor.visible")) minorTicksUnsupported_ = true;
 }
 
 void Axes::setTitleOffsetTrans(double points) {
@@ -598,7 +724,7 @@ void Axes::updateTitlePosition(Renderer& renderer) {
         t->y = 1.0;
         if (!t->text.empty()) {
             yaxis->updateTicks();  // ax.yaxis.get_tightbbox(renderer) updates the offset text
-            if (yaxis->offsetText.visible && !yaxis->formatter.offsetText().empty())
+            if (yaxis->offsetText.visible && !yaxis->offsetText.text.empty())
                 renderer.unsupported("titles beside a y offset text are not supported yet");
             if (top < 0) return;
             if (t->windowExtent(renderer).points()[1] < top) {
@@ -630,12 +756,18 @@ Line2D& Axes::addLine(std::unique_ptr<Line2D> line) {
                                                   -std::numeric_limits<double>::infinity()}
                           : dataLim->points();
         const std::vector<double>& v = *path.vertices;
-        double minx = std::numeric_limits<double>::infinity(), maxx = -minx, miny = minx, maxy = -minx;
+        const double inf = std::numeric_limits<double>::infinity();
+        double minx = inf, maxx = -inf, miny = inf, maxy = -inf, posx = inf, posy = inf;
         for (std::size_t i = 0; i + 1 < v.size(); i += 2) {
             if (!std::isfinite(v[i]) || !std::isfinite(v[i + 1])) continue;
             minx = std::min(minx, v[i]), maxx = std::max(maxx, v[i]);
             miny = std::min(miny, v[i + 1]), maxy = std::max(maxy, v[i + 1]);
+            if (v[i] > 0) posx = std::min(posx, v[i]);  // the smallest positive values (minpos)
+            if (v[i + 1] > 0) posy = std::min(posy, v[i + 1]);
         }
+        if (ignoreExistingDataLimits_) minpos = {inf, inf};
+        minpos[0] = posx < minpos[0] ? posx : minpos[0];
+        minpos[1] = posy < minpos[1] ? posy : minpos[1];
         // Python's min(a, b) / max(a, b): the first unless the second is beyond it
         points[0] = minx < points[0] ? minx : points[0];
         points[2] = maxx > points[2] ? maxx : points[2];
@@ -670,7 +802,7 @@ void Axes::unstaleViewLim() {
 }
 
 void Axes::autoscaleView(bool scalex, bool scaley) {
-    // No artist has sticky edges yet (lines have none); linear scales only.
+    // No artist has sticky edges yet (lines have none).
     const auto handle = [&](bool scale, Axis& axis, bool isX, double margin) {
         if (!(scale && axis.autoscaleOn)) return;
         const auto d = dataLim->points();
@@ -687,12 +819,18 @@ void Axes::autoscaleView(bool scalex, bool scaley) {
             x0 = -std::numeric_limits<double>::infinity();
             x1 = std::numeric_limits<double>::infinity();
         }
-        std::tie(x0, x1) = axes::nonsingular(x0, x1, 0.05);  // locator.nonsingular
-        double delta = (x1 - x0) * margin;
+        std::tie(x0, x1) = axis.locatorNonsingular(x0, x1);
+        if (axis.scale() == "log") {  // limit_range_for_scale(x0, x1, minimum_minpos)
+            double mp = axis.minpos();
+            if (!std::isfinite(mp)) mp = 1e-300;
+            x0 = x0 <= 0 ? mp : x0;
+            x1 = x1 <= 0 ? mp : x1;
+        }
+        const double x0t = axis.scaleForward(x0), x1t = axis.scaleForward(x1);
+        double delta = (x1t - x0t) * margin;
         if (!std::isfinite(delta)) delta = 0;
-        x0 = x0 - delta, x1 = x1 + delta;
-        axis.locator.tickSpace = axis.tickSpace();  // the locator's axis
-        if (!tight) std::tie(x0, x1) = axis.locator.viewLimits(x0, x1);
+        x0 = axis.scaleInverse(x0t - delta), x1 = axis.scaleInverse(x1t + delta);
+        if (!tight) std::tie(x0, x1) = axis.locatorViewLimits(x0, x1);
         // set_xbound: sorted, reversed if the axis is inverted
         const auto view = axis.viewInterval();
         const bool inverted = view[0] > view[1];
@@ -702,6 +840,20 @@ void Axes::autoscaleView(bool scalex, bool scaley) {
     };
     handle(scalex, *xaxis, true, xmargin);
     handle(scaley, *yaxis, false, ymargin);
+}
+
+void Axes::updateTransScale() {
+    transScale->set(transforms::blend(xaxis->scaleTransform(), yaxis->scaleTransform()));
+}
+
+void Axes::setScale(bool x, const std::string& name) {
+    Axis& axis = x ? *xaxis : *yaxis;
+    const double inf = std::numeric_limits<double>::infinity();
+    const auto oldDefault = axis.locatorNonsingular(-inf, inf);
+    axis.setScale(name);
+    updateTransScale();
+    const auto newDefault = axis.locatorNonsingular(-inf, inf);
+    if (oldDefault != newDefault) autoscaleView(x, !x);
 }
 
 Spine& Axes::spine(const std::string& type) {
@@ -739,6 +891,7 @@ Axes::TextTransform Axes::yaxisTextTransform(int which, double padPoints) {
 void Axes::draw(Renderer& renderer) {
     if (!visible) return;
     unstaleViewLim();
+    if (minorTicksUnsupported_) renderer.unsupported("minor ticks on linear scales (AutoMinorLocator) are not supported yet");
     renderer.openGroup("axes", gid);
     // get_children without the patch: children, spines, axes, titles; sorted by zorder (stable)
     std::vector<Artist*> artists;

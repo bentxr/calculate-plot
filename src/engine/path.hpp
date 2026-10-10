@@ -3,6 +3,8 @@
 // Licence: LICENSES/Matplotlib.txt. Changes: licensing/changes/matplotlib.md
 #pragma once
 
+#include "transforms/transforms.hpp"
+
 #include <memory>
 #include <vector>
 
@@ -29,5 +31,9 @@ struct Path {
     // Path.unit_rectangle(): (0, 0), (1, 0), (1, 1), (0, 1), closed.
     static Path unitRectangle(const rc::Params& rc);
 };
+
+// Transform.transform_path_non_affine: the vertices through the transform's non-affine part, the
+// codes and simplification settings kept (_fast_from_codes_and_verts); the path itself when affine.
+Path transformPathNonAffine(const Path& path, const transforms::Transform& transform);
 
 }  // namespace calculate_plot::engine

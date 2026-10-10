@@ -55,7 +55,7 @@ TEST(AggTraceRenderer, DrawsMarkersAsMatplotlib) {
 TEST(AggTraceRenderer, DrawsTextAsMatplotlib) {
     const auto rc = calculate_plot::rc::Params::defaults();
     AggTraceRenderer r(320, 240, 100, rc, "C.UTF-8", fonts());
-    r.drawText(textGc(rc), 29.0, 233.87452256944445, "0.0", FontSpec{{"DejaVuSans.ttf"}, 10.0}, 0.0, false, {});
+    r.drawText(textGc(rc), 29.0, 233.87452256944445, "0.0", FontSpec{{"DejaVuSans.ttf"}, 10.0, {}}, 0.0, false, {});
     const Json got = events(r);
     const Json trace = recorded("empty_axes");
     const Json& want = *trace.find("events");
@@ -77,7 +77,7 @@ TEST(AggTraceRenderer, MeasuresTextAsMatplotlib) {
         std::vector<std::string> names;
         for (const Json& f : c.find("fonts")->items()) names.push_back(f.asString());
         AggTraceRenderer r(320, 240, c.find("dpi")->asNumber(), rc, "C.UTF-8", fonts());
-        const auto e = r.textWidthHeightDescent(c.find("s")->asString(), FontSpec{names, c.find("size")->asNumber()}, false);
+        const auto e = r.textWidthHeightDescent(c.find("s")->asString(), FontSpec{names, c.find("size")->asNumber(), {}}, false);
         EXPECT_EQ(e.width, std::strtod(c.find("width")->asString().c_str(), nullptr)) << c.find("s")->asString();
         EXPECT_EQ(e.height, std::strtod(c.find("height")->asString().c_str(), nullptr)) << c.find("s")->asString();
         EXPECT_EQ(e.descent, std::strtod(c.find("descent")->asString().c_str(), nullptr)) << c.find("s")->asString();
@@ -89,7 +89,7 @@ TEST(AggTraceRenderer, MeasuresTextAsMatplotlib) {
 TEST(AggTraceRenderer, ReportsFontsItCannotOpen) {
     const auto rc = calculate_plot::rc::Params::defaults();
     AggTraceRenderer r(320, 240, 100, rc, "C.UTF-8", fonts());
-    r.drawText(GC(rc), 1, 1, "x", FontSpec{{"NoSuchFont.ttf"}, 10.0}, 0.0, false, {});
+    r.drawText(GC(rc), 1, 1, "x", FontSpec{{"NoSuchFont.ttf"}, 10.0, {}}, 0.0, false, {});
     EXPECT_NE(r.error(), "");
 }
 

@@ -138,6 +138,10 @@ TEST(FigureComparison, NamesTheFirstDifferingField) {
     EXPECT_EQ(firstDifference(*a, *b, "trace"), "trace.events[0].gc.linewidth: 1.0 instead of 1.25");
     EXPECT_EQ(firstDifference(*z, *y, "trace"), "trace.events[0].gc.linewidth: -0.0 instead of 0");
     EXPECT_EQ(firstDifference(*y, *z, "trace"), "trace.events[0].gc.linewidth: 0 instead of -0.0");
+    // the last bit counts only with the reference libm
+    const auto u = calculate_plot::support::parseJson(R"({"v":-0.2218487496163563})", nullptr);
+    const auto w = calculate_plot::support::parseJson(R"({"v":-0.22184874961635628})", nullptr);
+    EXPECT_EQ(firstDifference(*u, *w, "t").empty(), !calculate_plot::testing_support::kReferenceLibm);
 }
 
 }  // namespace

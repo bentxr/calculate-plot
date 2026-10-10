@@ -2,6 +2,7 @@
 
 #include "rc/rc_params.hpp"
 #include "support/base64.hpp"
+#include "text/mathtext.hpp"
 
 namespace calculate_plot::engine {
 
@@ -176,23 +177,35 @@ void AggTraceRenderer::drawText(const GC& gc, double x, double y, const std::str
     events_.key("gc");
     writeGc(gc);
     events_.endObject();
-    if (ismath) {
-        error_ = "mathtext is not supported yet: " + s;
-        return;
-    }
-
-    // RendererAgg.draw_text: the layout, then _draw_text_glyphs_and_boxes.
     const auto flags = text::hintingFlags(hinting);
     if (!flags) {
         error_ = "unknown text.hinting " + hinting;
         return;
     }
     std::string error;
-    const auto glyphs =
-        text::layoutText(fonts_, font.files, s, font.size, dpi_, *flags, mtext.features, mtext.language, error, locale_);
-    if (!error.empty()) {
-        error_ = error;
-        return;
+    std::vector<text::Glyph> glyphs;
+    std::vector<std::array<double, 4>> boxes;
+    if (ismath) {
+        // RendererAgg.draw_mathtext: mathtext's vector layout, glyphs placed by their offsets
+        const auto parse = text::parseMath(fonts_, s, dpi_, font.props, rc_, &error);
+        if (!parse) {
+            error_ = error;
+            return;
+        }
+        for (const auto& g : parse->glyphs) glyphs.push_back(text::Glyph{g.font, g.fontsize, g.index, 0.0, 1.0, g.ox, g.oy});
+        boxes = parse->rects;
+        if (!boxes.empty()) {
+            error_ = "mathtext rules (fraction bars, roots) are not supported yet";
+            return;
+        }
+    } else {
+        // RendererAgg.draw_text: the layout, then _draw_text_glyphs_and_boxes.
+        glyphs = text::layoutText(fonts_, font.files, s, font.size, dpi_, *flags, mtext.features, mtext.language, error,
+                                  locale_);
+        if (!error.empty()) {
+            error_ = error;
+            return;
+        }
     }
     events_.beginObject();
     events_.key("op").value("glyphs");
@@ -244,8 +257,13 @@ void AggTraceRenderer::drawText(const GC& gc, double x, double y, const std::str
 
 TextMetrics AggTraceRenderer::textWidthHeightDescent(const std::string& s, const FontSpec& font, bool ismath) {
     if (ismath) {
-        error_ = "mathtext is not supported yet: " + s;
-        return {};
+        std::string error;
+        const auto parse = text::parseMath(fonts_, s, dpi_, font.props, rc_, &error);
+        if (!parse) {
+            error_ = error;
+            return {};
+        }
+        return {parse->width, parse->height, parse->depth};
     }
     const auto flags = text::hintingFlags(rc_.text("text.hinting"));
     if (!flags) {
@@ -390,17 +408,46 @@ void SvgTraceRenderer::drawText(const GC& gc, double x, double y, const std::str
     writeOptionalText(mtext.language);
     events_.key("clip_transform");
     writeClipTransform(gc);
+    if (ismath) {
+        // record_svg's "math": the layout TextToPath draws, at FONT_SCALE and 72 dpi
+        text::FontProperties scaled = font.props;
+        scaled.size = 100.0;
+        std::string error;
+        const auto parse = text::parseMath(fonts_, s, 72.0, scaled, rc_, &error);
+        if (!parse) error_ = error;
+        events_.key("math").beginObject().key("glyphs").beginArray();
+        if (parse)
+            for (const auto& g : parse->glyphs) {
+                events_.beginObject();
+                events_.key("font").value(g.file);
+                events_.key("size").value(g.fontsize);
+                events_.key("index").value(static_cast<long long>(g.index));
+                events_.key("ox").value(g.ox);
+                events_.key("oy").value(g.oy);
+                events_.endObject();
+            }
+        events_.endArray().key("rects").beginArray();
+        if (parse)
+            for (const auto& r : parse->rects) writeNumbers({r[0], r[1], r[2], r[3]});
+        events_.endArray().endObject();
+    }
     events_.endObject();
-    if (ismath) error_ = "mathtext is not supported yet: " + s;
 }
 
 TextMetrics SvgTraceRenderer::textWidthHeightDescent(const std::string& s, const FontSpec& font, bool ismath) {
-    if (ismath) {
-        error_ = "mathtext is not supported yet: " + s;
-        return {};
-    }
     constexpr double kFontScale = 100.0;  // TextToPath.FONT_SCALE, at TextToPath.DPI = 72
     const double scale = font.size / kFontScale;
+    if (ismath) {
+        text::FontProperties scaled = font.props;
+        scaled.size = kFontScale;
+        std::string error;
+        const auto parse = text::parseMath(fonts_, s, 72.0, scaled, rc_, &error);
+        if (!parse) {
+            error_ = error;
+            return {};
+        }
+        return {parse->width * scale, parse->height * scale, parse->depth * scale};
+    }
     std::string error;
     const auto e = text::textExtent(fonts_, font.files, s, kFontScale, 72.0, FT_LOAD_NO_HINTING, std::nullopt, error,
                                     locale_);

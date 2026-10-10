@@ -5,6 +5,7 @@
 
 #include "engine/gc.hpp"
 #include "engine/path.hpp"
+#include "text/font_manager.hpp"
 #include "transforms/transforms.hpp"
 
 #include <optional>
@@ -21,6 +22,7 @@ namespace calculate_plot::engine {
 struct FontSpec {
     std::vector<std::string> files;
     double size = 10.0;
+    text::FontProperties props;  // for mathtext, which finds its own fonts
 };
 
 // What draw_text takes from the Text artist when the text has one line (mtext).

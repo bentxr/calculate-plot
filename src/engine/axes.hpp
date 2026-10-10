@@ -4,6 +4,7 @@
 // Licence: LICENSES/Matplotlib.txt. Changes: licensing/changes/matplotlib.md
 #pragma once
 
+#include "axes/log_ticker.hpp"
 #include "axes/ticker.hpp"
 #include "engine/artist.hpp"
 #include "engine/gridspec.hpp"
@@ -11,6 +12,7 @@
 #include "engine/text.hpp"
 
 #include <array>
+#include <limits>
 #include <memory>
 #include <optional>
 #include <string>
@@ -73,6 +75,7 @@ class Axis : public Artist {
 public:
     Axis(const rc::Params& rc, Axes& axes, bool isX);
     void draw(Renderer& renderer) override;
+    // get_view_interval: through Axes.viewLim, which first runs a pending autoscale
     std::array<double, 2> viewInterval() const;
     void setViewInterval(double vmin, double vmax);  // set_view_interval(..., ignore=True)
     void setLim(double v0, double v1, bool autoscale);  // Axis._set_lim
@@ -82,12 +85,26 @@ public:
     // Axis._get_ticklabel_bboxes: the window extents of the visible first and second labels.
     std::pair<std::vector<transforms::Bbox>, std::vector<transforms::Bbox>> ticklabelBboxes(
         const std::vector<Tick*>& ticks, Renderer& renderer);
-    std::string ticksPosition() const;
-    int tickSpace() const;  // get_tick_space: how many tick labels fit along the axis  // get_ticks_position: top, bottom, left, right, default, unknown
+    std::string ticksPosition() const;  // get_ticks_position: top, bottom, left, right, default, unknown
+    int tickSpace() const;              // get_tick_space: how many tick labels fit along the axis
+    void setMinorTickSwitches(const TickSwitches& switches);  // tick_params(which='minor')
+
+    // The scale: "linear" or "log" (base 10). _set_scale sets the locators and formatters.
+    void setScale(const std::string& name);
+    const std::string& scale() const { return scale_; }
+    transforms::TransformPtr scaleTransform() const;  // get_transform()
+    double scaleForward(double v) const;               // the scale's transform of one value
+    double scaleInverse(double v) const;
+    double minpos() const;                             // get_minpos(): the smallest positive data
+    // The major locator's nonsingular and view_limits
+    std::pair<double, double> locatorNonsingular(double v0, double v1);
+    std::pair<double, double> locatorViewLimits(double v0, double v1);
 
     Text label, offsetText;
     axes::MaxNLocator locator = axes::MaxNLocator::autoLocator();
     axes::ScalarFormatter formatter;
+    axes::LogLocator logLocator, logMinorLocator;
+    axes::LogFormatterSciNotation logFormatter, logMinorFormatter;
     double labelpad;
     std::string labelPosition;  // bottom/top, left/right
     bool autoscaleOn = true;
@@ -97,10 +114,13 @@ private:
     void updateOffsetTextPosition(const std::vector<transforms::Bbox>& bboxes,
                                   const std::vector<transforms::Bbox>& bboxes2);
     std::vector<Tick*> majorTicks(std::size_t count);
+    std::vector<Tick*> minorTicks(std::size_t count);
+    std::string offsetString() const;
     Axes& axes_;
     bool isX_;
-    TickSwitches majorTickKw_;
-    std::vector<std::unique_ptr<Tick>> majorTicks_;
+    std::string scale_ = "linear";
+    TickSwitches majorTickKw_, minorTickKw_;
+    std::vector<std::unique_ptr<Tick>> majorTicks_, minorTicks_;
 };
 
 class Axes : public Artist {
@@ -136,6 +156,10 @@ public:
     // The next colour of the property cycle when a line has none (_PropCycle.getdefaults).
     colors::Spec nextColor();
     void requestAutoscaleView(bool x, bool y);
+    void setScale(bool x, const std::string& name);  // set_xscale / set_yscale
+    void unstaleViewLim();                            // what reading Axes.viewLim does first
+    void clearStale(bool x) { (x ? staleX_ : staleY_) = false; }
+    std::array<double, 2> minpos{std::numeric_limits<double>::infinity(), std::numeric_limits<double>::infinity()};
     std::vector<std::unique_ptr<Artist>> children;  // _children: lines, ...
 
     // Axes.set_title(label, loc=, pad=, y=)
@@ -145,10 +169,11 @@ private:
     void setLimAndTransforms();
     void setTitleOffsetTrans(double points);
     void updateTitlePosition(Renderer& renderer);
-    void unstaleViewLim();
     void autoscaleView(bool scalex, bool scaley);
+    void updateTransScale();
     bool autotitlepos_ = true;
     bool ignoreExistingDataLimits_ = true;
+    bool minorTicksUnsupported_ = false;
     bool staleX_ = false, staleY_ = false;
     std::size_t cycleIndex_ = 0;
 };

@@ -1,0 +1,7 @@
+{"version": 1, "calls": [
+  {"call": "subplots", "kwargs": {"figsize": {"$tuple": [4.0, 3.0]}}, "as": ["fig", "ax"]},
+  {"on": "ax", "call": "set_yscale", "args": ["log"]},
+  {"on": "ax", "call": "plot", "args": [[0, 1, 2, 3, 4, 5], [5, 0, 20, -3, 400, 7000]], "kwargs": {"marker": "s"}},
+  {"on": "ax", "call": "set_ylim", "kwargs": {"bottom": 0.5}},
+  {"on": "ax", "call": "set_xlim", "args": [5.5, -0.5]}
+]}

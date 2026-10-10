@@ -223,21 +223,35 @@ private:
             const char* hi = isX ? "right" : "top";
             if (!keywords(call, {lo, hi}, error)) return false;
             Axis& axis = isX ? *ax.xaxis : *ax.yaxis;
-            const auto view = axis.viewInterval();
-            double v[2] = {view[0], view[1]};
             const Json* given[2] = {call.args.size() > 0 ? &call.args[0] : keyword(call, lo),
                                     call.args.size() > 1 ? &call.args[1] : keyword(call, hi)};
             if (call.args.size() == 1 && sequence(call.args[0]) && sequence(call.args[0])->size() == 2) {
                 given[0] = &(*sequence(call.args[0]))[0];
                 given[1] = &(*sequence(call.args[0]))[1];
             }
-            for (int i = 0; i < 2; ++i)
-                if (given[i] && !given[i]->isNull() && !readNumber(*given[i], &v[i]))
-                    return *error = where + ": limits must be numbers", false;
+            double v[2] = {0, 0};
+            bool missing = false;
+            for (int i = 0; i < 2; ++i) {
+                if (!given[i] || given[i]->isNull()) missing = true;
+                else if (!readNumber(*given[i], &v[i])) return *error = where + ": limits must be numbers", false;
+            }
+            if (missing) {  // the old limits fill in, read through viewLim (a pending autoscale runs first)
+                const auto view = axis.viewInterval();
+                for (int i = 0; i < 2; ++i)
+                    if (!given[i] || given[i]->isNull()) v[i] = view[i];
+            }
             axis.setLim(v[0], v[1], false);
             return true;
         }
         if (call.method == "plot") return plot(ax, call, error);
+        if (call.method == "set_xscale" || call.method == "set_yscale") {
+            if (!call.kwargs.empty()) return *error = where + ": scale options are not supported yet", false;
+            if (call.args.size() != 1 || !call.args[0].isString()) return *error = where + ": give the scale's name", false;
+            const std::string name = call.args[0].asString();
+            if (name != "linear" && name != "log") return *error = where + ": the " + name + " scale is not supported yet", false;
+            ax.setScale(call.method == "set_xscale", name);
+            return true;
+        }
         *error = "unsupported call: " + where;
         return false;
     }

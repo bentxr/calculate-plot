@@ -93,7 +93,7 @@ Text::Layout Text::layout(Renderer& renderer) const {
     std::vector<Wad> wads;
     std::vector<double> xs, ys;
     const double dpi = figure ? figure->dpi : renderer.dpi();
-    const FontSpec spec{text::findFontsByProps(font, rc_), font.size};
+    const FontSpec spec{text::findFontsByProps(font, rc_), font.size, font};
 
     // The font's own line metrics (OS/2, else hhea), scaled to the size at the figure's dpi.
     double minAscent = 0, minDescent = 0, lineGap = 0;
@@ -247,7 +247,7 @@ void Text::draw(Renderer& renderer) {
     gc.snap = snap;
     setGcClip(gc);
     const double angle = rotation();
-    const FontSpec spec{text::findFontsByProps(font, rc_), font.size};
+    const FontSpec spec{text::findFontsByProps(font, rc_), font.size, font};
     for (const Line& line : l.lines) {
         const bool single = l.lines.size() == 1;  // mtext
         double lx = line.x + posx;

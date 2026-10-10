@@ -122,7 +122,7 @@ void Patch::draw(Renderer& renderer) {
     gc.setForeground(std::vector<double>(edgecolor_.begin(), edgecolor_.end()));
     if (lw > 0) gc.setDashes(dashes_.first, dashes_.second);
     else gc.setDashes(0, std::nullopt);
-    renderer.drawPath(gc, path(), t->matrix(), face);
+    renderer.drawPath(gc, transformPathNonAffine(path(), *t), t->matrix(), face);
     renderer.closeGroup("patch");
 }
 

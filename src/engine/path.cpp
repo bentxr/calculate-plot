@@ -27,6 +27,18 @@ Path Path::make(std::vector<double> vertices, std::vector<unsigned char> codes, 
     return p;
 }
 
+Path transformPathNonAffine(const Path& path, const transforms::Transform& transform) {
+    if (transform.isAffine() || !path.vertices) return path;
+    Path out = path;
+    std::vector<double> v = *path.vertices;
+    for (std::size_t i = 0; i + 1 < v.size(); i += 2) {
+        const auto p = transform.transformNonAffine(v[i], v[i + 1]);
+        v[i] = p[0], v[i + 1] = p[1];
+    }
+    out.vertices = std::make_shared<std::vector<double>>(std::move(v));
+    return out;
+}
+
 Path Path::unitRectangle(const rc::Params& rc) {
     return make({0, 0, 1, 0, 1, 1, 0, 1, 0, 0}, {}, rc, true);
 }

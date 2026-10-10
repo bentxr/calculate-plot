@@ -12,6 +12,22 @@ namespace calculate_plot::testing_support {
 
 using support::Json;
 
+// The references come from glibc's libm (log10, sin, cos, pow, exp). Other libms (WASM's musl)
+// differ in the last bits of some results, as matplotlib does from platform to platform (see the
+// decision on libms): there the draw calls' numbers are compared within 1e-12, relative; pixels
+// and SVG bytes are compared exactly everywhere.
+#ifdef __GLIBC__
+inline constexpr bool kReferenceLibm = true;
+#else
+inline constexpr bool kReferenceLibm = false;
+#endif
+
+inline bool sameNumber(double a, double b) {
+    if (a == b) return std::signbit(a) == std::signbit(b);
+    if (kReferenceLibm) return false;
+    return std::fabs(a - b) <= 1e-12 * std::max({1.0, std::fabs(a), std::fabs(b)});
+}
+
 inline std::string describe(const Json& v) {
     switch (v.type()) {
         case Json::Type::Null: return "null";
@@ -35,7 +51,7 @@ inline std::string firstDifference(const Json& got, const Json& want, const std:
         case Json::Type::Bool:
             return got.asBool() == want.asBool() ? std::string() : where + ": " + describe(got) + " instead of " + describe(want);
         case Json::Type::Number:
-            if (got.asNumber() == want.asNumber() && std::signbit(got.asNumber()) == std::signbit(want.asNumber())) return {};
+            if (sameNumber(got.asNumber(), want.asNumber())) return {};
             return where + ": " + describe(got) + " instead of " + describe(want);
         case Json::Type::String:
             return got.asString() == want.asString() ? std::string() : where + ": " + describe(got) + " instead of " + describe(want);

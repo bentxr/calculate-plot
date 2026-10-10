@@ -343,8 +343,10 @@ void Line2D::draw(Renderer& renderer) {
     if (!visible) return;
     if (invalid_) recache();
     renderer.openGroup("line2d", gid);
-    const transforms::Matrix affine = transform->matrix();  // the transform is affine (linear scales)
-    if (linestyle_ != "None" && path_.size()) {
+    // get_transformed_path_and_affine: the non-affine part applied to the path, the affine part apart
+    const transforms::Matrix affine = transform->matrix();
+    const Path tpath = transformPathNonAffine(path_, *transform);
+    if (linestyle_ != "None" && tpath.size()) {
         GC gc = renderer.newGc();
         setGcClip(gc);
         gc.url = url;
@@ -358,7 +360,7 @@ void Line2D::draw(Renderer& renderer) {
         gc.setForeground(std::vector<double>(rgba.begin(), rgba.end()));
         if (linewidth_ > 0) gc.setDashes(dashes_.first, dashes_.second);
         else gc.setDashes(0, std::nullopt);
-        renderer.drawPath(gc, path_, affine, std::nullopt);
+        renderer.drawPath(gc, tpath, affine, std::nullopt);
     }
     if (!markerStyle.isNone() && markersize > 0) {
         GC gc = renderer.newGc();
@@ -373,7 +375,7 @@ void Line2D::draw(Renderer& renderer) {
         if (isAuto(markeredgecolor, false) && !colors::isNone(markerFaceColor(false))) ec[3] = fc[3];
         gc.setForeground(std::vector<double>(ec.begin(), ec.end()));
         if (sketch) gc.sketch = std::array<double, 3>{(*sketch)[0] / 2, (*sketch)[1] / 2, 2 * (*sketch)[2]};
-        if (path_.size()) {
+        if (tpath.size()) {
             const auto threshold = markerStyle.snapThreshold();
             if (threshold) gc.snap = renderer.pointsToPixels(markersize) >= *threshold;
             else gc.snap.reset();
@@ -383,7 +385,7 @@ void Line2D::draw(Renderer& renderer) {
             const double w = renderer.pointsToPixels(markersize);
             if (markerStyle.marker() == ",") gc.linewidth = 0;
             else markerTrans.scale(w);
-            renderer.drawMarkers(gc, markerStyle.path(), markerTrans.matrix(), path_, affine,
+            renderer.drawMarkers(gc, markerStyle.path(), markerTrans.matrix(), tpath, affine,
                                  std::vector<double>(fc.begin(), fc.end()));
         }
     }
