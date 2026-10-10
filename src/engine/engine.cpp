@@ -250,6 +250,10 @@ private:
         if (call.method == "fill_between") return fillBetween(ax, call, error);
         if (call.method == "errorbar") return errorbar(ax, call, error);
         if (call.method == "legend") return legend(ax, call, error);
+        if (call.method == "grid") return grid(ax, call, error);
+        if (call.method == "axhline" || call.method == "axvline") return axline(ax, call, error);
+        if (call.method == "axhspan" || call.method == "axvspan") return axspan(ax, call, error);
+        if (call.method == "vlines" || call.method == "hlines") return lines(ax, call, error);
         if (call.method == "set_xscale" || call.method == "set_yscale") {
             if (!call.kwargs.empty()) return *error = where + ": scale options are not supported yet", false;
             if (call.args.size() != 1 || !call.args[0].isString()) return *error = where + ": give the scale's name", false;
@@ -919,6 +923,230 @@ private:
         auto made = std::make_unique<Legend>(rc_, ax, handles, labels, o, &problem);
         if (!problem.empty()) return *error = where + ": " + problem, false;
         ax.legend = std::move(made);
+        return true;
+    }
+
+    // A positional argument, else the keyword, else nullptr
+    const Json* argument(const model::Call& call, std::size_t index, const char* name) {
+        if (call.args.size() > index) return &call.args[index];
+        return keyword(call, name);
+    }
+
+    // Axes.grid(visible=None, which='major', axis='both', **line properties)
+    bool grid(Axes& ax, const model::Call& call, std::string* error) {
+        const std::string where = call.on + ".grid";
+        std::optional<bool> on;
+        std::string which = "major", axisName = "both";
+        TickSwitches style;
+        bool styled = false;
+        if (const Json* v = argument(call, 0, "visible"); v && !v->isNull()) {
+            if (!v->isBool()) return *error = where + ": visible must be True, False or None", false;
+            on = v->asBool();
+        }
+        if (call.args.size() > 1) return *error = where + ": which and axis are keyword arguments here", false;
+        for (const auto& [name, value] : call.kwargs) {
+            double n = 0;
+            if (name == "visible") continue;
+            if (name == "which" || name == "axis") {
+                if (!value.isString()) return *error = where + ": " + name + " must be a string", false;
+                (name == "which" ? which : axisName) = value.asString();
+            } else if (name == "color" || name == "c") {
+                if (!value.isString()) return *error = where + ": grid colours must be strings so far", false;
+                style.gridColor = value.asString(), styled = true;
+            } else if (name == "linestyle" || name == "ls") {
+                if (!value.isString()) return *error = where + ": bad linestyle", false;
+                style.gridLinestyle = value.asString(), styled = true;
+            } else if (name == "linewidth" || name == "lw") {
+                if (!readNumber(value, &n)) return *error = where + ": linewidth must be a number", false;
+                style.gridLinewidth = n, styled = true;
+            } else if (name == "alpha") {
+                if (!readNumber(value, &n)) return *error = where + ": alpha must be a number", false;
+                style.gridAlpha = n, styled = true;
+            } else {
+                return *error = where + ": unsupported keyword " + name, false;
+            }
+        }
+        for (char& ch : which) ch = char(std::tolower(static_cast<unsigned char>(ch)));
+        if (which != "major" && which != "minor" && which != "both") return *error = where + ": bad which", false;
+        if (axisName != "x" && axisName != "y" && axisName != "both") return *error = where + ": bad axis", false;
+        if (axisName != "y") ax.xaxis->grid(on, which, style, styled);
+        if (axisName != "x") ax.yaxis->grid(on, which, style, styled);
+        return true;
+    }
+
+    // Axes.axhline(y=0, xmin=0, xmax=1, **kwargs) and axvline(x=0, ymin=0, ymax=1, **kwargs)
+    bool axline(Axes& ax, const model::Call& call, std::string* error) {
+        const std::string where = call.on + "." + call.method;
+        const bool horizontal = call.method == "axhline";
+        double at = 0, lo = 0, hi = 1;
+        const char* names[3] = {horizontal ? "y" : "x", horizontal ? "xmin" : "ymin", horizontal ? "xmax" : "ymax"};
+        double* targets[3] = {&at, &lo, &hi};
+        for (int i = 0; i < 3; ++i)
+            if (const Json* v = argument(call, std::size_t(i), names[i]); v && !readNumber(*v, targets[i]))
+                return *error = where + ": " + names[i] + " must be a number", false;
+        // get_ybound / get_xbound read the view (a pending autoscale runs first)
+        Axis& axis = horizontal ? *ax.yaxis : *ax.xaxis;
+        const auto view = axis.viewInterval();
+        const double bmin = std::min(view[0], view[1]), bmax = std::max(view[0], view[1]);
+        const bool rescale = at < bmin || at > bmax;
+        auto line = horizontal ? std::make_unique<Line2D>(rc_, std::vector<double>{lo, hi}, std::vector<double>{at, at})
+                               : std::make_unique<Line2D>(rc_, std::vector<double>{at, at}, std::vector<double>{lo, hi});
+        line->transform = horizontal ? ax.yaxisTransform : ax.xaxisTransform;
+        for (const auto& [name, value] : call.kwargs) {
+            if (name == names[0] || name == names[1] || name == names[2]) continue;
+            std::string full = name;
+            static const std::pair<const char*, const char*> aliases[] = {
+                {"aa", "antialiased"}, {"c", "color"}, {"ls", "linestyle"}, {"lw", "linewidth"}, {"mec", "markeredgecolor"},
+                {"mew", "markeredgewidth"}, {"mfc", "markerfacecolor"}, {"ms", "markersize"}};
+            for (const auto& [a, f] : aliases)
+                if (name == a) full = f;
+            if (!lineProperty(*line, full, value, where, error)) return false;
+        }
+        ax.addLine(std::move(line), true);
+        if (rescale) ax.requestAutoscaleView(!horizontal, horizontal);
+        return true;
+    }
+
+    bool patchProperty(Rectangle& p, const std::string& name, const Json& v, const std::string& where, std::string* error) {
+        double n = 0;
+        const auto text = [&](std::string* out) {
+            if (!v.isString()) return false;
+            *out = v.asString();
+            return true;
+        };
+        std::string str;
+        if (name == "color") {
+            if (!text(&str)) return *error = where + ": patch colours must be strings so far", false;
+            p.setColor(str);
+        } else if (name == "facecolor" || name == "fc") {
+            if (!text(&str)) return *error = where + ": patch colours must be strings so far", false;
+            p.setFacecolor(str);
+        } else if (name == "edgecolor" || name == "ec") {
+            if (!text(&str)) return *error = where + ": patch colours must be strings so far", false;
+            p.setEdgecolor(str);
+        } else if (name == "alpha") {
+            if (!readNumber(v, &n)) return *error = where + ": alpha must be a number", false;
+            p.setAlpha(n);
+        } else if (name == "linewidth" || name == "lw") {
+            if (!readNumber(v, &n)) return *error = where + ": linewidth must be a number", false;
+            p.setLinewidth(n);
+        } else if (name == "linestyle" || name == "ls") {
+            if (!text(&str)) return *error = where + ": bad linestyle", false;
+            p.setLinestyle(str == "-" ? "solid" : str == "--" ? "dashed" : str == "-." ? "dashdot" : str == ":" ? "dotted" : str);
+        } else if (name == "fill") {
+            if (!v.isBool()) return *error = where + ": fill must be True or False", false;
+            p.setFill(v.asBool());
+        } else if (name == "hatch") {
+            if (!v.isNull()) return *error = where + ": hatches are not supported yet", false;
+        } else if (name == "zorder") {
+            if (!readNumber(v, &n)) return *error = where + ": zorder must be a number", false;
+            p.zorder = n;
+        } else if (name == "label") {
+            if (!text(&str)) return *error = where + ": label must be a string", false;
+            p.label = str;
+        } else {
+            return *error = where + ": unsupported keyword " + name, false;
+        }
+        return true;
+    }
+
+    // Axes.axhspan(ymin, ymax, xmin=0, xmax=1, **kwargs) and axvspan(xmin, xmax, ymin=0, ymax=1, **kwargs)
+    bool axspan(Axes& ax, const model::Call& call, std::string* error) {
+        const std::string where = call.on + "." + call.method;
+        const bool horizontal = call.method == "axhspan";
+        const char* names[4] = {horizontal ? "ymin" : "xmin", horizontal ? "ymax" : "xmax", horizontal ? "xmin" : "ymin",
+                                horizontal ? "xmax" : "ymax"};
+        double v[4] = {0, 0, 0, 1};
+        for (int i = 0; i < 4; ++i) {
+            const Json* a = argument(call, std::size_t(i), names[i]);
+            if (!a) {
+                if (i < 2) return *error = where + ": " + names[i] + " is required", false;
+                continue;
+            }
+            if (!readNumber(*a, &v[i])) return *error = where + ": " + names[i] + " must be a number", false;
+        }
+        // Rectangle((xmin, ymin), xmax - xmin, ymax - ymin)
+        const double x0 = horizontal ? v[2] : v[0], x1 = horizontal ? v[3] : v[1];
+        const double y0 = horizontal ? v[0] : v[2], y1 = horizontal ? v[1] : v[3];
+        auto rect = std::make_unique<Rectangle>(rc_, x0, y0, x1 - x0, y1 - y0);
+        for (const auto& [name, value] : call.kwargs) {
+            bool positional = false;
+            for (const char* n : names) positional = positional || name == n;
+            if (positional) continue;
+            if (!patchProperty(*rect, name, value, where, error)) return false;
+        }
+        rect->transform = horizontal ? ax.yaxisTransform : ax.xaxisTransform;
+        rect->transformSet = true;
+        ax.addPatch(std::move(rect));  // (the other direction's limits are kept as they were)
+        ax.requestAutoscaleView(!horizontal, horizontal);
+        return true;
+    }
+
+    // Axes.vlines(x, ymin, ymax, colors=None, linestyles='solid', label='', **kwargs) and hlines
+    bool lines(Axes& ax, const model::Call& call, std::string* error) {
+        const std::string where = call.on + "." + call.method;
+        const bool vertical = call.method == "vlines";
+        const char* names[3] = {vertical ? "x" : "y", vertical ? "ymin" : "xmin", vertical ? "ymax" : "xmax"};
+        std::vector<double> v[3];
+        for (int i = 0; i < 3; ++i) {
+            const Json* a = argument(call, std::size_t(i), names[i]);
+            double one = 0;
+            if (!a) return *error = where + ": " + names[i] + " is required", false;
+            if (readNumber(*a, &one)) v[i] = {one};
+            else if (!numbers(*a, &v[i])) return *error = where + ": " + names[i] + " must be numbers", false;
+        }
+        const std::size_t n = v[0].size();
+        for (int i = 1; i < 3; ++i) {
+            if (v[i].size() == 1) {
+                const double one = v[i][0];  // (assign must not read from the vector it replaces)
+                v[i].assign(n, one);
+            }
+            if (v[i].size() != n) return *error = where + ": the lengths do not match", false;
+        }
+        std::vector<std::vector<std::array<double, 2>>> segments;
+        for (std::size_t k = 0; k < n; ++k) {
+            if (vertical) segments.push_back({{v[0][k], v[1][k]}, {v[0][k], v[2][k]}});
+            else segments.push_back({{v[1][k], v[0][k]}, {v[2][k], v[0][k]}});
+        }
+        auto lc = std::make_unique<LineCollection>(rc_, segments);
+        for (const auto& [name, value] : call.kwargs) {
+            if (name == names[0] || name == names[1] || name == names[2]) continue;
+            double num = 0;
+            if (name == "colors" || name == "color") {
+                if (value.isNull()) continue;
+                std::vector<colors::Spec> l;
+                if (!colorList(value, &l)) return *error = where + ": bad colors", false;
+                ColorArg a;
+                if (l.size() == 1) a = ColorArg::of(l[0]);
+                else a.kind = ColorArg::Colors, a.colors = l;
+                lc->setEdgecolor(a);  // LineCollection.set_color
+            } else if (name == "linestyles" || name == "linestyle" || name == "ls") {
+                std::vector<std::string> styles;
+                if (value.isString()) styles = {value.asString()};
+                else if (const Json* seq = sequence(value)) {
+                    for (const Json& s2 : seq->items())
+                        if (s2.isString()) styles.push_back(s2.asString());
+                }
+                if (styles.empty() || !lc->setLinestyles(styles)) return *error = where + ": bad linestyles", false;
+            } else if (name == "linewidths" || name == "linewidth" || name == "lw") {
+                std::vector<double> w;
+                if (readNumber(value, &num)) w = {num};
+                else if (!numbers(value, &w)) return *error = where + ": bad linewidths", false;
+                lc->setLinewidths(w);
+            } else if (name == "alpha") {
+                if (!readNumber(value, &num)) return *error = where + ": alpha must be a number", false;
+                lc->setAlpha(num);
+            } else if (name == "zorder") {
+                if (!readNumber(value, &num)) return *error = where + ": zorder must be a number", false;
+                lc->zorder = num;
+            } else if (name == "label") {
+                if (!value.isString()) return *error = where + ": label must be a string", false;
+                lc->label = value.asString();
+            } else {
+                return *error = where + ": unsupported keyword " + name, false;
+            }
+        }
+        ax.addLinesCollection(std::move(lc));
         return true;
     }
 

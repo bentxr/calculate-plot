@@ -175,13 +175,18 @@ Tick::Tick(const rc::Params& rc, Axes& axes, bool isX, bool major, const TickSwi
     const double labelsize = fontSizeOf(rc, (name + ".labelsize").c_str());
     zorder = major ? 2 + 0.01 : 2;  // Line2D.zorder (+ 0.01)
 
-    std::string gridColor = mm == "major" ? rcText(rc, {"grid.major.color", "grid.color"}) : rcText(rc, {"grid.minor.color", "grid.color"});
-    const std::string gridLinestyle = mm == "major" ? rcText(rc, {"grid.major.linestyle", "grid.linestyle"})
-                                                    : rcText(rc, {"grid.minor.linestyle", "grid.linestyle"});
-    const double gridLinewidth = mm == "major" ? rcNumber(rc, {"grid.major.linewidth", "grid.linewidth"})
-                                               : rcNumber(rc, {"grid.minor.linewidth", "grid.linewidth"});
-    std::optional<double> gridAlpha;
-    if (gridColor[0] == '#' && (gridColor.size() == 5 || gridColor.size() == 9)) {  // _has_alpha_channel
+    std::string gridColor = sw.gridColor ? *sw.gridColor
+                            : mm == "major" ? rcText(rc, {"grid.major.color", "grid.color"})
+                                            : rcText(rc, {"grid.minor.color", "grid.color"});
+    const std::string gridLinestyle = sw.gridLinestyle ? *sw.gridLinestyle
+                                      : mm == "major" ? rcText(rc, {"grid.major.linestyle", "grid.linestyle"})
+                                                      : rcText(rc, {"grid.minor.linestyle", "grid.linestyle"});
+    const double gridLinewidth = sw.gridLinewidth ? *sw.gridLinewidth
+                                 : mm == "major" ? rcNumber(rc, {"grid.major.linewidth", "grid.linewidth"})
+                                                 : rcNumber(rc, {"grid.minor.linewidth", "grid.linewidth"});
+    std::optional<double> gridAlpha = sw.gridAlpha;
+    if (gridAlpha) {
+    } else if (gridColor[0] == '#' && (gridColor.size() == 5 || gridColor.size() == 9)) {  // _has_alpha_channel
         const auto rgba = *colors::toRgba(gridColor, std::nullopt, rc, nullptr);
         gridAlpha = rgba[3];
     } else {
@@ -199,7 +204,14 @@ Tick::Tick(const rc::Params& rc, Axes& axes, bool isX, bool major, const TickSwi
     tick1line.visible = sw.tick1On;
     tick2line.visible = sw.tick2On;
     gridline.color = gridColor;
+    if (!sw.gridAlpha && gridColor[0] == '#' && (gridColor.size() == 5 || gridColor.size() == 9)) {
+        const auto rgba = *colors::toRgba(gridColor, std::nullopt, rc, nullptr);  // RGB only, alpha apart
+        gridline.color = std::vector<double>{rgba[0], rgba[1], rgba[2]};
+    }
     gridline.alpha = gridAlpha;
+    // Axis.set_clip_path(axes.patch) reaches the grid lines (copied to every tick): a clip box
+    gridline.clipBox = std::make_shared<transforms::TransformedBbox>(
+        std::make_shared<transforms::Bbox>(std::array<double, 4>{0, 0, 1, 1}), axes.patch->fullTransform());
     gridline.visible = sw.gridOn;
     gridline.setLinestyle(gridLinestyle, &error);
     gridline.setLinewidth(gridLinewidth);
@@ -398,6 +410,22 @@ std::pair<double, double> Axis::locatorViewLimits(double v0, double v1) {
     }
     locator.tickSpace = tickSpace();  // the locator's axis
     return locator.viewLimits(v0, v1);
+}
+
+void Axis::grid(std::optional<bool> on, const std::string& which, const TickSwitches& style, bool styled) {
+    if (styled && (!on || !*on)) on = true;  // properties turn the grid on
+    const auto apply = [&](TickSwitches& kw, std::vector<std::unique_ptr<Tick>>& ticks) {
+        kw.gridOn = on ? *on : !kw.gridOn;
+        if (style.gridColor) kw.gridColor = style.gridColor;
+        if (style.gridLinestyle) kw.gridLinestyle = style.gridLinestyle;
+        if (style.gridLinewidth) kw.gridLinewidth = style.gridLinewidth;
+        if (style.gridAlpha) kw.gridAlpha = style.gridAlpha;
+        // existing ticks: _apply_params(gridOn=..., grid_*=...); new ones are made with the keywords.
+        // (Ticks are made when drawn, so none exist yet.)
+        (void)ticks;
+    };
+    if (which == "minor" || which == "both") apply(minorTickKw_, minorTicks_);
+    if (which == "major" || which == "both") apply(majorTickKw_, majorTicks_);
 }
 
 void Axis::setMinorTickSwitches(const TickSwitches& sw) {
@@ -740,45 +768,84 @@ void Axes::updateTitlePosition(Renderer& renderer) {
     for (Text* t : titles) t->y = ymax;
 }
 
-Line2D& Axes::addLine(std::unique_ptr<Line2D> line) {
-    // _set_artist_props: the data transform unless one was set
-    line->transform = transData;
+void Axes::updateFromPath(const std::vector<double>& v, bool updatex, bool updatey) {
+    // Bbox.update_from_path(path, ignore=ignore_existing_data_limits, updatex, updatey)
+    if (v.empty() || !(updatex || updatey)) return;
+    const double inf = std::numeric_limits<double>::infinity();
+    auto points = ignoreExistingDataLimits_ ? std::array<double, 4>{inf, inf, -inf, -inf} : dataLim->points();
+    auto pos = ignoreExistingDataLimits_ ? std::array<double, 2>{inf, inf} : minpos;
+    double minx = inf, maxx = -inf, miny = inf, maxy = -inf, posx = inf, posy = inf;
+    for (std::size_t i = 0; i + 1 < v.size(); i += 2) {
+        if (!std::isfinite(v[i]) || !std::isfinite(v[i + 1])) continue;
+        minx = std::min(minx, v[i]), maxx = std::max(maxx, v[i]);
+        miny = std::min(miny, v[i + 1]), maxy = std::max(maxy, v[i + 1]);
+        if (v[i] > 0) posx = std::min(posx, v[i]);
+        if (v[i + 1] > 0) posy = std::min(posy, v[i + 1]);
+    }
+    auto current = dataLim->points();
+    // Python's min(a, b) / max(a, b): the first unless the second is beyond it
+    if (updatex) {
+        current[0] = minx < points[0] ? minx : points[0];
+        current[2] = maxx > points[2] ? maxx : points[2];
+        minpos[0] = posx < pos[0] ? posx : pos[0];
+    }
+    if (updatey) {
+        current[1] = miny < points[1] ? miny : points[1];
+        current[3] = maxy > points[3] ? maxy : points[3];
+        minpos[1] = posy < pos[1] ? posy : pos[1];
+    }
+    dataLim->setPoints(current);
+}
+
+Line2D& Axes::addLine(std::unique_ptr<Line2D> line, bool keepTransform) {
+    if (!keepTransform) line->transform = transData;  // _set_artist_props
     // set_clip_path(self.patch): a Rectangle clips by its box
     line->clipBox = std::make_shared<transforms::TransformedBbox>(
         std::make_shared<transforms::Bbox>(std::array<double, 4>{0, 0, 1, 1}), patch->fullTransform());
-    // _update_line_limits: the transform is transData, so the data path updates both limits
+    // _update_line_limits
     const Path& path = line->path();
     if (path.size()) {
-        auto points = ignoreExistingDataLimits_
-                          ? std::array<double, 4>{std::numeric_limits<double>::infinity(),
-                                                  std::numeric_limits<double>::infinity(),
-                                                  -std::numeric_limits<double>::infinity(),
-                                                  -std::numeric_limits<double>::infinity()}
-                          : dataLim->points();
-        const std::vector<double>& v = *path.vertices;
-        const double inf = std::numeric_limits<double>::infinity();
-        double minx = inf, maxx = -inf, miny = inf, maxy = -inf, posx = inf, posy = inf;
-        for (std::size_t i = 0; i + 1 < v.size(); i += 2) {
-            if (!std::isfinite(v[i]) || !std::isfinite(v[i + 1])) continue;
-            minx = std::min(minx, v[i]), maxx = std::max(maxx, v[i]);
-            miny = std::min(miny, v[i + 1]), maxy = std::max(maxy, v[i + 1]);
-            if (v[i] > 0) posx = std::min(posx, v[i]);  // the smallest positive values (minpos)
-            if (v[i + 1] > 0) posy = std::min(posy, v[i + 1]);
+        std::vector<double> v = *path.vertices;
+        const auto update = transforms::containsBranchSeparately(line->transform, transData);
+        if (line->transform != transData && (update[0] || update[1])) {
+            // trf_to_data = line_trf - transData: line_trf + transData.inverted(), applied as one affine
+            if (!transData->isAffine() || !line->transform->isAffine())
+                unsupported_ = "lines in axes coordinates on log scales are not supported yet";
+            const auto m = transforms::compose(line->transform, transData->inverted())->matrix();
+            for (std::size_t k = 0; k + 1 < v.size(); k += 2) {
+                const auto q = transforms::apply(m, v[k], v[k + 1]);
+                v[k] = q[0], v[k + 1] = q[1];
+            }
         }
-        if (ignoreExistingDataLimits_) minpos = {inf, inf};
-        minpos[0] = posx < minpos[0] ? posx : minpos[0];
-        minpos[1] = posy < minpos[1] ? posy : minpos[1];
-        // Python's min(a, b) / max(a, b): the first unless the second is beyond it
-        points[0] = minx < points[0] ? minx : points[0];
-        points[2] = maxx > points[2] ? maxx : points[2];
-        points[1] = miny < points[1] ? miny : points[1];
-        points[3] = maxy > points[3] ? maxy : points[3];
-        dataLim->setPoints(points);
+        updateFromPath(v, update[0], update[1]);
         ignoreExistingDataLimits_ = false;
     }
     if (line->label.empty()) line->label = "_child" + std::to_string(children.size());
     children.push_back(std::move(line));
     return static_cast<Line2D&>(*children.back());
+}
+
+Patch& Axes::addPatch(std::unique_ptr<Rectangle> p) {
+    if (!p->transformSet) p->transform = transData;  // _set_artist_props
+    p->clipBox = std::make_shared<transforms::TransformedBbox>(
+        std::make_shared<transforms::Bbox>(std::array<double, 4>{0, 0, 1, 1}), patch->fullTransform());
+    // _update_patch_limits: the ends of the path's segments (iter_bezier) through patch_trf - transData
+    if (p->width != 0 || p->height != 0) {
+        const auto t = p->fullTransform();
+        const auto update = transforms::containsBranchSeparately(t, transData);
+        if (update[0] || update[1]) {
+            if (!transData->isAffine() || !t->isAffine())
+                unsupported_ = "patches on log scales are not supported yet";
+            const auto m = transforms::compose(t, transData->inverted())->matrix();
+            std::vector<std::array<double, 2>> xys;
+            const double corners[8][2] = {{0, 0}, {1, 0}, {1, 0}, {1, 1}, {1, 1}, {0, 1}, {0, 1}, {0, 0}};
+            for (const auto& c : corners) xys.push_back(transforms::apply(m, c[0], c[1]));
+            updateDatalim(xys, update[0], update[1]);
+        }
+    }
+    if (p->label.empty()) p->label = "_child" + std::to_string(children.size());
+    children.push_back(std::move(p));
+    return static_cast<Patch&>(*children.back());
 }
 
 colors::Spec Axes::nextColor() {
@@ -797,31 +864,17 @@ colors::Spec Axes::nextPatchColor() {
     return c;
 }
 
-void Axes::updateDatalim(const std::vector<std::array<double, 2>>& xys) {
+void Axes::updateDatalim(const std::vector<std::array<double, 2>>& xys, bool updatex, bool updatey) {
     // update_datalim: nothing unless some value is finite; then Bbox.update_from_data_xy
     bool anyFinite = false;
     for (const auto& p : xys) anyFinite = anyFinite || std::isfinite(p[0]) || std::isfinite(p[1]);
     if (!anyFinite) return;
-    const double inf = std::numeric_limits<double>::infinity();
-    auto points = ignoreExistingDataLimits_ ? std::array<double, 4>{inf, inf, -inf, -inf} : dataLim->points();
-    if (ignoreExistingDataLimits_) minpos = {inf, inf};
-    double minx = inf, maxx = -inf, miny = inf, maxy = -inf, posx = inf, posy = inf;
-    for (const auto& p : xys) {
-        if (!std::isfinite(p[0]) || !std::isfinite(p[1])) continue;
-        minx = std::min(minx, p[0]), maxx = std::max(maxx, p[0]);
-        miny = std::min(miny, p[1]), maxy = std::max(maxy, p[1]);
-        if (p[0] > 0) posx = std::min(posx, p[0]);
-        if (p[1] > 0) posy = std::min(posy, p[1]);
-    }
-    points[0] = minx < points[0] ? minx : points[0];
-    points[2] = maxx > points[2] ? maxx : points[2];
-    points[1] = miny < points[1] ? miny : points[1];
-    points[3] = maxy > points[3] ? maxy : points[3];
-    minpos[0] = posx < minpos[0] ? posx : minpos[0];
-    minpos[1] = posy < minpos[1] ? posy : minpos[1];
-    dataLim->setPoints(points);
+    std::vector<double> flat;
+    for (const auto& p : xys) flat.push_back(p[0]), flat.push_back(p[1]);
+    updateFromPath(flat, updatex, updatey);
     ignoreExistingDataLimits_ = false;
 }
+
 
 Collection& Axes::addCollection(std::unique_ptr<Collection> c) {
     if (c->label.empty()) c->label = "_child" + std::to_string(children.size());

@@ -39,6 +39,8 @@ public:
     void setFacecolor(const ColorArg& c);
     void setEdgecolor(const ColorArg& c);
     void setLinewidths(std::vector<double> lw);  // empty: the default (patch.linewidth)
+    // set_linestyle: named styles ('solid', 'dashed', 'dashdot', 'dotted' or their symbols)
+    bool setLinestyles(const std::vector<std::string>& styles);
     void setAlpha(std::optional<double> a);       // _set_alpha_for_array with a scalar
     void draw(Renderer& renderer) override;
     // get_datalim: the box of the data (offsets through the offset transform) and its minpos.
@@ -50,7 +52,7 @@ public:
     // Collection.update_from: colours (originals, resolved, mapped), widths, styles and the Artist part
     void updateFrom(const Collection& other);
     const std::vector<double>& linewidths() const { return linewidths_; }
-    bool transformSet = false;  // is_transform_set(): otherwise add_collection gives transData
+
 
     std::vector<Path> paths;
     std::vector<transforms::Matrix> transforms;  // get_transforms()
@@ -80,8 +82,10 @@ private:
     ColorArg originalFacecolor_, originalEdgecolor_;
     std::vector<colors::Rgba> facecolors_, edgecolors_;
     bool edgeIsFace_ = false;
-    std::vector<double> linewidths_;
+    std::vector<double> linewidths_, unscaledLinewidths_;
     std::vector<std::pair<double, std::optional<std::vector<double>>>> linestyles_{{0.0, std::nullopt}};
+    std::vector<std::pair<double, std::optional<std::vector<double>>>> unscaledLinestyles_{{0.0, std::nullopt}};
+    void broadcastLinestyles();
     std::vector<bool> antialiaseds_;
 };
 

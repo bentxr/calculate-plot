@@ -203,6 +203,21 @@ double LogTransform::inverse1d(double v) const {
     return std::exp(v * std::log(base_));
 }
 
+namespace {
+// Transform.contains_branch: other is t itself, or the right-hand side of one of t's compositions
+bool containsBranch(const TransformPtr& t, const TransformPtr& other) {
+    if (t == other) return true;
+    if (const auto* c = dynamic_cast<const CompositeTransform*>(t.get())) return containsBranch(c->b(), other);
+    return false;
+}
+}  // namespace
+
+std::array<bool, 2> containsBranchSeparately(const TransformPtr& t, const TransformPtr& other) {
+    if (const auto* b = dynamic_cast<const BlendedAffine2D*>(t.get())) return {containsBranch(b->x(), other), containsBranch(b->y(), other)};
+    const bool c = containsBranch(t, other);
+    return {c, c};
+}
+
 TransformPtr compose(const TransformPtr& a, const TransformPtr& b) {
     if (a->isIdentity()) return b;
     if (b->isIdentity()) return a;

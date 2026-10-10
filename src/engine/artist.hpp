@@ -41,6 +41,7 @@ public:
     double zorder = 0;
     std::string label;
     transforms::TransformPtr transform = std::make_shared<transforms::IdentityTransform>();
+    bool transformSet = false;  // is_transform_set()
 
 protected:
     void setGcClip(GC& gc) const;  // Artist._set_gc_clip
@@ -71,6 +72,10 @@ public:
     }
     double linewidth() const { return linewidth_; }
     void setFill(bool b);
+    void setColor(const std::string& c) {  // Patch.set_color: edge and face
+        setEdgecolor(c);
+        setFacecolor(c);
+    }
 
 protected:
     void applyEdgecolor();

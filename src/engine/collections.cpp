@@ -9,6 +9,7 @@
 
 #include <cmath>
 #include <limits>
+#include <tuple>
 
 namespace calculate_plot::engine {
 
@@ -75,9 +76,37 @@ std::vector<colors::Rgba> Collection::edgecolors() const { return edgeIsFace_ ? 
 
 void Collection::setLinewidths(std::vector<double> lw) {
     if (lw.empty()) lw = {rc_.number(defaults_.linewidthKey)};  // _get_default_linewidth
-    linewidths_ = lw;
-    // _bcast_lwls: the dash patterns (all solid so far) scaled by the line widths
-    linestyles_.assign(linewidths_.size(), {0.0, std::nullopt});
+    unscaledLinewidths_ = lw;
+    broadcastLinestyles();
+}
+
+bool Collection::setLinestyles(const std::vector<std::string>& styles) {
+    unscaledLinestyles_.clear();
+    for (const std::string& st : styles) {
+        const std::string named = st == "-" ? "solid" : st == "--" ? "dashed" : st == "-." ? "dashdot" : st == ":" ? "dotted" : st;
+        if (named != "solid" && named != "dashed" && named != "dashdot" && named != "dotted") return false;
+        unscaledLinestyles_.push_back(dashPattern(named, rc_));  // mlines._get_dash_patterns
+    }
+    broadcastLinestyles();
+    return true;
+}
+
+void Collection::broadcastLinestyles() {
+    // _bcast_lwls: both lists repeated to a common length, the dashes scaled by the widths
+    std::vector<double> widths = unscaledLinewidths_;
+    auto dashes = unscaledLinestyles_;
+    if (dashes.size() != widths.size()) {
+        std::size_t a = dashes.size(), b = widths.size(), g = a;
+        for (std::size_t r = b; r;) std::tie(g, r) = std::make_pair(r, g % r);  // gcd
+        std::vector<double> w2;
+        for (std::size_t k = 0; k < a / g; ++k) w2.insert(w2.end(), widths.begin(), widths.end());
+        decltype(dashes) d2;
+        for (std::size_t k = 0; k < b / g; ++k) d2.insert(d2.end(), dashes.begin(), dashes.end());
+        widths = w2, dashes = d2;
+    }
+    linewidths_ = widths;
+    linestyles_.clear();
+    for (std::size_t k = 0; k < dashes.size(); ++k) linestyles_.push_back(scaleDashes(dashes[k], widths[k], rc_));
 }
 
 void Collection::setAlpha(std::optional<double> a) {
@@ -129,8 +158,10 @@ void Collection::draw(Renderer& renderer) {
     const std::vector<colors::Rgba> faces = facecolors_, edges = edgecolors();
     bool single = false;
     transforms::Matrix combined = master;
+    bool solid = true;
+    for (const auto& ls : linestyles_) solid = solid && !ls.second;
     if (drawPaths.size() == 1 && transforms.size() <= 1 && faces.size() == 1 && edges.size() == 1 &&
-        linewidths_.size() == 1 && antialiaseds_.size() == 1) {
+        linewidths_.size() == 1 && solid && antialiaseds_.size() == 1) {
         // Affine2D(trans[0]) + transform
         if (!transforms.empty()) combined = transform->isIdentity() ? transforms[0] : transforms::dot(master, transforms[0]);
         // extents of the path through the combined transform, against the figure's box: the control
@@ -194,7 +225,9 @@ void Collection::updateFrom(const Collection& o) {
     originalFacecolor_ = o.originalFacecolor_;
     facecolors_ = o.facecolors_;
     linewidths_ = o.linewidths_;
+    unscaledLinewidths_ = o.unscaledLinewidths_;
     linestyles_ = o.linestyles_;
+    unscaledLinestyles_ = o.unscaledLinestyles_;
     array = o.array;
     norm = o.norm;
     cmap = o.cmap;

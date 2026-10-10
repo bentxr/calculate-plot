@@ -49,6 +49,9 @@ private:
 struct TickSwitches {
     bool tick1On = true, tick2On = true, label1On = true, label2On = false;
     bool gridOn = false;
+    // grid_color, grid_linestyle, grid_linewidth, grid_alpha (Axis.grid's keywords)
+    std::optional<std::string> gridColor, gridLinestyle;
+    std::optional<double> gridLinewidth, gridAlpha;
 };
 
 // Tick: its two tick marks (markers), grid line and two labels at one location.
@@ -89,6 +92,8 @@ public:
     std::string ticksPosition() const;  // get_ticks_position: top, bottom, left, right, default, unknown
     int tickSpace() const;              // get_tick_space: how many tick labels fit along the axis
     void setMinorTickSwitches(const TickSwitches& switches);  // tick_params(which='minor')
+    // Axis.grid(visible, which, **line properties): None toggles; properties turn the grid on
+    void grid(std::optional<bool> on, const std::string& which, const TickSwitches& style, bool styled);
 
     // The scale: "linear" or "log" (base 10). _set_scale sets the locators and formatters.
     void setScale(const std::string& name);
@@ -153,7 +158,10 @@ public:
     TextTransform yaxisTextTransform(int which, double padPoints);
 
     // Axes.add_line: the line in data coordinates, clipped to the Axes, counted in the data limits.
-    Line2D& addLine(std::unique_ptr<Line2D> line);
+    // Axes.add_line; the line keeps its transform when it was set (axhline, axvline)
+    Line2D& addLine(std::unique_ptr<Line2D> line, bool keepTransform = false);
+    Patch& addPatch(std::unique_ptr<Rectangle> patch);  // Axes.add_patch
+    const std::string& unsupportedFeature() const { return unsupported_; }
     // The next colour of the property cycle when a line has none (_PropCycle.getdefaults).
     colors::Spec nextColor();
     // The patches' own cycle (_get_patches_for_fill.get_next_color), used by scatter and fills.
@@ -187,7 +195,9 @@ private:
     bool minorTicksUnsupported_ = false;
     bool staleX_ = false, staleY_ = false;
     std::size_t cycleIndex_ = 0, patchCycleIndex_ = 0;
-    void updateDatalim(const std::vector<std::array<double, 2>>& xys);
+    void updateDatalim(const std::vector<std::array<double, 2>>& xys, bool updatex = true, bool updatey = true);
+    void updateFromPath(const std::vector<double>& xy, bool updatex, bool updatey);
+    std::string unsupported_;
 };
 
 }  // namespace calculate_plot::engine

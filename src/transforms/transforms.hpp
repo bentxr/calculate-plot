@@ -152,6 +152,8 @@ public:
     bool isAffine() const override { return x_->isAffine() && y_->isAffine(); }
     bool isAffine2DBase() const override { return !generic_; }
     std::array<double, 2> transformNonAffine(double x, double y) const override;
+    const TransformPtr& x() const { return x_; }
+    const TransformPtr& y() const { return y_; }
 
 private:
     TransformPtr x_, y_;
@@ -171,6 +173,8 @@ public:
     bool isAffine2DBase() const override { return !generic_; }
     std::array<double, 2> transformNonAffine(double x, double y) const override;
     TransformPtr inverted() const override;
+    const TransformPtr& a() const { return a_; }
+    const TransformPtr& b() const { return b_; }
 
 private:
     TransformPtr a_, b_;
@@ -204,6 +208,10 @@ public:
 private:
     TransformPtr child_;
 };
+
+// Transform.contains_branch_separately(other) for the transforms artists carry: a blended transform
+// answers per direction; another answers the same for both (whether it is `other` or composes it last).
+std::array<bool, 2> containsBranchSeparately(const TransformPtr& t, const TransformPtr& other);
 
 // a + b in matplotlib (composite_transform_factory): a, then b; identities drop out.
 TransformPtr compose(const TransformPtr& a, const TransformPtr& b);
