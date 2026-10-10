@@ -46,7 +46,14 @@ it comes from in its first lines. The changes, as a whole:
   size names, the scoring functions and _find_fonts_by_props/_findfont_cached, translated to C++, over a fixed list of
   the bundled fonts (dumped from matplotlib's FontManager, sorted by file name) instead of a scan of the system's
   fonts with a cache file; font files are named by file name.
-- **Figures** (src/engine): path.py's Path (vertices, codes and the simplification settings),
+- **Mathtext** (src/text/mathtext, data/tex2uni.json): _mathtext.py's box model (Node, Box, Hbox, Char, Kern,
+  List, Hlist with kerning and hpack, Vlist with vpack, ship), the DejaVu Sans fontset (TruetypeFonts' glyph metrics
+  and kerning, UnicodeFonts' and DejaVuFonts' glyph lookup, DejaVuSansFontConstants), the parser handlers for symbols
+  (with the spacing of binary operators, relations and punctuation), groups and font groups, font switches and sub-
+  and superscripts, and mathtext.py's vector output, translated to C++. The pyparsing grammar is replaced by a
+  hand-written recursive-descent parser for that subset that skips whitespace where pyparsing does; anything else
+  (fractions, roots, accents, delimiters, the STIX fallback, other fontsets) is refused with an error. Letters are
+  told from other characters for the code points the subset reaches instead of with Python's unicodedata. path.py's Path (vertices, codes and the simplification settings),
   backend_bases.py's GraphicsContextBase and the RendererBase interface, artist.py's Artist (clip settings),
   patches.py's Patch and Rectangle, lines.py's dash patterns and figure.py's Figure (its boxes, transforms and
   patch) with backend_agg.py's and backend_svg.py's canvas drawing, translated to C++. Artists draw through a

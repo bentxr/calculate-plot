@@ -38,7 +38,8 @@
     "tools/oracle/make_rcdefaults.py",
     "tools/oracle/make_colors.py",
     "tools/oracle/make_fonts.py",
-    "tools/oracle/make_marker_paths.py"
+    "tools/oracle/make_marker_paths.py",
+    "tools/oracle/make_tex2uni.py"
   ],
   "notice": "NOTICE",
   "components": [
@@ -488,7 +489,10 @@
         "src/text/font_manager.hpp",
         "src/text/font_manager.cpp",
         "data/fonts.json",
-        "data/marker_paths.json"
+        "data/marker_paths.json",
+        "data/tex2uni.json",
+        "src/text/mathtext.hpp",
+        "src/text/mathtext.cpp"
       ],
       "header": [
         "Copyright (c) 2012- Matplotlib Development Team; All Rights Reserved",

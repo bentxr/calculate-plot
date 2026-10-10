@@ -125,8 +125,8 @@ double scoreSize(double size1, const std::string& size2) {
 }
 
 // FontManager._findfont_cached for a prop with one family; nullopt where matplotlib fails.
-std::optional<std::string> findFont(const FontProperties& prop, const std::vector<FontEntry>& fonts,
-                                    bool fallbackToDefault, const rc::Params& rc) {
+std::optional<std::string> findFontCached(const FontProperties& prop, const std::vector<FontEntry>& fonts,
+                                    bool fallbackToDefault, const rc::Params& rc) {  // _findfont_cached
     double bestScore = 1e64;
     const FontEntry* best = nullptr;
     for (const FontEntry& font : fonts) {
@@ -144,7 +144,7 @@ std::optional<std::string> findFont(const FontProperties& prop, const std::vecto
         if (!fallbackToDefault) return std::nullopt;
         FontProperties defaultProp = prop;
         defaultProp.family = {kDefaultFamily};
-        return findFont(defaultProp, fonts, false, rc);
+        return findFontCached(defaultProp, fonts, false, rc);
     }
     return best->file;
 }
@@ -190,6 +190,11 @@ std::optional<double> fontSize(const std::string& name, const rc::Params& rc) {
     return it->second * rc.number("font.size");
 }
 
+std::string findFont(const FontProperties& prop, const rc::Params& rc, const std::vector<FontEntry>* fonts) {
+    const auto found = findFontCached(prop, fonts ? *fonts : bundledFonts(), true, rc);
+    return found ? *found : std::string();
+}
+
 std::vector<std::string> findFontsByProps(const FontProperties& prop, const rc::Params& rc,
                                           const std::vector<FontEntry>* fonts) {
     const std::vector<FontEntry>& list = fonts ? *fonts : bundledFonts();
@@ -197,13 +202,13 @@ std::vector<std::string> findFontsByProps(const FontProperties& prop, const rc::
     for (const std::string& family : prop.family) {
         FontProperties one = prop;
         one.family = {family};
-        if (auto found = findFont(one, list, false, rc)) paths.push_back(*found);
+        if (auto found = findFontCached(one, list, false, rc)) paths.push_back(*found);
     }
     // only add default family if no other font was found
     if (paths.empty()) {
         FontProperties fallback = prop;
         fallback.family = {kDefaultFamily};
-        if (auto found = findFont(fallback, list, true, rc)) paths.push_back(*found);
+        if (auto found = findFontCached(fallback, list, true, rc)) paths.push_back(*found);
     }
     return paths;
 }

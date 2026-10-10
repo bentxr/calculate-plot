@@ -47,6 +47,10 @@ std::optional<double> fontSize(const std::string& name, const rc::Params& rc);
 // FontManager._find_fonts_by_props: for each family in turn, the best-scoring font (families with
 // no font scoring under 10 are skipped); if none was found, the default family's. `fonts` replaces
 // the bundled list (tests).
+// FontManager.findfont: the best-scoring font over all of the properties' families, falling back to
+// the default family.
+std::string findFont(const FontProperties& prop, const rc::Params& rc, const std::vector<FontEntry>* fonts = nullptr);
+
 std::vector<std::string> findFontsByProps(const FontProperties& prop, const rc::Params& rc,
                                           const std::vector<FontEntry>* fonts = nullptr);
 
