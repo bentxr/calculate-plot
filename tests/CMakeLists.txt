@@ -16,6 +16,7 @@ add_executable(calculate-plot-tests
     test_replay.cpp
     licensing/compliance.cpp
     test_sha256.cpp
+    test_text.cpp
     test_text_libraries.cpp
     test_version.cpp
 )

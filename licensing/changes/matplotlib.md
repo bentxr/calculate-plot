@@ -16,6 +16,16 @@ it comes from in its first lines. The changes, as a whole:
   restored the clipping state before rethrowing, is now a plain block (its normal path already restores it).
 - **Clip path identity** (`PathIterator::get_id`) is an explicit identity carried by the path (recorded from
   Matplotlib) instead of the address of a Python array.
+- **Text** (src/text): src/ft2font.cpp and .h without pybind11; fonts are opened from a file path with
+  FT_New_Face instead of a Python file stream; the module-level FreeType library is created on first use;
+  missing-glyph warnings are collected instead of issued through Python; the FT2Image whole-string bitmap
+  path (draw_glyphs_to_bitmap, draw_glyph_to_bitmap) is not included. From src/ft2font_wrapper.cpp:
+  FT2Font._layout (layout items) and FT2Font._render_glyph (with the bitmap conversion). From Python,
+  translated to C++: backend_agg.py's get_hinting_flag, draw_text (plain text), _prepare_font and
+  _draw_text_glyphs_and_boxes, and font_manager.py's _get_font (fallback chain and Last Resort font).
+  Python's and NumPy's round() are std::nearbyint (halves to even). Fonts are named by file name in a
+  font directory. When a text has no language, the port passes the reference locale's language to
+  libraqm explicitly instead of letting HarfBuzz read the process locale.
 - File names drop the leading underscore (e.g. src/_backend_agg.h is src/agg/backend_agg.h); includes follow.
 - The drawing algorithms themselves (src/_backend_agg.h, src/_backend_agg.cpp, src/path_converters.h,
   src/agg_workaround.h, src/array.h, src/mplutils.h) are otherwise unchanged.

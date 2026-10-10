@@ -9,6 +9,7 @@
 #include "agg/backend_agg.h"
 #include "support/base64.hpp"
 #include "support/json.hpp"
+#include "text/text_render.h"
 
 #include <algorithm>
 #include <cmath>
@@ -301,7 +302,83 @@ DashesVector dashesVector(Reader& in, const Json& j) {
     return out;
 }
 
-std::string draw(RendererAgg& r, const Json& e, Identities& ids) {
+// What the replay must still skip: the recorded output of text it drew itself.
+struct Skip {
+    std::size_t textImages = 0;
+    std::size_t paths = 0;
+    bool glyphsEvent = false;  // the "glyphs" annotation after a "text" event drawn from its string
+};
+
+std::vector<std::string> strings(Reader& in, const Json& j) {
+    std::vector<std::string> out;
+    if (!j.isArray()) {
+        in.fail("expected a list of strings");
+        return out;
+    }
+    for (const Json& item : j.items()) out.push_back(in.text(item));
+    return out;
+}
+
+// A "glyphs" event: draw its glyphs and boxes with FreeType and the renderer, as matplotlib did.
+std::string drawGlyphs(RendererAgg& r, const Json& e, Identities& ids, text::FontCache& fonts, Skip& skip) {
+    Reader in;
+    GCAgg gc;
+    graphicsContext(in, gc, in.field(e, "gc"), ids);
+    const double x = in.number(in.field(e, "x")), y = in.number(in.field(e, "y"));
+    const double angle = in.number(in.field(e, "angle"));
+    const auto flags = text::hintingFlags(in.text(in.field(e, "hinting")));
+    if (!flags) in.fail("unknown text.hinting");
+    std::vector<text::Glyph> glyphs;
+    const Json& list = in.field(e, "glyphs");
+    if (!list.isArray()) in.fail("expected a list of glyphs");
+    for (const Json& g : list.items()) {
+        FT2Font* font = fonts.byPath(in.text(in.field(g, "font")));
+        if (!font) in.fail(fonts.error);
+        glyphs.push_back(text::Glyph{font, in.number(in.field(g, "size")), FT_UInt(in.integer(in.field(g, "index"))),
+                                     in.number(in.field(g, "slant")), in.number(in.field(g, "extend")),
+                                     in.number(in.field(g, "dx")), in.number(in.field(g, "dy"))});
+    }
+    std::vector<text::Box> boxes;
+    const Json& boxList = in.field(e, "boxes");
+    if (!boxList.isArray()) in.fail("expected a list of boxes");
+    for (const Json& b : boxList.items()) {
+        const auto v = in.numbers(b, 4);
+        boxes.push_back(text::Box{v[0], v[1], v[2], v[3]});
+    }
+    if (!in.error.empty()) return "glyphs: " + in.error;
+    skip.textImages += glyphs.size();
+    skip.paths += boxes.size();
+    return text::drawGlyphsAndBoxes(r, gc, x, y, angle, glyphs, boxes, *flags);
+}
+
+// A plain "text" event: lay the string out and draw it, as RendererAgg.draw_text does.
+std::string drawText(RendererAgg& r, const Json& e, Identities& ids, text::FontCache& fonts, Skip& skip,
+                     const std::string& locale) {
+    Reader in;
+    GCAgg gc;
+    graphicsContext(in, gc, in.field(e, "gc"), ids);
+    const std::string s = in.text(in.field(e, "s"));
+    const double x = in.number(in.field(e, "x")), y = in.number(in.field(e, "y"));
+    const double angle = in.number(in.field(e, "angle"));
+    const auto names = strings(in, in.field(e, "fonts"));
+    const double size = in.number(in.field(e, "size"));
+    const auto flags = text::hintingFlags(in.text(in.field(e, "hinting")));
+    if (!flags) in.fail("unknown text.hinting");
+    std::optional<std::vector<std::string>> features;
+    if (!in.field(e, "features").isNull()) features = strings(in, in.field(e, "features"));
+    std::optional<std::string> language;
+    if (!in.field(e, "language").isNull()) language = in.text(in.field(e, "language"));
+    if (!in.error.empty()) return "text: " + in.error;
+    std::string error;
+    const auto glyphs = text::layoutText(fonts, names, s, size, r.dpi, *flags, features, language, error, locale);
+    if (!error.empty()) return "text: " + error;
+    skip.glyphsEvent = true;
+    skip.textImages += glyphs.size();
+    return text::drawGlyphsAndBoxes(r, gc, x, y, angle, glyphs, {}, *flags);
+}
+
+std::string draw(RendererAgg& r, const Json& e, Identities& ids, const ReplayOptions& options,
+                 text::FontCache& fonts, Skip& skip, const std::string& locale) {
     Reader in;
     const std::string op = in.text(in.field(e, "op"));
     if (!in.error.empty()) return in.error;
@@ -309,7 +386,28 @@ std::string draw(RendererAgg& r, const Json& e, Identities& ids) {
         r.clear();
         return {};
     }
-    if (op == "text" || op == "glyphs") return {};  // annotations: their pixels arrive as draw_text_image
+    if (op == "text") {
+        const Json& ismath = in.field(e, "ismath");
+        if (options.text == TextMode::Text && ismath.isBool() && !ismath.asBool())
+            return drawText(r, e, ids, fonts, skip, locale);
+        return {};
+    }
+    if (op == "glyphs") {
+        if (skip.glyphsEvent) {
+            skip.glyphsEvent = false;
+            return {};
+        }
+        if (options.text != TextMode::Bitmaps) return drawGlyphs(r, e, ids, fonts, skip);
+        return {};  // annotations: their pixels arrive as draw_text_image
+    }
+    if (op == "draw_text_image" && skip.textImages) {
+        --skip.textImages;
+        return {};
+    }
+    if (op == "draw_path" && skip.paths) {
+        --skip.paths;
+        return {};
+    }
     static const char* const known[] = {"draw_path", "draw_markers", "draw_text_image", "draw_image",
                                         "draw_path_collection", "draw_quad_mesh", "draw_gouraud_triangles"};
     if (std::find(std::begin(known), std::end(known), op) == std::end(known))
@@ -391,7 +489,7 @@ std::string draw(RendererAgg& r, const Json& e, Identities& ids) {
 
 }  // namespace
 
-ReplayResult replayTrace(std::string_view traceJson) {
+ReplayResult replayTrace(std::string_view traceJson, const ReplayOptions& options) {
     ReplayResult result;
     support::JsonError jsonError;
     const auto trace = support::parseJson(traceJson, &jsonError);
@@ -418,10 +516,16 @@ ReplayResult replayTrace(std::string_view traceJson) {
         result.error = renderer.error;
         return result;
     }
+    // The locale matplotlib ran in decides how text is shaped when it sets no language.
+    const Json* recordedLocale = trace->find("locale");
+    const std::string locale =
+        recordedLocale && recordedLocale->isString() ? recordedLocale->asString() : text::kReferenceLocale;
     Identities ids;
+    text::FontCache fonts(options.fontDirectory);
+    Skip skip;
     for (const Json& event : events.items()) {
         agg_hooks::cellBlockLimitExceeded() = false;
-        const std::string error = draw(renderer, event, ids);
+        const std::string error = draw(renderer, event, ids, options, fonts, skip, locale);
         if (agg_hooks::cellBlockLimitExceeded()) renderer.error = "Exceeded cell block limit";
         if (!error.empty() || !renderer.error.empty()) {
             result.error = error.empty() ? renderer.error : error;

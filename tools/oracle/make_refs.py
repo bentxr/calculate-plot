@@ -2,7 +2,7 @@
 """Regenerate the renderer corpus: tests/corpus/<case>/{trace.json, ref.png}.
 
 Run with the reference environment (requirements.lock), e.g.
-  MPL_IGNORE_SYSTEM_FONTS=1 tools/oracle/.venv/bin/python -I tools/oracle/make_refs.py [case ...]
+  LC_ALL=C.UTF-8 MPL_IGNORE_SYSTEM_FONTS=1 tools/oracle/.venv/bin/python -I tools/oracle/make_refs.py [case ...]
 The PNG holds the exact RGBA buffer matplotlib's Agg renderer produced.
 """
 import hashlib
@@ -13,6 +13,10 @@ import sys
 
 if os.environ.get("MPL_IGNORE_SYSTEM_FONTS") != "1":
     sys.exit("set MPL_IGNORE_SYSTEM_FONTS=1 so that only matplotlib's bundled fonts are used")
+# Text shaping depends on the locale (HarfBuzz's default language): the references use C.UTF-8,
+# which shapes like en_US.UTF-8, the locale matplotlib's own image tests use.
+if os.environ.get("LC_ALL") != "C.UTF-8":
+    sys.exit("set LC_ALL=C.UTF-8: text shaping depends on the locale")
 
 HERE = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))

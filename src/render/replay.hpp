@@ -12,9 +12,21 @@ struct ReplayResult {
     std::string error;  // empty when the trace was drawn completely
 };
 
+// How the replay draws text.
+enum class TextMode {
+    Bitmaps,  // the glyph bitmaps recorded from matplotlib (tests the renderer alone)
+    Glyphs,   // calculate-plot renders the recorded glyph lists with FreeType (tests rasterizing)
+    Text,     // calculate-plot also lays out each plain string (tests layout); mathtext as Glyphs
+};
+
+struct ReplayOptions {
+    TextMode text = TextMode::Bitmaps;
+    std::string fontDirectory;  // where the fonts named in the trace are (needed unless Bitmaps)
+};
+
 // Draws a trace recorded from matplotlib's Agg renderer (tools/oracle/record.py, version 1)
 // with calculate-plot's port of that renderer.
-ReplayResult replayTrace(std::string_view traceJson);
+ReplayResult replayTrace(std::string_view traceJson, const ReplayOptions& options = {});
 
 }  // namespace calculate_plot::render
 

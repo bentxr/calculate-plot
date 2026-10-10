@@ -39,6 +39,8 @@ add_library(calculate-plot STATIC
     src/png/png.cpp
     src/render/replay.cpp
     src/support/base64.cpp
+    src/text/ft2font.cpp
+    src/text/text_render.cpp
     src/support/glob.cpp
     src/support/json.cpp
     src/support/sha256.cpp)
@@ -48,8 +50,9 @@ target_include_directories(calculate-plot
 # Matplotlib's renderer, ported: its headers keep upstream's style, so they are system headers here,
 # and the files that instantiate its templates get the warnings matplotlib's own build accepts.
 target_include_directories(calculate-plot SYSTEM PRIVATE ${PROJECT_SOURCE_DIR}/src/agg)
-set_source_files_properties(src/agg/backend_agg.cpp src/render/replay.cpp PROPERTIES COMPILE_OPTIONS
-    "-Wno-unused-parameter;-Wno-shadow;-Wno-sign-compare")
+set_source_files_properties(src/agg/backend_agg.cpp src/render/replay.cpp src/text/ft2font.cpp src/text/text_render.cpp
+    PROPERTIES COMPILE_OPTIONS
+    "-Wno-unused-parameter;-Wno-shadow;-Wno-sign-compare;-Wno-missing-field-initializers")
 target_compile_definitions(calculate-plot PRIVATE CALCULATE_PLOT_VERSION="${PROJECT_VERSION}")
 target_compile_options(calculate-plot PRIVATE -fno-exceptions)
 target_link_libraries(calculate-plot PUBLIC calculate-plot-raqm calculate-plot-zlib calculate-plot-agg PRIVATE calculate-plot-warnings)

@@ -46,21 +46,39 @@ std::string difference(const calculate_plot::png::Image& got, const calculate_pl
 
 class Replay : public testing::TestWithParam<std::string> {};
 
-}  // namespace
-
-TEST_P(Replay, GivesMatplotlibsPixels) {
-    const fs::path dir = corpus() / GetParam();
-    const auto result = calculate_plot::render::replayTrace(readFile(dir / "trace.json"));
+void expectMatplotlibsPixels(const std::string& name, calculate_plot::render::TextMode mode, const char* tag) {
+    const fs::path dir = corpus() / name;
+    calculate_plot::render::ReplayOptions options;
+    options.text = mode;
+    options.fontDirectory = std::string(CALCULATE_PLOT_SOURCE_DIR) + "/fonts/ttf";
+    const auto result = calculate_plot::render::replayTrace(readFile(dir / "trace.json"), options);
     ASSERT_TRUE(result.error.empty()) << result.error;
     std::string error;
     const auto want = calculate_plot::png::decodePng(readFile(dir / "ref.png"), &error);
     ASSERT_TRUE(want.has_value()) << error;
     const std::string diff = difference(result.image, *want);
     if (!diff.empty()) {
-        const fs::path out = fs::temp_directory_path() / ("cplot-replay-" + GetParam() + ".png");
+        const fs::path out = fs::temp_directory_path() / ("cplot-" + std::string(tag) + "-" + name + ".png");
         std::ofstream(out, std::ios::binary) << calculate_plot::png::encodePng(result.image, {});
-        ADD_FAILURE() << GetParam() << ": " << diff << " (our image: " << out.string() << ")";
+        ADD_FAILURE() << name << ": " << diff << " (our image: " << out.string() << ")";
     }
+}
+
+}  // namespace
+
+// Matplotlib's glyph bitmaps, our renderer.
+TEST_P(Replay, GivesMatplotlibsPixels) {
+    expectMatplotlibsPixels(GetParam(), calculate_plot::render::TextMode::Bitmaps, "bitmaps");
+}
+
+// Matplotlib's glyph lists, our FreeType rendering and compositing.
+TEST_P(Replay, GivesMatplotlibsPixelsWithOurGlyphs) {
+    expectMatplotlibsPixels(GetParam(), calculate_plot::render::TextMode::Glyphs, "glyphs");
+}
+
+// Matplotlib's strings, our layout, FreeType rendering and compositing.
+TEST_P(Replay, GivesMatplotlibsPixelsWithOurText) {
+    expectMatplotlibsPixels(GetParam(), calculate_plot::render::TextMode::Text, "text");
 }
 
 std::vector<std::string> corpusCases() {

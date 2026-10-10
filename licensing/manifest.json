@@ -437,7 +437,11 @@
         "src/agg/path.h",
         "src/agg/backend_agg.h",
         "src/agg/backend_agg.cpp",
-        "src/render/replay.cpp"
+        "src/render/replay.cpp",
+        "src/text/ft2font.h",
+        "src/text/ft2font.cpp",
+        "src/text/text_render.h",
+        "src/text/text_render.cpp"
       ],
       "header": [
         "Copyright (c) 2012- Matplotlib Development Team; All Rights Reserved",

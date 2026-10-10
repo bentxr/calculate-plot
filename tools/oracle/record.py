@@ -241,7 +241,8 @@ def record(fig):
                        "features": None if mtext is None or mtext.get_fontfeatures() is None
                        else list(mtext.get_fontfeatures()),
                        "language": None if mtext is None else mtext.get_language(),
-                       "antialiased": bool(g.get_antialiased())})
+                       "antialiased": bool(g.get_antialiased()),
+                       "hinting": matplotlib.rcParams["text.hinting"], "gc": gc(g)})
         return original_text(self, g, x, y, s, prop, angle, ismath, mtext)
 
     def draw_text_glyphs_and_boxes(self, g, x, y, angle, glyphs, boxes):
@@ -252,7 +253,8 @@ def record(fig):
                                    "slant": number(slant), "extend": number(extend),
                                    "dx": number(dx), "dy": number(dy)}
                                   for font, size, index, slant, extend, dx, dy in glyphs],
-                       "boxes": [numbers(b) for b in boxes]})
+                       "boxes": [numbers(b) for b in boxes],
+                       "hinting": matplotlib.rcParams["text.hinting"], "gc": gc(g)})
         return original_glyphs(self, g, x, y, angle, glyphs, boxes)
 
     RendererAgg.draw_text = draw_text
@@ -264,7 +266,10 @@ def record(fig):
         RendererAgg._draw_text_glyphs_and_boxes = original_glyphs
     renderer = canvas.get_renderer()
     rgba = np.asarray(canvas.buffer_rgba()).copy()
+    # HarfBuzz takes its default text language from the process locale (LC_CTYPE), and that changes
+    # shaping (e.g. ligatures): the trace says which locale matplotlib ran in.
     trace = {"version": TRACE_VERSION, "matplotlib": matplotlib.__version__,
+             "locale": __import__("locale").setlocale(__import__("locale").LC_CTYPE),
              "width": int(renderer.width), "height": int(renderer.height), "dpi": number(renderer.dpi),
              "events": events}
     return trace, rgba
