@@ -54,6 +54,7 @@ add_library(calculate-plot STATIC
     ${PROJECT_BINARY_DIR}/generated/notices.cpp
     src/version.cpp
     src/agg/agg_hooks.cpp
+    src/axes/log_ticker.cpp
     src/axes/ticker.cpp
     src/colors/colors.cpp
     src/engine/artist.cpp

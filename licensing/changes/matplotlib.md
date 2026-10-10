@@ -37,11 +37,16 @@ it comes from in its first lines. The changes, as a whole:
   ScalarFormatter (offset, order of magnitude, format, labels and offset text, with the default rcParams) and
   transforms.py's _nonsingular, translated to C++ with Python's and NumPy's numeric semantics (floor division,
   divmod, rounding, %-formatting) reproduced exactly; the axis' view interval is passed in.
+- **Log ticks** (src/axes/log_ticker): ticker.py's LogLocator (tick_values, nonsingular, view_limits, the decade
+  helpers), LogFormatter.set_locs and LogFormatterMathtext/LogFormatterSciNotation.__call__, and the overlap removal
+  of Axis.get_minorticklocs, translated to C++ (the locator's axis is given as its tick space and minpos).
 - **Transforms** (src/transforms): transforms.py's Bbox, TransformedBbox, Affine2D, IdentityTransform,
   BboxTransformTo/From, BboxTransform, BlendedAffine2D, ScaledTranslation and the composite transforms, translated
   to C++ (matrices computed on demand rather than cached and invalidated; the same values). np.dot is reproduced
   (accumulating from +0.0) and numpy.linalg.inv by an LU solve that multiplies by pivot reciprocals as NumPy's
   OpenBLAS does; composites keep matplotlib's distinction between CompositeAffine2D and CompositeGenericTransform.
+  Non-affine transforms are supported for log scales: LogTransform/InvertedLogTransform (one-dimensional, used
+  inside blended transforms), BlendedGenericTransform, CompositeGenericTransform's non-affine part and get_affine.
 - **Font manager** (src/text/font_manager, data/fonts.json): font_manager.py's FontProperties defaults, font
   size names, the scoring functions and _find_fonts_by_props/_findfont_cached, translated to C++, over a fixed list of
   the bundled fonts (dumped from matplotlib's FontManager, sorted by file name) instead of a scan of the system's

@@ -96,9 +96,9 @@ std::shared_ptr<Bbox> Bbox::fromExtents(double x0, double y0, double x1, double 
 std::array<double, 4> TransformedBbox::points() const {
     // Transform all four corners, then make a box of the result with the same orientation.
     const auto p = bbox_->points();
-    const Matrix m = transform_->matrix();
-    const std::array<std::array<double, 2>, 4> corners{
-        apply(m, p[0], p[1]), apply(m, p[2], p[1]), apply(m, p[0], p[3]), apply(m, p[2], p[3])};
+    const Transform& t = *transform_;
+    const std::array<std::array<double, 2>, 4> corners{t.transform(p[0], p[1]), t.transform(p[2], p[1]),
+                                                       t.transform(p[0], p[3]), t.transform(p[2], p[3])};
     double xmin = corners[0][0], xmax = corners[0][0], ymin = corners[0][1], ymax = corners[0][1];
     for (const auto& c : corners) {  // Python's min()/max(): the first of equal values
         if (c[0] < xmin) xmin = c[0];
@@ -169,6 +169,40 @@ Matrix ScaledTranslation::matrix() const {
     return Matrix{1.0, 0.0, t[0], 0.0, 1.0, t[1]};
 }
 
+std::array<double, 2> CompositeTransform::transformNonAffine(double x, double y) const {
+    if (a_->isAffine() && b_->isAffine()) return {x, y};
+    if (!a_->isAffine() && b_->isAffine()) return a_->transformNonAffine(x, y);
+    const auto p = a_->transform(x, y);
+    return b_->transformNonAffine(p[0], p[1]);
+}
+
+std::array<double, 2> BlendedAffine2D::transformNonAffine(double x, double y) const {
+    if (x_->isAffine() && y_->isAffine()) return {x, y};
+    // a one-dimensional part transforms its own coordinate; a two-dimensional one gives its column
+    const auto* lx = dynamic_cast<const LogTransform*>(x_.get());
+    const auto* ly = dynamic_cast<const LogTransform*>(y_.get());
+    const double rx = lx ? lx->transform1d(x) : x_->transformNonAffine(x, y)[0];
+    const double ry = ly ? ly->transform1d(y) : y_->transformNonAffine(x, y)[1];
+    return {rx, ry};
+}
+
+double LogTransform::transform1d(double v) const {
+    // np.log10 / np.log2 / np.log(v) / np.log(base); clip: values <= 0 give -1000
+    double out;
+    if (base_ == 10) out = std::log10(v);
+    else if (base_ == 2) out = std::log2(v);
+    else out = std::log(v) / std::log(base_);
+    if (v <= 0) out = -1000;
+    return out;
+}
+
+double LogTransform::inverse1d(double v) const {
+    // InvertedLogTransform: np.exp2 for base 2, else np.exp(values * np.log(base))
+    if (base_ == 2) return std::exp2(v);
+    if (base_ == 2.718281828459045) return std::exp(v);
+    return std::exp(v * std::log(base_));
+}
+
 TransformPtr compose(const TransformPtr& a, const TransformPtr& b) {
     if (a->isIdentity()) return b;
     if (b->isIdentity()) return a;
@@ -181,6 +215,8 @@ TransformPtr CompositeTransform::inverted() const {
     return Transform::inverted();
 }
 
-TransformPtr blend(const TransformPtr& x, const TransformPtr& y) { return std::make_shared<BlendedAffine2D>(x, y); }
+TransformPtr blend(const TransformPtr& x, const TransformPtr& y) {
+    return std::make_shared<BlendedAffine2D>(x, y, !(x->isAffine2DBase() && y->isAffine2DBase()));
+}
 
 }  // namespace calculate_plot::transforms

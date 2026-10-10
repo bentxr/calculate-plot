@@ -58,13 +58,40 @@ private:
     TransformPtr transform_;
 };
 
+// A transform: a non-affine part (identity for affine transforms), then an affine part, whose
+// matrix() is matplotlib's get_affine().get_matrix().
 class Transform : public std::enable_shared_from_this<Transform> {
 public:
     virtual ~Transform() = default;
     virtual Matrix matrix() const = 0;
     virtual bool isIdentity() const { return false; }
-    std::array<double, 2> transform(double x, double y) const { return apply(matrix(), x, y); }
-    virtual TransformPtr inverted() const;
+    virtual bool isAffine() const { return true; }
+    // isinstance(t, Affine2DBase): decides between BlendedAffine2D and BlendedGenericTransform
+    virtual bool isAffine2DBase() const { return true; }
+    // transform_non_affine of one point (the identity for affine transforms)
+    virtual std::array<double, 2> transformNonAffine(double x, double y) const { return {x, y}; }
+    std::array<double, 2> transform(double x, double y) const {
+        const auto p = transformNonAffine(x, y);
+        return apply(matrix(), p[0], p[1]);
+    }
+    virtual TransformPtr inverted() const;  // of affine transforms
+};
+
+// LogTransform: a one-dimensional transform (log of its coordinate; non-positive values clip to
+// -1000) used for one direction of a blended transform. As a 2-D transform it is only meaningful
+// inside BlendedGenericTransform.
+class LogTransform : public Transform {
+public:
+    explicit LogTransform(double base) : base_(base) {}
+    Matrix matrix() const override { return {}; }  // get_affine(): IdentityTransform
+    bool isAffine() const override { return false; }
+    bool isAffine2DBase() const override { return false; }
+    double transform1d(double v) const;
+    double inverse1d(double v) const;  // InvertedLogTransform
+    double base() const { return base_; }
+
+private:
+    double base_;
 };
 
 class Affine2D : public Transform {
@@ -115,13 +142,20 @@ private:
     BboxPtr boxin_, boxout_;
 };
 
+// BlendedAffine2D, or BlendedGenericTransform when either part is not an Affine2DBase (the same
+// matrix; a non-affine part, such as a log scale, transforms its own coordinate first).
 class BlendedAffine2D : public Transform {
 public:
-    BlendedAffine2D(TransformPtr x, TransformPtr y) : x_(std::move(x)), y_(std::move(y)) {}
+    BlendedAffine2D(TransformPtr x, TransformPtr y, bool generic = false)
+        : x_(std::move(x)), y_(std::move(y)), generic_(generic) {}
     Matrix matrix() const override;
+    bool isAffine() const override { return x_->isAffine() && y_->isAffine(); }
+    bool isAffine2DBase() const override { return !generic_; }
+    std::array<double, 2> transformNonAffine(double x, double y) const override;
 
 private:
     TransformPtr x_, y_;
+    bool generic_;
 };
 
 // a, then b. matplotlib makes a CompositeAffine2D when both are Affine2D objects (inverted: the
@@ -131,7 +165,11 @@ class CompositeTransform : public Transform {
 public:
     CompositeTransform(TransformPtr a, TransformPtr b, bool generic)
         : a_(std::move(a)), b_(std::move(b)), generic_(generic) {}
-    Matrix matrix() const override { return dot(b_->matrix(), a_->matrix()); }
+    // get_affine(): b's alone when b is not affine
+    Matrix matrix() const override { return b_->isAffine() ? dot(b_->matrix(), a_->matrix()) : b_->matrix(); }
+    bool isAffine() const override { return a_->isAffine() && b_->isAffine(); }
+    bool isAffine2DBase() const override { return !generic_; }
+    std::array<double, 2> transformNonAffine(double x, double y) const override;
     TransformPtr inverted() const override;
 
 private:
@@ -156,7 +194,11 @@ class TransformWrapper : public Transform {
 public:
     explicit TransformWrapper(TransformPtr child) : child_(std::move(child)) {}
     void set(TransformPtr child) { child_ = std::move(child); }
+    const TransformPtr& child() const { return child_; }
     Matrix matrix() const override { return child_->matrix(); }
+    bool isAffine() const override { return child_->isAffine(); }
+    bool isAffine2DBase() const override { return false; }
+    std::array<double, 2> transformNonAffine(double x, double y) const override { return child_->transformNonAffine(x, y); }
     TransformPtr inverted() const override { return child_->inverted(); }
 
 private:

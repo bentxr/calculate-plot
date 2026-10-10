@@ -462,6 +462,8 @@
         "src/svg/xml_writer.cpp",
         "src/svg/svg_renderer.h",
         "src/svg/svg_renderer.cpp",
+        "src/axes/log_ticker.hpp",
+        "src/axes/log_ticker.cpp",
         "src/axes/ticker.hpp",
         "src/axes/ticker.cpp",
         "data/rcdefaults.json",
