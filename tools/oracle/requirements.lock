@@ -1,0 +1,14 @@
+# The reference environment: matplotlib exactly as published, used only at development time to
+# produce the committed reference files in tests/corpus (never needed to build or test).
+# python3 -m venv tools/oracle/.venv && tools/oracle/.venv/bin/pip install -r tools/oracle/requirements.lock
+matplotlib==3.11.2
+numpy==2.5.3
+pillow==12.3.0
+contourpy==1.4.0
+fonttools==4.66.1
+kiwisolver==1.5.1
+cycler==0.12.1
+pyparsing==3.3.3
+python-dateutil==2.9.0.post0
+packaging==26.3
+six==1.17.0
