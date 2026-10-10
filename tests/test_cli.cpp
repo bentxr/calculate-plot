@@ -1,9 +1,13 @@
 #include "cli.hpp"
 
 #include "calculate-plot/calculate-plot.hpp"
+#include "png/png.hpp"
 
 #include <gtest/gtest.h>
 
+#include <filesystem>
+#include <fstream>
+#include <random>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -58,4 +62,56 @@ TEST(Cli, AnUnknownOptionFails) {
     EXPECT_EQ(r.status, 2);
     EXPECT_NE(r.err.find("--frobnicate"), std::string::npos);
     EXPECT_EQ(r.out, "");
+}
+
+namespace {
+
+std::string corpusFile(const std::string& name) {
+    return std::string(CALCULATE_PLOT_SOURCE_DIR) + "/tests/corpus/" + name;
+}
+
+std::string fileText(const std::string& path) {
+    std::ifstream in(path, std::ios::binary);
+    std::ostringstream text;
+    text << in.rdbuf();
+    return text.str();
+}
+
+std::string tempFile(const std::string& name) {
+    return (std::filesystem::temp_directory_path() / ("cplot-cli-" + std::to_string(std::random_device{}()) + name)).string();
+}
+
+const std::string kFontDir = std::string(CALCULATE_PLOT_SOURCE_DIR) + "/fonts/ttf";
+
+}  // namespace
+
+TEST(Cli, ReplayWritesMatplotlibsPixels) {
+    const std::string out = tempFile(".png");
+    const Outcome r = cplot({"replay", corpusFile("line_basic/trace.json"), out, "--fonts", kFontDir});
+    ASSERT_EQ(r.status, 0) << r.err;
+    std::string error;
+    const auto got = calculate_plot::png::decodePng(fileText(out), &error);
+    const auto want = calculate_plot::png::decodePng(fileText(corpusFile("line_basic/ref.png")), &error);
+    ASSERT_TRUE(got && want) << error;
+    EXPECT_TRUE(got->rgba == want->rgba);
+    std::filesystem::remove(out);
+}
+
+TEST(Cli, ReplaySvgWritesMatplotlibsBytes) {
+    const std::string out = tempFile(".svg");
+    const Outcome r = cplot({"replay-svg", corpusFile("text_rotations/svg-trace.json"), out, "--fonts", kFontDir});
+    ASSERT_EQ(r.status, 0) << r.err;
+    EXPECT_EQ(fileText(out), fileText(corpusFile("text_rotations/ref.svg")));
+    std::filesystem::remove(out);
+}
+
+TEST(Cli, ReplayReportsAMissingFile) {
+    const Outcome r = cplot({"replay", "/no/such/trace.json", tempFile(".png"), "--fonts", kFontDir});
+    EXPECT_EQ(r.status, 1);
+    EXPECT_NE(r.err.find("/no/such/trace.json"), std::string::npos);
+}
+
+TEST(Cli, ReplayNeedsItsArguments) {
+    EXPECT_EQ(cplot({"replay"}).status, 2);
+    EXPECT_EQ(cplot({"replay-svg", "a.json"}).status, 2);
 }

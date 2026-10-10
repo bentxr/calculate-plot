@@ -63,7 +63,7 @@ target_compile_options(calculate-plot PRIVATE -fno-exceptions)
 target_link_libraries(calculate-plot PUBLIC calculate-plot-raqm calculate-plot-zlib calculate-plot-agg PRIVATE calculate-plot-warnings)
 
 add_library(cplot-cli STATIC cli/cli.cpp)
-target_include_directories(cplot-cli PUBLIC ${PROJECT_SOURCE_DIR}/cli)
+target_include_directories(cplot-cli PUBLIC ${PROJECT_SOURCE_DIR}/cli PRIVATE ${PROJECT_SOURCE_DIR}/src)
 target_compile_options(cplot-cli PRIVATE -fno-exceptions)
 target_link_libraries(cplot-cli PUBLIC calculate-plot PRIVATE calculate-plot-warnings)
 
