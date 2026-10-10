@@ -35,7 +35,8 @@
     "licensing/**",
     "tests/licensing/**",
     "tests/test_licensing.cpp",
-    "tools/oracle/make_rcdefaults.py"
+    "tools/oracle/make_rcdefaults.py",
+    "tools/oracle/make_colors.py"
   ],
   "notice": "NOTICE",
   "components": [
@@ -460,7 +461,9 @@
         "src/svg/svg_renderer.cpp",
         "src/axes/ticker.hpp",
         "src/axes/ticker.cpp",
-        "data/rcdefaults.json"
+        "data/rcdefaults.json",
+        "data/colors.json",
+        "src/colors/colors.cpp"
       ],
       "header": [
         "Copyright (c) 2012- Matplotlib Development Team; All Rights Reserved",

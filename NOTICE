@@ -76,6 +76,8 @@ Copyright (c) 2002-2011 John D. Hunter; All Rights Reserved
 Used under the Matplotlib License (LICENSES/Matplotlib.txt). The derived files name their origin, and
 licensing/changes/matplotlib.md summarises the changes made. calculate-plot is not affiliated with
 or endorsed by the Matplotlib project or NumFOCUS.
+Its colour names come from Matplotlib's data: the xkcd colour survey names (https://xkcd.com/color/rgb/)
+are in the public domain (CC0 1.0); the CSS4 names are those of the W3C's CSS colour specification.
 Its SVG writer comes from Matplotlib's copy of SimpleXMLWriter:
 Copyright (c) 2001-2004 by Fredrik Lundh (permission notice in LICENSES/SimpleXMLWriter.txt).
 

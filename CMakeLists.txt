@@ -39,7 +39,7 @@ add_custom_command(
     VERBATIM)
 
 # Data files compiled into the library.
-set(embedded_files data/rcdefaults.json)
+set(embedded_files data/rcdefaults.json data/colors.json)
 list(TRANSFORM embedded_files PREPEND "${PROJECT_SOURCE_DIR}/" OUTPUT_VARIABLE embedded_paths)
 add_custom_command(
     OUTPUT  ${PROJECT_BINARY_DIR}/generated/embedded.cpp
@@ -55,6 +55,7 @@ add_library(calculate-plot STATIC
     src/version.cpp
     src/agg/agg_hooks.cpp
     src/axes/ticker.cpp
+    src/colors/colors.cpp
     src/agg/backend_agg.cpp
     src/model/figure_model.cpp
     src/png/png.cpp
