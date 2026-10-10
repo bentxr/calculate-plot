@@ -361,7 +361,7 @@ void Axis::setViewInterval(double vmin, double vmax) {
     axes_.viewLim->setPoints(p);
 }
 
-void Axis::setLim(double v0, double v1, bool autoscale) {
+void Axis::setLim(double v0, double v1, std::optional<bool> autoscale, bool emit) {
     if (scale_ == "log" && (v0 <= 0 || v1 <= 0)) {  // non-positive limits are ignored (with a warning)
         const auto old = viewInterval();
         if (v0 <= 0) v0 = old[0];
@@ -369,7 +369,7 @@ void Axis::setLim(double v0, double v1, bool autoscale) {
     }
     const bool reverse = v0 > v1;
     std::tie(v0, v1) = locatorNonsingular(v0, v1);
-    if (scale_ == "log") {  // LogScale.limit_range_for_scale
+    if (scale_ == "log") {  // LogScale.limit_range_for_scale with this axis' own minpos
         double mp = minpos();
         if (!std::isfinite(mp)) mp = 1e-300;
         v0 = v0 <= 0 ? mp : v0;
@@ -378,8 +378,21 @@ void Axis::setLim(double v0, double v1, bool autoscale) {
     // sorted([v0, v1], reverse=reverse)
     if ((v0 > v1) != reverse && v0 != v1) std::swap(v0, v1);
     setViewInterval(v0, v1);
-    axes_.clearStale(isX_);  // _stale_viewlims[name] = False
-    autoscaleOn = autoscale;
+    const std::vector<Axes*>& siblings = axes_.shared(isX_).members;
+    for (Axes* ax : siblings) ax->clearStale(isX_);  // _stale_viewlims[name] = False
+    if (autoscale) autoscaleOn = *autoscale;
+    if (emit)
+        for (Axes* other : siblings)
+            if (other != &axes_) (isX_ ? *other->xaxis : *other->yaxis).setLim(v0, v1, autoscale, false);
+}
+
+Axis& Axis::tickerAxis() const { return *axes_.shared(isX_).tickerAxis; }
+
+void Axis::setLabelsOn(bool first, bool on) {
+    for (TickSwitches* kw : {&majorTickKw_, &minorTickKw_}) (first ? kw->label1On : kw->label2On) = on;
+    for (auto& t : majorTicks_) t->applySwitches(majorTickKw_);
+    for (auto& t : minorTicks_) t->applySwitches(minorTickKw_);
+    offsetText.visible = majorTickKw_.label1On || majorTickKw_.label2On;
 }
 
 void Axis::setScale(const std::string& name) {
@@ -407,9 +420,15 @@ double Axis::scaleForward(double v) const { return scale_ == "log" ? transforms:
 double Axis::scaleInverse(double v) const { return scale_ == "log" ? transforms::LogTransform(10.0).inverse1d(v) : v; }
 double Axis::minpos() const { return axes_.minpos[isX_ ? 0 : 1]; }
 
+double Axis::sharedMinpos() const {
+    double mp = std::numeric_limits<double>::infinity();
+    for (const Axes* ax : axes_.shared(isX_).members) mp = std::min(mp, ax->minpos[isX_ ? 0 : 1]);
+    return mp;
+}
+
 std::pair<double, double> Axis::locatorNonsingular(double v0, double v1) {
     if (scale_ == "log") {
-        logLocator.minpos = minpos();
+        logLocator.minpos = sharedMinpos();  // LogLocator.nonsingular: the least over the shared axes
         return logLocator.nonsingular(v0, v1);
     }
     return axes::nonsingular(v0, v1, 0.05);  // Locator.nonsingular
@@ -417,10 +436,10 @@ std::pair<double, double> Axis::locatorNonsingular(double v0, double v1) {
 
 std::pair<double, double> Axis::locatorViewLimits(double v0, double v1) {
     if (scale_ == "log") {
-        logLocator.minpos = minpos();
+        logLocator.minpos = sharedMinpos();
         return logLocator.viewLimits(v0, v1, rc_.text("axes.autolimit_mode") == "round_numbers");
     }
-    locator.tickSpace = tickSpace();  // the locator's axis
+    locator.tickSpace = tickerAxis().tickSpace();  // the locator's axis
     return locator.viewLimits(v0, v1);
 }
 
@@ -539,6 +558,8 @@ std::array<double, 2> Axis::viewInterval() const {
 void Axis::setTickSwitches(const TickSwitches& sw) {
     majorTickKw_ = sw;
     for (auto& t : majorTicks_) t->applySwitches(sw);
+    // set_tick_params: the offset text shows when the major ticks have labels on either side
+    offsetText.visible = sw.label1On || sw.label2On;
 }
 
 std::vector<Tick*> Axis::majorTicks(std::size_t count) {
@@ -561,6 +582,10 @@ int Axis::tickSpace() const {
 }
 
 std::vector<Tick*> Axis::updateTicks() {
+    // The locators and formatters read the limits, the tick space and the minpos of their own axis
+    // (the one this axis shares its tickers with); the ticks are then kept by this axis' limits.
+    Axis& owner = tickerAxis();
+    const auto ownerView = owner.viewInterval();
     const auto view = viewInterval();
     const auto groupVisible = [](const TickSwitches& kw) {
         return kw.tick1On || kw.tick2On || kw.label1On || kw.label2On || kw.gridOn;
@@ -570,15 +595,15 @@ std::vector<Tick*> Axis::updateTicks() {
         std::vector<double> locs;
         std::vector<std::string> labels;
         if (scale_ == "log") {
-            logLocator.tickSpace = tickSpace();
-            logLocator.minpos = minpos();
-            locs = logLocator.tickValues(view[0], view[1]);
-            logFormatter.setLocs(view[0], view[1]);
+            logLocator.tickSpace = owner.tickSpace();
+            logLocator.minpos = owner.minpos();
+            locs = logLocator.tickValues(ownerView[0], ownerView[1]);
+            logFormatter.setLocs(ownerView[0], ownerView[1]);
             for (double v : locs) labels.push_back(logFormatter(v));
         } else {
-            locator.tickSpace = tickSpace();
-            locs = locator.tickValues(view[0], view[1]);
-            formatter.setViewInterval(view[0], view[1]);
+            locator.tickSpace = owner.tickSpace();
+            locs = locator.tickValues(ownerView[0], ownerView[1]);
+            formatter.setViewInterval(ownerView[0], ownerView[1]);
             formatter.setLocs(locs);
             for (double v : locs) labels.push_back(formatter(v));
         }
@@ -591,13 +616,14 @@ std::vector<Tick*> Axis::updateTicks() {
     }
     // The minor locator: LogLocator(subs='auto') on log scales, NullLocator otherwise
     if (groupVisible(minorTickKw_) && scale_ == "log") {
-        logMinorLocator.tickSpace = tickSpace();
-        logMinorLocator.minpos = minpos();
-        logLocator.tickSpace = tickSpace();
-        logLocator.minpos = minpos();
-        const auto locs = axes::withoutMajorTicks(logMinorLocator.tickValues(view[0], view[1]),
-                                                  logLocator.tickValues(view[0], view[1]), view[0], view[1], 10.0);
-        logMinorFormatter.setLocs(view[0], view[1]);
+        logMinorLocator.tickSpace = owner.tickSpace();
+        logMinorLocator.minpos = owner.minpos();
+        logLocator.tickSpace = owner.tickSpace();
+        logLocator.minpos = owner.minpos();
+        // get_minorticklocs: the minor locations a major one covers go (within this axis' limits)
+        const auto locs = axes::withoutMajorTicks(logMinorLocator.tickValues(ownerView[0], ownerView[1]),
+                                                  logLocator.tickValues(ownerView[0], ownerView[1]), view[0], view[1], 10.0);
+        logMinorFormatter.setLocs(ownerView[0], ownerView[1]);
         const std::vector<Tick*> minor = minorTicks(locs.size());
         for (std::size_t i = 0; i < locs.size(); ++i) {
             minor[i]->updatePosition(locs[i]);
@@ -681,6 +707,8 @@ Axes::Axes(const rc::Params& rc, Figure& fig, const SubplotSpec& spec)
     spine("bottom").axis = spine("top").axis = xaxis.get();
     yaxis = std::make_unique<Axis>(rc, *this, false);
     spine("left").axis = spine("right").axis = yaxis.get();
+    shared_[0] = std::make_shared<SharedAxes>(SharedAxes{{this}, xaxis.get()});
+    shared_[1] = std::make_shared<SharedAxes>(SharedAxes{{this}, yaxis.get()});
 
     // clear(): the titles and the patch; the view limits (0, 1) stay.
     const double titleSize = fontSizeOf(rc, "axes.titlesize");
@@ -962,24 +990,34 @@ void Axes::requestAutoscaleView(bool x, bool y) {
 }
 
 void Axes::unstaleViewLim() {
-    if (!staleX_ && !staleY_) return;
-    const bool x = staleX_, y = staleY_;
-    staleX_ = staleY_ = false;
-    autoscaleView(x, y);
+    // a pending autoscale of any of the Axes sharing a direction counts, and is spent for all of them
+    bool need[2] = {false, false};
+    for (int d = 0; d < 2; ++d)
+        for (const Axes* ax : shared_[d]->members) need[d] = need[d] || (d == 0 ? ax->staleX_ : ax->staleY_);
+    if (!need[0] && !need[1]) return;
+    for (int d = 0; d < 2; ++d)
+        for (Axes* ax : shared_[d]->members) (d == 0 ? ax->staleX_ : ax->staleY_) = false;
+    autoscaleView(need[0], need[1]);
 }
 
 void Axes::autoscaleView(bool scalex, bool scaley) {
     // No artist has sticky edges yet (lines have none).
     const auto handle = [&](bool scale, Axis& axis, bool isX, double margin) {
         if (!(scale && axis.autoscaleOn)) return;
-        const auto d = dataLim->points();
-        const double a = isX ? d[0] : d[1], b = isX ? d[2] : d[3];
-        double x0, x1;
-        if (std::isfinite(a) || std::isfinite(b)) {
-            // min/max of the finite ones
-            if (std::isfinite(a) && std::isfinite(b)) x0 = b < a ? b : a, x1 = b > a ? b : a;
-            else x0 = x1 = std::isfinite(a) ? a : b;
-        } else {
+        const std::vector<Axes*>& siblings = shared_[isX ? 0 : 1]->members;
+        // the finite ends of the data limits of all the Axes sharing the axis
+        bool any = false;
+        double x0 = 0, x1 = 0;
+        for (const Axes* ax : siblings) {
+            const auto d = ax->dataLim->points();
+            for (double val : {isX ? d[0] : d[1], isX ? d[2] : d[3]}) {
+                if (!std::isfinite(val)) continue;
+                if (!any || val < x0) x0 = val;
+                if (!any || val > x1) x1 = val;
+                any = true;
+            }
+        }
+        if (!any) {
             const auto v = viewLim->points();
             const bool mutated = isX ? (v[0] != 0 || v[2] != 1) : (v[1] != 0 || v[3] != 1);
             if (mutated) return;
@@ -988,7 +1026,7 @@ void Axes::autoscaleView(bool scalex, bool scaley) {
         }
         std::tie(x0, x1) = axis.locatorNonsingular(x0, x1);
         if (axis.scale() == "log") {  // limit_range_for_scale(x0, x1, minimum_minpos)
-            double mp = axis.minpos();
+            double mp = axis.sharedMinpos();
             if (!std::isfinite(mp)) mp = 1e-300;
             x0 = x0 <= 0 ? mp : x0;
             x1 = x1 <= 0 ? mp : x1;
@@ -1002,11 +1040,51 @@ void Axes::autoscaleView(bool scalex, bool scaley) {
         const auto view = axis.viewInterval();
         const bool inverted = view[0] > view[1];
         if ((x0 > x1) != inverted && x0 != x1) std::swap(x0, x1);
-        const bool keep = axis.autoscaleOn;
-        axis.setLim(x0, x1, keep);  // auto=None keeps the autoscale state
+        axis.setLim(x0, x1, std::nullopt);  // auto=None keeps the autoscale state
     };
     handle(scalex, *xaxis, true, xmargin);
     handle(scaley, *yaxis, false, ymargin);
+}
+
+void Axes::share(bool x, Axes& other) {
+    // Grouper.join(self, other): a group made now lists this Axes before `other`; later ones follow
+    std::shared_ptr<SharedAxes>& theirs = other.shared_[x ? 0 : 1];
+    if (theirs->members.size() == 1) theirs->members.insert(theirs->members.begin(), this);
+    else theirs->members.push_back(this);
+    shared_[x ? 0 : 1] = theirs;  // with other's tickers (self.xaxis.major = other.xaxis.major)
+    // matplotlib then takes other's limits, autoscaling and scale. Axes are shared as they are made
+    // (plt.subplots), when those are still the ones a new Axes has; sharing Axes that have been used
+    // needs set_xlim(*other.get_xlim(), emit=False, auto=other.get_autoscalex_on()) and the scale here.
+}
+
+void Axes::labelOuter(bool x) {
+    if (!subplotSpec) return;
+    const GridSpec& gs = *subplotSpec->gridspec;
+    Axis& axis = x ? *xaxis : *yaxis;
+    // SubplotSpec.is_first_row / is_last_row / is_first_col / is_last_col
+    const int c1 = std::min(subplotSpec->num1 % gs.ncols, subplotSpec->num2 % gs.ncols);
+    const int c2 = std::max(subplotSpec->num1 % gs.ncols, subplotSpec->num2 % gs.ncols);
+    const bool first = x ? subplotSpec->num1 / gs.ncols == 0 : c1 == 0;
+    const bool last = x ? subplotSpec->num2 / gs.ncols + 1 == gs.nrows : c2 + 1 == gs.ncols;
+    // The labels and offset texts of the sides that face another Axes go: for x the top one unless
+    // in the first row, the bottom one unless in the last row; for y the left one unless in the
+    // first column, the right one unless in the last column.
+    const bool keep1 = x ? last : first, keep2 = x ? first : last;  // label1: bottom, left
+    const auto remove = [&](bool label1) {
+        // (matplotlib also empties the axis label on that side; the Axes have none yet when made)
+        axis.setLabelsOn(label1, false);
+        // offsetText.get_position(): (1, 0) on x, (0, 0.5) on y until the first draw
+        const double at = x ? axis.offsetText.y : axis.offsetText.x;
+        if (at == (label1 ? 0 : 1)) axis.offsetText.visible = false;
+    };
+    // matplotlib's order: x top then bottom, y left then right
+    if (x) {
+        if (!keep2) remove(false);
+        if (!keep1) remove(true);
+    } else {
+        if (!keep1) remove(true);
+        if (!keep2) remove(false);
+    }
 }
 
 void Axes::updateTransScale() {
@@ -1014,11 +1092,18 @@ void Axes::updateTransScale() {
 }
 
 void Axes::setScale(bool x, const std::string& name) {
+    // Axis._set_axes_scale: every Axes sharing the axis takes the scale; each sets the shared tickers'
+    // locators and formatters anew, so they end up belonging to the last one's axis.
     Axis& axis = x ? *xaxis : *yaxis;
     const double inf = std::numeric_limits<double>::infinity();
     const auto oldDefault = axis.locatorNonsingular(-inf, inf);
-    axis.setScale(name);
-    updateTransScale();
+    SharedAxes& group = *shared_[x ? 0 : 1];
+    for (Axes* ax : group.members) {
+        Axis& theirs = x ? *ax->xaxis : *ax->yaxis;
+        theirs.setScale(name);
+        group.tickerAxis = &theirs;
+        ax->updateTransScale();
+    }
     const auto newDefault = axis.locatorNonsingular(-inf, inf);
     if (oldDefault != newDefault) autoscaleView(x, !x);
 }

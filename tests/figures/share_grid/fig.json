@@ -1,0 +1,9 @@
+{"version": 1, "calls": [
+  {"call": "subplots", "args": [2, 2], "kwargs": {"sharex": "col", "sharey": "row", "figsize": {"$tuple": [6.0, 4.5]}}, "as": ["fig", "axs"]},
+  {"on": "axs[0, 0]", "call": "plot", "args": [[0, 1], [0, 1]]},
+  {"on": "axs[0, 1]", "call": "plot", "args": [[10, 20], [5, 50]]},
+  {"on": "axs[1, 0]", "call": "scatter", "args": [[-3, 0.5], [100, 200]]},
+  {"on": "axs[1, 1]", "call": "plot", "args": [[12, 31], [150, 420]]},
+  {"on": "axs[1, 1]", "call": "set_ylabel", "args": ["inner label"]},
+  {"on": "axs[0, 1]", "call": "set_title", "args": ["column 1"]}
+]}

@@ -1,0 +1,7 @@
+{"version": 1, "calls": [
+  {"call": "subplots", "as": ["fig", "ax"]},
+  {"on": "ax", "call": "scatter", "args": [[0, 3, 40, -2], [5, 0, 2, 7]]},
+  {"on": "ax", "call": "scatter", "args": [[1, -1, 20, 0], [3, 4, -5, 0]], "kwargs": {"s": [10, 40, 90, 160]}},
+  {"on": "ax", "call": "set_xscale", "args": ["log"]},
+  {"on": "ax", "call": "set_yscale", "args": ["log"]}
+]}

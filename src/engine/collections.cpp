@@ -149,7 +149,11 @@ void Collection::draw(Renderer& renderer) {
     if (!offsetTransform->isAffine())
         for (auto& o : offs) {
             const auto p = offsetTransform->transformNonAffine(o[0], o[1]);
-            o = {p[0], p[1]};
+            // The offsets in data coordinates are scatter's, a masked array: NumPy masks the logarithm
+            // of a non-positive number, and the mask outlives the -1000 written over it;
+            // filled(np.nan) then makes it NaN. (Offsets that are plain arrays would keep -1000.)
+            for (std::size_t k = 0; k < 2; ++k)
+                o[k] = o[k] <= 0 && p[k] == -1000 ? std::numeric_limits<double>::quiet_NaN() : p[k];
         }
     GC gc = renderer.newGc();
     setGcClip(gc);

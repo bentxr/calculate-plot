@@ -114,6 +114,12 @@ it comes from in its first lines. The changes, as a whole:
   tick, as matplotlib does. The children clipped by the Axes' patch are not measured: their boxes, cut by the clip
   box, lie inside the patch's own box, which is counted. Warnings are not reproduced (the layout is left alone
   where matplotlib warns that it is not applied).
+  Shared axes: GridSpecBase.subplots' sharex and sharey, Axes.sharex/sharey as plt.subplots uses them (cbook.Grouper's
+  order of the siblings is kept in a vector; the shared Ticker objects become the Axis the locators belong to),
+  the siblings in Axis._set_lim, _unstale_viewLim, autoscale_view, Axis._set_axes_scale and LogLocator.nonsingular,
+  _label_outer_xaxis/_label_outer_yaxis and what Axis.set_tick_params does to the offset text, translated to C++.
+  Collection._prepare_points: scatter's offsets are a masked array, so the logarithm of a non-positive offset is
+  NaN, not the clipped -1000.
 - File names drop the leading underscore (e.g. src/_backend_agg.h is src/agg/backend_agg.h); includes follow.
 - The drawing algorithms themselves (src/_backend_agg.h, src/_backend_agg.cpp, src/path_converters.h,
   src/agg_workaround.h, src/array.h, src/mplutils.h) are otherwise unchanged.

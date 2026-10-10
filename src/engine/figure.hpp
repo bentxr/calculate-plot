@@ -44,8 +44,10 @@ public:
     std::vector<std::unique_ptr<Artist>> texts;         // figure texts (suptitle)
     Artist* suptitle = nullptr;
 
-    // Figure.subplots(nrows, ncols): the axes in row-major order.
-    std::vector<Axes*> subplots(int nrows, int ncols);
+    // Figure.subplots(nrows, ncols, sharex=, sharey=): the axes in row-major order. The sharing is
+    // "none", "all", "row" or "col".
+    std::vector<Axes*> subplots(int nrows, int ncols, const std::string& sharex = "none",
+                                const std::string& sharey = "none");
 };
 
 // FigureCanvasAgg.draw into a trace: the renderer is cleared, then the figure drawn. Returns the

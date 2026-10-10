@@ -12,6 +12,7 @@ add_executable(calculate-plot-tests
     test_colors.cpp
     test_figures.cpp
     test_engine_calls.cpp
+    test_shared_axes.cpp
     test_font_manager.cpp
     test_glob.cpp
     test_gridspec.cpp

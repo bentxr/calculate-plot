@@ -85,4 +85,28 @@ TEST(LayoutCalls, NoneKeywordsAreTheDefaults) {
     EXPECT_EQ(adjusted.trace, untouched.trace);
 }
 
+// plt.subplots(sharex=, sharey=): True, False or one of matplotlib's four words.
+TEST(SubplotsCalls, RefuseUnknownSharing) {
+    EXPECT_EQ(draw(R"({"call": "subplots", "args": [2, 2], "kwargs": {"sharex": "diagonal"}})").error,
+              "plt.subplots: sharex must be True, False, 'all', 'row', 'col' or 'none'");
+    EXPECT_EQ(draw(R"({"call": "subplots", "args": [2, 2], "kwargs": {"sharey": 1}})").error,
+              "plt.subplots: sharey must be True, False, 'all', 'row', 'col' or 'none'");
+    EXPECT_EQ(draw(R"({"call": "subplots", "args": [2, 2], "kwargs": {"sharey": null}})").error,
+              "plt.subplots: sharey must be True, False, 'all', 'row', 'col' or 'none'");
+}
+
+TEST(SubplotsCalls, FalseAndNoneShareNothing) {
+    const std::string plot = R"(, {"on": "axs[0]", "call": "plot", "args": [[0, 5], [1, 9]]})";
+    const auto plain = draw(R"({"call": "subplots", "args": [2, 1], "as": ["fig", "axs"]})" + plot);
+    const auto no = draw(R"({"call": "subplots", "args": [2, 1], "kwargs": {"sharex": false, "sharey": "none"}, "as": ["fig", "axs"]})" + plot);
+    const auto all = draw(R"({"call": "subplots", "args": [2, 1], "kwargs": {"sharex": true}, "as": ["fig", "axs"]})" + plot);
+    const auto word = draw(R"({"call": "subplots", "args": [2, 1], "kwargs": {"sharex": "all"}, "as": ["fig", "axs"]})" + plot);
+    EXPECT_EQ(plain.error, "");
+    EXPECT_EQ(no.error, "");
+    EXPECT_EQ(all.error, "");
+    EXPECT_EQ(no.trace, plain.trace);
+    EXPECT_NE(all.trace, plain.trace);
+    EXPECT_EQ(word.trace, all.trace);
+}
+
 }  // namespace

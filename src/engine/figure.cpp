@@ -43,15 +43,30 @@ Figure::Figure(const rc::Params& rc, const FigureOptions& o) : Artist(rc), subpl
 
 Figure::~Figure() = default;
 
-std::vector<Axes*> Figure::subplots(int nrows, int ncols) {
+std::vector<Axes*> Figure::subplots(int nrows, int ncols, const std::string& sharex, const std::string& sharey) {
     gridspecs.push_back(std::make_unique<GridSpec>(nrows, ncols));
     const GridSpec& gs = *gridspecs.back();
     std::vector<Axes*> out;
+    // GridSpecBase.subplots: each Axes shares with the first one of the grid, of its row or of its column
+    const auto sharedWith = [&](const std::string& share, int row, int col) -> Axes* {
+        if (share == "none" || out.empty()) return nullptr;
+        const int index = share == "all" ? 0 : share == "row" ? row * ncols : col;
+        return std::size_t(index) < out.size() ? out[std::size_t(index)] : nullptr;
+    };
     for (int row = 0; row < nrows; ++row)
         for (int col = 0; col < ncols; ++col) {
+            Axes* const withX = sharedWith(sharex, row, col);
+            Axes* const withY = sharedWith(sharey, row, col);
             axes.push_back(std::make_unique<Axes>(rc_, *this, gs.cell(row, col)));
+            if (withX) axes.back()->share(true, *withX);
+            if (withY) axes.back()->share(false, *withY);
             out.push_back(axes.back().get());
         }
+    // turn off redundant tick labeling
+    if (sharex == "col" || sharex == "all")
+        for (Axes* ax : out) ax->labelOuter(true);
+    if (sharey == "row" || sharey == "all")
+        for (Axes* ax : out) ax->labelOuter(false);
     return out;
 }
 

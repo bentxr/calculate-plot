@@ -83,8 +83,14 @@ public:
     // get_view_interval: through Axes.viewLim, which first runs a pending autoscale
     std::array<double, 2> viewInterval() const;
     void setViewInterval(double vmin, double vmax);  // set_view_interval(..., ignore=True)
-    void setLim(double v0, double v1, bool autoscale);  // Axis._set_lim
+    // Axis._set_lim(v0, v1, emit=, auto=): `autoscale` unset keeps the autoscaling as it is; with
+    // `emit` the Axes sharing this axis take the limits too.
+    void setLim(double v0, double v1, std::optional<bool> autoscale, bool emit = true);
     void setTickSwitches(const TickSwitches& switches);  // tick_params on this axis' major ticks
+    // set_tick_params(which='both', labelbottom=/labelleft= (first) or labeltop=/labelright=)
+    void setLabelsOn(bool first, bool on);
+    // The Axis the locators and formatters belong to: this one, or the one whose tickers it shares.
+    Axis& tickerAxis() const;
     void setLabelText(const std::string& text, const std::string& loc);  // set_xlabel / set_ylabel
     std::vector<Tick*> updateTicks();  // Axis._update_ticks: the ticks to draw, labelled
     // Axis._get_ticklabel_bboxes: the window extents of the visible first and second labels.
@@ -93,6 +99,7 @@ public:
     std::string ticksPosition() const;  // get_ticks_position: top, bottom, left, right, default, unknown
     int tickSpace() const;              // get_tick_space: how many tick labels fit along the axis
     void setMinorTickSwitches(const TickSwitches& switches);  // tick_params(which='minor')
+    const TickSwitches& tickSwitches(bool major) const { return major ? majorTickKw_ : minorTickKw_; }
     // Axis.grid(visible, which, **line properties): None toggles; properties turn the grid on
     void grid(std::optional<bool> on, const std::string& which, const TickSwitches& style, bool styled);
     // Axis.get_tightbbox(renderer, for_layout_only=): the box of the tick labels, the label and the
@@ -106,6 +113,7 @@ public:
     double scaleForward(double v) const;               // the scale's transform of one value
     double scaleInverse(double v) const;
     double minpos() const;                             // get_minpos(): the smallest positive data
+    double sharedMinpos() const;                       // the least get_minpos() of the Axes sharing the axis
     // The major locator's nonsingular and view_limits
     std::pair<double, double> locatorNonsingular(double v0, double v1);
     std::pair<double, double> locatorViewLimits(double v0, double v1);
@@ -131,6 +139,13 @@ private:
     std::string scale_ = "linear";
     TickSwitches majorTickKw_, minorTickKw_;
     std::vector<std::unique_ptr<Tick>> majorTicks_, minorTicks_;
+};
+
+// The Axes sharing one direction's view limits (Axes._shared_axes[name].get_siblings), in the order
+// matplotlib's Grouper gives them, and the Axis their shared locators and formatters belong to.
+struct SharedAxes {
+    std::vector<Axes*> members;
+    Axis* tickerAxis = nullptr;
 };
 
 class Axes : public Artist {
@@ -181,6 +196,11 @@ public:
     void setScale(bool x, const std::string& name);  // set_xscale / set_yscale
     void unstaleViewLim();                            // what reading Axes.viewLim does first
     void clearStale(bool x) { (x ? staleX_ : staleY_) = false; }
+    // Axes.sharex / sharey: this Axes joins `other`'s group, uses its tickers and takes its limits.
+    void share(bool x, Axes& other);
+    const SharedAxes& shared(bool x) const { return *shared_[x ? 0 : 1]; }
+    // _label_outer_xaxis / _label_outer_yaxis: the tick labels and offset texts of the inner sides go.
+    void labelOuter(bool x);
     std::array<double, 2> minpos{std::numeric_limits<double>::infinity(), std::numeric_limits<double>::infinity()};
     std::vector<std::unique_ptr<Artist>> children;  // _children: lines, ...
     std::unique_ptr<Artist> legend;                  // legend_
@@ -204,6 +224,7 @@ private:
     bool ignoreExistingDataLimits_ = true;
     bool minorTicksUnsupported_ = false;
     bool staleX_ = false, staleY_ = false;
+    std::shared_ptr<SharedAxes> shared_[2];  // x, y
     std::size_t cycleIndex_ = 0, patchCycleIndex_ = 0;
     void updateDatalim(const std::vector<std::array<double, 2>>& xys, bool updatex = true, bool updatey = true);
     void updateFromPath(const std::vector<double>& xy, bool updatex, bool updatey);

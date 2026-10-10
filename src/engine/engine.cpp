@@ -122,6 +122,7 @@ private:
             }
         FigureOptions options;
         bool squeeze = true;
+        std::string sharex = "none", sharey = "none";
         for (const auto& [name, value] : call.kwargs) {
             if (name == "nrows" || name == "ncols") {
                 if (!readNumber(value, &grid[name == "nrows" ? 0 : 1])) {
@@ -132,8 +133,13 @@ private:
                 if (!value.isBool()) return *error = "plt.subplots: squeeze must be True or False", false;
                 squeeze = value.asBool();
             } else if (name == "sharex" || name == "sharey") {
-                if (!(value.isBool() && !value.asBool()) && !(value.isString() && value.asString() == "none"))
-                    return *error = "plt.subplots: shared axes are not supported yet", false;
+                // True and False mean 'all' and 'none'
+                std::string share;
+                if (value.isBool()) share = value.asBool() ? "all" : "none";
+                else if (value.isString()) share = value.asString();
+                if (share != "all" && share != "row" && share != "col" && share != "none")
+                    return *error = "plt.subplots: " + name + " must be True, False, 'all', 'row', 'col' or 'none'", false;
+                (name == "sharex" ? sharex : sharey) = share;
             } else if (!figureKeyword(name, value, options, "plt.subplots", error)) {
                 return false;
             }
@@ -141,7 +147,7 @@ private:
         const int nrows = int(grid[0]), ncols = int(grid[1]);
         if (nrows < 1 || ncols < 1) return *error = "plt.subplots: nrows and ncols must be positive", false;
         figure_ = std::make_unique<Figure>(rc_, options);
-        const std::vector<Axes*> made = figure_->subplots(nrows, ncols);
+        const std::vector<Axes*> made = figure_->subplots(nrows, ncols, sharex, sharey);
         axes_.clear();
         figureName_.clear();
         if (call.as.empty()) return true;
