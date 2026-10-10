@@ -107,9 +107,7 @@ Tick::Tick(const rc::Params& rc, Axes& axes, bool isX, bool major, const TickSwi
       gridline(rc, {}, {}),
       label1(rc, kNan, kNan, ""),
       label2(rc, kNan, kNan, ""),
-      axes_(axes),
-      isX_(isX),
-      major_(major) {
+      isX_(isX) {
     const std::string name = isX ? "xtick" : "ytick";
     const std::string mm = major ? "major" : "minor";
     size_ = rc.number(name + "." + mm + ".size");

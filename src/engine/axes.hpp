@@ -59,8 +59,7 @@ public:
 
 private:
     double pad() const;  // the label pad: base pad plus the part of the tick outside the Axes
-    Axes& axes_;
-    bool isX_, major_;
+    bool isX_;
     double loc_ = 0, size_, width_, basePad_;
     std::string tickdir_;
 };
