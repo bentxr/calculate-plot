@@ -1,0 +1,10 @@
+{"version": 1,
+ "rc": {"xtick.labelbottom": false, "ytick.labelleft": false, "xtick.labeltop": true, "ytick.labelright": true,
+        "xtick.minor.size": 8},
+ "calls": [
+  {"call": "subplots", "args": [1, 2], "kwargs": {"figsize": {"$tuple": [5.0, 3.0]}}, "as": ["fig", "axs"]},
+  {"on": "axs[0]", "call": "plot", "args": [[1, 1000], [0, 1]]},
+  {"on": "axs[0]", "call": "set_xscale", "args": ["log"]},
+  {"on": "axs[1]", "call": "plot", "args": [[0, 1], [0, 1]]},
+  {"on": "fig", "call": "tight_layout"}
+]}

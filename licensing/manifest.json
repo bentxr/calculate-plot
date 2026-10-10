@@ -484,6 +484,8 @@
         "src/engine/artist.cpp",
         "src/engine/figure.hpp",
         "src/engine/figure.cpp",
+        "src/engine/tight_layout.hpp",
+        "src/engine/tight_layout.cpp",
         "src/engine/legend.hpp",
         "src/engine/legend.cpp",
         "src/agg/path_queries.h",

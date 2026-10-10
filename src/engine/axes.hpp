@@ -67,6 +67,7 @@ public:
 
     Line2D tick1line, tick2line, gridline;
     Text label1, label2;
+    bool isMajor;  // in Axis.majorTicks (or minorTicks)
 
 private:
     double pad() const;  // the label pad: base pad plus the part of the tick outside the Axes
@@ -94,6 +95,9 @@ public:
     void setMinorTickSwitches(const TickSwitches& switches);  // tick_params(which='minor')
     // Axis.grid(visible, which, **line properties): None toggles; properties turn the grid on
     void grid(std::optional<bool> on, const std::string& which, const TickSwitches& style, bool styled);
+    // Axis.get_tightbbox(renderer, for_layout_only=): the box of the tick labels, the label and the
+    // offset text; nullopt when there is none.
+    std::optional<transforms::Bbox> tightbbox(Renderer& renderer, bool forLayoutOnly);
 
     // The scale: "linear" or "log" (base 10). _set_scale sets the locators and formatters.
     void setScale(const std::string& name);
@@ -135,6 +139,7 @@ public:
     void draw(Renderer& renderer) override;
 
     Figure& figure;
+    std::optional<SubplotSpec> subplotSpec;  // get_subplotspec
     std::shared_ptr<transforms::Bbox> position;
     std::shared_ptr<transforms::TransformedBbox> bbox;
     std::shared_ptr<transforms::Bbox> viewLim, dataLim;
@@ -180,6 +185,11 @@ public:
     std::vector<std::unique_ptr<Artist>> children;  // _children: lines, ...
     std::unique_ptr<Artist> legend;                  // legend_
     bool labelledContainers = false;                 // errorbar labels (containers are not supported yet)
+
+    // get_tightbbox(renderer, for_layout_only=): the box of the Axes with its decorations; nullopt
+    // when the Axes is invisible.
+    std::optional<transforms::Bbox> tightbbox(Renderer& renderer, bool forLayoutOnly);
+    void setPosition(const transforms::BboxBase& pos);  // _set_position(pos, which='both')
 
     // Axes.set_title(label, loc=, pad=, y=)
     void setTitle(const std::string& label, const std::string& loc, std::optional<double> pad, std::optional<double> y);

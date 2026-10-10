@@ -6,6 +6,7 @@
 #include "engine/axes.hpp"
 
 #include "engine/figure.hpp"
+#include "engine/legend.hpp"
 #include "rc/rc_params.hpp"
 
 #include <algorithm>
@@ -66,6 +67,12 @@ transforms::Bbox unionOf(const std::vector<transforms::Bbox>& boxes) {
     return transforms::Bbox({x0, y0, x1, y1});
 }
 
+// BboxBase._is_finite
+bool isFiniteBox(const transforms::Bbox& b) {
+    const double w = b.width(), h = b.height();
+    return (w > 0 || h > 0) && w < std::numeric_limits<double>::infinity() && h < std::numeric_limits<double>::infinity();
+}
+
 }  // namespace
 
 // --- Spine ---------------------------------------------------------------------------------------
@@ -113,11 +120,11 @@ void Spine::adjustLocation() {
 transforms::Bbox Spine::windowExtent() {
     adjustLocation();
     // Patch.get_window_extent: the path's extents through the transform
-    const transforms::Matrix m = transforms::compose(patchTransform(), transform)->matrix();
+    const auto t = transforms::compose(patchTransform(), transform);
     const std::vector<double>& v = *path_.vertices;
     double x0 = 0, y0 = 0, x1 = 0, y1 = 0;
     for (std::size_t i = 0; i + 1 < v.size(); i += 2) {
-        const auto q = transforms::apply(m, v[i], v[i + 1]);
+        const auto q = t->transform(v[i], v[i + 1]);
         if (i == 0 || q[0] < x0) x0 = q[0];
         if (i == 0 || q[0] > x1) x1 = q[0];
         if (i == 0 || q[1] < y0) y0 = q[1];
@@ -127,20 +134,24 @@ transforms::Bbox Spine::windowExtent() {
     if (!axis || !axis->visible) return bb;
     std::vector<transforms::Bbox> boxes{bb};
     const std::vector<Tick*> drawn = axis->updateTicks();
-    if (!drawn.empty()) {
-        const Tick& tick = *drawn.front();
+    // a drawn major tick, then a drawn minor tick (each group's ticks share their properties)
+    const Tick* groups[2] = {nullptr, nullptr};
+    for (const Tick* tick : drawn)
+        if (!groups[tick->isMajor ? 0 : 1]) groups[tick->isMajor ? 0 : 1] = tick;
+    for (const Tick* tick : groups) {
+        if (!tick) continue;
         auto p = bb.points();
         double padout = 0.5, padin = 0.5;
-        if (tick.tickdir() == "out") padout = 1, padin = 0;
-        else if (tick.tickdir() == "in") padout = 0, padin = 1;
+        if (tick->tickdir() == "out") padout = 1, padin = 0;
+        else if (tick->tickdir() == "in") padout = 0, padin = 1;
         const double dpi = axes_.figure.dpi;
-        padout = padout * tick.size() / 72 * dpi;
-        padin = padin * tick.size() / 72 * dpi;
-        if (tick.tick1line.visible) {
+        padout = padout * tick->size() / 72 * dpi;
+        padin = padin * tick->size() / 72 * dpi;
+        if (tick->tick1line.visible) {
             if (type == "left") p[0] = p[0] - padout, p[2] = p[2] + padin;
             else if (type == "bottom") p[1] = p[1] - padout, p[3] = p[3] + padin;
         }
-        if (tick.tick2line.visible) {
+        if (tick->tick2line.visible) {
             if (type == "right") p[2] = p[2] + padout, p[0] = p[0] - padin;
             else if (type == "top") p[3] = p[3] + padout, p[1] = p[1] - padout;  // (sic: padout, as matplotlib)
         }
@@ -163,6 +174,7 @@ Tick::Tick(const rc::Params& rc, Axes& axes, bool isX, bool major, const TickSwi
       gridline(rc, {}, {}),
       label1(rc, kNan, kNan, ""),
       label2(rc, kNan, kNan, ""),
+      isMajor(major),
       isX_(isX) {
     const std::string name = isX ? "xtick" : "ytick";
     const std::string mm = major ? "major" : "minor";
@@ -617,10 +629,44 @@ void Axis::draw(Renderer& renderer) {
     renderer.closeGroup("matplotlib.axis");
 }
 
+std::optional<transforms::Bbox> Axis::tightbbox(Renderer& renderer, bool forLayoutOnly) {
+    if (!visible) return std::nullopt;
+    const std::vector<Tick*> ticks = updateTicks();
+    updateLabelPosition(renderer);
+    const auto [tlb1, tlb2] = ticklabelBboxes(ticks, renderer);
+    updateOffsetTextPosition(tlb1, tlb2);
+    offsetText.text = offsetString();
+    std::vector<transforms::Bbox> bboxes;
+    if (offsetText.visible) bboxes.push_back(offsetText.windowExtent(renderer));
+    bboxes.insert(bboxes.end(), tlb1.begin(), tlb1.end());
+    bboxes.insert(bboxes.end(), tlb2.begin(), tlb2.end());
+    if (label.visible) {
+        auto p = label.windowExtent(renderer).points();
+        if (forLayoutOnly) {
+            // only the label's centre counts along its axis
+            if (isX_ && p[2] - p[0] > 0) {
+                p[0] = (p[0] + p[2]) / 2 - 0.5;
+                p[2] = p[0] + 1.0;
+            }
+            if (!isX_ && p[3] - p[1] > 0) {
+                p[1] = (p[1] + p[3]) / 2 - 0.5;
+                p[3] = p[1] + 1.0;
+            }
+        }
+        bboxes.push_back(transforms::Bbox(p));
+    }
+    std::vector<transforms::Bbox> finite;
+    for (const auto& b : bboxes)
+        if (isFiniteBox(b)) finite.push_back(b);
+    if (finite.empty()) return std::nullopt;
+    return unionOf(finite);
+}
+
 // --- Axes ----------------------------------------------------------------------------------------
 
 Axes::Axes(const rc::Params& rc, Figure& fig, const SubplotSpec& spec)
     : Artist(rc), figure(fig), xmargin(rc.number("axes.xmargin")), ymargin(rc.number("axes.ymargin")) {
+    subplotSpec = spec;
     position = spec.position(fig.subplotpars);
     // set_figure
     bbox = std::make_shared<transforms::TransformedBbox>(position, fig.transSubfigure);
@@ -1007,6 +1053,65 @@ Axes::TextTransform Axes::yaxisTextTransform(int which, double padPoints) {
     auto offset = std::make_shared<transforms::ScaledTranslation>(dx, 0, figure.dpiScaleTrans);
     return {transforms::compose(spine(which == 1 ? "left" : "right").spineTransform(), offset), align,
             which == 1 ? "right" : "left"};
+}
+
+void Axes::setPosition(const transforms::BboxBase& pos) { position->setPoints(pos.points()); }
+
+std::optional<transforms::Bbox> Axes::tightbbox(Renderer& renderer, bool forLayoutOnly) {
+    if (!visible) return std::nullopt;
+    // apply_aspect: the 'auto' aspect keeps the original position
+    std::vector<transforms::Bbox> bb;
+    if (axisOn)
+        for (Axis* axis : {xaxis.get(), yaxis.get()})
+            if (axis->visible)
+                if (auto ba = axis->tightbbox(renderer, forLayoutOnly)) bb.push_back(*ba);
+    updateTitlePosition(renderer);
+    bb.push_back(transforms::Bbox(bbox->points()));
+    for (Text* t : {title.get(), leftTitle.get(), rightTitle.get()}) {
+        if (!t->visible) continue;
+        auto p = t->windowExtent(renderer).points();
+        if (forLayoutOnly && p[2] - p[0] > 0) {
+            p[0] = (p[0] + p[2]) / 2 - 0.5;
+            p[2] = p[0] + 1.0;
+        }
+        bb.push_back(transforms::Bbox(p));
+    }
+    // get_default_bbox_extra_artists: the visible children not fully clipped to the Axes, the spines,
+    // the legend and the patch
+    const auto extra = [&](const std::optional<transforms::Bbox>& b) {
+        if (b && isFiniteBox(*b)) bb.push_back(*b);
+    };
+    for (auto& c : children) {
+        if (!c->visible) continue;
+        // The children are clipped by the patch's box (set_clip_path(self.patch): a box, no path).
+        // matplotlib leaves out those whose clip box equals the Axes' box (_fully_clipped_to_axes);
+        // the two can differ in the last bits, and then it adds the child's window extent cut by the
+        // clip box. That lies inside the clip box, which is the patch's window extent, added below:
+        // the union is the same either way.
+        if (c->clipOn && c->clipBox && !c->clipPath && patch->visible) continue;
+        renderer.unsupported("tight boxes of artists not clipped to the Axes are not supported yet");
+    }
+    if (axisOn && frameOn)
+        for (auto& s : spines)
+            if (s->visible) extra(s->windowExtent());
+    if (legend && legend->visible) extra(static_cast<Legend&>(*legend).tightbbox(renderer));
+    if (patch->visible) {
+        // Patch.get_window_extent: the path's extents (its MOVETO and LINETO vertices) through its transform
+        const Path path = patch->path();
+        const auto m = patch->fullTransform()->matrix();
+        std::vector<transforms::Bbox> points;
+        for (std::size_t k = 0; k < path.codes->size(); ++k) {
+            const auto code = (*path.codes)[k];
+            if (code != MOVETO && code != LINETO) continue;
+            const auto q = transforms::apply(m, (*path.vertices)[2 * k], (*path.vertices)[2 * k + 1]);
+            points.push_back(transforms::Bbox({q[0], q[1], q[0], q[1]}));
+        }
+        extra(unionOf(points));
+    }
+    std::vector<transforms::Bbox> sized;
+    for (const auto& b : bb)
+        if (b.width() != 0 || b.height() != 0) sized.push_back(b);
+    return unionOf(sized);
 }
 
 void Axes::draw(Renderer& renderer) {

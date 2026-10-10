@@ -1,0 +1,8 @@
+{"version": 1,
+ "rc": {"font.size": 14},
+ "calls": [
+  {"call": "subplots", "args": [1, 2], "kwargs": {"figsize": {"$tuple": [5.0, 3.0]}}, "as": ["fig", "axs"]},
+  {"on": "axs[0]", "call": "set_ylabel", "args": ["y"]},
+  {"on": "axs[1]", "call": "set_xlabel", "args": ["x"]},
+  {"on": "fig", "call": "tight_layout", "kwargs": {"rect": [0, 0, 1, 1]}}
+]}

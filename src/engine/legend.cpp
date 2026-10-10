@@ -460,4 +460,6 @@ void Legend::draw(Renderer& renderer) {
     renderer.closeGroup("legend");
 }
 
+transforms::Bbox Legend::tightbbox(Renderer& renderer) { return legendBox_->windowExtent(renderer); }
+
 }  // namespace calculate_plot::engine

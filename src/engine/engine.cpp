@@ -3,6 +3,7 @@
 #include "engine/axes.hpp"
 #include "engine/figure.hpp"
 #include "engine/legend.hpp"
+#include "engine/tight_layout.hpp"
 #include "rc/rc_params.hpp"
 
 #include <cctype>
@@ -40,7 +41,7 @@ bool readNumber(const Json& v, double* out) {
 // The figure file's calls, run against the objects they make.
 class Executor {
 public:
-    explicit Executor(rc::Params rc) : rc_(std::move(rc)) {}
+    Executor(rc::Params rc, DrawOptions options) : rc_(std::move(rc)), options_(std::move(options)) {}
 
     bool run(const model::Call& call, std::string* error) {
         if (call.on.empty() && call.method == "figure") return figure(call, error);
@@ -200,6 +201,48 @@ private:
             label->figure = figure_.get();
             figure_->suptitle = label.get();
             figure_->texts.push_back(std::move(label));
+            return true;
+        }
+        if (call.method == "subplots_adjust") {
+            // subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=None, hspace=None)
+            if (call.args.size() > 6) return *error = where + ": too many positional arguments", false;
+            const char* names[6] = {"left", "bottom", "right", "top", "wspace", "hspace"};
+            if (!keywords(call, {"left", "bottom", "right", "top", "wspace", "hspace"}, error)) return false;
+            std::optional<double> v[6];
+            for (std::size_t i = 0; i < 6; ++i) {
+                const Json* a = argument(call, i, names[i]);
+                if (!a || a->isNull()) continue;
+                double n = 0;
+                if (!readNumber(*a, &n)) return *error = where + ": " + names[i] + " must be a number", false;
+                v[i] = n;
+            }
+            if (!subplotsAdjust(*figure_, {v[0], v[1], v[2], v[3], v[4], v[5]}, error)) return *error = where + ": " + *error, false;
+            return true;
+        }
+        if (call.method == "tight_layout") {
+            // tight_layout(*, pad=1.08, h_pad=None, w_pad=None, rect=None)
+            if (!call.args.empty()) return *error = where + ": the arguments are keywords", false;
+            if (!keywords(call, {"pad", "h_pad", "w_pad", "rect"}, error)) return false;
+            TightLayoutOptions o;
+            double n = 0;
+            if (const Json* v = keyword(call, "pad")) {
+                if (!readNumber(*v, &n)) return *error = where + ": pad must be a number", false;
+                o.pad = n;
+            }
+            for (const char* name : {"h_pad", "w_pad"})
+                if (const Json* v = keyword(call, name); v && !v->isNull()) {
+                    if (!readNumber(*v, &n)) return *error = where + ": " + name + " must be a number", false;
+                    (name[0] == 'h' ? o.hPad : o.wPad) = n;
+                }
+            if (const Json* v = keyword(call, "rect"); v && !v->isNull()) {
+                const Json* r = sequence(*v);
+                std::array<double, 4> rect{};
+                if (!r || r->size() != 4) return *error = where + ": rect must be (left, bottom, right, top)", false;
+                for (std::size_t i = 0; i < 4; ++i)
+                    if (!readNumber((*r)[i], &rect[i])) return *error = where + ": rect must be (left, bottom, right, top)", false;
+                o.rect = rect;
+            }
+            if (!tightLayout(*figure_, o, options_.locale, options_.fontDirectory, error)) return *error = where + ": " + *error, false;
             return true;
         }
         *error = "unsupported call: " + where;
@@ -1271,6 +1314,7 @@ private:
     }
 
     rc::Params rc_;
+    DrawOptions options_;  // what measuring texts needs before the drawing (tight_layout)
     std::unique_ptr<Figure> figure_;
     std::map<std::string, Axes*> axes_;
     std::string figureName_;
@@ -1280,13 +1324,13 @@ private:
 
 // Runs the figure file's calls, then `draw` on the figure they made; returns its error or "".
 template <typename Draw>
-std::string runFigure(const model::Figure& model, Draw draw) {
+std::string runFigure(const model::Figure& model, const DrawOptions& options, Draw draw) {
     rc::Params rc = rc::Params::defaults();
     for (const auto& [key, value] : model.rc) {
         std::string error;
         if (!rc.set(key, value, &error)) return "rc " + key + ": " + error;
     }
-    Executor executor(std::move(rc));
+    Executor executor(std::move(rc), options);
     for (const auto& call : model.calls) {
         std::string error;
         if (!executor.run(call, &error)) return error;
@@ -1298,7 +1342,7 @@ std::string runFigure(const model::Figure& model, Draw draw) {
 
 AggDrawing drawAgg(const model::Figure& model, const DrawOptions& options) {
     AggDrawing out;
-    out.error = runFigure(model, [&](Figure& figure) {
+    out.error = runFigure(model, options, [&](Figure& figure) {
         std::string error;
         out.trace = drawAggTrace(figure, options.locale, options.fontDirectory, &error);
         return error;
@@ -1308,7 +1352,7 @@ AggDrawing drawAgg(const model::Figure& model, const DrawOptions& options) {
 
 SvgDrawing drawSvg(const model::Figure& model, const DrawOptions& options) {
     SvgDrawing out;
-    out.error = runFigure(model, [&](Figure& figure) {
+    out.error = runFigure(model, options, [&](Figure& figure) {
         const auto& salt = figure.rc().value("svg.hashsalt");
         std::string error;
         out.trace = drawSvgTrace(figure, options.locale, options.fontDirectory, kSvgMetadata, salt.isString() ? salt.asString() : kSvgHashSalt, &error);

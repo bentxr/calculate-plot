@@ -1,0 +1,5 @@
+{"version": 1, "calls": [
+  {"call": "figure", "kwargs": {"figsize": {"$tuple": [3.0, 2.0]}}, "as": ["fig"]},
+  {"on": "fig", "call": "suptitle", "args": ["Only a title"]},
+  {"on": "fig", "call": "tight_layout"}
+]}

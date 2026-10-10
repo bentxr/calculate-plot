@@ -107,6 +107,13 @@ it comes from in its first lines. The changes, as a whole:
   transform - transData), Bbox.update_from_path's per-direction updates, contains_branch_separately, and the
   collections' line styles (_bcast_lwls), translated to C++. Figure.subplots grids (the returned array's names
   follow squeeze) and FigureBase.suptitle (_suplabels), translated to C++.
+  Layout: _tight_layout.py's _auto_adjust_subplotpars, get_subplotspec_list and get_tight_layout_figure,
+  TightLayoutEngine.execute, Figure.tight_layout and FigureBase.subplots_adjust, with the boxes they measure
+  (Axes.get_tightbbox and get_default_bbox_extra_artists, Axis.get_tightbbox, Legend.get_tightbbox), translated
+  to C++; Spine.get_window_extent now carries the path through the whole transform and counts a major and a minor
+  tick, as matplotlib does. The children clipped by the Axes' patch are not measured: their boxes, cut by the clip
+  box, lie inside the patch's own box, which is counted. Warnings are not reproduced (the layout is left alone
+  where matplotlib warns that it is not applied).
 - File names drop the leading underscore (e.g. src/_backend_agg.h is src/agg/backend_agg.h); includes follow.
 - The drawing algorithms themselves (src/_backend_agg.h, src/_backend_agg.cpp, src/path_converters.h,
   src/agg_workaround.h, src/array.h, src/mplutils.h) are otherwise unchanged.

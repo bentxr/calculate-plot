@@ -1,0 +1,8 @@
+{"version": 1, "calls": [
+  {"call": "subplots", "args": [1, 4], "kwargs": {"figsize": {"$tuple": [1.8, 3.0]}}, "as": ["fig", "axs"]},
+  {"on": "axs[0]", "call": "set_ylabel", "args": ["first"]},
+  {"on": "axs[1]", "call": "set_ylabel", "args": ["second"]},
+  {"on": "axs[2]", "call": "set_ylabel", "args": ["third"]},
+  {"on": "axs[3]", "call": "set_ylabel", "args": ["fourth"]},
+  {"on": "fig", "call": "tight_layout"}
+]}

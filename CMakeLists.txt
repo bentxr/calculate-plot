@@ -63,6 +63,7 @@ add_library(calculate-plot STATIC
     src/engine/collections.cpp
     src/engine/engine.cpp
     src/engine/figure.cpp
+    src/engine/tight_layout.cpp
     src/engine/gc.cpp
     src/engine/gridspec.cpp
     src/engine/legend.cpp

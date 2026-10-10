@@ -1,0 +1,5 @@
+{"version": 1, "calls": [
+  {"call": "subplots", "kwargs": {"figsize": {"$tuple": [3.0, 2.5]}}, "as": ["fig", "ax"]},
+  {"on": "ax", "call": "plot", "args": [[10000, 10001], [0, 0.00001]]},
+  {"on": "fig", "call": "tight_layout"}
+]}

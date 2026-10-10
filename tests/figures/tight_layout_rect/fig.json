@@ -1,0 +1,10 @@
+{"version": 1, "calls": [
+  {"call": "subplots", "args": [2, 1], "kwargs": {"figsize": {"$tuple": [4.0, 5.0]}}, "as": ["fig", "axs"]},
+  {"on": "axs[0]", "call": "plot", "args": [[1, 10, 100], [1, 2, 3]], "kwargs": {"label": "data"}},
+  {"on": "axs[0]", "call": "set_xscale", "args": ["log"]},
+  {"on": "axs[0]", "call": "legend", "kwargs": {"loc": "upper left"}},
+  {"on": "axs[1]", "call": "scatter", "args": [[1, 2, 3], [1, 100, 10000]]},
+  {"on": "axs[1]", "call": "set_yscale", "args": ["log"]},
+  {"on": "axs[1]", "call": "set_ylabel", "args": ["log y"]},
+  {"on": "fig", "call": "tight_layout", "kwargs": {"rect": {"$tuple": [0.05, 0.1, 0.95, 0.9]}}}
+]}

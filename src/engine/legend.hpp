@@ -99,6 +99,7 @@ public:
     Legend(const rc::Params& rc, Axes& parent, const std::vector<Artist*>& handles,
            const std::vector<std::string>& labels, const LegendOptions& options, std::string* error);
     void draw(Renderer& renderer) override;
+    transforms::Bbox tightbbox(Renderer& renderer);  // get_tightbbox: the legend box's window extent
 
 private:
     std::array<double, 2> findOffset(double width, double height, double xdescent, double ydescent,
