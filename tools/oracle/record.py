@@ -273,3 +273,156 @@ def record(fig):
              "width": int(renderer.width), "height": int(renderer.height), "dpi": number(renderer.dpi),
              "events": events}
     return trace, rgba
+
+
+# --- SVG -----------------------------------------------------------------------------------------
+
+_svg_clip_paths = {}
+
+
+def svg_gc(g):
+    """The graphics context as matplotlib's SVG renderer reads it. Clip paths are numbered by the
+    identity of the Path object, as RendererSVG._get_clippath_id numbers them."""
+    d = gc(g)
+    clip_path, _ = g.get_clip_path()
+    clip_index = None
+    if clip_path is not None:
+        clip_index = _svg_clip_paths.setdefault(id(clip_path), (len(_svg_clip_paths), clip_path))[0]
+    d.update({"url": g.get_url(), "gid": g.get_gid(), "hatch_string": g.get_hatch(),
+              "rgb_length": len(g.get_rgb()), "clip_index": clip_index})
+    return d
+
+
+def matrix(transform):
+    return None if transform is None else affine(transform.get_matrix())
+
+
+def face(rgb_face):
+    """A face colour with its length (the SVG style rules depend on it)."""
+    return None if rgb_face is None else numbers(rgb_face)
+
+
+def record_svg(fig, metadata):
+    """Draws `fig` with matplotlib's SVG backend; returns (trace dict, SVG text).
+
+    The trace logs the renderer's drawing calls at the Python level (only the outermost call when
+    one drawing method uses another), plus every id hash input matplotlib computes (`_make_id`):
+    replaying the trace through calculate-plot's SVG renderer must write the same bytes.
+    """
+    import io
+    from matplotlib.backends.backend_svg import RendererSVG
+    from matplotlib.backends.backend_svg import FigureCanvasSVG
+
+    events = []
+    ids = []
+    depth = [0]
+    _svg_clip_paths.clear()
+    originals = {}
+
+    def wrap(name, describe):
+        original = getattr(RendererSVG, name)
+        originals[name] = original
+
+        def method(self, *args, **kwargs):
+            if depth[0] == 0:
+                events.append(describe(self, *args, **kwargs))
+            depth[0] += 1
+            try:
+                return original(self, *args, **kwargs)
+            finally:
+                depth[0] -= 1
+        setattr(RendererSVG, name, method)
+
+    def clip_transform_text(g):
+        clip_path, clip_trans = g.get_clip_path()
+        if clip_path is None:
+            return None
+        return str(clip_trans + __import__("matplotlib").transforms.Affine2D().scale(1, -1).translate(
+            0, events[0]["height"]))
+
+    wrap("draw_path", lambda self, g, p, transform, rgbFace=None: {
+        "op": "draw_path", "gc": svg_gc(g), "path": path(p), "transform": matrix(transform),
+        "face": face(rgbFace), "clip_transform": clip_transform_text(g)})
+    wrap("draw_markers", lambda self, g, marker_path, marker_trans, p, trans, rgbFace=None: {
+        "op": "draw_markers", "gc": svg_gc(g), "marker_path": path(marker_path),
+        "marker_transform": matrix(marker_trans), "path": path(p), "transform": matrix(trans),
+        "face": face(rgbFace), "clip_transform": clip_transform_text(g)})
+
+    def collection(self, g, master_transform, paths, all_transforms, offsets, offset_trans,
+                   facecolors, edgecolors, linewidths, linestyles, antialiaseds, urls,
+                   offset_position, *, hatchcolors=None):
+        return {"op": "draw_path_collection", "gc": svg_gc(g), "master_transform": matrix(master_transform),
+                "paths": [path(p) for p in paths],
+                "transforms": array(np.asarray(all_transforms, float).reshape(-1, 3, 3) if len(all_transforms) else np.empty((0, 3, 3))),
+                "offsets": array(np.asarray(offsets, float).reshape(-1, 2) if np.size(offsets) else np.empty((0, 2))),
+                "offset_transform": matrix(offset_trans),
+                "facecolors": array(np.asarray(facecolors, float).reshape(-1, 4) if np.size(facecolors) else np.empty((0, 4))),
+                "edgecolors": array(np.asarray(edgecolors, float).reshape(-1, 4) if np.size(edgecolors) else np.empty((0, 4))),
+                "linewidths": array(np.asarray(linewidths, float).reshape(-1)),
+                "dashes": [dashes(d) for d in linestyles],
+                "antialiaseds": array(np.asarray(antialiaseds, np.uint8).reshape(-1)),
+                "urls": [None if u is None else str(u) for u in urls],
+                "hatchcolors": array(np.asarray(hatchcolors, float).reshape(-1, 4) if hatchcolors is not None and np.size(hatchcolors) else np.empty((0, 4))),
+                "clip_transform": clip_transform_text(g)}
+    wrap("draw_path_collection", collection)
+    wrap("draw_gouraud_triangles", lambda self, g, points, colors, transform: {
+        "op": "draw_gouraud_triangles", "gc": svg_gc(g), "points": array(points), "colors": array(colors),
+        "transform": matrix(transform), "clip_transform": clip_transform_text(g)})
+    wrap("draw_image", lambda self, g, x, y, im, transform=None: {
+        "op": "draw_image", "gc": svg_gc(g), "x": number(x), "y": number(y), "image": image(im),
+        "transform": matrix(transform), "clip_transform": clip_transform_text(g)})
+
+    def text(self, g, x, y, s, prop, angle, ismath=False, mtext=None):
+        event = {"op": "draw_text", "gc": svg_gc(g), "x": number(x), "y": number(y), "s": s,
+                 "fonts": font_paths(prop), "size": number(prop.get_size_in_points()),
+                 "angle": number(angle), "ismath": ismath if isinstance(ismath, str) else bool(ismath),
+                 "features": None if mtext is None or mtext.get_fontfeatures() is None
+                 else list(mtext.get_fontfeatures()),
+                 "language": None if mtext is None else mtext.get_language(),
+                 "clip_transform": clip_transform_text(g)}
+        if ismath is True:
+            # The mathtext layout (ported later); recorded as TextToPath uses it, at FONT_SCALE.
+            p = prop.copy()
+            p.set_size(self._text2path.FONT_SCALE)
+            width, height, descent, glyphs, rects = self._text2path.mathtext_parser.parse(s, 72, p)
+            event["math"] = {"glyphs": [{"font": font_name(font.fname), "size": number(fontsize),
+                                         "index": int(index), "ox": number(ox), "oy": number(oy)}
+                                        for font, fontsize, _ccode, index, ox, oy in glyphs],
+                             "rects": [numbers(r) for r in rects]}
+        return event
+    wrap("draw_text", text)
+    wrap("open_group", lambda self, s, gid=None: {"op": "open_group", "s": s, "gid": gid})
+    wrap("close_group", lambda self, s: {"op": "close_group", "s": s})
+
+    original_make_id = RendererSVG._make_id
+    originals["_make_id"] = original_make_id
+
+    def make_id(self, type, content):
+        result = original_make_id(self, type, content)
+        ids.append({"type": type, "content": str(content) if not isinstance(content, bytes) else None,
+                    "id": result})
+        return result
+    RendererSVG._make_id = make_id
+
+    original_init = RendererSVG.__init__
+    originals["__init__"] = original_init
+
+    def init(self, width, height, svgwriter, basename=None, image_dpi=72, *, metadata=None):
+        events.insert(0, {"op": "begin", "width": number(width), "height": number(height),
+                          "image_dpi": number(image_dpi)})
+        return original_init(self, width, height, svgwriter, basename, image_dpi, metadata=metadata)
+    RendererSVG.__init__ = init
+
+    out = io.StringIO()
+    try:
+        FigureCanvasSVG(fig).print_svg(out, metadata=metadata)
+    finally:
+        for name, original in originals.items():
+            setattr(RendererSVG, name, original)
+    rc = matplotlib.rcParams
+    trace = {"version": TRACE_VERSION, "matplotlib": matplotlib.__version__,
+             "locale": __import__("locale").setlocale(__import__("locale").LC_CTYPE),
+             "metadata": metadata, "hashsalt": rc["svg.hashsalt"], "svg_id": rc["svg.id"],
+             "image_inline": bool(rc["svg.image_inline"]), "fonttype": rc["svg.fonttype"],
+             "events": events, "ids": ids}
+    return trace, out.getvalue()

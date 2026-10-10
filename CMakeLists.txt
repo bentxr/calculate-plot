@@ -43,6 +43,7 @@ add_library(calculate-plot STATIC
     src/text/text_render.cpp
     src/support/glob.cpp
     src/support/json.cpp
+    src/support/pyformat.cpp
     src/support/sha256.cpp)
 target_include_directories(calculate-plot
     PUBLIC  ${PROJECT_SOURCE_DIR}/include

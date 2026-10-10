@@ -1,0 +1,1370 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="230.4pt" height="172.8pt" viewBox="0 0 230.4 172.8" xmlns="http://www.w3.org/2000/svg" version="1.1">
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>calculate-plot</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 172.8 
+L 230.4 172.8 
+L 230.4 0 
+L 0 0 
+z
+" style="fill: #ffffff"/>
+  </g>
+  <g id="axes_1">
+   <g id="patch_2">
+    <path d="M 27.648 152.064 
+L 218.88 152.064 
+L 218.88 8.64 
+L 27.648 8.64 
+z
+" style="fill: #ffffff"/>
+   </g>
+   <g id="TriMesh_1">
+    <g clip-path="url(#p32af6349c7)">
+     <filter id="colorAdd">
+      <feComposite in="SourceGraphic" in2="BackgroundImage" operator="arithmetic" k2="1" k3="1"/>
+     </filter>
+     <filter id="colorMat">
+      <feColorMatrix type="matrix" values="1 0 0 0 0 
+0 1 0 0 0 
+0 0 1 0 0 
+1 1 1 1 0 
+0 0 0 0 1 "/>
+     </filter>
+     <defs>
+      <linearGradient id="GR0_0" gradientUnits="userSpaceOnUse" x1="52.909761" y1="127.49971" x2="64.999836" y2="116.372017">
+       <stop offset="1" style="stop-color: #2ba781; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #40bd72; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR0_1" gradientUnits="userSpaceOnUse" x1="51.393117" y1="101.588517" x2="43.902967" y2="104.52487">
+       <stop offset="1" style="stop-color: #2ba781; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #22a785; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR0_2" gradientUnits="userSpaceOnUse" x1="36.340364" y1="85.233923" x2="50.387716" y2="84.411697">
+       <stop offset="1" style="stop-color: #2ba781; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #20928c; stop-opacity: 0"/>
+      </linearGradient>
+     </defs>
+     <path d="M 36.340364,85.233923 L 52.909761,127.49971 51.393117,101.588517 Z" fill="#2ba781" fill-opacity="1" shape-rendering="crispEdges"/>
+     <g stroke="none" stroke-width="0" shape-rendering="crispEdges" filter="url(#colorMat)">
+      <path d="M 36.340364,85.233923 L 52.909761,127.49971 51.393117,101.588517 Z" fill="url(#GR0_0)" shape-rendering="crispEdges"/>
+      <path d="M 36.340364,85.233923 L 52.909761,127.49971 51.393117,101.588517 Z" fill="url(#GR0_1)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+      <path d="M 36.340364,85.233923 L 52.909761,127.49971 51.393117,101.588517 Z" fill="url(#GR0_2)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+     </g>
+     <defs>
+      <linearGradient id="GR1_0" gradientUnits="userSpaceOnUse" x1="86.906266" y1="23.37746" x2="93.13276" y2="36.873678">
+       <stop offset="1" style="stop-color: #450a5c; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #440154; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR1_1" gradientUnits="userSpaceOnUse" x1="106.049196" y1="30.914668" x2="104.469271" y2="20.669136">
+       <stop offset="1" style="stop-color: #450a5c; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #440154; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR1_2" gradientUnits="userSpaceOnUse" x1="140.199758" y1="15.159273" x2="130.245311" y2="40.441483">
+       <stop offset="1" style="stop-color: #450a5c; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #481b6d; stop-opacity: 0"/>
+      </linearGradient>
+     </defs>
+     <path d="M 140.199758,15.159273 L 86.906266,23.37746 106.049196,30.914668 Z" fill="#450a5c" fill-opacity="1" shape-rendering="crispEdges"/>
+     <g stroke="none" stroke-width="0" shape-rendering="crispEdges" filter="url(#colorMat)">
+      <path d="M 140.199758,15.159273 L 86.906266,23.37746 106.049196,30.914668 Z" fill="url(#GR1_0)" shape-rendering="crispEdges"/>
+      <path d="M 140.199758,15.159273 L 86.906266,23.37746 106.049196,30.914668 Z" fill="url(#GR1_1)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+      <path d="M 140.199758,15.159273 L 86.906266,23.37746 106.049196,30.914668 Z" fill="url(#GR1_2)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+     </g>
+     <defs>
+      <linearGradient id="GR2_0" gradientUnits="userSpaceOnUse" x1="179.390361" y1="57.187905" x2="169.886753" y2="45.628701">
+       <stop offset="1" style="stop-color: #339e81; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #1f958b; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR2_1" gradientUnits="userSpaceOnUse" x1="195.565916" y1="24.516113" x2="173.291383" y2="52.297951">
+       <stop offset="1" style="stop-color: #339e81; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #52c569; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR2_2" gradientUnits="userSpaceOnUse" x1="167.460833" y1="47.623215" x2="180.84507" y2="54.249648">
+       <stop offset="1" style="stop-color: #339e81; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #27808e; stop-opacity: 0"/>
+      </linearGradient>
+     </defs>
+     <path d="M 167.460833,47.623215 L 179.390361,57.187905 195.565916,24.516113 Z" fill="#339e81" fill-opacity="1" shape-rendering="crispEdges"/>
+     <g stroke="none" stroke-width="0" shape-rendering="crispEdges" filter="url(#colorMat)">
+      <path d="M 167.460833,47.623215 L 179.390361,57.187905 195.565916,24.516113 Z" fill="url(#GR2_0)" shape-rendering="crispEdges"/>
+      <path d="M 167.460833,47.623215 L 179.390361,57.187905 195.565916,24.516113 Z" fill="url(#GR2_1)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+      <path d="M 167.460833,47.623215 L 179.390361,57.187905 195.565916,24.516113 Z" fill="url(#GR2_2)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+     </g>
+     <defs>
+      <linearGradient id="GR3_0" gradientUnits="userSpaceOnUse" x1="207.112481" y1="41.95547" x2="190.904634" y2="33.931088">
+       <stop offset="1" style="stop-color: #47b771; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #65cb5e; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR3_1" gradientUnits="userSpaceOnUse" x1="195.565916" y1="24.516113" x2="205.603793" y2="42.784446">
+       <stop offset="1" style="stop-color: #47b771; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #52c569; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR3_2" gradientUnits="userSpaceOnUse" x1="179.390361" y1="57.187905" x2="205.675242" y2="39.784736">
+       <stop offset="1" style="stop-color: #47b771; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #1f958b; stop-opacity: 0"/>
+      </linearGradient>
+     </defs>
+     <path d="M 179.390361,57.187905 L 207.112481,41.95547 195.565916,24.516113 Z" fill="#47b771" fill-opacity="1" shape-rendering="crispEdges"/>
+     <g stroke="none" stroke-width="0" shape-rendering="crispEdges" filter="url(#colorMat)">
+      <path d="M 179.390361,57.187905 L 207.112481,41.95547 195.565916,24.516113 Z" fill="url(#GR3_0)" shape-rendering="crispEdges"/>
+      <path d="M 179.390361,57.187905 L 207.112481,41.95547 195.565916,24.516113 Z" fill="url(#GR3_1)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+      <path d="M 179.390361,57.187905 L 207.112481,41.95547 195.565916,24.516113 Z" fill="url(#GR3_2)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+     </g>
+     <defs>
+      <linearGradient id="GR4_0" gradientUnits="userSpaceOnUse" x1="207.112481" y1="41.95547" x2="161.505142" y2="83.515047">
+       <stop offset="1" style="stop-color: #448276; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #65cb5e; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR4_1" gradientUnits="userSpaceOnUse" x1="174.382717" y1="97.646854" x2="208.879367" y2="96.530003">
+       <stop offset="1" style="stop-color: #448276; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #20938c; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR4_2" gradientUnits="userSpaceOnUse" x1="210.187636" y1="136.939051" x2="166.410812" y2="111.211461">
+       <stop offset="1" style="stop-color: #448276; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #482878; stop-opacity: 0"/>
+      </linearGradient>
+     </defs>
+     <path d="M 210.187636,136.939051 L 207.112481,41.95547 174.382717,97.646854 Z" fill="#448276" fill-opacity="1" shape-rendering="crispEdges"/>
+     <g stroke="none" stroke-width="0" shape-rendering="crispEdges" filter="url(#colorMat)">
+      <path d="M 210.187636,136.939051 L 207.112481,41.95547 174.382717,97.646854 Z" fill="url(#GR4_0)" shape-rendering="crispEdges"/>
+      <path d="M 210.187636,136.939051 L 207.112481,41.95547 174.382717,97.646854 Z" fill="url(#GR4_1)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+      <path d="M 210.187636,136.939051 L 207.112481,41.95547 174.382717,97.646854 Z" fill="url(#GR4_2)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+     </g>
+     <defs>
+      <linearGradient id="GR5_0" gradientUnits="userSpaceOnUse" x1="179.390361" y1="57.187905" x2="193.341732" y2="65.38711">
+       <stop offset="1" style="stop-color: #37a77c; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #1f958b; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR5_1" gradientUnits="userSpaceOnUse" x1="174.382717" y1="97.646854" x2="158.468448" y2="68.68384">
+       <stop offset="1" style="stop-color: #37a77c; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #20938c; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR5_2" gradientUnits="userSpaceOnUse" x1="207.112481" y1="41.95547" x2="181.665524" y2="38.805874">
+       <stop offset="1" style="stop-color: #37a77c; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #65cb5e; stop-opacity: 0"/>
+      </linearGradient>
+     </defs>
+     <path d="M 207.112481,41.95547 L 179.390361,57.187905 174.382717,97.646854 Z" fill="#37a77c" fill-opacity="1" shape-rendering="crispEdges"/>
+     <g stroke="none" stroke-width="0" shape-rendering="crispEdges" filter="url(#colorMat)">
+      <path d="M 207.112481,41.95547 L 179.390361,57.187905 174.382717,97.646854 Z" fill="url(#GR5_0)" shape-rendering="crispEdges"/>
+      <path d="M 207.112481,41.95547 L 179.390361,57.187905 174.382717,97.646854 Z" fill="url(#GR5_1)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+      <path d="M 207.112481,41.95547 L 179.390361,57.187905 174.382717,97.646854 Z" fill="url(#GR5_2)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+     </g>
+     <defs>
+      <linearGradient id="GR6_0" gradientUnits="userSpaceOnUse" x1="89.446099" y1="51.305239" x2="74.290298" y2="35.39582">
+       <stop offset="1" style="stop-color: #3f3578; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #404688; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR6_1" gradientUnits="userSpaceOnUse" x1="86.906266" y1="23.37746" x2="80.02963" y2="48.753473">
+       <stop offset="1" style="stop-color: #3f3578; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #440154; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR6_2" gradientUnits="userSpaceOnUse" x1="64.644861" y1="44.58436" x2="88.636458" y2="42.402495">
+       <stop offset="1" style="stop-color: #3f3578; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #38598c; stop-opacity: 0"/>
+      </linearGradient>
+     </defs>
+     <path d="M 64.644861,44.58436 L 89.446099,51.305239 86.906266,23.37746 Z" fill="#3f3578" fill-opacity="1" shape-rendering="crispEdges"/>
+     <g stroke="none" stroke-width="0" shape-rendering="crispEdges" filter="url(#colorMat)">
+      <path d="M 64.644861,44.58436 L 89.446099,51.305239 86.906266,23.37746 Z" fill="url(#GR6_0)" shape-rendering="crispEdges"/>
+      <path d="M 64.644861,44.58436 L 89.446099,51.305239 86.906266,23.37746 Z" fill="url(#GR6_1)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+      <path d="M 64.644861,44.58436 L 89.446099,51.305239 86.906266,23.37746 Z" fill="url(#GR6_2)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+     </g>
+     <defs>
+      <linearGradient id="GR7_0" gradientUnits="userSpaceOnUse" x1="106.049196" y1="30.914668" x2="87.743124" y2="32.579475">
+       <stop offset="1" style="stop-color: #431865; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #440154; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR7_1" gradientUnits="userSpaceOnUse" x1="86.906266" y1="23.37746" x2="102.107704" y2="35.755287">
+       <stop offset="1" style="stop-color: #431865; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #440154; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR7_2" gradientUnits="userSpaceOnUse" x1="89.446099" y1="51.305239" x2="98.625422" y2="27.991681">
+       <stop offset="1" style="stop-color: #431865; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #404688; stop-opacity: 0"/>
+      </linearGradient>
+     </defs>
+     <path d="M 89.446099,51.305239 L 106.049196,30.914668 86.906266,23.37746 Z" fill="#431865" fill-opacity="1" shape-rendering="crispEdges"/>
+     <g stroke="none" stroke-width="0" shape-rendering="crispEdges" filter="url(#colorMat)">
+      <path d="M 89.446099,51.305239 L 106.049196,30.914668 86.906266,23.37746 Z" fill="url(#GR7_0)" shape-rendering="crispEdges"/>
+      <path d="M 89.446099,51.305239 L 106.049196,30.914668 86.906266,23.37746 Z" fill="url(#GR7_1)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+      <path d="M 89.446099,51.305239 L 106.049196,30.914668 86.906266,23.37746 Z" fill="url(#GR7_2)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+     </g>
+     <defs>
+      <linearGradient id="GR8_0" gradientUnits="userSpaceOnUse" x1="64.644861" y1="44.58436" x2="64.141808" y2="44.029861">
+       <stop offset="1" style="stop-color: #354d7a; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #38598c; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR8_1" gradientUnits="userSpaceOnUse" x1="86.906266" y1="23.37746" x2="87.887308" y2="24.513527">
+       <stop offset="1" style="stop-color: #354d7a; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #440154; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR8_2" gradientUnits="userSpaceOnUse" x1="41.501555" y1="64.569581" x2="42.531244" y2="65.650472">
+       <stop offset="1" style="stop-color: #354d7a; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #228c8d; stop-opacity: 0"/>
+      </linearGradient>
+     </defs>
+     <path d="M 41.501555,64.569581 L 64.644861,44.58436 86.906266,23.37746 Z" fill="#354d7a" fill-opacity="1" shape-rendering="crispEdges"/>
+     <g stroke="none" stroke-width="0" shape-rendering="crispEdges" filter="url(#colorMat)">
+      <path d="M 41.501555,64.569581 L 64.644861,44.58436 86.906266,23.37746 Z" fill="url(#GR8_0)" shape-rendering="crispEdges"/>
+      <path d="M 41.501555,64.569581 L 64.644861,44.58436 86.906266,23.37746 Z" fill="url(#GR8_1)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+      <path d="M 41.501555,64.569581 L 64.644861,44.58436 86.906266,23.37746 Z" fill="url(#GR8_2)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+     </g>
+     <defs>
+      <linearGradient id="GR9_0" gradientUnits="userSpaceOnUse" x1="41.501555" y1="64.569581" x2="48.130109" y2="40.109033">
+       <stop offset="1" style="stop-color: #33638b; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #228c8d; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR9_1" gradientUnits="userSpaceOnUse" x1="89.446099" y1="51.305239" x2="75.52727" y2="35.186941">
+       <stop offset="1" style="stop-color: #33638b; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #404688; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR9_2" gradientUnits="userSpaceOnUse" x1="64.644861" y1="44.58436" x2="68.135398" y2="57.201059">
+       <stop offset="1" style="stop-color: #33638b; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #38598c; stop-opacity: 0"/>
+      </linearGradient>
+     </defs>
+     <path d="M 64.644861,44.58436 L 41.501555,64.569581 89.446099,51.305239 Z" fill="#33638b" fill-opacity="1" shape-rendering="crispEdges"/>
+     <g stroke="none" stroke-width="0" shape-rendering="crispEdges" filter="url(#colorMat)">
+      <path d="M 64.644861,44.58436 L 41.501555,64.569581 89.446099,51.305239 Z" fill="url(#GR9_0)" shape-rendering="crispEdges"/>
+      <path d="M 64.644861,44.58436 L 41.501555,64.569581 89.446099,51.305239 Z" fill="url(#GR9_1)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+      <path d="M 64.644861,44.58436 L 41.501555,64.569581 89.446099,51.305239 Z" fill="url(#GR9_2)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+     </g>
+     <defs>
+      <linearGradient id="GRa_0" gradientUnits="userSpaceOnUse" x1="36.340364" y1="85.233923" x2="46.311231" y2="82.56968">
+       <stop offset="1" style="stop-color: #21978a; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #20928c; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GRa_1" gradientUnits="userSpaceOnUse" x1="51.393117" y1="101.588517" x2="33.379319" y2="97.089335">
+       <stop offset="1" style="stop-color: #21978a; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #22a785; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GRa_2" gradientUnits="userSpaceOnUse" x1="41.501555" y1="64.569581" x2="28.410665" y2="76.618423">
+       <stop offset="1" style="stop-color: #21978a; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #228c8d; stop-opacity: 0"/>
+      </linearGradient>
+     </defs>
+     <path d="M 41.501555,64.569581 L 36.340364,85.233923 51.393117,101.588517 Z" fill="#21978a" fill-opacity="1" shape-rendering="crispEdges"/>
+     <g stroke="none" stroke-width="0" shape-rendering="crispEdges" filter="url(#colorMat)">
+      <path d="M 41.501555,64.569581 L 36.340364,85.233923 51.393117,101.588517 Z" fill="url(#GRa_0)" shape-rendering="crispEdges"/>
+      <path d="M 41.501555,64.569581 L 36.340364,85.233923 51.393117,101.588517 Z" fill="url(#GRa_1)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+      <path d="M 41.501555,64.569581 L 36.340364,85.233923 51.393117,101.588517 Z" fill="url(#GRa_2)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+     </g>
+     <defs>
+      <linearGradient id="GRb_0" gradientUnits="userSpaceOnUse" x1="160.59953" y1="27.830895" x2="162.115106" y2="18.86295">
+       <stop offset="1" style="stop-color: #446c76; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #32658e; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GRb_1" gradientUnits="userSpaceOnUse" x1="195.565916" y1="24.516113" x2="184.344854" y2="42.580658">
+       <stop offset="1" style="stop-color: #446c76; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #52c569; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GRb_2" gradientUnits="userSpaceOnUse" x1="140.199758" y1="15.159273" x2="141.572014" y2="29.634687">
+       <stop offset="1" style="stop-color: #446c76; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #481b6d; stop-opacity: 0"/>
+      </linearGradient>
+     </defs>
+     <path d="M 140.199758,15.159273 L 160.59953,27.830895 195.565916,24.516113 Z" fill="#446c76" fill-opacity="1" shape-rendering="crispEdges"/>
+     <g stroke="none" stroke-width="0" shape-rendering="crispEdges" filter="url(#colorMat)">
+      <path d="M 140.199758,15.159273 L 160.59953,27.830895 195.565916,24.516113 Z" fill="url(#GRb_0)" shape-rendering="crispEdges"/>
+      <path d="M 140.199758,15.159273 L 160.59953,27.830895 195.565916,24.516113 Z" fill="url(#GRb_1)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+      <path d="M 140.199758,15.159273 L 160.59953,27.830895 195.565916,24.516113 Z" fill="url(#GRb_2)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+     </g>
+     <defs>
+      <linearGradient id="GRc_0" gradientUnits="userSpaceOnUse" x1="160.59953" y1="27.830895" x2="173.076306" y2="43.006352">
+       <stop offset="1" style="stop-color: #398e82; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #32658e; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GRc_1" gradientUnits="userSpaceOnUse" x1="167.460833" y1="47.623215" x2="165.540138" y2="27.36253">
+       <stop offset="1" style="stop-color: #398e82; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #27808e; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GRc_2" gradientUnits="userSpaceOnUse" x1="195.565916" y1="24.516113" x2="163.325012" y2="35.692904">
+       <stop offset="1" style="stop-color: #398e82; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #52c569; stop-opacity: 0"/>
+      </linearGradient>
+     </defs>
+     <path d="M 195.565916,24.516113 L 160.59953,27.830895 167.460833,47.623215 Z" fill="#398e82" fill-opacity="1" shape-rendering="crispEdges"/>
+     <g stroke="none" stroke-width="0" shape-rendering="crispEdges" filter="url(#colorMat)">
+      <path d="M 195.565916,24.516113 L 160.59953,27.830895 167.460833,47.623215 Z" fill="url(#GRc_0)" shape-rendering="crispEdges"/>
+      <path d="M 195.565916,24.516113 L 160.59953,27.830895 167.460833,47.623215 Z" fill="url(#GRc_1)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+      <path d="M 195.565916,24.516113 L 160.59953,27.830895 167.460833,47.623215 Z" fill="url(#GRc_2)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+     </g>
+     <defs>
+      <linearGradient id="GRd_0" gradientUnits="userSpaceOnUse" x1="140.736502" y1="116.923954" x2="160.939101" y2="131.35286">
+       <stop offset="1" style="stop-color: #6acb5a; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #84d44b; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GRd_1" gradientUnits="userSpaceOnUse" x1="152.073456" y1="143.766072" x2="160.811893" y2="128.177689">
+       <stop offset="1" style="stop-color: #6acb5a; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #86d549; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GRd_2" gradientUnits="userSpaceOnUse" x1="162.522121" y1="129.136398" x2="148.411619" y2="135.096066">
+       <stop offset="1" style="stop-color: #6acb5a; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #35b779; stop-opacity: 0"/>
+      </linearGradient>
+     </defs>
+     <path d="M 162.522121,129.136398 L 140.736502,116.923954 152.073456,143.766072 Z" fill="#6acb5a" fill-opacity="1" shape-rendering="crispEdges"/>
+     <g stroke="none" stroke-width="0" shape-rendering="crispEdges" filter="url(#colorMat)">
+      <path d="M 162.522121,129.136398 L 140.736502,116.923954 152.073456,143.766072 Z" fill="url(#GRd_0)" shape-rendering="crispEdges"/>
+      <path d="M 162.522121,129.136398 L 140.736502,116.923954 152.073456,143.766072 Z" fill="url(#GRd_1)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+      <path d="M 162.522121,129.136398 L 140.736502,116.923954 152.073456,143.766072 Z" fill="url(#GRd_2)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+     </g>
+     <defs>
+      <linearGradient id="GRe_0" gradientUnits="userSpaceOnUse" x1="162.522121" y1="129.136398" x2="151.870421" y2="110.54494">
+       <stop offset="1" style="stop-color: #48b570; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #35b779; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GRe_1" gradientUnits="userSpaceOnUse" x1="174.382717" y1="97.646854" x2="158.115315" y2="126.666059">
+       <stop offset="1" style="stop-color: #48b570; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #20938c; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GRe_2" gradientUnits="userSpaceOnUse" x1="140.736502" y1="116.923954" x2="163.843806" y2="125.627363">
+       <stop offset="1" style="stop-color: #48b570; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #84d44b; stop-opacity: 0"/>
+      </linearGradient>
+     </defs>
+     <path d="M 140.736502,116.923954 L 162.522121,129.136398 174.382717,97.646854 Z" fill="#48b570" fill-opacity="1" shape-rendering="crispEdges"/>
+     <g stroke="none" stroke-width="0" shape-rendering="crispEdges" filter="url(#colorMat)">
+      <path d="M 140.736502,116.923954 L 162.522121,129.136398 174.382717,97.646854 Z" fill="url(#GRe_0)" shape-rendering="crispEdges"/>
+      <path d="M 140.736502,116.923954 L 162.522121,129.136398 174.382717,97.646854 Z" fill="url(#GRe_1)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+      <path d="M 140.736502,116.923954 L 162.522121,129.136398 174.382717,97.646854 Z" fill="url(#GRe_2)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+     </g>
+     <defs>
+      <linearGradient id="GRf_0" gradientUnits="userSpaceOnUse" x1="162.522121" y1="129.136398" x2="164.075126" y2="142.356164">
+       <stop offset="1" style="stop-color: #569169; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #35b779; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GRf_1" gradientUnits="userSpaceOnUse" x1="152.073456" y1="143.766072" x2="154.678457" y2="127.852422">
+       <stop offset="1" style="stop-color: #569169; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #86d549; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GRf_2" gradientUnits="userSpaceOnUse" x1="210.187636" y1="136.939051" x2="174.932768" y2="111.759659">
+       <stop offset="1" style="stop-color: #569169; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #482878; stop-opacity: 0"/>
+      </linearGradient>
+     </defs>
+     <path d="M 210.187636,136.939051 L 162.522121,129.136398 152.073456,143.766072 Z" fill="#569169" fill-opacity="1" shape-rendering="crispEdges"/>
+     <g stroke="none" stroke-width="0" shape-rendering="crispEdges" filter="url(#colorMat)">
+      <path d="M 210.187636,136.939051 L 162.522121,129.136398 152.073456,143.766072 Z" fill="url(#GRf_0)" shape-rendering="crispEdges"/>
+      <path d="M 210.187636,136.939051 L 162.522121,129.136398 152.073456,143.766072 Z" fill="url(#GRf_1)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+      <path d="M 210.187636,136.939051 L 162.522121,129.136398 152.073456,143.766072 Z" fill="url(#GRf_2)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+     </g>
+     <defs>
+      <linearGradient id="GR10_0" gradientUnits="userSpaceOnUse" x1="210.187636" y1="136.939051" x2="165.870377" y2="120.246873">
+       <stop offset="1" style="stop-color: #347b7f; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #482878; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR10_1" gradientUnits="userSpaceOnUse" x1="174.382717" y1="97.646854" x2="169.053001" y2="130.205477">
+       <stop offset="1" style="stop-color: #347b7f; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #20938c; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR10_2" gradientUnits="userSpaceOnUse" x1="162.522121" y1="129.136398" x2="184.679017" y2="108.94598">
+       <stop offset="1" style="stop-color: #347b7f; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #35b779; stop-opacity: 0"/>
+      </linearGradient>
+     </defs>
+     <path d="M 162.522121,129.136398 L 210.187636,136.939051 174.382717,97.646854 Z" fill="#347b7f" fill-opacity="1" shape-rendering="crispEdges"/>
+     <g stroke="none" stroke-width="0" shape-rendering="crispEdges" filter="url(#colorMat)">
+      <path d="M 162.522121,129.136398 L 210.187636,136.939051 174.382717,97.646854 Z" fill="url(#GR10_0)" shape-rendering="crispEdges"/>
+      <path d="M 162.522121,129.136398 L 210.187636,136.939051 174.382717,97.646854 Z" fill="url(#GR10_1)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+      <path d="M 162.522121,129.136398 L 210.187636,136.939051 174.382717,97.646854 Z" fill="url(#GR10_2)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+     </g>
+     <defs>
+      <linearGradient id="GR11_0" gradientUnits="userSpaceOnUse" x1="120.372625" y1="72.495561" x2="151.148822" y2="107.863422">
+       <stop offset="1" style="stop-color: #43a577; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #26818e; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR11_1" gradientUnits="userSpaceOnUse" x1="140.736502" y1="116.923954" x2="153.72814" y2="86.955548">
+       <stop offset="1" style="stop-color: #43a577; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #84d44b; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR11_2" gradientUnits="userSpaceOnUse" x1="168.044032" y1="93.161647" x2="136.476846" y2="107.630554">
+       <stop offset="1" style="stop-color: #43a577; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #1f998a; stop-opacity: 0"/>
+      </linearGradient>
+     </defs>
+     <path d="M 168.044032,93.161647 L 120.372625,72.495561 140.736502,116.923954 Z" fill="#43a577" fill-opacity="1" shape-rendering="crispEdges"/>
+     <g stroke="none" stroke-width="0" shape-rendering="crispEdges" filter="url(#colorMat)">
+      <path d="M 168.044032,93.161647 L 120.372625,72.495561 140.736502,116.923954 Z" fill="url(#GR11_0)" shape-rendering="crispEdges"/>
+      <path d="M 168.044032,93.161647 L 120.372625,72.495561 140.736502,116.923954 Z" fill="url(#GR11_1)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+      <path d="M 168.044032,93.161647 L 120.372625,72.495561 140.736502,116.923954 Z" fill="url(#GR11_2)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+     </g>
+     <defs>
+      <linearGradient id="GR12_0" gradientUnits="userSpaceOnUse" x1="140.736502" y1="116.923954" x2="161.051573" y2="88.213834">
+       <stop offset="1" style="stop-color: #41ab76; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #84d44b; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR12_1" gradientUnits="userSpaceOnUse" x1="174.382717" y1="97.646854" x2="169.430197" y2="91.955442">
+       <stop offset="1" style="stop-color: #41ab76; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #20938c; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR12_2" gradientUnits="userSpaceOnUse" x1="168.044032" y1="93.161647" x2="171.545195" y2="99.27257">
+       <stop offset="1" style="stop-color: #41ab76; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #1f998a; stop-opacity: 0"/>
+      </linearGradient>
+     </defs>
+     <path d="M 168.044032,93.161647 L 140.736502,116.923954 174.382717,97.646854 Z" fill="#41ab76" fill-opacity="1" shape-rendering="crispEdges"/>
+     <g stroke="none" stroke-width="0" shape-rendering="crispEdges" filter="url(#colorMat)">
+      <path d="M 168.044032,93.161647 L 140.736502,116.923954 174.382717,97.646854 Z" fill="url(#GR12_0)" shape-rendering="crispEdges"/>
+      <path d="M 168.044032,93.161647 L 140.736502,116.923954 174.382717,97.646854 Z" fill="url(#GR12_1)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+      <path d="M 168.044032,93.161647 L 140.736502,116.923954 174.382717,97.646854 Z" fill="url(#GR12_2)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+     </g>
+     <defs>
+      <linearGradient id="GR13_0" gradientUnits="userSpaceOnUse" x1="168.044032" y1="93.161647" x2="122.641546" y2="68.344597">
+       <stop offset="1" style="stop-color: #297c8c; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #1f998a; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR13_1" gradientUnits="userSpaceOnUse" x1="128.498359" y1="57.62963" x2="121.787847" y2="73.109075">
+       <stop offset="1" style="stop-color: #297c8c; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #365c8d; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR13_2" gradientUnits="userSpaceOnUse" x1="120.372625" y1="72.495561" x2="131.392928" y2="60.230417">
+       <stop offset="1" style="stop-color: #297c8c; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #26818e; stop-opacity: 0"/>
+      </linearGradient>
+     </defs>
+     <path d="M 120.372625,72.495561 L 168.044032,93.161647 128.498359,57.62963 Z" fill="#297c8c" fill-opacity="1" shape-rendering="crispEdges"/>
+     <g stroke="none" stroke-width="0" shape-rendering="crispEdges" filter="url(#colorMat)">
+      <path d="M 120.372625,72.495561 L 168.044032,93.161647 128.498359,57.62963 Z" fill="url(#GR13_0)" shape-rendering="crispEdges"/>
+      <path d="M 120.372625,72.495561 L 168.044032,93.161647 128.498359,57.62963 Z" fill="url(#GR13_1)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+      <path d="M 120.372625,72.495561 L 168.044032,93.161647 128.498359,57.62963 Z" fill="url(#GR13_2)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+     </g>
+     <defs>
+      <linearGradient id="GR14_0" gradientUnits="userSpaceOnUse" x1="168.044032" y1="93.161647" x2="174.83384" y2="94.002029">
+       <stop offset="1" style="stop-color: #1f968b; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #1f998a; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR14_1" gradientUnits="userSpaceOnUse" x1="174.382717" y1="97.646854" x2="167.330893" y2="95.422668">
+       <stop offset="1" style="stop-color: #1f968b; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #20938c; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR14_2" gradientUnits="userSpaceOnUse" x1="179.390361" y1="57.187905" x2="158.642721" y2="86.509348">
+       <stop offset="1" style="stop-color: #1f968b; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #1f958b; stop-opacity: 0"/>
+      </linearGradient>
+     </defs>
+     <path d="M 179.390361,57.187905 L 168.044032,93.161647 174.382717,97.646854 Z" fill="#1f968b" fill-opacity="1" shape-rendering="crispEdges"/>
+     <g stroke="none" stroke-width="0" shape-rendering="crispEdges" filter="url(#colorMat)">
+      <path d="M 179.390361,57.187905 L 168.044032,93.161647 174.382717,97.646854 Z" fill="url(#GR14_0)" shape-rendering="crispEdges"/>
+      <path d="M 179.390361,57.187905 L 168.044032,93.161647 174.382717,97.646854 Z" fill="url(#GR14_1)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+      <path d="M 179.390361,57.187905 L 168.044032,93.161647 174.382717,97.646854 Z" fill="url(#GR14_2)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+     </g>
+     <defs>
+      <linearGradient id="GR15_0" gradientUnits="userSpaceOnUse" x1="179.390361" y1="57.187905" x2="167.585262" y2="57.33909">
+       <stop offset="1" style="stop-color: #228f8c; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #1f958b; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR15_1" gradientUnits="userSpaceOnUse" x1="167.460833" y1="47.623215" x2="181.054783" y2="51.910826">
+       <stop offset="1" style="stop-color: #228f8c; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #27808e; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR15_2" gradientUnits="userSpaceOnUse" x1="168.044032" y1="93.161647" x2="190.040403" y2="65.726746">
+       <stop offset="1" style="stop-color: #228f8c; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #1f998a; stop-opacity: 0"/>
+      </linearGradient>
+     </defs>
+     <path d="M 168.044032,93.161647 L 179.390361,57.187905 167.460833,47.623215 Z" fill="#228f8c" fill-opacity="1" shape-rendering="crispEdges"/>
+     <g stroke="none" stroke-width="0" shape-rendering="crispEdges" filter="url(#colorMat)">
+      <path d="M 168.044032,93.161647 L 179.390361,57.187905 167.460833,47.623215 Z" fill="url(#GR15_0)" shape-rendering="crispEdges"/>
+      <path d="M 168.044032,93.161647 L 179.390361,57.187905 167.460833,47.623215 Z" fill="url(#GR15_1)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+      <path d="M 168.044032,93.161647 L 179.390361,57.187905 167.460833,47.623215 Z" fill="url(#GR15_2)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+     </g>
+     <defs>
+      <linearGradient id="GR16_0" gradientUnits="userSpaceOnUse" x1="167.460833" y1="47.623215" x2="145.081904" y2="72.530042">
+       <stop offset="1" style="stop-color: #297c8c; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #27808e; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR16_1" gradientUnits="userSpaceOnUse" x1="128.498359" y1="57.62963" x2="167.582572" y2="57.129088">
+       <stop offset="1" style="stop-color: #297c8c; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #365c8d; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR16_2" gradientUnits="userSpaceOnUse" x1="168.044032" y1="93.161647" x2="157.03634" y2="50.300452">
+       <stop offset="1" style="stop-color: #297c8c; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #1f998a; stop-opacity: 0"/>
+      </linearGradient>
+     </defs>
+     <path d="M 168.044032,93.161647 L 167.460833,47.623215 128.498359,57.62963 Z" fill="#297c8c" fill-opacity="1" shape-rendering="crispEdges"/>
+     <g stroke="none" stroke-width="0" shape-rendering="crispEdges" filter="url(#colorMat)">
+      <path d="M 168.044032,93.161647 L 167.460833,47.623215 128.498359,57.62963 Z" fill="url(#GR16_0)" shape-rendering="crispEdges"/>
+      <path d="M 168.044032,93.161647 L 167.460833,47.623215 128.498359,57.62963 Z" fill="url(#GR16_1)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+      <path d="M 168.044032,93.161647 L 167.460833,47.623215 128.498359,57.62963 Z" fill="url(#GR16_2)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+     </g>
+     <defs>
+      <linearGradient id="GR17_0" gradientUnits="userSpaceOnUse" x1="121.757299" y1="113.389244" x2="97.422502" y2="102.621615">
+       <stop offset="1" style="stop-color: #cae02b; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #addc30; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR17_1" gradientUnits="userSpaceOnUse" x1="92.233604" y1="114.348505" x2="102.260383" y2="127.858918">
+       <stop offset="1" style="stop-color: #cae02b; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #b5de2b; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR17_2" gradientUnits="userSpaceOnUse" x1="78.42994" y1="145.544727" x2="77.431962" y2="114.829428">
+       <stop offset="1" style="stop-color: #cae02b; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #fde725; stop-opacity: 0"/>
+      </linearGradient>
+     </defs>
+     <path d="M 78.42994,145.544727 L 121.757299,113.389244 92.233604,114.348505 Z" fill="#cae02b" fill-opacity="1" shape-rendering="crispEdges"/>
+     <g stroke="none" stroke-width="0" shape-rendering="crispEdges" filter="url(#colorMat)">
+      <path d="M 78.42994,145.544727 L 121.757299,113.389244 92.233604,114.348505 Z" fill="url(#GR17_0)" shape-rendering="crispEdges"/>
+      <path d="M 78.42994,145.544727 L 121.757299,113.389244 92.233604,114.348505 Z" fill="url(#GR17_1)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+      <path d="M 78.42994,145.544727 L 121.757299,113.389244 92.233604,114.348505 Z" fill="url(#GR17_2)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+     </g>
+     <defs>
+      <linearGradient id="GR18_0" gradientUnits="userSpaceOnUse" x1="78.42994" y1="145.544727" x2="116.214641" y2="107.835493">
+       <stop offset="1" style="stop-color: #bbdd35; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #fde725; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR18_1" gradientUnits="userSpaceOnUse" x1="152.073456" y1="143.766072" x2="126.768898" y2="109.669876">
+       <stop offset="1" style="stop-color: #bbdd35; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #86d549; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR18_2" gradientUnits="userSpaceOnUse" x1="121.757299" y1="113.389244" x2="122.508213" y2="144.480139">
+       <stop offset="1" style="stop-color: #bbdd35; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #addc30; stop-opacity: 0"/>
+      </linearGradient>
+     </defs>
+     <path d="M 121.757299,113.389244 L 78.42994,145.544727 152.073456,143.766072 Z" fill="#bbdd35" fill-opacity="1" shape-rendering="crispEdges"/>
+     <g stroke="none" stroke-width="0" shape-rendering="crispEdges" filter="url(#colorMat)">
+      <path d="M 121.757299,113.389244 L 78.42994,145.544727 152.073456,143.766072 Z" fill="url(#GR18_0)" shape-rendering="crispEdges"/>
+      <path d="M 121.757299,113.389244 L 78.42994,145.544727 152.073456,143.766072 Z" fill="url(#GR18_1)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+      <path d="M 121.757299,113.389244 L 78.42994,145.544727 152.073456,143.766072 Z" fill="url(#GR18_2)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+     </g>
+     <defs>
+      <linearGradient id="GR19_0" gradientUnits="userSpaceOnUse" x1="121.757299" y1="113.389244" x2="136.596496" y2="107.121806">
+       <stop offset="1" style="stop-color: #92d742; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #addc30; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR19_1" gradientUnits="userSpaceOnUse" x1="152.073456" y1="143.766072" x2="156.524931" y2="119.864411">
+       <stop offset="1" style="stop-color: #92d742; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #86d549; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR19_2" gradientUnits="userSpaceOnUse" x1="140.736502" y1="116.923954" x2="132.995279" y2="124.649715">
+       <stop offset="1" style="stop-color: #92d742; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #84d44b; stop-opacity: 0"/>
+      </linearGradient>
+     </defs>
+     <path d="M 140.736502,116.923954 L 121.757299,113.389244 152.073456,143.766072 Z" fill="#92d742" fill-opacity="1" shape-rendering="crispEdges"/>
+     <g stroke="none" stroke-width="0" shape-rendering="crispEdges" filter="url(#colorMat)">
+      <path d="M 140.736502,116.923954 L 121.757299,113.389244 152.073456,143.766072 Z" fill="url(#GR19_0)" shape-rendering="crispEdges"/>
+      <path d="M 140.736502,116.923954 L 121.757299,113.389244 152.073456,143.766072 Z" fill="url(#GR19_1)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+      <path d="M 140.736502,116.923954 L 121.757299,113.389244 152.073456,143.766072 Z" fill="url(#GR19_2)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+     </g>
+     <defs>
+      <linearGradient id="GR1a_0" gradientUnits="userSpaceOnUse" x1="121.757299" y1="113.389244" x2="136.102594" y2="106.814038">
+       <stop offset="1" style="stop-color: #72bb59; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #addc30; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR1a_1" gradientUnits="userSpaceOnUse" x1="140.736502" y1="116.923954" x2="121.898583" y2="117.561812">
+       <stop offset="1" style="stop-color: #72bb59; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #84d44b; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR1a_2" gradientUnits="userSpaceOnUse" x1="120.372625" y1="72.495561" x2="113.058268" y2="111.769125">
+       <stop offset="1" style="stop-color: #72bb59; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #26818e; stop-opacity: 0"/>
+      </linearGradient>
+     </defs>
+     <path d="M 120.372625,72.495561 L 121.757299,113.389244 140.736502,116.923954 Z" fill="#72bb59" fill-opacity="1" shape-rendering="crispEdges"/>
+     <g stroke="none" stroke-width="0" shape-rendering="crispEdges" filter="url(#colorMat)">
+      <path d="M 120.372625,72.495561 L 121.757299,113.389244 140.736502,116.923954 Z" fill="url(#GR1a_0)" shape-rendering="crispEdges"/>
+      <path d="M 120.372625,72.495561 L 121.757299,113.389244 140.736502,116.923954 Z" fill="url(#GR1a_1)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+      <path d="M 120.372625,72.495561 L 121.757299,113.389244 140.736502,116.923954 Z" fill="url(#GR1a_2)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+     </g>
+     <defs>
+      <linearGradient id="GR1b_0" gradientUnits="userSpaceOnUse" x1="56.405304" y1="125.712207" x2="54.397534" y2="128.551697">
+       <stop offset="1" style="stop-color: #84cd56; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #50c46a; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR1b_1" gradientUnits="userSpaceOnUse" x1="52.909761" y1="127.49971" x2="55.36383" y2="124.774391">
+       <stop offset="1" style="stop-color: #84cd56; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #40bd72; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR1b_2" gradientUnits="userSpaceOnUse" x1="78.42994" y1="145.544727" x2="65.825032" y2="120.895272">
+       <stop offset="1" style="stop-color: #84cd56; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #fde725; stop-opacity: 0"/>
+      </linearGradient>
+     </defs>
+     <path d="M 78.42994,145.544727 L 56.405304,125.712207 52.909761,127.49971 Z" fill="#84cd56" fill-opacity="1" shape-rendering="crispEdges"/>
+     <g stroke="none" stroke-width="0" shape-rendering="crispEdges" filter="url(#colorMat)">
+      <path d="M 78.42994,145.544727 L 56.405304,125.712207 52.909761,127.49971 Z" fill="url(#GR1b_0)" shape-rendering="crispEdges"/>
+      <path d="M 78.42994,145.544727 L 56.405304,125.712207 52.909761,127.49971 Z" fill="url(#GR1b_1)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+      <path d="M 78.42994,145.544727 L 56.405304,125.712207 52.909761,127.49971 Z" fill="url(#GR1b_2)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+     </g>
+     <defs>
+      <linearGradient id="GR1c_0" gradientUnits="userSpaceOnUse" x1="78.42994" y1="145.544727" x2="70.701478" y2="121.177873">
+       <stop offset="1" style="stop-color: #abd83e; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #fde725; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR1c_1" gradientUnits="userSpaceOnUse" x1="92.233604" y1="114.348505" x2="70.539929" y2="138.440011">
+       <stop offset="1" style="stop-color: #abd83e; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #b5de2b; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR1c_2" gradientUnits="userSpaceOnUse" x1="56.405304" y1="125.712207" x2="82.162478" y2="137.109207">
+       <stop offset="1" style="stop-color: #abd83e; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #50c46a; stop-opacity: 0"/>
+      </linearGradient>
+     </defs>
+     <path d="M 56.405304,125.712207 L 78.42994,145.544727 92.233604,114.348505 Z" fill="#abd83e" fill-opacity="1" shape-rendering="crispEdges"/>
+     <g stroke="none" stroke-width="0" shape-rendering="crispEdges" filter="url(#colorMat)">
+      <path d="M 56.405304,125.712207 L 78.42994,145.544727 92.233604,114.348505 Z" fill="url(#GR1c_0)" shape-rendering="crispEdges"/>
+      <path d="M 56.405304,125.712207 L 78.42994,145.544727 92.233604,114.348505 Z" fill="url(#GR1c_1)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+      <path d="M 56.405304,125.712207 L 78.42994,145.544727 92.233604,114.348505 Z" fill="url(#GR1c_2)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+     </g>
+     <defs>
+      <linearGradient id="GR1d_0" gradientUnits="userSpaceOnUse" x1="51.393117" y1="101.588517" x2="62.211" y2="122.743367">
+       <stop offset="1" style="stop-color: #3bb876; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #22a785; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR1d_1" gradientUnits="userSpaceOnUse" x1="52.909761" y1="127.49971" x2="56.616672" y2="126.729524">
+       <stop offset="1" style="stop-color: #3bb876; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #40bd72; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR1d_2" gradientUnits="userSpaceOnUse" x1="56.405304" y1="125.712207" x2="52.817427" y2="125.922214">
+       <stop offset="1" style="stop-color: #3bb876; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #50c46a; stop-opacity: 0"/>
+      </linearGradient>
+     </defs>
+     <path d="M 56.405304,125.712207 L 51.393117,101.588517 52.909761,127.49971 Z" fill="#3bb876" fill-opacity="1" shape-rendering="crispEdges"/>
+     <g stroke="none" stroke-width="0" shape-rendering="crispEdges" filter="url(#colorMat)">
+      <path d="M 56.405304,125.712207 L 51.393117,101.588517 52.909761,127.49971 Z" fill="url(#GR1d_0)" shape-rendering="crispEdges"/>
+      <path d="M 56.405304,125.712207 L 51.393117,101.588517 52.909761,127.49971 Z" fill="url(#GR1d_1)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+      <path d="M 56.405304,125.712207 L 51.393117,101.588517 52.909761,127.49971 Z" fill="url(#GR1d_2)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+     </g>
+     <defs>
+      <linearGradient id="GR1e_0" gradientUnits="userSpaceOnUse" x1="56.405304" y1="125.712207" x2="62.826325" y2="105.160649">
+       <stop offset="1" style="stop-color: #62c35e; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #50c46a; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR1e_1" gradientUnits="userSpaceOnUse" x1="92.233604" y1="114.348505" x2="55.624619" y2="121.954766">
+       <stop offset="1" style="stop-color: #62c35e; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #b5de2b; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR1e_2" gradientUnits="userSpaceOnUse" x1="51.393117" y1="101.588517" x2="58.803229" y2="124.951654">
+       <stop offset="1" style="stop-color: #62c35e; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #22a785; stop-opacity: 0"/>
+      </linearGradient>
+     </defs>
+     <path d="M 51.393117,101.588517 L 56.405304,125.712207 92.233604,114.348505 Z" fill="#62c35e" fill-opacity="1" shape-rendering="crispEdges"/>
+     <g stroke="none" stroke-width="0" shape-rendering="crispEdges" filter="url(#colorMat)">
+      <path d="M 51.393117,101.588517 L 56.405304,125.712207 92.233604,114.348505 Z" fill="url(#GR1e_0)" shape-rendering="crispEdges"/>
+      <path d="M 51.393117,101.588517 L 56.405304,125.712207 92.233604,114.348505 Z" fill="url(#GR1e_1)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+      <path d="M 51.393117,101.588517 L 56.405304,125.712207 92.233604,114.348505 Z" fill="url(#GR1e_2)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+     </g>
+     <defs>
+      <linearGradient id="GR1f_0" gradientUnits="userSpaceOnUse" x1="51.393117" y1="101.588517" x2="87.098701" y2="93.000244">
+       <stop offset="1" style="stop-color: #62c35e; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #22a785; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR1f_1" gradientUnits="userSpaceOnUse" x1="92.233604" y1="114.348505" x2="90.913213" y2="98.330759">
+       <stop offset="1" style="stop-color: #62c35e; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #b5de2b; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR1f_2" gradientUnits="userSpaceOnUse" x1="88.430086" y1="98.53545" x2="84.267184" y2="111.859518">
+       <stop offset="1" style="stop-color: #62c35e; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #50c46a; stop-opacity: 0"/>
+      </linearGradient>
+     </defs>
+     <path d="M 88.430086,98.53545 L 51.393117,101.588517 92.233604,114.348505 Z" fill="#62c35e" fill-opacity="1" shape-rendering="crispEdges"/>
+     <g stroke="none" stroke-width="0" shape-rendering="crispEdges" filter="url(#colorMat)">
+      <path d="M 88.430086,98.53545 L 51.393117,101.588517 92.233604,114.348505 Z" fill="url(#GR1f_0)" shape-rendering="crispEdges"/>
+      <path d="M 88.430086,98.53545 L 51.393117,101.588517 92.233604,114.348505 Z" fill="url(#GR1f_1)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+      <path d="M 88.430086,98.53545 L 51.393117,101.588517 92.233604,114.348505 Z" fill="url(#GR1f_2)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+     </g>
+     <defs>
+      <linearGradient id="GR20_0" gradientUnits="userSpaceOnUse" x1="88.430086" y1="98.53545" x2="53.099815" y2="107.975796">
+       <stop offset="1" style="stop-color: #31a87f; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #50c46a; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR20_1" gradientUnits="userSpaceOnUse" x1="41.501555" y1="64.569581" x2="44.5993" y2="102.148551">
+       <stop offset="1" style="stop-color: #31a87f; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #228c8d; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR20_2" gradientUnits="userSpaceOnUse" x1="51.393117" y1="101.588517" x2="65.57541" y2="81.993724">
+       <stop offset="1" style="stop-color: #31a87f; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #22a785; stop-opacity: 0"/>
+      </linearGradient>
+     </defs>
+     <path d="M 51.393117,101.588517 L 88.430086,98.53545 41.501555,64.569581 Z" fill="#31a87f" fill-opacity="1" shape-rendering="crispEdges"/>
+     <g stroke="none" stroke-width="0" shape-rendering="crispEdges" filter="url(#colorMat)">
+      <path d="M 51.393117,101.588517 L 88.430086,98.53545 41.501555,64.569581 Z" fill="url(#GR20_0)" shape-rendering="crispEdges"/>
+      <path d="M 51.393117,101.588517 L 88.430086,98.53545 41.501555,64.569581 Z" fill="url(#GR20_1)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+      <path d="M 51.393117,101.588517 L 88.430086,98.53545 41.501555,64.569581 Z" fill="url(#GR20_2)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+     </g>
+     <defs>
+      <linearGradient id="GR21_0" gradientUnits="userSpaceOnUse" x1="89.446099" y1="51.305239" x2="66.664108" y2="82.7817">
+       <stop offset="1" style="stop-color: #3b8780; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #404688; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR21_1" gradientUnits="userSpaceOnUse" x1="41.501555" y1="64.569581" x2="89.138713" y2="65.594349">
+       <stop offset="1" style="stop-color: #3b8780; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #228c8d; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR21_2" gradientUnits="userSpaceOnUse" x1="88.430086" y1="98.53545" x2="76.364637" y2="54.924357">
+       <stop offset="1" style="stop-color: #3b8780; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #50c46a; stop-opacity: 0"/>
+      </linearGradient>
+     </defs>
+     <path d="M 88.430086,98.53545 L 89.446099,51.305239 41.501555,64.569581 Z" fill="#3b8780" fill-opacity="1" shape-rendering="crispEdges"/>
+     <g stroke="none" stroke-width="0" shape-rendering="crispEdges" filter="url(#colorMat)">
+      <path d="M 88.430086,98.53545 L 89.446099,51.305239 41.501555,64.569581 Z" fill="url(#GR21_0)" shape-rendering="crispEdges"/>
+      <path d="M 88.430086,98.53545 L 89.446099,51.305239 41.501555,64.569581 Z" fill="url(#GR21_1)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+      <path d="M 88.430086,98.53545 L 89.446099,51.305239 41.501555,64.569581 Z" fill="url(#GR21_2)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+     </g>
+     <defs>
+      <linearGradient id="GR22_0" gradientUnits="userSpaceOnUse" x1="88.430086" y1="98.53545" x2="121.216754" y2="97.425283">
+       <stop offset="1" style="stop-color: #61b663; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #50c46a; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR22_1" gradientUnits="userSpaceOnUse" x1="121.757299" y1="113.389244" x2="101.177085" y2="88.143964">
+       <stop offset="1" style="stop-color: #61b663; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #addc30; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR22_2" gradientUnits="userSpaceOnUse" x1="120.372625" y1="72.495561" x2="105.396478" y2="106.097297">
+       <stop offset="1" style="stop-color: #61b663; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #26818e; stop-opacity: 0"/>
+      </linearGradient>
+     </defs>
+     <path d="M 120.372625,72.495561 L 88.430086,98.53545 121.757299,113.389244 Z" fill="#61b663" fill-opacity="1" shape-rendering="crispEdges"/>
+     <g stroke="none" stroke-width="0" shape-rendering="crispEdges" filter="url(#colorMat)">
+      <path d="M 120.372625,72.495561 L 88.430086,98.53545 121.757299,113.389244 Z" fill="url(#GR22_0)" shape-rendering="crispEdges"/>
+      <path d="M 120.372625,72.495561 L 88.430086,98.53545 121.757299,113.389244 Z" fill="url(#GR22_1)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+      <path d="M 120.372625,72.495561 L 88.430086,98.53545 121.757299,113.389244 Z" fill="url(#GR22_2)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+     </g>
+     <defs>
+      <linearGradient id="GR23_0" gradientUnits="userSpaceOnUse" x1="92.233604" y1="114.348505" x2="97.483084" y2="102.570332">
+       <stop offset="1" style="stop-color: #91d542; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #b5de2b; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR23_1" gradientUnits="userSpaceOnUse" x1="121.757299" y1="113.389244" x2="93.630162" y2="120.154671">
+       <stop offset="1" style="stop-color: #91d542; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #addc30; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR23_2" gradientUnits="userSpaceOnUse" x1="88.430086" y1="98.53545" x2="88.94734" y2="114.455279">
+       <stop offset="1" style="stop-color: #91d542; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #50c46a; stop-opacity: 0"/>
+      </linearGradient>
+     </defs>
+     <path d="M 88.430086,98.53545 L 92.233604,114.348505 121.757299,113.389244 Z" fill="#91d542" fill-opacity="1" shape-rendering="crispEdges"/>
+     <g stroke="none" stroke-width="0" shape-rendering="crispEdges" filter="url(#colorMat)">
+      <path d="M 88.430086,98.53545 L 92.233604,114.348505 121.757299,113.389244 Z" fill="url(#GR23_0)" shape-rendering="crispEdges"/>
+      <path d="M 88.430086,98.53545 L 92.233604,114.348505 121.757299,113.389244 Z" fill="url(#GR23_1)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+      <path d="M 88.430086,98.53545 L 92.233604,114.348505 121.757299,113.389244 Z" fill="url(#GR23_2)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+     </g>
+     <defs>
+      <linearGradient id="GR24_0" gradientUnits="userSpaceOnUse" x1="106.049196" y1="30.914668" x2="103.808469" y2="52.777258">
+       <stop offset="1" style="stop-color: #413077; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #440154; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR24_1" gradientUnits="userSpaceOnUse" x1="89.446099" y1="51.305239" x2="110.352834" y2="44.847442">
+       <stop offset="1" style="stop-color: #413077; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #404688; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR24_2" gradientUnits="userSpaceOnUse" x1="113.096277" y1="53.729178" x2="97.688135" y2="41.183042">
+       <stop offset="1" style="stop-color: #413077; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #3f4889; stop-opacity: 0"/>
+      </linearGradient>
+     </defs>
+     <path d="M 113.096277,53.729178 L 106.049196,30.914668 89.446099,51.305239 Z" fill="#413077" fill-opacity="1" shape-rendering="crispEdges"/>
+     <g stroke="none" stroke-width="0" shape-rendering="crispEdges" filter="url(#colorMat)">
+      <path d="M 113.096277,53.729178 L 106.049196,30.914668 89.446099,51.305239 Z" fill="url(#GR24_0)" shape-rendering="crispEdges"/>
+      <path d="M 113.096277,53.729178 L 106.049196,30.914668 89.446099,51.305239 Z" fill="url(#GR24_1)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+      <path d="M 113.096277,53.729178 L 106.049196,30.914668 89.446099,51.305239 Z" fill="url(#GR24_2)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+     </g>
+     <defs>
+      <linearGradient id="GR25_0" gradientUnits="userSpaceOnUse" x1="140.199758" y1="15.159273" x2="139.451108" y2="32.367803">
+       <stop offset="1" style="stop-color: #461b6b; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #481b6d; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR25_1" gradientUnits="userSpaceOnUse" x1="106.049196" y1="30.914668" x2="140.875769" y2="29.243014">
+       <stop offset="1" style="stop-color: #461b6b; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #440154; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR25_2" gradientUnits="userSpaceOnUse" x1="141.029052" y1="32.436451" x2="134.311495" y2="17.875829">
+       <stop offset="1" style="stop-color: #461b6b; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #453581; stop-opacity: 0"/>
+      </linearGradient>
+     </defs>
+     <path d="M 141.029052,32.436451 L 140.199758,15.159273 106.049196,30.914668 Z" fill="#461b6b" fill-opacity="1" shape-rendering="crispEdges"/>
+     <g stroke="none" stroke-width="0" shape-rendering="crispEdges" filter="url(#colorMat)">
+      <path d="M 141.029052,32.436451 L 140.199758,15.159273 106.049196,30.914668 Z" fill="url(#GR25_0)" shape-rendering="crispEdges"/>
+      <path d="M 141.029052,32.436451 L 140.199758,15.159273 106.049196,30.914668 Z" fill="url(#GR25_1)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+      <path d="M 141.029052,32.436451 L 140.199758,15.159273 106.049196,30.914668 Z" fill="url(#GR25_2)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+     </g>
+     <defs>
+      <linearGradient id="GR26_0" gradientUnits="userSpaceOnUse" x1="141.029052" y1="32.436451" x2="148.542151" y2="20.341275">
+       <stop offset="1" style="stop-color: #403c7e; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #453581; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR26_1" gradientUnits="userSpaceOnUse" x1="160.59953" y1="27.830895" x2="140.853482" y2="28.778694">
+       <stop offset="1" style="stop-color: #403c7e; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #32658e; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR26_2" gradientUnits="userSpaceOnUse" x1="140.199758" y1="15.159273" x2="144.095788" y2="31.714751">
+       <stop offset="1" style="stop-color: #403c7e; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #481b6d; stop-opacity: 0"/>
+      </linearGradient>
+     </defs>
+     <path d="M 140.199758,15.159273 L 141.029052,32.436451 160.59953,27.830895 Z" fill="#403c7e" fill-opacity="1" shape-rendering="crispEdges"/>
+     <g stroke="none" stroke-width="0" shape-rendering="crispEdges" filter="url(#colorMat)">
+      <path d="M 140.199758,15.159273 L 141.029052,32.436451 160.59953,27.830895 Z" fill="url(#GR26_0)" shape-rendering="crispEdges"/>
+      <path d="M 140.199758,15.159273 L 141.029052,32.436451 160.59953,27.830895 Z" fill="url(#GR26_1)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+      <path d="M 140.199758,15.159273 L 141.029052,32.436451 160.59953,27.830895 Z" fill="url(#GR26_2)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+     </g>
+     <defs>
+      <linearGradient id="GR27_0" gradientUnits="userSpaceOnUse" x1="106.049196" y1="30.914668" x2="119.638694" y2="48.741994">
+       <stop offset="1" style="stop-color: #432a74; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #440154; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR27_1" gradientUnits="userSpaceOnUse" x1="113.096277" y1="53.729178" x2="114.073625" y2="31.263767">
+       <stop offset="1" style="stop-color: #432a74; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #3f4889; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR27_2" gradientUnits="userSpaceOnUse" x1="141.029052" y1="32.436451" x2="109.525065" y2="42.16759">
+       <stop offset="1" style="stop-color: #432a74; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #453581; stop-opacity: 0"/>
+      </linearGradient>
+     </defs>
+     <path d="M 141.029052,32.436451 L 106.049196,30.914668 113.096277,53.729178 Z" fill="#432a74" fill-opacity="1" shape-rendering="crispEdges"/>
+     <g stroke="none" stroke-width="0" shape-rendering="crispEdges" filter="url(#colorMat)">
+      <path d="M 141.029052,32.436451 L 106.049196,30.914668 113.096277,53.729178 Z" fill="url(#GR27_0)" shape-rendering="crispEdges"/>
+      <path d="M 141.029052,32.436451 L 106.049196,30.914668 113.096277,53.729178 Z" fill="url(#GR27_1)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+      <path d="M 141.029052,32.436451 L 106.049196,30.914668 113.096277,53.729178 Z" fill="url(#GR27_2)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+     </g>
+     <defs>
+      <linearGradient id="GR28_0" gradientUnits="userSpaceOnUse" x1="141.029052" y1="32.436451" x2="134.278401" y2="59.093379">
+       <stop offset="1" style="stop-color: #3e4887; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #453581; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR28_1" gradientUnits="userSpaceOnUse" x1="113.096277" y1="53.729178" x2="126.998977" y2="60.644163">
+       <stop offset="1" style="stop-color: #3e4887; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #3f4889; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR28_2" gradientUnits="userSpaceOnUse" x1="128.498359" y1="57.62963" x2="120.95726" y2="47.736871">
+       <stop offset="1" style="stop-color: #3e4887; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #365c8d; stop-opacity: 0"/>
+      </linearGradient>
+     </defs>
+     <path d="M 128.498359,57.62963 L 141.029052,32.436451 113.096277,53.729178 Z" fill="#3e4887" fill-opacity="1" shape-rendering="crispEdges"/>
+     <g stroke="none" stroke-width="0" shape-rendering="crispEdges" filter="url(#colorMat)">
+      <path d="M 128.498359,57.62963 L 141.029052,32.436451 113.096277,53.729178 Z" fill="url(#GR28_0)" shape-rendering="crispEdges"/>
+      <path d="M 128.498359,57.62963 L 141.029052,32.436451 113.096277,53.729178 Z" fill="url(#GR28_1)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+      <path d="M 128.498359,57.62963 L 141.029052,32.436451 113.096277,53.729178 Z" fill="url(#GR28_2)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+     </g>
+     <defs>
+      <linearGradient id="GR29_0" gradientUnits="userSpaceOnUse" x1="167.460833" y1="47.623215" x2="162.68744" y2="27.339544">
+       <stop offset="1" style="stop-color: #355e89; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #27808e; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR29_1" gradientUnits="userSpaceOnUse" x1="160.59953" y1="27.830895" x2="153.752891" y2="39.747118">
+       <stop offset="1" style="stop-color: #355e89; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #32658e; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR29_2" gradientUnits="userSpaceOnUse" x1="141.029052" y1="32.436451" x2="159.925236" y2="25.885807">
+       <stop offset="1" style="stop-color: #355e89; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #453581; stop-opacity: 0"/>
+      </linearGradient>
+     </defs>
+     <path d="M 141.029052,32.436451 L 167.460833,47.623215 160.59953,27.830895 Z" fill="#355e89" fill-opacity="1" shape-rendering="crispEdges"/>
+     <g stroke="none" stroke-width="0" shape-rendering="crispEdges" filter="url(#colorMat)">
+      <path d="M 141.029052,32.436451 L 167.460833,47.623215 160.59953,27.830895 Z" fill="url(#GR29_0)" shape-rendering="crispEdges"/>
+      <path d="M 141.029052,32.436451 L 167.460833,47.623215 160.59953,27.830895 Z" fill="url(#GR29_1)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+      <path d="M 141.029052,32.436451 L 167.460833,47.623215 160.59953,27.830895 Z" fill="url(#GR29_2)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+     </g>
+     <defs>
+      <linearGradient id="GR2a_0" gradientUnits="userSpaceOnUse" x1="141.029052" y1="32.436451" x2="146.323509" y2="53.051742">
+       <stop offset="1" style="stop-color: #365b89; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #453581; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR2a_1" gradientUnits="userSpaceOnUse" x1="128.498359" y1="57.62963" x2="142.490881" y2="33.276366">
+       <stop offset="1" style="stop-color: #365b89; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #365c8d; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR2a_2" gradientUnits="userSpaceOnUse" x1="167.460833" y1="47.623215" x2="140.215619" y2="34.071872">
+       <stop offset="1" style="stop-color: #365b89; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #27808e; stop-opacity: 0"/>
+      </linearGradient>
+     </defs>
+     <path d="M 167.460833,47.623215 L 141.029052,32.436451 128.498359,57.62963 Z" fill="#365b89" fill-opacity="1" shape-rendering="crispEdges"/>
+     <g stroke="none" stroke-width="0" shape-rendering="crispEdges" filter="url(#colorMat)">
+      <path d="M 167.460833,47.623215 L 141.029052,32.436451 128.498359,57.62963 Z" fill="url(#GR2a_0)" shape-rendering="crispEdges"/>
+      <path d="M 167.460833,47.623215 L 141.029052,32.436451 128.498359,57.62963 Z" fill="url(#GR2a_1)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+      <path d="M 167.460833,47.623215 L 141.029052,32.436451 128.498359,57.62963 Z" fill="url(#GR2a_2)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+     </g>
+     <defs>
+      <linearGradient id="GR2b_0" gradientUnits="userSpaceOnUse" x1="113.543236" y1="61.904717" x2="114.367801" y2="53.859498">
+       <stop offset="1" style="stop-color: #3c508a; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #34618d; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR2b_1" gradientUnits="userSpaceOnUse" x1="113.096277" y1="53.729178" x2="110.155591" y2="60.414612">
+       <stop offset="1" style="stop-color: #3c508a; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #3f4889; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR2b_2" gradientUnits="userSpaceOnUse" x1="89.446099" y1="51.305239" x2="112.893679" y2="50.023354">
+       <stop offset="1" style="stop-color: #3c508a; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #404688; stop-opacity: 0"/>
+      </linearGradient>
+     </defs>
+     <path d="M 89.446099,51.305239 L 113.543236,61.904717 113.096277,53.729178 Z" fill="#3c508a" fill-opacity="1" shape-rendering="crispEdges"/>
+     <g stroke="none" stroke-width="0" shape-rendering="crispEdges" filter="url(#colorMat)">
+      <path d="M 89.446099,51.305239 L 113.543236,61.904717 113.096277,53.729178 Z" fill="url(#GR2b_0)" shape-rendering="crispEdges"/>
+      <path d="M 89.446099,51.305239 L 113.543236,61.904717 113.096277,53.729178 Z" fill="url(#GR2b_1)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+      <path d="M 89.446099,51.305239 L 113.543236,61.904717 113.096277,53.729178 Z" fill="url(#GR2b_2)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+     </g>
+     <defs>
+      <linearGradient id="GR2c_0" gradientUnits="userSpaceOnUse" x1="113.543236" y1="61.904717" x2="121.456616" y2="71.61188">
+       <stop offset="1" style="stop-color: #398c82; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #34618d; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR2c_1" gradientUnits="userSpaceOnUse" x1="88.430086" y1="98.53545" x2="122.851246" y2="76.339344">
+       <stop offset="1" style="stop-color: #398c82; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #50c46a; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR2c_2" gradientUnits="userSpaceOnUse" x1="120.372625" y1="72.495561" x2="110.787537" y2="65.924255">
+       <stop offset="1" style="stop-color: #398c82; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #26818e; stop-opacity: 0"/>
+      </linearGradient>
+     </defs>
+     <path d="M 120.372625,72.495561 L 113.543236,61.904717 88.430086,98.53545 Z" fill="#398c82" fill-opacity="1" shape-rendering="crispEdges"/>
+     <g stroke="none" stroke-width="0" shape-rendering="crispEdges" filter="url(#colorMat)">
+      <path d="M 120.372625,72.495561 L 113.543236,61.904717 88.430086,98.53545 Z" fill="url(#GR2c_0)" shape-rendering="crispEdges"/>
+      <path d="M 120.372625,72.495561 L 113.543236,61.904717 88.430086,98.53545 Z" fill="url(#GR2c_1)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+      <path d="M 120.372625,72.495561 L 113.543236,61.904717 88.430086,98.53545 Z" fill="url(#GR2c_2)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+     </g>
+     <defs>
+      <linearGradient id="GR2d_0" gradientUnits="userSpaceOnUse" x1="89.446099" y1="51.305239" x2="110.781866" y2="65.932527">
+       <stop offset="1" style="stop-color: #417980; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #404688; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR2d_1" gradientUnits="userSpaceOnUse" x1="88.430086" y1="98.53545" x2="106.001778" y2="58.587496">
+       <stop offset="1" style="stop-color: #417980; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #50c46a; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR2d_2" gradientUnits="userSpaceOnUse" x1="113.543236" y1="61.904717" x2="89.229335" y2="61.381677">
+       <stop offset="1" style="stop-color: #417980; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #34618d; stop-opacity: 0"/>
+      </linearGradient>
+     </defs>
+     <path d="M 113.543236,61.904717 L 89.446099,51.305239 88.430086,98.53545 Z" fill="#417980" fill-opacity="1" shape-rendering="crispEdges"/>
+     <g stroke="none" stroke-width="0" shape-rendering="crispEdges" filter="url(#colorMat)">
+      <path d="M 113.543236,61.904717 L 89.446099,51.305239 88.430086,98.53545 Z" fill="url(#GR2d_0)" shape-rendering="crispEdges"/>
+      <path d="M 113.543236,61.904717 L 89.446099,51.305239 88.430086,98.53545 Z" fill="url(#GR2d_1)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+      <path d="M 113.543236,61.904717 L 89.446099,51.305239 88.430086,98.53545 Z" fill="url(#GR2d_2)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+     </g>
+     <defs>
+      <linearGradient id="GR2e_0" gradientUnits="userSpaceOnUse" x1="120.372625" y1="72.495561" x2="117.057909" y2="60.900009">
+       <stop offset="1" style="stop-color: #306a8d; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #26818e; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR2e_1" gradientUnits="userSpaceOnUse" x1="128.498359" y1="57.62963" x2="115.988365" y2="65.696562">
+       <stop offset="1" style="stop-color: #306a8d; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #365c8d; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR2e_2" gradientUnits="userSpaceOnUse" x1="113.543236" y1="61.904717" x2="123.258835" y2="67.215274">
+       <stop offset="1" style="stop-color: #306a8d; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #34618d; stop-opacity: 0"/>
+      </linearGradient>
+     </defs>
+     <path d="M 113.543236,61.904717 L 120.372625,72.495561 128.498359,57.62963 Z" fill="#306a8d" fill-opacity="1" shape-rendering="crispEdges"/>
+     <g stroke="none" stroke-width="0" shape-rendering="crispEdges" filter="url(#colorMat)">
+      <path d="M 113.543236,61.904717 L 120.372625,72.495561 128.498359,57.62963 Z" fill="url(#GR2e_0)" shape-rendering="crispEdges"/>
+      <path d="M 113.543236,61.904717 L 120.372625,72.495561 128.498359,57.62963 Z" fill="url(#GR2e_1)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+      <path d="M 113.543236,61.904717 L 120.372625,72.495561 128.498359,57.62963 Z" fill="url(#GR2e_2)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+     </g>
+     <defs>
+      <linearGradient id="GR2f_0" gradientUnits="userSpaceOnUse" x1="128.498359" y1="57.62963" x2="113.354777" y2="58.457533">
+       <stop offset="1" style="stop-color: #38578c; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #365c8d; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR2f_1" gradientUnits="userSpaceOnUse" x1="113.096277" y1="53.729178" x2="115.29056" y2="61.405225">
+       <stop offset="1" style="stop-color: #38578c; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #3f4889; stop-opacity: 0"/>
+      </linearGradient>
+      <linearGradient id="GR2f_2" gradientUnits="userSpaceOnUse" x1="113.543236" y1="61.904717" x2="115.461913" y2="54.328256">
+       <stop offset="1" style="stop-color: #38578c; stop-opacity: 1"/>
+       <stop offset="0" style="stop-color: #34618d; stop-opacity: 0"/>
+      </linearGradient>
+     </defs>
+     <path d="M 113.543236,61.904717 L 128.498359,57.62963 113.096277,53.729178 Z" fill="#38578c" fill-opacity="1" shape-rendering="crispEdges"/>
+     <g stroke="none" stroke-width="0" shape-rendering="crispEdges" filter="url(#colorMat)">
+      <path d="M 113.543236,61.904717 L 128.498359,57.62963 113.096277,53.729178 Z" fill="url(#GR2f_0)" shape-rendering="crispEdges"/>
+      <path d="M 113.543236,61.904717 L 128.498359,57.62963 113.096277,53.729178 Z" fill="url(#GR2f_1)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+      <path d="M 113.543236,61.904717 L 128.498359,57.62963 113.096277,53.729178 Z" fill="url(#GR2f_2)" filter="url(#colorAdd)" shape-rendering="crispEdges"/>
+     </g>
+    </g>
+   </g>
+   <g id="matplotlib.axis_1">
+    <g id="xtick_1">
+     <g id="line2d_1">
+      <defs>
+       <path id="m8d4cb97ff0" d="M 0 0 
+L 0 3.5 
+" style="stroke: #000000; stroke-width: 0.8"/>
+      </defs>
+      <g>
+       <use xlink:href="#m8d4cb97ff0" x="36.073846" y="152.064" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="text_1">
+      <!-- 0.0 -->
+      <g transform="translate(28.122284 166.661656) scale(0.1 -0.1)">
+       <defs>
+        <path id="DejaVuSans-13" d="M 2034 4250 
+Q 1547 4250 1301 3770 
+Q 1056 3291 1056 2328 
+Q 1056 1369 1301 889 
+Q 1547 409 2034 409 
+Q 2525 409 2770 889 
+Q 3016 1369 3016 2328 
+Q 3016 3291 2770 3770 
+Q 2525 4250 2034 4250 
+z
+M 2034 4750 
+Q 2819 4750 3233 4129 
+Q 3647 3509 3647 2328 
+Q 3647 1150 3233 529 
+Q 2819 -91 2034 -91 
+Q 1250 -91 836 529 
+Q 422 1150 422 2328 
+Q 422 3509 836 4129 
+Q 1250 4750 2034 4750 
+z
+" transform="scale(0.015625)"/>
+        <path id="DejaVuSans-11" d="M 684 794 
+L 1344 794 
+L 1344 0 
+L 684 0 
+L 684 794 
+z
+" transform="scale(0.015625)"/>
+       </defs>
+       <use xlink:href="#DejaVuSans-13"/>
+       <use xlink:href="#DejaVuSans-11" transform="translate(63.625 0)"/>
+       <use xlink:href="#DejaVuSans-13" transform="translate(95.40625 0)"/>
+      </g>
+     </g>
+    </g>
+    <g id="xtick_2">
+     <g id="line2d_2">
+      <g>
+       <use xlink:href="#m8d4cb97ff0" x="71.845987" y="152.064" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="text_2">
+      <!-- 0.2 -->
+      <g transform="translate(63.894425 166.661656) scale(0.1 -0.1)">
+       <defs>
+        <path id="DejaVuSans-15" d="M 1228 531 
+L 3431 531 
+L 3431 0 
+L 469 0 
+L 469 531 
+Q 828 903 1448 1529 
+Q 2069 2156 2228 2338 
+Q 2531 2678 2651 2914 
+Q 2772 3150 2772 3378 
+Q 2772 3750 2511 3984 
+Q 2250 4219 1831 4219 
+Q 1534 4219 1204 4116 
+Q 875 4013 500 3803 
+L 500 4441 
+Q 881 4594 1212 4672 
+Q 1544 4750 1819 4750 
+Q 2544 4750 2975 4387 
+Q 3406 4025 3406 3419 
+Q 3406 3131 3298 2873 
+Q 3191 2616 2906 2266 
+Q 2828 2175 2409 1742 
+Q 1991 1309 1228 531 
+z
+" transform="scale(0.015625)"/>
+       </defs>
+       <use xlink:href="#DejaVuSans-13"/>
+       <use xlink:href="#DejaVuSans-11" transform="translate(63.625 0)"/>
+       <use xlink:href="#DejaVuSans-15" transform="translate(95.40625 0)"/>
+      </g>
+     </g>
+    </g>
+    <g id="xtick_3">
+     <g id="line2d_3">
+      <g>
+       <use xlink:href="#m8d4cb97ff0" x="107.618128" y="152.064" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="text_3">
+      <!-- 0.4 -->
+      <g transform="translate(99.666565 166.661656) scale(0.1 -0.1)">
+       <defs>
+        <path id="DejaVuSans-17" d="M 2419 4116 
+L 825 1625 
+L 2419 1625 
+L 2419 4116 
+z
+M 2253 4666 
+L 3047 4666 
+L 3047 1625 
+L 3713 1625 
+L 3713 1100 
+L 3047 1100 
+L 3047 0 
+L 2419 0 
+L 2419 1100 
+L 313 1100 
+L 313 1709 
+L 2253 4666 
+z
+" transform="scale(0.015625)"/>
+       </defs>
+       <use xlink:href="#DejaVuSans-13"/>
+       <use xlink:href="#DejaVuSans-11" transform="translate(63.625 0)"/>
+       <use xlink:href="#DejaVuSans-17" transform="translate(95.40625 0)"/>
+      </g>
+     </g>
+    </g>
+    <g id="xtick_4">
+     <g id="line2d_4">
+      <g>
+       <use xlink:href="#m8d4cb97ff0" x="143.390269" y="152.064" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="text_4">
+      <!-- 0.6 -->
+      <g transform="translate(135.438706 166.661656) scale(0.1 -0.1)">
+       <defs>
+        <path id="DejaVuSans-19" d="M 2113 2584 
+Q 1688 2584 1439 2293 
+Q 1191 2003 1191 1497 
+Q 1191 994 1439 701 
+Q 1688 409 2113 409 
+Q 2538 409 2786 701 
+Q 3034 994 3034 1497 
+Q 3034 2003 2786 2293 
+Q 2538 2584 2113 2584 
+z
+M 3366 4563 
+L 3366 3988 
+Q 3128 4100 2886 4159 
+Q 2644 4219 2406 4219 
+Q 1781 4219 1451 3797 
+Q 1122 3375 1075 2522 
+Q 1259 2794 1537 2939 
+Q 1816 3084 2150 3084 
+Q 2853 3084 3261 2657 
+Q 3669 2231 3669 1497 
+Q 3669 778 3244 343 
+Q 2819 -91 2113 -91 
+Q 1303 -91 875 529 
+Q 447 1150 447 2328 
+Q 447 3434 972 4092 
+Q 1497 4750 2381 4750 
+Q 2619 4750 2861 4703 
+Q 3103 4656 3366 4563 
+z
+" transform="scale(0.015625)"/>
+       </defs>
+       <use xlink:href="#DejaVuSans-13"/>
+       <use xlink:href="#DejaVuSans-11" transform="translate(63.625 0)"/>
+       <use xlink:href="#DejaVuSans-19" transform="translate(95.40625 0)"/>
+      </g>
+     </g>
+    </g>
+    <g id="xtick_5">
+     <g id="line2d_5">
+      <g>
+       <use xlink:href="#m8d4cb97ff0" x="179.162409" y="152.064" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="text_5">
+      <!-- 0.8 -->
+      <g transform="translate(171.210847 166.661656) scale(0.1 -0.1)">
+       <defs>
+        <path id="DejaVuSans-1b" d="M 2034 2216 
+Q 1584 2216 1326 1975 
+Q 1069 1734 1069 1313 
+Q 1069 891 1326 650 
+Q 1584 409 2034 409 
+Q 2484 409 2743 651 
+Q 3003 894 3003 1313 
+Q 3003 1734 2745 1975 
+Q 2488 2216 2034 2216 
+z
+M 1403 2484 
+Q 997 2584 770 2862 
+Q 544 3141 544 3541 
+Q 544 4100 942 4425 
+Q 1341 4750 2034 4750 
+Q 2731 4750 3128 4425 
+Q 3525 4100 3525 3541 
+Q 3525 3141 3298 2862 
+Q 3072 2584 2669 2484 
+Q 3125 2378 3379 2068 
+Q 3634 1759 3634 1313 
+Q 3634 634 3220 271 
+Q 2806 -91 2034 -91 
+Q 1263 -91 848 271 
+Q 434 634 434 1313 
+Q 434 1759 690 2068 
+Q 947 2378 1403 2484 
+z
+M 1172 3481 
+Q 1172 3119 1398 2916 
+Q 1625 2713 2034 2713 
+Q 2441 2713 2670 2916 
+Q 2900 3119 2900 3481 
+Q 2900 3844 2670 4047 
+Q 2441 4250 2034 4250 
+Q 1625 4250 1398 4047 
+Q 1172 3844 1172 3481 
+z
+" transform="scale(0.015625)"/>
+       </defs>
+       <use xlink:href="#DejaVuSans-13"/>
+       <use xlink:href="#DejaVuSans-11" transform="translate(63.625 0)"/>
+       <use xlink:href="#DejaVuSans-1b" transform="translate(95.40625 0)"/>
+      </g>
+     </g>
+    </g>
+    <g id="xtick_6">
+     <g id="line2d_6">
+      <g>
+       <use xlink:href="#m8d4cb97ff0" x="214.93455" y="152.064" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="text_6">
+      <!-- 1.0 -->
+      <g transform="translate(206.982988 166.661656) scale(0.1 -0.1)">
+       <defs>
+        <path id="DejaVuSans-14" d="M 794 531 
+L 1825 531 
+L 1825 4091 
+L 703 3866 
+L 703 4441 
+L 1819 4666 
+L 2450 4666 
+L 2450 531 
+L 3481 531 
+L 3481 0 
+L 794 0 
+L 794 531 
+z
+" transform="scale(0.015625)"/>
+       </defs>
+       <use xlink:href="#DejaVuSans-14"/>
+       <use xlink:href="#DejaVuSans-11" transform="translate(63.625 0)"/>
+       <use xlink:href="#DejaVuSans-13" transform="translate(95.40625 0)"/>
+      </g>
+     </g>
+    </g>
+   </g>
+   <g id="matplotlib.axis_2">
+    <g id="ytick_1">
+     <g id="line2d_7">
+      <defs>
+       <path id="m777255e130" d="M 0 0 
+L -3.5 0 
+" style="stroke: #000000; stroke-width: 0.8"/>
+      </defs>
+      <g>
+       <use xlink:href="#m777255e130" x="27.648" y="128.615118" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="text_7">
+      <!-- 0.2 -->
+      <g transform="translate(4.744875 132.413946) scale(0.1 -0.1)">
+       <use xlink:href="#DejaVuSans-13"/>
+       <use xlink:href="#DejaVuSans-11" transform="translate(63.625 0)"/>
+       <use xlink:href="#DejaVuSans-15" transform="translate(95.40625 0)"/>
+      </g>
+     </g>
+    </g>
+    <g id="ytick_2">
+     <g id="line2d_8">
+      <g>
+       <use xlink:href="#m777255e130" x="27.648" y="97.593531" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="text_8">
+      <!-- 0.4 -->
+      <g transform="translate(4.744875 101.39236) scale(0.1 -0.1)">
+       <use xlink:href="#DejaVuSans-13"/>
+       <use xlink:href="#DejaVuSans-11" transform="translate(63.625 0)"/>
+       <use xlink:href="#DejaVuSans-17" transform="translate(95.40625 0)"/>
+      </g>
+     </g>
+    </g>
+    <g id="ytick_3">
+     <g id="line2d_9">
+      <g>
+       <use xlink:href="#m777255e130" x="27.648" y="66.571945" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="text_9">
+      <!-- 0.6 -->
+      <g transform="translate(4.744875 70.370773) scale(0.1 -0.1)">
+       <use xlink:href="#DejaVuSans-13"/>
+       <use xlink:href="#DejaVuSans-11" transform="translate(63.625 0)"/>
+       <use xlink:href="#DejaVuSans-19" transform="translate(95.40625 0)"/>
+      </g>
+     </g>
+    </g>
+    <g id="ytick_4">
+     <g id="line2d_10">
+      <g>
+       <use xlink:href="#m777255e130" x="27.648" y="35.550359" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="text_10">
+      <!-- 0.8 -->
+      <g transform="translate(4.744875 39.349187) scale(0.1 -0.1)">
+       <use xlink:href="#DejaVuSans-13"/>
+       <use xlink:href="#DejaVuSans-11" transform="translate(63.625 0)"/>
+       <use xlink:href="#DejaVuSans-1b" transform="translate(95.40625 0)"/>
+      </g>
+     </g>
+    </g>
+   </g>
+   <g id="patch_3">
+    <path d="M 27.648 152.064 
+L 27.648 8.64 
+" style="fill: none; stroke: #000000; stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_4">
+    <path d="M 218.88 152.064 
+L 218.88 8.64 
+" style="fill: none; stroke: #000000; stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_5">
+    <path d="M 27.648 152.064 
+L 218.88 152.064 
+" style="fill: none; stroke: #000000; stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_6">
+    <path d="M 27.648 8.64 
+L 218.88 8.64 
+" style="fill: none; stroke: #000000; stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="p32af6349c7">
+   <rect x="27.648" y="8.64" width="191.232" height="143.424"/>
+  </clipPath>
+ </defs>
+</svg>

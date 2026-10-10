@@ -32,6 +32,7 @@ import replay  # noqa: E402
 import numpy as np  # noqa: E402
 
 CORPUS = HERE.parents[1] / "tests" / "corpus"
+SVG_METADATA = {"Creator": "calculate-plot", "Date": None}
 
 
 def main(names):
@@ -54,6 +55,15 @@ def main(names):
         # An independent check of PNG decoding: the hash of the raw pixels, row by row, RGBA.
         decoded = np.asarray(Image.open(out / "ref.png").convert("RGBA"))
         assert np.array_equal(decoded, rgba)
+        # SVG: written with a fixed hash salt and metadata naming the program that wrote the trace
+        # (never a date), as calculate-plot's exported scripts will set them.
+        plt.rcdefaults()
+        matplotlib.rcParams["svg.hashsalt"] = "calculate-plot"
+        fig = cases.CASES[name]()
+        svg_trace, svg = record.record_svg(fig, SVG_METADATA)
+        plt.close(fig)
+        (out / "svg-trace.json").write_text(json.dumps(svg_trace, separators=(",", ":")) + "\n")
+        (out / "ref.svg").write_text(svg)
         (out / "ref.json").write_text(json.dumps({
             "width": int(rgba.shape[1]), "height": int(rgba.shape[0]),
             "rgba_sha256": hashlib.sha256(rgba.tobytes()).hexdigest()}, indent=1) + "\n")

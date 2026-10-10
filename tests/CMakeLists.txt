@@ -13,6 +13,7 @@ add_executable(calculate-plot-tests
     test_licensing.cpp
     test_notices.cpp
     test_png.cpp
+    test_pyformat.cpp
     test_replay.cpp
     licensing/compliance.cpp
     test_sha256.cpp
