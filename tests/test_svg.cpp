@@ -27,19 +27,49 @@ std::string readFile(const fs::path& path) {
 
 fs::path corpus() { return fs::path(CALCULATE_PLOT_SOURCE_DIR) / "tests/corpus"; }
 
-const std::regex kImageData("data:image/png;base64,\n([A-Za-z0-9+/=]+)");
-const std::regex kImageId("image[0-9a-f]{10}");
+// Embedded images are found by plain scanning, not std::regex: libstdc++ before GCC 16 matches
+// recursively, one stack frame per character, and overflows the stack on a large image.
+const std::string kImageData = "data:image/png;base64,\n";
+
+bool isBase64(char c) {
+    return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '+' || c == '/' || c == '=';
+}
 
 std::vector<std::string> embeddedImages(const std::string& svg) {
     std::vector<std::string> out;
-    for (auto it = std::sregex_iterator(svg.begin(), svg.end(), kImageData); it != std::sregex_iterator(); ++it)
-        out.push_back((*it)[1].str());
+    for (std::size_t at = svg.find(kImageData); at != std::string::npos; at = svg.find(kImageData, at)) {
+        at += kImageData.size();
+        std::size_t end = at;
+        while (end < svg.size() && isBase64(svg[end])) ++end;
+        out.push_back(svg.substr(at, end - at));
+        at = end;
+    }
     return out;
 }
 
+// The SVG with each embedded image's bytes, and each image id ("image" and 10 hex digits), replaced.
 std::string withoutImageBytes(const std::string& svg) {
-    return std::regex_replace(std::regex_replace(svg, kImageData, "data:image/png;base64,\n(image)"), kImageId,
-                              "image(id)");
+    std::string out;
+    std::size_t at = 0;
+    for (std::size_t found = svg.find(kImageData); found != std::string::npos; found = svg.find(kImageData, at)) {
+        out += svg.substr(at, found - at) + kImageData + "(image)";
+        at = found + kImageData.size();
+        while (at < svg.size() && isBase64(svg[at])) ++at;
+    }
+    out += svg.substr(at);
+    std::string result;
+    for (std::size_t i = 0; i < out.size();) {
+        bool id = out.compare(i, 5, "image") == 0 && i + 15 <= out.size();
+        for (std::size_t k = i + 5; id && k < i + 15; ++k)
+            id = (out[k] >= '0' && out[k] <= '9') || (out[k] >= 'a' && out[k] <= 'f');
+        if (id) {
+            result += "image(id)";
+            i += 15;
+        } else {
+            result += out[i++];
+        }
+    }
+    return result;
 }
 
 // The first line where two texts differ, for the failure message.
