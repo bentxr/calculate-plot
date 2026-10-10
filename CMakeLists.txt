@@ -18,6 +18,7 @@ endif()
 
 add_library(calculate-plot STATIC
     src/version.cpp
+    src/support/glob.cpp
     src/support/json.cpp
     src/support/sha256.cpp)
 target_include_directories(calculate-plot
