@@ -5,10 +5,14 @@
 
 #include "engine/figure.hpp"
 
+#include "engine/axes.hpp"
+
+#include <algorithm>
+
 
 namespace calculate_plot::engine {
 
-Figure::Figure(const rc::Params& rc, const FigureOptions& o) : Artist(rc) {
+Figure::Figure(const rc::Params& rc, const FigureOptions& o) : Artist(rc), subplotpars(SubplotParams::defaults(rc)) {
     std::array<double, 2> figsize;
     if (o.figsize) figsize = *o.figsize;
     else {
@@ -37,10 +41,29 @@ Figure::Figure(const rc::Params& rc, const FigureOptions& o) : Artist(rc) {
     patch->antialiased = false;
 }
 
+Figure::~Figure() = default;
+
+std::vector<Axes*> Figure::subplots(int nrows, int ncols) {
+    gridspecs.push_back(std::make_unique<GridSpec>(nrows, ncols));
+    const GridSpec& gs = *gridspecs.back();
+    std::vector<Axes*> out;
+    for (int row = 0; row < nrows; ++row)
+        for (int col = 0; col < ncols; ++col) {
+            axes.push_back(std::make_unique<Axes>(rc_, *this, gs.cell(row, col)));
+            out.push_back(axes.back().get());
+        }
+    return out;
+}
+
 void Figure::draw(Renderer& renderer) {
     if (!visible) return;
+    // _get_draw_artists: the children but the patch, sorted by zorder (stable)
+    std::vector<Artist*> artists;
+    for (auto& a : axes) artists.push_back(a.get());
+    std::stable_sort(artists.begin(), artists.end(), [](const Artist* a, const Artist* b) { return a->zorder < b->zorder; });
     renderer.openGroup("figure", gid);
     patch->draw(renderer);
+    for (Artist* a : artists) a->draw(renderer);
     renderer.closeGroup("figure");
 }
 

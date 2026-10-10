@@ -340,9 +340,27 @@ void SvgTraceRenderer::drawPath(const GC& gc, const Path& path, const transforms
     events_.endObject();
 }
 
-void SvgTraceRenderer::drawMarkers(const GC&, const Path&, const transforms::Matrix&, const Path&,
-                                   const transforms::Matrix&, const std::optional<std::vector<double>>&) {
-    error_ = "SVG markers are not supported yet";
+void SvgTraceRenderer::drawMarkers(const GC& gc, const Path& markerPath, const transforms::Matrix& markerTrans,
+                                   const Path& path, const transforms::Matrix& trans,
+                                   const std::optional<std::vector<double>>& face) {
+    events_.beginObject();
+    events_.key("op").value("draw_markers");
+    events_.key("gc");
+    writeSvgGc(gc);
+    events_.key("marker_path");
+    writePath(markerPath);
+    events_.key("marker_transform");
+    writeMatrix(markerTrans);
+    events_.key("path");
+    writePath(path);
+    events_.key("transform");
+    writeMatrix(trans);
+    events_.key("face");
+    if (face) writeNumbers(*face);
+    else events_.null();
+    events_.key("clip_transform");
+    writeClipTransform(gc);
+    events_.endObject();
 }
 
 void SvgTraceRenderer::drawText(const GC& gc, double x, double y, const std::string& s, const FontSpec& font,

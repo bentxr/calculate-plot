@@ -1,0 +1,10 @@
+{"version": 1,
+ "rc": {"patch.force_edgecolor": true, "axes.facecolor": "#eeeeee", "axes.edgecolor": "C3", "axes.linewidth": 1.5,
+        "xtick.direction": "in", "ytick.direction": "inout", "xtick.top": true, "ytick.right": true,
+        "xtick.labeltop": true, "ytick.labelright": true, "axes.spines.top": false, "xtick.major.size": 6.0,
+        "ytick.major.width": 2.0, "xtick.color": "tab:blue", "ytick.labelcolor": "green", "figure.facecolor": "0.9",
+        "font.size": 12.0, "xtick.labelsize": "small", "figure.subplot.left": 0.2, "figure.subplot.top": 0.8,
+        "xtick.major.pad": 6.0, "ytick.alignment": "center"},
+ "calls": [
+  {"call": "subplots", "kwargs": {"figsize": {"$tuple": [4.0, 3.0]}, "dpi": 80}, "as": ["fig", "ax"]}
+]}

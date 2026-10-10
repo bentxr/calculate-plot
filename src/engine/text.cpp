@@ -68,6 +68,7 @@ Text::Text(const rc::Params& rc, double x0, double y0, std::string s)
       font(text::FontProperties::defaults(rc)),
       antialiased(rc.boolean("text.antialiased")),
       parseMath(rc.boolean("text.parse_math")) {
+    zorder = 3;
     setColor(rc.text("text.color"));
 }
 

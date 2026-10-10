@@ -5,6 +5,7 @@
 #pragma once
 
 #include "engine/artist.hpp"
+#include "engine/gridspec.hpp"
 #include "engine/trace_renderer.hpp"
 #include "rc/rc_params.hpp"
 
@@ -22,9 +23,12 @@ struct FigureOptions {
     std::optional<bool> frameon;
 };
 
+class Axes;
+
 class Figure : public Artist {
 public:
     Figure(const rc::Params& rc, const FigureOptions& options);
+    ~Figure() override;
     void draw(Renderer& renderer) override;
     void setDpi(double value);  // Figure.dpi = value: the boxes in pixels follow
 
@@ -34,6 +38,12 @@ public:
     std::shared_ptr<transforms::TransformedBbox> bbox;
     transforms::TransformPtr transFigure, transSubfigure;
     std::unique_ptr<Rectangle> patch;
+    SubplotParams subplotpars;
+    std::vector<std::unique_ptr<Axes>> axes;
+    std::vector<std::unique_ptr<GridSpec>> gridspecs;  // kept alive for the axes' subplot specs
+
+    // Figure.subplots(nrows, ncols): the axes in row-major order.
+    std::vector<Axes*> subplots(int nrows, int ncols);
 };
 
 // FigureCanvasAgg.draw into a trace: the renderer is cleared, then the figure drawn. Returns the

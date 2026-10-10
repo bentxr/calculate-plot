@@ -150,6 +150,19 @@ private:
     TransformPtr scaleTrans_;
 };
 
+// TransformWrapper: stands for another transform that can be replaced later (Axes.transScale).
+// Never an identity for composition, as in matplotlib (only IdentityTransform drops out).
+class TransformWrapper : public Transform {
+public:
+    explicit TransformWrapper(TransformPtr child) : child_(std::move(child)) {}
+    void set(TransformPtr child) { child_ = std::move(child); }
+    Matrix matrix() const override { return child_->matrix(); }
+    TransformPtr inverted() const override { return child_->inverted(); }
+
+private:
+    TransformPtr child_;
+};
+
 // a + b in matplotlib (composite_transform_factory): a, then b; identities drop out.
 TransformPtr compose(const TransformPtr& a, const TransformPtr& b);
 // blended_transform_factory: x from one transform, y from the other.

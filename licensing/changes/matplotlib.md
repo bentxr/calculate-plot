@@ -56,6 +56,12 @@ it comes from in its first lines. The changes, as a whole:
   the font's line metrics are read with FreeType's FT_Get_Sfnt_Table. gridspec.py's SubplotParams, GridSpec
   (get_grid_positions) and SubplotSpec.get_position, translated to C++ (NumPy's cumsum and Python's sum()
   reproduced; a grid's own spacing overrides the figure's subplot parameters as in get_subplot_params).
+  lines.py's Line2D (lines and markers; drawing through affine transforms) and markers.py's MarkerStyle (the tick
+  and line markers so far; integer markers go by name), axis.py's Tick/XTick/YTick and Axis/XAxis/YAxis (major
+  ticks from AutoLocator and ScalarFormatter, tick visibility from the rcParams), spines.py's linear Spine and
+  axes/_base.py's _AxesBase (position from the subplot spec, transforms, patch, spines, axes, titles, drawing
+  order) are translated to C++; ticks are made when the axis is drawn rather than lazily on first access, with the
+  same visibility. transforms.py's TransformWrapper is added to the transforms.
 - File names drop the leading underscore (e.g. src/_backend_agg.h is src/agg/backend_agg.h); includes follow.
 - The drawing algorithms themselves (src/_backend_agg.h, src/_backend_agg.cpp, src/path_converters.h,
   src/agg_workaround.h, src/array.h, src/mplutils.h) are otherwise unchanged.

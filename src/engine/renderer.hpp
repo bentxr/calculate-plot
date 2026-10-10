@@ -58,6 +58,8 @@ public:
     virtual bool flipy() const { return true; }
     // The fonts the renderer opened (matplotlib's get_font cache), for the font metrics of layouts.
     virtual text::FontCache& fontCache() = 0;
+    // An artist met something calculate-plot cannot draw yet; the drawing reports it.
+    virtual void unsupported(const std::string& what) = 0;
 
     GC newGc() const { return GC(rc()); }
     double pointsToPixels(double points) const { return points * dpi() / 72; }

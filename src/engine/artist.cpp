@@ -45,6 +45,7 @@ void Artist::setGcClip(GC& gc) const {
 
 // Patch.__init__ with its defaults, in its order: edge colour, face colour, line style, line width.
 Patch::Patch(const rc::Params& rc) : Artist(rc), antialiased(rc.boolean("patch.antialiased")) {
+    zorder = 1;
     setEdgecolor(std::nullopt);
     setFacecolor(std::nullopt);
     setLinestyle("solid");

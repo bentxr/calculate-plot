@@ -31,6 +31,7 @@ public:
 
     bool run(const model::Call& call, std::string* error) {
         if (call.on.empty() && call.method == "figure") return figure(call, error);
+        if (call.on.empty() && call.method == "subplots") return subplots(call, error);
         *error = "unsupported call: " + (call.on.empty() ? "plt" : call.on) + "." + call.method;
         return false;
     }
@@ -38,6 +39,43 @@ public:
     Figure* currentFigure() { return figure_.get(); }
 
 private:
+    // A keyword of plt.figure (also taken by plt.subplots); false with *error if it is not one or is invalid.
+    bool figureKeyword(const std::string& name, const Json& value, FigureOptions& options, const std::string& where,
+                       std::string* error) {
+        if (name == "figsize") {
+            const Json* s = sequence(value);
+            std::array<double, 2> size{};
+            if (!s || s->size() != 2 || !readNumber((*s)[0], &size[0]) || !readNumber((*s)[1], &size[1])) {
+                *error = where + ": figsize must be (width, height) in inches";
+                return false;
+            }
+            options.figsize = size;
+        } else if (name == "dpi") {
+            double dpi = 0;
+            if (!readNumber(value, &dpi)) {
+                *error = where + ": dpi must be a number";
+                return false;
+            }
+            options.dpi = dpi;
+        } else if (name == "facecolor" || name == "edgecolor") {
+            if (!value.isString()) {
+                *error = where + ": " + name + " must be a colour string";
+                return false;
+            }
+            (name == "facecolor" ? options.facecolor : options.edgecolor) = value.asString();
+        } else if (name == "frameon") {
+            if (!value.isBool()) {
+                *error = where + ": frameon must be True or False";
+                return false;
+            }
+            options.frameon = value.asBool();
+        } else {
+            *error = where + ": unsupported keyword " + name;
+            return false;
+        }
+        return true;
+    }
+
     // plt.figure(figsize=, dpi=, facecolor=, edgecolor=, frameon=)
     bool figure(const model::Call& call, std::string* error) {
         if (!call.args.empty()) {
@@ -45,40 +83,41 @@ private:
             return false;
         }
         FigureOptions options;
+        for (const auto& [name, value] : call.kwargs)
+            if (!figureKeyword(name, value, options, "plt.figure", error)) return false;
+        figure_ = std::make_unique<Figure>(rc_, options);
+        return true;
+    }
+
+    // plt.subplots(nrows=1, ncols=1, **fig_kw) -> fig, ax (one Axes; grids of Axes come later)
+    bool subplots(const model::Call& call, std::string* error) {
+        double grid[2] = {1, 1};
+        if (call.args.size() > 2) {
+            *error = "plt.subplots: too many positional arguments";
+            return false;
+        }
+        for (std::size_t i = 0; i < call.args.size(); ++i)
+            if (!readNumber(call.args[i], &grid[i]) || call.args[i].numberText().find_first_of(".eE") != std::string::npos) {
+                *error = "plt.subplots: nrows and ncols must be integers";
+                return false;
+            }
+        FigureOptions options;
         for (const auto& [name, value] : call.kwargs) {
-            if (name == "figsize") {
-                const Json* s = sequence(value);
-                std::array<double, 2> size{};
-                if (!s || s->size() != 2 || !readNumber((*s)[0], &size[0]) || !readNumber((*s)[1], &size[1])) {
-                    *error = "plt.figure: figsize must be (width, height) in inches";
+            if (name == "nrows" || name == "ncols") {
+                if (!readNumber(value, &grid[name == "nrows" ? 0 : 1])) {
+                    *error = "plt.subplots: " + name + " must be an integer";
                     return false;
                 }
-                options.figsize = size;
-            } else if (name == "dpi") {
-                double dpi = 0;
-                if (!readNumber(value, &dpi)) {
-                    *error = "plt.figure: dpi must be a number";
-                    return false;
-                }
-                options.dpi = dpi;
-            } else if (name == "facecolor" || name == "edgecolor") {
-                if (!value.isString()) {
-                    *error = "plt.figure: " + name + " must be a colour string";
-                    return false;
-                }
-                (name == "facecolor" ? options.facecolor : options.edgecolor) = value.asString();
-            } else if (name == "frameon") {
-                if (!value.isBool()) {
-                    *error = "plt.figure: frameon must be True or False";
-                    return false;
-                }
-                options.frameon = value.asBool();
-            } else {
-                *error = "plt.figure: unsupported keyword " + name;
+            } else if (!figureKeyword(name, value, options, "plt.subplots", error)) {
                 return false;
             }
         }
+        if (grid[0] != 1 || grid[1] != 1) {
+            *error = "plt.subplots: grids of several Axes are not supported yet";
+            return false;
+        }
         figure_ = std::make_unique<Figure>(rc_, options);
+        figure_->subplots(1, 1);
         return true;
     }
 

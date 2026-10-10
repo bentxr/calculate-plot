@@ -57,10 +57,12 @@ add_library(calculate-plot STATIC
     src/axes/ticker.cpp
     src/colors/colors.cpp
     src/engine/artist.cpp
+    src/engine/axes.cpp
     src/engine/engine.cpp
     src/engine/figure.cpp
     src/engine/gc.cpp
     src/engine/gridspec.cpp
+    src/engine/lines.cpp
     src/engine/path.cpp
     src/engine/text.cpp
     src/engine/trace_renderer.cpp
