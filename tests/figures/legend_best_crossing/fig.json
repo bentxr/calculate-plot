@@ -1,0 +1,9 @@
+{"version": 1, "calls": [
+  {"call": "subplots", "kwargs": {"figsize": {"$tuple": [4.0, 3.0]}}, "as": ["fig", "ax"]},
+  {"on": "ax", "call": "plot", "args": [[-10, 20], [-10, 20]], "kwargs": {"label": "rising"}},
+  {"on": "ax", "call": "plot", "args": [[-10, 20], [20, -10]], "kwargs": {"label": "falling"}},
+  {"on": "ax", "call": "plot", "args": [[-10, 20], [5, 5]], "kwargs": {"label": "middle"}},
+  {"on": "ax", "call": "set_xlim", "args": [0, 10]},
+  {"on": "ax", "call": "set_ylim", "args": [0, 10]},
+  {"on": "ax", "call": "legend"}
+]}
