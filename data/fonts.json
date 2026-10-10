@@ -1,0 +1,371 @@
+{
+"_provenance": [
+"Derived from Matplotlib 3.11.2: lib/matplotlib/font_manager.py (the font list FontManager",
+"builds from the bundled fonts in lib/matplotlib/mpl-data/fonts/ttf), written by",
+"tools/oracle/make_fonts.py.",
+"Copyright (c) 2012- Matplotlib Development Team; All Rights Reserved",
+"Licence: LICENSES/Matplotlib.txt."
+],
+"fonts": [
+{
+"file": "DejaVuSans-Bold.ttf",
+"name": "DejaVu Sans",
+"style": "normal",
+"variant": "normal",
+"weight": 700,
+"stretch": "normal",
+"size": "scalable"
+},
+{
+"file": "DejaVuSans-BoldOblique.ttf",
+"name": "DejaVu Sans",
+"style": "oblique",
+"variant": "normal",
+"weight": 700,
+"stretch": "normal",
+"size": "scalable"
+},
+{
+"file": "DejaVuSans-Oblique.ttf",
+"name": "DejaVu Sans",
+"style": "oblique",
+"variant": "normal",
+"weight": 400,
+"stretch": "normal",
+"size": "scalable"
+},
+{
+"file": "DejaVuSans.ttf",
+"name": "DejaVu Sans",
+"style": "normal",
+"variant": "normal",
+"weight": 400,
+"stretch": "normal",
+"size": "scalable"
+},
+{
+"file": "DejaVuSansDisplay.ttf",
+"name": "DejaVu Sans Display",
+"style": "normal",
+"variant": "normal",
+"weight": 400,
+"stretch": "normal",
+"size": "scalable"
+},
+{
+"file": "DejaVuSansMono-Bold.ttf",
+"name": "DejaVu Sans Mono",
+"style": "normal",
+"variant": "normal",
+"weight": 700,
+"stretch": "normal",
+"size": "scalable"
+},
+{
+"file": "DejaVuSansMono-BoldOblique.ttf",
+"name": "DejaVu Sans Mono",
+"style": "oblique",
+"variant": "normal",
+"weight": 700,
+"stretch": "normal",
+"size": "scalable"
+},
+{
+"file": "DejaVuSansMono-Oblique.ttf",
+"name": "DejaVu Sans Mono",
+"style": "oblique",
+"variant": "normal",
+"weight": 400,
+"stretch": "normal",
+"size": "scalable"
+},
+{
+"file": "DejaVuSansMono.ttf",
+"name": "DejaVu Sans Mono",
+"style": "normal",
+"variant": "normal",
+"weight": 400,
+"stretch": "normal",
+"size": "scalable"
+},
+{
+"file": "DejaVuSerif-Bold.ttf",
+"name": "DejaVu Serif",
+"style": "normal",
+"variant": "normal",
+"weight": 700,
+"stretch": "normal",
+"size": "scalable"
+},
+{
+"file": "DejaVuSerif-BoldItalic.ttf",
+"name": "DejaVu Serif",
+"style": "italic",
+"variant": "normal",
+"weight": 700,
+"stretch": "normal",
+"size": "scalable"
+},
+{
+"file": "DejaVuSerif-Italic.ttf",
+"name": "DejaVu Serif",
+"style": "italic",
+"variant": "normal",
+"weight": 400,
+"stretch": "normal",
+"size": "scalable"
+},
+{
+"file": "DejaVuSerif.ttf",
+"name": "DejaVu Serif",
+"style": "normal",
+"variant": "normal",
+"weight": 400,
+"stretch": "normal",
+"size": "scalable"
+},
+{
+"file": "DejaVuSerifDisplay.ttf",
+"name": "DejaVu Serif Display",
+"style": "normal",
+"variant": "normal",
+"weight": 400,
+"stretch": "normal",
+"size": "scalable"
+},
+{
+"file": "LastResortHE-Regular.ttf",
+"name": "Last Resort High-Efficiency",
+"style": "normal",
+"variant": "normal",
+"weight": 400,
+"stretch": "normal",
+"size": "scalable"
+},
+{
+"file": "STIXGeneral.ttf",
+"name": "STIXGeneral",
+"style": "normal",
+"variant": "normal",
+"weight": 400,
+"stretch": "normal",
+"size": "scalable"
+},
+{
+"file": "STIXGeneralBol.ttf",
+"name": "STIXGeneral",
+"style": "normal",
+"variant": "normal",
+"weight": 700,
+"stretch": "normal",
+"size": "scalable"
+},
+{
+"file": "STIXGeneralBolIta.ttf",
+"name": "STIXGeneral",
+"style": "italic",
+"variant": "normal",
+"weight": 700,
+"stretch": "normal",
+"size": "scalable"
+},
+{
+"file": "STIXGeneralItalic.ttf",
+"name": "STIXGeneral",
+"style": "italic",
+"variant": "normal",
+"weight": 400,
+"stretch": "normal",
+"size": "scalable"
+},
+{
+"file": "STIXNonUni.ttf",
+"name": "STIXNonUnicode",
+"style": "normal",
+"variant": "normal",
+"weight": 400,
+"stretch": "normal",
+"size": "scalable"
+},
+{
+"file": "STIXNonUniBol.ttf",
+"name": "STIXNonUnicode",
+"style": "normal",
+"variant": "normal",
+"weight": 700,
+"stretch": "normal",
+"size": "scalable"
+},
+{
+"file": "STIXNonUniBolIta.ttf",
+"name": "STIXNonUnicode",
+"style": "italic",
+"variant": "normal",
+"weight": 700,
+"stretch": "normal",
+"size": "scalable"
+},
+{
+"file": "STIXNonUniIta.ttf",
+"name": "STIXNonUnicode",
+"style": "italic",
+"variant": "normal",
+"weight": 400,
+"stretch": "normal",
+"size": "scalable"
+},
+{
+"file": "STIXSizFiveSymReg.ttf",
+"name": "STIXSizeFiveSym",
+"style": "normal",
+"variant": "normal",
+"weight": 400,
+"stretch": "normal",
+"size": "scalable"
+},
+{
+"file": "STIXSizFourSymBol.ttf",
+"name": "STIXSizeFourSym",
+"style": "normal",
+"variant": "normal",
+"weight": 700,
+"stretch": "normal",
+"size": "scalable"
+},
+{
+"file": "STIXSizFourSymReg.ttf",
+"name": "STIXSizeFourSym",
+"style": "normal",
+"variant": "normal",
+"weight": 400,
+"stretch": "normal",
+"size": "scalable"
+},
+{
+"file": "STIXSizOneSymBol.ttf",
+"name": "STIXSizeOneSym",
+"style": "normal",
+"variant": "normal",
+"weight": 700,
+"stretch": "normal",
+"size": "scalable"
+},
+{
+"file": "STIXSizOneSymReg.ttf",
+"name": "STIXSizeOneSym",
+"style": "normal",
+"variant": "normal",
+"weight": 400,
+"stretch": "normal",
+"size": "scalable"
+},
+{
+"file": "STIXSizThreeSymBol.ttf",
+"name": "STIXSizeThreeSym",
+"style": "normal",
+"variant": "normal",
+"weight": 700,
+"stretch": "normal",
+"size": "scalable"
+},
+{
+"file": "STIXSizThreeSymReg.ttf",
+"name": "STIXSizeThreeSym",
+"style": "normal",
+"variant": "normal",
+"weight": 400,
+"stretch": "normal",
+"size": "scalable"
+},
+{
+"file": "STIXSizTwoSymBol.ttf",
+"name": "STIXSizeTwoSym",
+"style": "normal",
+"variant": "normal",
+"weight": 700,
+"stretch": "normal",
+"size": "scalable"
+},
+{
+"file": "STIXSizTwoSymReg.ttf",
+"name": "STIXSizeTwoSym",
+"style": "normal",
+"variant": "normal",
+"weight": 400,
+"stretch": "normal",
+"size": "scalable"
+},
+{
+"file": "cmb10.ttf",
+"name": "cmb10",
+"style": "normal",
+"variant": "normal",
+"weight": 400,
+"stretch": "normal",
+"size": "scalable"
+},
+{
+"file": "cmex10.ttf",
+"name": "cmex10",
+"style": "normal",
+"variant": "normal",
+"weight": 400,
+"stretch": "normal",
+"size": "scalable"
+},
+{
+"file": "cmmi10.ttf",
+"name": "cmmi10",
+"style": "normal",
+"variant": "normal",
+"weight": 400,
+"stretch": "normal",
+"size": "scalable"
+},
+{
+"file": "cmr10.ttf",
+"name": "cmr10",
+"style": "normal",
+"variant": "normal",
+"weight": 400,
+"stretch": "normal",
+"size": "scalable"
+},
+{
+"file": "cmss10.ttf",
+"name": "cmss10",
+"style": "normal",
+"variant": "normal",
+"weight": 400,
+"stretch": "normal",
+"size": "scalable"
+},
+{
+"file": "cmsy10.ttf",
+"name": "cmsy10",
+"style": "normal",
+"variant": "normal",
+"weight": 400,
+"stretch": "normal",
+"size": "scalable"
+},
+{
+"file": "cmti10.ttf",
+"name": "cmti10",
+"style": "normal",
+"variant": "normal",
+"weight": 400,
+"stretch": "normal",
+"size": "scalable"
+},
+{
+"file": "cmtt10.ttf",
+"name": "cmtt10",
+"style": "normal",
+"variant": "normal",
+"weight": 400,
+"stretch": "normal",
+"size": "scalable"
+}
+]
+}

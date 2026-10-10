@@ -10,6 +10,7 @@ add_executable(calculate-plot-tests
     test_cli.cpp
     test_colors.cpp
     test_figures.cpp
+    test_font_manager.cpp
     test_glob.cpp
     test_json.cpp
     test_json_writer.cpp

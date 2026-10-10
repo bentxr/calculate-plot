@@ -42,6 +42,10 @@ it comes from in its first lines. The changes, as a whole:
   to C++ (matrices computed on demand rather than cached and invalidated; the same values). np.dot is reproduced
   (accumulating from +0.0) and numpy.linalg.inv by an LU solve that multiplies by pivot reciprocals as NumPy's
   OpenBLAS does; composites keep matplotlib's distinction between CompositeAffine2D and CompositeGenericTransform.
+- **Font manager** (src/text/font_manager, data/fonts.json): font_manager.py's FontProperties defaults, font
+  size names, the scoring functions and _find_fonts_by_props/_findfont_cached, translated to C++, over a fixed list of
+  the bundled fonts (dumped from matplotlib's FontManager, sorted by file name) instead of a scan of the system's
+  fonts with a cache file; font files are named by file name.
 - **Figures** (src/engine): path.py's Path (vertices, codes and the simplification settings),
   backend_bases.py's GraphicsContextBase and the RendererBase interface, artist.py's Artist (clip settings),
   patches.py's Patch and Rectangle, lines.py's dash patterns and figure.py's Figure (its boxes, transforms and
