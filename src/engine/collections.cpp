@@ -25,12 +25,12 @@ ColorArg ColorArg::of(colors::Spec c) {
     return a;
 }
 
-Collection::Collection(const rc::Params& rc) : Artist(rc) {
-    zorder = 1;
+Collection::Collection(const rc::Params& rc, CollectionDefaults defaults) : Artist(rc), defaults_(std::move(defaults)) {
+    zorder = defaults_.zorder;
     setFacecolor(ColorArg{});
     setEdgecolor(ColorArg{});
     setLinewidths({});
-    antialiaseds_ = {rc.boolean("patch.antialiased")};
+    antialiaseds_ = {rc.boolean(defaults_.antialiasedKey)};
     offsetTransform = std::make_shared<transforms::IdentityTransform>();
 }
 
@@ -48,7 +48,8 @@ void Collection::setFacecolor(const ColorArg& c) {
 
 void Collection::applyFacecolor() {
     ColorArg c = originalFacecolor_;
-    if (c.kind == ColorArg::Default) c = ColorArg::of(rc_.text("patch.facecolor"));  // _get_default_facecolor
+    if (c.kind == ColorArg::Default)  // _get_default_facecolor
+        c = defaults_.facecolorKey.empty() ? ColorArg::of(std::string("none")) : ColorArg::of(rc_.text(defaults_.facecolorKey));
     facecolors_ = toRgbaArray(c);
 }
 
@@ -61,8 +62,8 @@ void Collection::applyEdgecolor() {
     ColorArg c = originalEdgecolor_;
     if (c.kind == ColorArg::Default) {
         // the default edge colour when edges are forced or the face is 'none', else no edge
-        if (rc_.boolean("patch.force_edgecolor") || originalFacecolor_.kind == ColorArg::None)
-            c = ColorArg::of(rc_.text("patch.edgecolor"));
+        if (rc_.boolean("patch.force_edgecolor") || defaults_.edgeDefault || originalFacecolor_.kind == ColorArg::None)
+            c = ColorArg::of(rc_.text(defaults_.edgecolorKey));
         else
             c.kind = ColorArg::None;
     }
@@ -73,7 +74,7 @@ void Collection::applyEdgecolor() {
 std::vector<colors::Rgba> Collection::edgecolors() const { return edgeIsFace_ ? facecolors_ : edgecolors_; }
 
 void Collection::setLinewidths(std::vector<double> lw) {
-    if (lw.empty()) lw = {rc_.number("patch.linewidth")};  // _get_default_linewidth
+    if (lw.empty()) lw = {rc_.number(defaults_.linewidthKey)};  // _get_default_linewidth
     linewidths_ = lw;
     // _bcast_lwls: the dash patterns (all solid so far) scaled by the line widths
     linestyles_.assign(linewidths_.size(), {0.0, std::nullopt});
@@ -262,6 +263,36 @@ std::vector<std::vector<std::array<double, 2>>> FillBetweenPolyCollection::makeV
         i = j;
     }
     return regions;
+}
+
+LineCollection::LineCollection(const rc::Params& rc, const std::vector<std::vector<std::array<double, 2>>>& segments)
+    : Collection(rc, CollectionDefaults{"", "lines.color", true, "lines.linewidth", "lines.antialiased", 2}) {
+    groupName = "LineCollection";
+    setFacecolor(ColorArg::of(std::string("none")));  // kwargs.setdefault('facecolors', 'none')
+    offsets = {{0.0, 0.0}};
+    for (const auto& seg : segments) {
+        std::vector<double> v;
+        for (const auto& p : seg) v.push_back(p[0]), v.push_back(p[1]);
+        paths.push_back(Path::make(std::move(v), {}, rc));
+    }
+}
+
+Collection::DataLim LineCollection::dataLim() const {
+    // get_path_collection_extents with the identity (transform - transData) and the origin offset:
+    // the finite vertices' box and their smallest positive values
+    const double inf = std::numeric_limits<double>::infinity();
+    DataLim d{{inf, inf, -inf, -inf}, {inf, inf}};
+    for (const auto& p : paths) {
+        const auto& v = *p.vertices;
+        for (std::size_t i = 0; i + 1 < v.size(); i += 2) {
+            if (!std::isfinite(v[i]) || !std::isfinite(v[i + 1])) continue;
+            d.points[0] = std::min(d.points[0], v[i]), d.points[2] = std::max(d.points[2], v[i]);
+            d.points[1] = std::min(d.points[1], v[i + 1]), d.points[3] = std::max(d.points[3], v[i + 1]);
+            if (v[i] > 0) d.minpos[0] = std::min(d.minpos[0], v[i]);
+            if (v[i + 1] > 0) d.minpos[1] = std::min(d.minpos[1], v[i + 1]);
+        }
+    }
+    return d;
 }
 
 PathCollection::PathCollection(const rc::Params& rc, std::vector<Path> p, std::vector<double> sizes)

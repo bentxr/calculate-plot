@@ -22,9 +22,19 @@ struct ColorArg {
     static ColorArg of(colors::Spec c);
 };
 
+// What a kind of collection uses when given nothing (the _get_default_* methods, _edge_default).
+struct CollectionDefaults {
+    std::string facecolorKey = "patch.facecolor";  // empty: 'none'
+    std::string edgecolorKey = "patch.edgecolor";
+    bool edgeDefault = false;  // _edge_default: an edge even without force_edgecolor
+    std::string linewidthKey = "patch.linewidth";
+    std::string antialiasedKey = "patch.antialiased";
+    double zorder = 1;
+};
+
 class Collection : public Artist {
 public:
-    explicit Collection(const rc::Params& rc);
+    explicit Collection(const rc::Params& rc, CollectionDefaults defaults = {});
 
     void setFacecolor(const ColorArg& c);
     void setEdgecolor(const ColorArg& c);
@@ -63,6 +73,7 @@ private:
     void updateScalarMappable();
     std::vector<colors::Rgba> toRgbaArray(const ColorArg& c) const;
 
+    CollectionDefaults defaults_;
     ColorArg originalFacecolor_, originalEdgecolor_;
     std::vector<colors::Rgba> facecolors_, edgecolors_;
     bool edgeIsFace_ = false;
@@ -90,6 +101,13 @@ private:
                                                                      const std::vector<double>& f2,
                                                                      const std::vector<bool>& where);
     DataLim bbox_;
+};
+
+// LineCollection: line segments (vlines, hlines, error bars).
+class LineCollection : public Collection {
+public:
+    LineCollection(const rc::Params& rc, const std::vector<std::vector<std::array<double, 2>>>& segments);
+    DataLim dataLim() const override;  // the segments' extents (get_path_collection_extents)
 };
 
 // PathCollection: paths drawn at the offsets, scaled by sizes (areas in points²).

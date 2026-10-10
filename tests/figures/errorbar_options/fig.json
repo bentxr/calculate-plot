@@ -1,0 +1,6 @@
+{"version": 1, "calls": [
+  {"call": "subplots", "kwargs": {"figsize": {"$tuple": [4.0, 3.0]}}, "as": ["fig", "ax"]},
+  {"on": "ax", "call": "errorbar", "args": [[0, 1, 2, 3], [1, 2.5, 2, 3]], "kwargs": {"yerr": [[0.1, 0.2, 0.3, 0.4], [0.4, 0.3, 0.2, 0.1]], "xerr": 0.2, "fmt": "rs--", "ecolor": "k", "elinewidth": 0.5, "capsize": 4, "capthick": 2}},
+  {"on": "ax", "call": "errorbar", "args": [[0.5, 1.5, 2.5], [0.5, 1, 0.7]], "kwargs": {"yerr": 0.3, "fmt": "none", "barsabove": true, "alpha": 0.6, "lw": 2}},
+  {"on": "ax", "call": "errorbar", "args": [[3.5], [1.5]], "kwargs": {"xerr": [[0.3], [0.6]], "marker": "o", "color": "C4", "label": "single"}}
+]}

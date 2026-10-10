@@ -161,6 +161,9 @@ public:
     // Axes.add_collection(autolim=True): a pending autoscale runs first, then the data limits grow
     // by the collection's and an autoscale is requested.
     Collection& addCollection(std::unique_ptr<Collection> collection);
+    // vlines / hlines: add_collection(autolim=False), then the corners of the collection's data box
+    // (nanmin / nanmax) grow the data limits and an autoscale is requested.
+    Collection& addLinesCollection(std::unique_ptr<Collection> collection);
     void requestAutoscaleView(bool x, bool y);
     void setScale(bool x, const std::string& name);  // set_xscale / set_yscale
     void unstaleViewLim();                            // what reading Axes.viewLim does first

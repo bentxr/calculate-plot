@@ -93,7 +93,9 @@ it comes from in its first lines. The changes, as a whole:
   Normalize and cm.py's ScalarMappable.to_rgba map scatter's values (data/colormaps.json holds viridis so far), with
   Collection.update_scalarmappable's choice of mapped faces and edges. PolyCollection (closed polygons) and
   FillBetweenPolyCollection (_make_verts, _make_verts_for_region without steps or interpolation yet, the data
-  box), with Axes.fill_between's arguments and the collections' general paths transform.
+  box), with Axes.fill_between's arguments and the collections' general paths transform. LineCollection (its
+  defaults from lines.*), the vlines/hlines insertion (add_collection without autolimits, then the corners), and
+  Axes.errorbar (data line, error bars, caps; no limit markers or errorevery yet), translated to C++.
 - File names drop the leading underscore (e.g. src/_backend_agg.h is src/agg/backend_agg.h); includes follow.
 - The drawing algorithms themselves (src/_backend_agg.h, src/_backend_agg.cpp, src/path_converters.h,
   src/agg_workaround.h, src/array.h, src/mplutils.h) are otherwise unchanged.

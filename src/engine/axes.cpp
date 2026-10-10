@@ -841,6 +841,22 @@ Collection& Axes::addCollection(std::unique_ptr<Collection> c) {
     return ref;
 }
 
+Collection& Axes::addLinesCollection(std::unique_ptr<Collection> c) {
+    if (c->label.empty()) c->label = "_child" + std::to_string(children.size());
+    c->figure = &figure;
+    if (!c->transformSet) c->transform = transData;
+    c->clipBox = std::make_shared<transforms::TransformedBbox>(
+        std::make_shared<transforms::Bbox>(std::array<double, 4>{0, 0, 1, 1}), patch->fullTransform());
+    Collection& ref = *c;
+    children.push_back(std::move(c));
+    if (!ref.paths.empty()) {
+        const auto d = ref.dataLim();
+        updateDatalim({{d.points[0], d.points[1]}, {d.points[2], d.points[3]}});
+        requestAutoscaleView(true, true);
+    }
+    return ref;
+}
+
 void Axes::requestAutoscaleView(bool x, bool y) {
     staleX_ = staleX_ || x;
     staleY_ = staleY_ || y;

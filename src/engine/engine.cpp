@@ -247,6 +247,7 @@ private:
         if (call.method == "plot") return plot(ax, call, error);
         if (call.method == "scatter") return scatter(ax, call, error);
         if (call.method == "fill_between") return fillBetween(ax, call, error);
+        if (call.method == "errorbar") return errorbar(ax, call, error);
         if (call.method == "set_xscale" || call.method == "set_yscale") {
             if (!call.kwargs.empty()) return *error = where + ": scale options are not supported yet", false;
             if (call.args.size() != 1 || !call.args[0].isString()) return *error = where + ": give the scale's name", false;
@@ -655,6 +656,197 @@ private:
         if (zorder) collection->zorder = *zorder;
         collection->label = label;
         ax.addCollection(std::move(collection));
+        return true;
+    }
+
+    // An error argument: a number, a list (one per point), or two lists (below, above).
+    bool errorValues(const Json& v, std::size_t n, std::vector<double>* below, std::vector<double>* above) {
+        double one = 0;
+        if (readNumber(v, &one)) {
+            below->assign(n, one), above->assign(n, one);
+            return true;
+        }
+        std::vector<double> list;
+        if (numbers(v, &list) && list.size() == n) {
+            *below = *above = list;
+            return true;
+        }
+        const Json* seq = sequence(v);
+        if (seq && seq->size() == 2 && numbers((*seq)[0], below) && numbers((*seq)[1], above) && below->size() == n &&
+            above->size() == n)
+            return true;
+        return false;
+    }
+
+    // Axes.errorbar(x, y, yerr=None, xerr=None, fmt='', ecolor=None, elinewidth=None, capsize=None,
+    // barsabove=False, capthick=None, **Line2D kwargs) without limit markers or errorevery
+    bool errorbar(Axes& ax, const model::Call& call, std::string* error) {
+        const std::string where = call.on + ".errorbar";
+        const Json* xa = call.args.size() > 0 ? &call.args[0] : keyword(call, "x");
+        const Json* ya = call.args.size() > 1 ? &call.args[1] : keyword(call, "y");
+        const Json* yerr = call.args.size() > 2 ? &call.args[2] : keyword(call, "yerr");
+        const Json* xerr = call.args.size() > 3 ? &call.args[3] : keyword(call, "xerr");
+        const Json* fmtJson = call.args.size() > 4 ? &call.args[4] : keyword(call, "fmt");
+        if (call.args.size() > 5) return *error = where + ": ecolor and the rest are keyword arguments", false;
+        std::vector<double> x, y;
+        if (!xa || !ya || !numbers(*xa, &x) || !numbers(*ya, &y)) return *error = where + ": x and y must be lists of numbers", false;
+        if (x.size() != y.size()) return *error = where + ": 'x' and 'y' must have the same size", false;
+        if (yerr && yerr->isNull()) yerr = nullptr;
+        if (xerr && xerr->isNull()) xerr = nullptr;
+        std::string fmt;
+        if (fmtJson && !fmtJson->isNull()) {
+            if (!fmtJson->isString()) return *error = where + ": fmt must be a string", false;
+            fmt = fmtJson->asString();
+        }
+        std::optional<colors::Spec> ecolor;
+        std::optional<double> elinewidth, capsize, capthick;
+        bool barsabove = false;
+        // the Line2D keyword arguments (aliases normalised, None dropped)
+        std::vector<std::pair<std::string, const Json*>> props;
+        static const std::pair<const char*, const char*> aliases[] = {
+            {"aa", "antialiased"}, {"c", "color"}, {"ds", "drawstyle"}, {"ls", "linestyle"}, {"lw", "linewidth"},
+            {"mec", "markeredgecolor"}, {"mew", "markeredgewidth"}, {"mfc", "markerfacecolor"},
+            {"mfcalt", "markerfacecoloralt"}, {"ms", "markersize"}};
+        std::optional<double> zorderArg;
+        for (const auto& [name, value] : call.kwargs) {
+            if (name == "x" || name == "y" || name == "yerr" || name == "xerr" || name == "fmt") continue;
+            if (name == "ecolor") {
+                if (value.isNull()) continue;
+                colors::Spec c;
+                if (!color(value, &c)) return *error = where + ": bad ecolor", false;
+                ecolor = c;
+            } else if (name == "elinewidth" || name == "capsize" || name == "capthick") {
+                if (value.isNull()) continue;
+                double n = 0;
+                if (!readNumber(value, &n)) return *error = where + ": " + name + " must be a number", false;
+                (name == "elinewidth" ? elinewidth : name == "capsize" ? capsize : capthick) = n;
+            } else if (name == "barsabove") {
+                if (!value.isBool()) return *error = where + ": barsabove must be True or False", false;
+                barsabove = value.asBool();
+            } else if (name == "lolims" || name == "uplims" || name == "xlolims" || name == "xuplims" ||
+                       name == "errorevery" || name == "elinestyle") {
+                return *error = where + ": " + name + " is not supported yet", false;
+            } else {
+                if (value.isNull()) continue;
+                std::string full = name;
+                for (const auto& [a, f] : aliases)
+                    if (name == a) full = f;
+                if (full == "zorder") {
+                    double z = 0;
+                    if (!readNumber(value, &z)) return *error = where + ": zorder must be a number", false;
+                    zorderArg = z;
+                    continue;
+                }
+                props.emplace_back(full, &value);
+            }
+        }
+        const double zorder = zorderArg ? *zorderArg : 2;  // kwargs.setdefault('zorder', 2)
+        const auto prop = [&](const char* name) -> const Json* {
+            for (const auto& [n, v] : props)
+                if (n == name) return v;
+            return nullptr;
+        };
+
+        // the data line, as _plot_args((x, y[, fmt]), kwargs, return_kwargs=True)
+        std::optional<std::string> linestyle, marker;
+        std::optional<colors::Spec> fmtColor;
+        std::string lowerFmt = fmt;
+        for (char& ch : lowerFmt) ch = char(std::tolower(static_cast<unsigned char>(ch)));
+        if (!fmt.empty() && !plotFormat(fmt, &linestyle, &marker, &fmtColor, error)) return false;
+        colors::Spec baseColor;
+        bool baseColorSet = false;
+        if (fmtColor) baseColor = *fmtColor, baseColorSet = true;
+        if (const Json* c = prop("color")) {
+            if (!color(*c, &baseColor)) return *error = where + ": bad color", false;
+            baseColorSet = true;
+        }
+        if (lowerFmt != "none") {
+            auto line = std::make_unique<Line2D>(rc_, x, y);
+            if (linestyle && !line->setLinestyle(*linestyle, error)) return false;
+            if (marker && !line->setMarker(*marker, error)) return false;
+            if (fmtColor) line->color = *fmtColor;
+            for (const auto& [name, value] : props)
+                if (!lineProperty(*line, name, *value, where, error)) return false;
+            if (!baseColorSet) {  // _PropCycle.getdefaults
+                baseColor = ax.nextColor();
+                baseColorSet = true;
+            }
+            line->color = baseColor;
+            line->label = "_nolegend_";
+            line->zorder = barsabove ? zorder - .1 : zorder + .1;
+            ax.addLine(std::move(line));
+        } else {
+            // no data line; base_style keeps the kwargs' colour only
+            if (!prop("color")) baseColorSet = false;
+        }
+        if (!baseColorSet) baseColor = std::string("C0");
+        const colors::Spec eColor = ecolor ? *ecolor : baseColor;
+        // base_style keeps what is not about markers or line styles
+        std::optional<double> linewidth, alpha;
+        double n = 0;
+        if (const Json* v = prop("linewidth"); v && readNumber(*v, &n)) linewidth = n;
+        if (const Json* v = prop("alpha"); v && readNumber(*v, &n)) alpha = n;
+        if (!elinewidth && !rc_.value("errorbar.elinewidth").isNull()) elinewidth = rc_.number("errorbar.elinewidth");
+        const double caps = capsize ? *capsize : rc_.number("errorbar.capsize");
+        if (!capthick && !rc_.value("errorbar.capthick").isNull()) capthick = rc_.number("errorbar.capthick");
+
+        const auto styleBars = [&](Collection& bars) {
+            bars.setEdgecolor(ColorArg::of(eColor));  // set_color: the edge
+            if (elinewidth) bars.setLinewidths({*elinewidth});
+            else if (linewidth) bars.setLinewidths({*linewidth});
+            if (alpha) bars.setAlpha(alpha);
+            bars.zorder = zorder;
+            bars.label = "_nolegend_";
+        };
+        const auto capLine = [&](const std::vector<double>& cx, const std::vector<double>& cy, const char* m) {
+            auto line = std::make_unique<Line2D>(rc_, cx, cy);
+            line->color = baseColor;
+            std::string e;
+            line->setLinestyle("none", &e);
+            line->setMarker(m, &e);
+            if (linewidth) line->setLinewidth(*linewidth);
+            if (alpha) line->alpha = alpha;
+            if (caps > 0) line->markersize = 2. * caps;
+            if (capthick) line->markeredgewidth = *capthick;
+            if (const Json* v = prop("markeredgewidth"); v && readNumber(*v, &n)) line->markeredgewidth = n;
+            line->markeredgecolor = eColor;
+            line->zorder = zorder;
+            line->label = "_nolegend_";
+            return line;
+        };
+        std::vector<std::unique_ptr<Line2D>> capLines;
+        // x errors (hlines, '|' caps), then y errors (vlines, '_' caps)
+        for (int axisIndex = 0; axisIndex < 2; ++axisIndex) {
+            const Json* err = axisIndex == 0 ? xerr : yerr;
+            if (!err) continue;
+            const std::vector<double>& dep = axisIndex == 0 ? x : y;
+            const std::vector<double>& indep = axisIndex == 0 ? y : x;
+            std::vector<double> below, above;
+            if (!errorValues(*err, dep.size(), &below, &above))
+                return *error = where + ": the errors must be a number, one list or two lists as long as the data", false;
+            std::vector<double> low, high;
+            for (std::size_t i = 0; i < dep.size(); ++i) {
+                if (below[i] < -below[i] || above[i] < -above[i]) return *error = where + ": errors must not be negative", false;
+                low.push_back(dep[i] + -1 * below[i]);
+                high.push_back(dep[i] + 1 * above[i]);
+            }
+            std::vector<std::vector<std::array<double, 2>>> segments;
+            for (std::size_t i = 0; i < dep.size(); ++i) {
+                if (axisIndex == 0) segments.push_back({{low[i], indep[i]}, {high[i], indep[i]}});
+                else segments.push_back({{indep[i], low[i]}, {indep[i], high[i]}});
+            }
+            auto bars = std::make_unique<LineCollection>(rc_, segments);
+            styleBars(*bars);
+            ax.addLinesCollection(std::move(bars));
+            if (caps > 0) {
+                for (const std::vector<double>* lh : {&low, &high}) {
+                    if (axisIndex == 0) capLines.push_back(capLine(*lh, indep, "|"));
+                    else capLines.push_back(capLine(indep, *lh, "_"));
+                }
+            }
+        }
+        for (auto& l : capLines) ax.addLine(std::move(l));
+        ax.requestAutoscaleView(true, true);
         return true;
     }
 
