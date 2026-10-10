@@ -30,10 +30,23 @@ def main():
             local = (ROOT / licence["path"]).read_bytes()
             upstream = fetch(licence["upstream"])
             ok = (hashlib.sha256(upstream).hexdigest() == licence["sha256"] and upstream == local)
+            if not ok and licence.get("upstreamMayChange"):
+                # An unversioned URL (e.g. the Unicode licence, whose year changes): report, don't fail.
+                print(f'NOTE {component["id"]}: {licence["upstream"]} changed since {licence.get("retrieved")}; '
+                      f'review and update {licence["path"]}')
+                continue
             failures += not ok
             print(("ok  " if ok else "BAD ") + f'{component["id"]}: {licence["path"]} == {licence["upstream"]}')
         if skip_downloads:
             continue
+        source = component.get("vendoredFrom")
+        if source:
+            pristine = json.loads((ROOT / component["pristine"]).read_text())
+            for path, digest in pristine.items():
+                url = source["base"] + path[len(source.get("strip", "")):]
+                ok = hashlib.sha256(fetch(url)).hexdigest() == digest
+                failures += not ok
+                print(("ok  " if ok else "BAD ") + f'{component["id"]}: {path} == {url}')
         for item in component["fetch"]:
             digest = hashlib.sha256(fetch(item["url"])).hexdigest()
             ok = digest == item["sha256"]

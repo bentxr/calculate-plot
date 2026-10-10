@@ -1,0 +1,19 @@
+{
+  "fonts/ttf/STIXGeneral.ttf": "167378031e2dddc6216d67819c9260e9a06ffc4c478e4e23cb98a6fd44b183c2",
+  "fonts/ttf/STIXGeneralBol.ttf": "e8533dc7083fa346bda1933d60ea4a83b67d0945bceaf1b3541f82b4a0e2c6a0",
+  "fonts/ttf/STIXGeneralBolIta.ttf": "98788fd4ba48dfbb2bd026c0e20a247a8b06c7372879628b7a6bb0d5bb09736c",
+  "fonts/ttf/STIXGeneralItalic.ttf": "6cfcb333d22b7c3c623bdfd40174f14c85c3d6731ca6166c1edc80140eae8527",
+  "fonts/ttf/STIXNonUni.ttf": "5256f7e021335ac4854d180f0e8bf198964ec2fc820176276e16aabc6537bb57",
+  "fonts/ttf/STIXNonUniBol.ttf": "5d106a5b78d1ffc30174553439b86257bfa45f088120cb3b4150a51dc4f9b60b",
+  "fonts/ttf/STIXNonUniBolIta.ttf": "a5bdb60e76c37f6c90aa2ce8b5cdf0043a85182fe0dbb61c086262bc7f7e2def",
+  "fonts/ttf/STIXNonUniIta.ttf": "04cafda56881bf660865dab4e17e1cdc280be8d3cb50fae5eb8695d4de30f548",
+  "fonts/ttf/STIXSizFiveSymReg.ttf": "c18b87d60614a42baeb2a22d447e647fda7fb3a9940fef57dcbe51bd1b4a4b1b",
+  "fonts/ttf/STIXSizFourSymBol.ttf": "c8d76f8d4a129ac64250b983ed256af4769b9dd1bd3f874f85ba0bd49a407f4b",
+  "fonts/ttf/STIXSizFourSymReg.ttf": "fbdc553182f8ff5adc3bc16208aac27d1e0f69298ab40e3675d2c6ab0b5e8b5c",
+  "fonts/ttf/STIXSizOneSymBol.ttf": "7187b1ca8f2b65c76a325a5af5f345e5ad88a172d44d9b88be1d090f5429d22e",
+  "fonts/ttf/STIXSizOneSymReg.ttf": "d256c7ce99ddcc998ef12e369a5921b33e4d6ef24b402687e4c71ced06510f37",
+  "fonts/ttf/STIXSizThreeSymBol.ttf": "dde05cf95b586e1414dc19f18b2a5f3ba780cc4bbc05d0efb4825215b912da86",
+  "fonts/ttf/STIXSizThreeSymReg.ttf": "5c548a0a9b5b11233cbb11ed5054805767326f0c614a377c756541caae9fdf0d",
+  "fonts/ttf/STIXSizTwoSymBol.ttf": "3140981eb03466a162484fcf8c81a525980cbafefd694810a84ec3b6ede4ba8d",
+  "fonts/ttf/STIXSizTwoSymReg.ttf": "fec7710ee130043b400e9bbd0b221743157bb08a80d93655042522523ab95029"
+}

@@ -1,14 +1,39 @@
 {
   "version": 1,
-  "ignore": ["build/**", ".git/**", "tools/oracle/.venv/**", "**/__pycache__/**"],
+  "ignore": [
+    "build/**",
+    ".git/**",
+    "tools/oracle/.venv/**",
+    "**/__pycache__/**"
+  ],
   "own": [
-    "README.md", ".gitignore", "CMakeLists.txt", "CMakePresets.json", ".github/**", "cmake/**",
-    "include/**", "src/**", "cli/**", "tests/**", "tools/**", "licensing/**", "NOTICE"
+    "README.md",
+    ".gitignore",
+    "CMakeLists.txt",
+    "CMakePresets.json",
+    ".github/**",
+    "cmake/**",
+    "include/**",
+    "src/**",
+    "cli/**",
+    "tests/**",
+    "tools/**",
+    "licensing/**",
+    "NOTICE"
   ],
   "forbidden": [
-    "**/agg_conv_gpc.h", "**/gpc.c", "**/gpc.h", "**/cmr10.pfb", "**/Courier10PitchBT-Bold.pfb"
+    "**/agg_conv_gpc.h",
+    "**/gpc.c",
+    "**/gpc.h",
+    "**/cmr10.pfb",
+    "**/Courier10PitchBT-Bold.pfb"
   ],
-  "mayMentionCopyright": ["NOTICE", "licensing/**", "tests/licensing/**", "tests/test_licensing.cpp"],
+  "mayMentionCopyright": [
+    "NOTICE",
+    "licensing/**",
+    "tests/licensing/**",
+    "tests/test_licensing.cpp"
+  ],
   "notice": "NOTICE",
   "components": [
     {
@@ -36,6 +61,290 @@
       "header": [],
       "notices": [],
       "changes": null
+    },
+    {
+      "id": "freetype",
+      "name": "FreeType",
+      "version": "2.14.3",
+      "homepage": "https://freetype.org",
+      "use": "runtime",
+      "licence": "FTL (chosen over GPL-2.0-or-later); BDF/PCF drivers X11-style; gzip module Zlib",
+      "licenceFiles": [
+        {
+          "path": "LICENSES/FreeType-FTL.txt",
+          "upstream": "https://raw.githubusercontent.com/freetype/freetype/VER-2-14-3/docs/FTL.TXT",
+          "sha256": "5a5ee54c5001bbad1cdc1a57cc3dd4c42199b2da09d39c7ee41fab002d02967f"
+        },
+        {
+          "path": "LICENSES/FreeType-LICENSE.txt",
+          "upstream": "https://raw.githubusercontent.com/freetype/freetype/VER-2-14-3/LICENSE.TXT",
+          "sha256": "bd36c8b474855fa294c2ec5c184544478ef3720aad37d65a6296a4f264fd2d3b"
+        },
+        {
+          "path": "LICENSES/FreeType-BDF-README.txt",
+          "upstream": "https://raw.githubusercontent.com/freetype/freetype/VER-2-14-3/src/bdf/README",
+          "sha256": "7984455e7e5a9faba3797c8bf095fbe10cc846316b7320aff8c58402e22b82fe"
+        },
+        {
+          "path": "LICENSES/FreeType-PCF-README.txt",
+          "upstream": "https://raw.githubusercontent.com/freetype/freetype/VER-2-14-3/src/pcf/README",
+          "sha256": "18d9782898d9eac04476e2f744678137b2a889689ed3e923e052fc396a86f86b"
+        },
+        {
+          "path": "LICENSES/zlib.txt",
+          "upstream": "https://raw.githubusercontent.com/madler/zlib/v1.3/LICENSE",
+          "sha256": "845efc77857d485d91fb3e0b884aaa929368c717ae8186b66fe1ed2495753243"
+        }
+      ],
+      "fetch": [
+        {
+          "url": "https://download.savannah.nongnu.org/releases/freetype/freetype-2.14.3.tar.xz",
+          "sha256": "36bc4f1cc413335368ee656c42afca65c5a3987e8768cc28cf11ba775e785a5f"
+        }
+      ],
+      "vendored": [],
+      "derived": [],
+      "header": [],
+      "notices": [
+        "This software is based in part on the work of the FreeType Team.",
+        "Portions of this software are copyright (C) The FreeType Project (https://freetype.org)."
+      ],
+      "changes": null,
+      "remarks": "Built from the unmodified release archive. Configuration (not a change to its files): FT_CONFIG_OPTION_USE_HARFBUZZ is switched on in a generated copy of ftoption.h, as matplotlib's build does; symbols may be renamed with a prefix by a forced-include header."
+    },
+    {
+      "id": "harfbuzz",
+      "name": "HarfBuzz",
+      "version": "14.1.0",
+      "homepage": "https://harfbuzz.github.io",
+      "use": "runtime",
+      "licence": "MIT-Old (HarfBuzz); MIT (src/ms-use); Unicode-3.0 (data tables)",
+      "licenceFiles": [
+        {
+          "path": "LICENSES/HarfBuzz.txt",
+          "upstream": "https://raw.githubusercontent.com/harfbuzz/harfbuzz/14.1.0/COPYING",
+          "sha256": "ba8f810f2455c2f08e2d56bb49b72f37fcf68f1f4fade38977cfd7372050ad64"
+        },
+        {
+          "path": "LICENSES/HarfBuzz-ms-use.txt",
+          "upstream": "https://raw.githubusercontent.com/harfbuzz/harfbuzz/14.1.0/src/ms-use/COPYING",
+          "sha256": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383"
+        },
+        {
+          "path": "LICENSES/Unicode-3.0.txt",
+          "upstream": "https://www.unicode.org/license.txt",
+          "sha256": "e7a93b009565cfce55919a381437ac4db883e9da2126fa28b91d12732bc53d96",
+          "upstreamMayChange": true,
+          "retrieved": "2026-10-10"
+        }
+      ],
+      "fetch": [
+        {
+          "url": "https://github.com/harfbuzz/harfbuzz/releases/download/14.1.0/harfbuzz-14.1.0.tar.xz",
+          "sha256": "ee0eb3a1da2c5a28147f12dff55f6c7d60aeeeb29ac7ef334eabe84c8476c105"
+        }
+      ],
+      "vendored": [],
+      "derived": [],
+      "header": [],
+      "notices": [
+        "Copyright (C) 2010-2022 Google, Inc.",
+        "Microsoft Corporation",
+        "Unicode, Inc."
+      ],
+      "changes": null,
+      "remarks": "Built from the unmodified release archive (src/harfbuzz.cc) with FreeType support."
+    },
+    {
+      "id": "sheenbidi",
+      "name": "SheenBidi",
+      "version": "3.0.0",
+      "homepage": "https://github.com/Tehreer/SheenBidi",
+      "use": "runtime",
+      "licence": "Apache-2.0; Unicode-3.0 (data tables)",
+      "licenceFiles": [
+        {
+          "path": "LICENSES/SheenBidi.txt",
+          "upstream": "https://raw.githubusercontent.com/Tehreer/SheenBidi/v3.0.0/LICENSE",
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+        },
+        {
+          "path": "LICENSES/Unicode-3.0.txt",
+          "upstream": "https://www.unicode.org/license.txt",
+          "sha256": "e7a93b009565cfce55919a381437ac4db883e9da2126fa28b91d12732bc53d96",
+          "upstreamMayChange": true,
+          "retrieved": "2026-10-10"
+        }
+      ],
+      "fetch": [
+        {
+          "url": "https://github.com/Tehreer/SheenBidi/archive/refs/tags/v3.0.0/sheenbidi-3.0.0.tar.gz",
+          "sha256": "86c56014034739ba39a24c23eb00323b0bf6f737354f665786015fca842af786"
+        }
+      ],
+      "vendored": [],
+      "derived": [],
+      "header": [],
+      "notices": [
+        "Copyright (C) 2014-2026 Muhammad Tayyab Akram"
+      ],
+      "changes": null,
+      "remarks": "Built from the unmodified release archive (Source/SheenBidi.c, unity build). It has no NOTICE file."
+    },
+    {
+      "id": "libraqm",
+      "name": "libraqm",
+      "version": "0.10.5",
+      "homepage": "https://github.com/HOST-Oman/libraqm",
+      "use": "runtime",
+      "licence": "MIT",
+      "licenceFiles": [
+        {
+          "path": "LICENSES/libraqm.txt",
+          "upstream": "https://raw.githubusercontent.com/HOST-Oman/libraqm/v0.10.5/COPYING",
+          "sha256": "4a574f631d5aee5223d108d3f7ec4f717343685d8a8904f42591be72c907ecba"
+        }
+      ],
+      "fetch": [
+        {
+          "url": "https://github.com/HOST-Oman/libraqm/archive/v0.10.5/libraqm-0.10.5.tar.gz",
+          "sha256": "7f3dd21b4b3bd28a36f2c911d31d91a9d69341697713923ef1aac65d56ebcafd"
+        }
+      ],
+      "vendored": [],
+      "derived": [],
+      "header": [],
+      "notices": [
+        "Copyright (C) 2015 Information Technology Authority (ITA)",
+        "Copyright (C) 2016-2025 Khaled Hosny"
+      ],
+      "changes": null,
+      "remarks": "Built from the unmodified release archive with SheenBidi; raqm-version.h and config.h generated as its meson build does."
+    },
+    {
+      "id": "dejavu-fonts",
+      "name": "DejaVu fonts",
+      "version": "2.35",
+      "homepage": "https://dejavu-fonts.github.io",
+      "use": "runtime",
+      "licence": "Bitstream-Vera AND LicenseRef-Arev (DejaVu changes public domain)",
+      "licenceFiles": [
+        {
+          "path": "LICENSES/DejaVu.txt",
+          "upstream": "https://raw.githubusercontent.com/matplotlib/matplotlib/v3.11.2/lib/matplotlib/mpl-data/fonts/ttf/LICENSE_DEJAVU",
+          "sha256": "d75938dec098f06f0ac3c00853065d94f020be1c3c62ef1dc2975ba15b4d9b0e"
+        }
+      ],
+      "fetch": [],
+      "vendored": [
+        "fonts/ttf/DejaVu*.ttf"
+      ],
+      "pristine": "licensing/vendored/dejavu-fonts.json",
+      "vendoredFrom": {
+        "base": "https://raw.githubusercontent.com/matplotlib/matplotlib/v3.11.2/lib/matplotlib/mpl-data/",
+        "strip": ""
+      },
+      "derived": [],
+      "header": [],
+      "notices": [
+        "Copyright (c) 2003 by Bitstream, Inc. All Rights Reserved. Bitstream Vera is a trademark of Bitstream, Inc.",
+        "Copyright (c) 2006 by Tavmjong Bah. All Rights Reserved."
+      ],
+      "changes": null,
+      "remarks": "The 14 files are copied unmodified from Matplotlib 3.11.2 (lib/matplotlib/mpl-data/fonts/ttf), where they are byte-identical to the wheel."
+    },
+    {
+      "id": "stix-fonts",
+      "name": "STIX fonts",
+      "version": "1.0.0",
+      "homepage": "https://www.stixfonts.org",
+      "use": "runtime",
+      "licence": "OFL-1.1 (Reserved Font Name: STIX Fonts)",
+      "licenceFiles": [
+        {
+          "path": "LICENSES/STIX.txt",
+          "upstream": "https://raw.githubusercontent.com/matplotlib/matplotlib/v3.11.2/lib/matplotlib/mpl-data/fonts/ttf/LICENSE_STIX",
+          "sha256": "bab3d31dfef07f483624f2f65f2711e76065b8e7273278b1c071ede1041c9959"
+        }
+      ],
+      "fetch": [],
+      "vendored": [
+        "fonts/ttf/STIX*.ttf"
+      ],
+      "pristine": "licensing/vendored/stix-fonts.json",
+      "vendoredFrom": {
+        "base": "https://raw.githubusercontent.com/matplotlib/matplotlib/v3.11.2/lib/matplotlib/mpl-data/",
+        "strip": ""
+      },
+      "derived": [],
+      "header": [],
+      "notices": [
+        "Copyright (c) 2001-2010 by the STI Pub Companies"
+      ],
+      "changes": null,
+      "remarks": "The 17 files are copied unmodified from Matplotlib 3.11.2 (lib/matplotlib/mpl-data/fonts/ttf), where they are byte-identical to the wheel."
+    },
+    {
+      "id": "bakoma-fonts",
+      "name": "BaKoMa Computer Modern fonts",
+      "version": "1.1",
+      "homepage": "https://www.ctan.org/tex-archive/fonts/cm/ps-type1/bakoma",
+      "use": "runtime",
+      "licence": "LicenseRef-BaKoMa",
+      "licenceFiles": [
+        {
+          "path": "LICENSES/BaKoMa.txt",
+          "upstream": "https://raw.githubusercontent.com/matplotlib/matplotlib/v3.11.2/LICENSE/LICENSE_BAKOMA",
+          "sha256": "93adb2b53c02b7ce06b26bff41358c21248f42fed287b633ec4c31038377cdbb"
+        }
+      ],
+      "fetch": [],
+      "vendored": [
+        "fonts/ttf/cm*.ttf"
+      ],
+      "pristine": "licensing/vendored/bakoma-fonts.json",
+      "vendoredFrom": {
+        "base": "https://raw.githubusercontent.com/matplotlib/matplotlib/v3.11.2/lib/matplotlib/mpl-data/",
+        "strip": ""
+      },
+      "derived": [],
+      "header": [],
+      "notices": [
+        "Copyright (C) 1994, 1995, Basil K. Malyshev. All Rights Reserved."
+      ],
+      "changes": null,
+      "remarks": "The 8 files are copied unmodified from Matplotlib 3.11.2 (lib/matplotlib/mpl-data/fonts/ttf), where they are byte-identical to the wheel."
+    },
+    {
+      "id": "lastresort-font",
+      "name": "Last Resort High-Efficiency font",
+      "version": "16.000",
+      "homepage": "https://github.com/unicode-org/last-resort-font",
+      "use": "runtime",
+      "licence": "OFL-1.1",
+      "licenceFiles": [
+        {
+          "path": "LICENSES/LastResort.txt",
+          "upstream": "https://raw.githubusercontent.com/matplotlib/matplotlib/v3.11.2/LICENSE/LICENSE_LAST_RESORT_FONT",
+          "sha256": "1440f519e51f27adb9b4825580e922c38b9e326523843d6cf876a7d312a916e0"
+        }
+      ],
+      "fetch": [],
+      "vendored": [
+        "fonts/ttf/LastResortHE-Regular.ttf"
+      ],
+      "pristine": "licensing/vendored/lastresort-font.json",
+      "vendoredFrom": {
+        "base": "https://raw.githubusercontent.com/matplotlib/matplotlib/v3.11.2/lib/matplotlib/mpl-data/",
+        "strip": ""
+      },
+      "derived": [],
+      "header": [],
+      "notices": [
+        "Copyright (C) 2020-2024 Unicode, Inc."
+      ],
+      "changes": null,
+      "remarks": "The 1 files are copied unmodified from Matplotlib 3.11.2 (lib/matplotlib/mpl-data/fonts/ttf), where they are byte-identical to the wheel."
     }
   ]
 }

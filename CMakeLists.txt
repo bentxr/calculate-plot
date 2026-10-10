@@ -9,6 +9,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 add_compile_options(-ffp-contract=off)
 
 include(FetchContent)
+include(cmake/text-libraries.cmake)
 
 add_library(calculate-plot-warnings INTERFACE)
 target_compile_options(calculate-plot-warnings INTERFACE -Wall -Wextra -Wpedantic -Wshadow)
@@ -39,7 +40,7 @@ target_include_directories(calculate-plot
     PRIVATE ${PROJECT_SOURCE_DIR}/src)
 target_compile_definitions(calculate-plot PRIVATE CALCULATE_PLOT_VERSION="${PROJECT_VERSION}")
 target_compile_options(calculate-plot PRIVATE -fno-exceptions)
-target_link_libraries(calculate-plot PRIVATE calculate-plot-warnings)
+target_link_libraries(calculate-plot PUBLIC calculate-plot-raqm PRIVATE calculate-plot-warnings)
 
 add_library(cplot-cli STATIC cli/cli.cpp)
 target_include_directories(cplot-cli PUBLIC ${PROJECT_SOURCE_DIR}/cli)

@@ -1,0 +1,16 @@
+{
+  "fonts/ttf/DejaVuSans-Bold.ttf": "b184b89e3c1075f22f6b71575b6fc20d4972b3cfd3b23322ca6fd596dcaef167",
+  "fonts/ttf/DejaVuSans-BoldOblique.ttf": "6edf0283160186af451cbee71e7b845f2e4cabf264bb992ce668c83c25465e6f",
+  "fonts/ttf/DejaVuSans-Oblique.ttf": "ccdf74b350f11fd3dd5774de50e5e6346a1a5da1f5b7d5fb83590665e97a5213",
+  "fonts/ttf/DejaVuSans.ttf": "3fdf69cabf06049ea70a00b5919340e2ce1e6d02b0cc3c4b44fb6801bd1e0d22",
+  "fonts/ttf/DejaVuSansDisplay.ttf": "82099dcfba5aa868cdfc27451989525fe3292f737fb3c9e0328ce9cef59652f6",
+  "fonts/ttf/DejaVuSansMono-Bold.ttf": "baada9a5172fe20886251aff0433fc38461912d5daf07287e7bee56620a8da96",
+  "fonts/ttf/DejaVuSansMono-BoldOblique.ttf": "a69081c15c76c827e0a27a5a7f5c74b6135c843499955495ffa8c20d3a98288b",
+  "fonts/ttf/DejaVuSansMono-Oblique.ttf": "28052813f7a709fc89f52d192dc995ef4f0fdc5c3d7b73a49d6849b1916d0cd0",
+  "fonts/ttf/DejaVuSansMono.ttf": "602ec86b8948cfcd956482fe64f94c36c867770149ef2f791d4613f443bcecb3",
+  "fonts/ttf/DejaVuSerif-Bold.ttf": "c3753f2ed6bc673f15846dc45addbeb3b9c872f32fb18fd53a21f1bef1ed7676",
+  "fonts/ttf/DejaVuSerif-BoldItalic.ttf": "d93efec7a9d2e826768d1a2ee95b95870e15e29599a84f3484af1de1cec2e181",
+  "fonts/ttf/DejaVuSerif-Italic.ttf": "3e7994fbc54fa10ce3352a42d548fadd7d9cadb69cb1109bc9d960f6dac57f04",
+  "fonts/ttf/DejaVuSerif.ttf": "107244956e9962b9e96faccdc551825e0ae0898ae13737133e1b921a2fd35ffa",
+  "fonts/ttf/DejaVuSerifDisplay.ttf": "2914f32e47c777c27be5677afae7db4de79f9e45de6fc9097d9949c23c14f7d5"
+}
