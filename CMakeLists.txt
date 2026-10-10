@@ -8,6 +8,13 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Numerical correctness: no FMA contraction, so every target computes the same doubles.
 add_compile_options(-ffp-contract=off)
 
+# A program built with threads for the browser (Qt's wasm_multithread kit) needs every object
+# compiled with -pthread, ours and the libraries we build.
+option(CALCULATE_PLOT_THREADS "Compile with -pthread under Emscripten" OFF)
+if(EMSCRIPTEN AND CALCULATE_PLOT_THREADS)
+    add_compile_options(-pthread)
+endif()
+
 include(FetchContent)
 include(cmake/text-libraries.cmake)
 include(cmake/zlib.cmake)
