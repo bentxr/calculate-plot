@@ -38,7 +38,19 @@ add_custom_command(
     COMMENT "Embedding the third-party notices"
     VERBATIM)
 
+# Data files compiled into the library.
+set(embedded_files data/rcdefaults.json)
+list(TRANSFORM embedded_files PREPEND "${PROJECT_SOURCE_DIR}/" OUTPUT_VARIABLE embedded_paths)
+add_custom_command(
+    OUTPUT  ${PROJECT_BINARY_DIR}/generated/embedded.cpp
+    COMMAND ${CMAKE_COMMAND} -DSOURCE_DIR=${PROJECT_SOURCE_DIR} "-DFILES=${embedded_files}"
+            -DOUTPUT=${PROJECT_BINARY_DIR}/generated/embedded.cpp -P ${PROJECT_SOURCE_DIR}/cmake/embed.cmake
+    DEPENDS ${embedded_paths} ${PROJECT_SOURCE_DIR}/cmake/embed.cmake
+    COMMENT "Embedding data files"
+    VERBATIM)
+
 add_library(calculate-plot STATIC
+    ${PROJECT_BINARY_DIR}/generated/embedded.cpp
     ${PROJECT_BINARY_DIR}/generated/notices.cpp
     src/version.cpp
     src/agg/agg_hooks.cpp
@@ -46,6 +58,7 @@ add_library(calculate-plot STATIC
     src/agg/backend_agg.cpp
     src/model/figure_model.cpp
     src/png/png.cpp
+    src/rc/rc_params.cpp
     src/render/replay.cpp
     src/render/svg_replay.cpp
     src/support/base64.cpp

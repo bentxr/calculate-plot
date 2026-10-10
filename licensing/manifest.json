@@ -20,7 +20,8 @@
     "tests/**",
     "tools/**",
     "licensing/**",
-    "NOTICE"
+    "NOTICE",
+    "data/**"
   ],
   "forbidden": [
     "**/agg_conv_gpc.h",
@@ -33,7 +34,8 @@
     "NOTICE",
     "licensing/**",
     "tests/licensing/**",
-    "tests/test_licensing.cpp"
+    "tests/test_licensing.cpp",
+    "tools/oracle/make_rcdefaults.py"
   ],
   "notice": "NOTICE",
   "components": [
@@ -457,7 +459,8 @@
         "src/svg/svg_renderer.h",
         "src/svg/svg_renderer.cpp",
         "src/axes/ticker.hpp",
-        "src/axes/ticker.cpp"
+        "src/axes/ticker.cpp",
+        "data/rcdefaults.json"
       ],
       "header": [
         "Copyright (c) 2012- Matplotlib Development Team; All Rights Reserved",
