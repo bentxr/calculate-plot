@@ -16,7 +16,9 @@ if(PROJECT_IS_TOP_LEVEL)  # warnings are errors here, but never break a project 
     target_compile_options(calculate-plot-warnings INTERFACE -Werror)
 endif()
 
-add_library(calculate-plot STATIC src/version.cpp)
+add_library(calculate-plot STATIC
+    src/version.cpp
+    src/support/sha256.cpp)
 target_include_directories(calculate-plot
     PUBLIC  ${PROJECT_SOURCE_DIR}/include
     PRIVATE ${PROJECT_SOURCE_DIR}/src)

@@ -6,6 +6,7 @@ set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
 add_executable(calculate-plot-tests
+    test_sha256.cpp
     test_version.cpp
 )
 target_include_directories(calculate-plot-tests PRIVATE ${PROJECT_SOURCE_DIR}/src)
