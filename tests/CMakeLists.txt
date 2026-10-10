@@ -24,6 +24,7 @@ add_executable(calculate-plot-tests
     test_text.cpp
     test_text_libraries.cpp
     test_ticker.cpp
+    test_transforms.cpp
     test_version.cpp
     test_xml_writer.cpp
 )

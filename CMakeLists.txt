@@ -63,6 +63,7 @@ add_library(calculate-plot STATIC
     src/render/replay.cpp
     src/render/svg_replay.cpp
     src/support/base64.cpp
+    src/transforms/transforms.cpp
     src/svg/svg_renderer.cpp
     src/svg/xml_writer.cpp
     src/text/ft2font.cpp

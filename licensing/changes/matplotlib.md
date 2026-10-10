@@ -37,6 +37,11 @@ it comes from in its first lines. The changes, as a whole:
   ScalarFormatter (offset, order of magnitude, format, labels and offset text, with the default rcParams) and
   transforms.py's _nonsingular, translated to C++ with Python's and NumPy's numeric semantics (floor division,
   divmod, rounding, %-formatting) reproduced exactly; the axis' view interval is passed in.
+- **Transforms** (src/transforms): transforms.py's Bbox, TransformedBbox, Affine2D, IdentityTransform,
+  BboxTransformTo/From, BboxTransform, BlendedAffine2D, ScaledTranslation and the composite transforms, translated
+  to C++ (matrices computed on demand rather than cached and invalidated; the same values). np.dot is reproduced
+  (accumulating from +0.0) and numpy.linalg.inv by an LU solve that multiplies by pivot reciprocals as NumPy's
+  OpenBLAS does; composites keep matplotlib's distinction between CompositeAffine2D and CompositeGenericTransform.
 - File names drop the leading underscore (e.g. src/_backend_agg.h is src/agg/backend_agg.h); includes follow.
 - The drawing algorithms themselves (src/_backend_agg.h, src/_backend_agg.cpp, src/path_converters.h,
   src/agg_workaround.h, src/array.h, src/mplutils.h) are otherwise unchanged.

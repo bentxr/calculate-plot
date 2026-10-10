@@ -463,7 +463,9 @@
         "src/axes/ticker.cpp",
         "data/rcdefaults.json",
         "data/colors.json",
-        "src/colors/colors.cpp"
+        "src/colors/colors.cpp",
+        "src/transforms/transforms.hpp",
+        "src/transforms/transforms.cpp"
       ],
       "header": [
         "Copyright (c) 2012- Matplotlib Development Team; All Rights Reserved",
