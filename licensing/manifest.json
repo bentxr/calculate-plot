@@ -476,6 +476,8 @@
         "src/engine/artist.cpp",
         "src/engine/figure.hpp",
         "src/engine/figure.cpp",
+        "src/engine/gridspec.hpp",
+        "src/engine/gridspec.cpp",
         "src/engine/text.hpp",
         "src/engine/text.cpp",
         "src/text/font_manager.hpp",

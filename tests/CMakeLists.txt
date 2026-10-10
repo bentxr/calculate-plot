@@ -12,6 +12,7 @@ add_executable(calculate-plot-tests
     test_figures.cpp
     test_font_manager.cpp
     test_glob.cpp
+    test_gridspec.cpp
     test_json.cpp
     test_json_writer.cpp
     test_licensing.cpp
@@ -20,6 +21,7 @@ add_executable(calculate-plot-tests
     test_png.cpp
     test_rc.cpp
     test_pyformat.cpp
+    test_pynum.cpp
     test_replay.cpp
     licensing/compliance.cpp
     test_sha256.cpp

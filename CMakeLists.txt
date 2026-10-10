@@ -60,6 +60,7 @@ add_library(calculate-plot STATIC
     src/engine/engine.cpp
     src/engine/figure.cpp
     src/engine/gc.cpp
+    src/engine/gridspec.cpp
     src/engine/path.cpp
     src/engine/text.cpp
     src/engine/trace_renderer.cpp
@@ -82,6 +83,7 @@ add_library(calculate-plot STATIC
     src/support/pyformat.cpp
     src/support/pynum.cpp
     src/support/pyformat_round.cpp
+    src/support/pysum.cpp
     src/support/sha256.cpp)
 target_include_directories(calculate-plot
     PUBLIC  ${PROJECT_SOURCE_DIR}/include

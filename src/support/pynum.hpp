@@ -2,6 +2,7 @@
 
 #include <string>
 #include <utility>
+#include <vector>
 
 namespace calculate_plot::support {
 
@@ -14,6 +15,11 @@ std::pair<double, double> divmod(double a, double b);
 double npRound(double x, int decimals);
 // Python's round(x, ndigits): the double nearest to x correctly rounded to ndigits decimals.
 double pythonRound(double x, int ndigits);
+
+// Python's sum() of numbers (CPython 3.12+): `integers` says which values are Python ints. Leading
+// ints are summed exactly, the first float is added plainly, then the rest with Neumaier's
+// compensated summation.
+double pythonSum(const std::vector<double>& values, const std::vector<bool>& integers);
 
 // printf-style formatting as Python's % operator does it, whatever the C locale says.
 std::string percentF(double x, int precision);  // "%.{p}f"
