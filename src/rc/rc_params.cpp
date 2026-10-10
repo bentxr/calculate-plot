@@ -79,8 +79,15 @@ bool Params::set(const std::string& key, const Json& v, std::string* error) {
     }
     const Kind want = kindOf(it->second), got = kindOf(v);
     // A default of None accepts anything matplotlib would validate; otherwise the kinds must agree.
-    // savefig.dpi is 'figure' or a number.
-    const bool numberForName = key == "savefig.dpi" && got == Kind::Number;
+    // A few defaults are names where a number is as good: savefig.dpi ('figure'), the font sizes
+    // ('medium', 'large') and the font weights ('normal').
+    static const char* const kNumberOrName[] = {
+        "savefig.dpi",      "axes.labelsize",    "axes.titlesize",   "figure.labelsize",   "figure.titlesize",
+        "legend.fontsize",  "xtick.labelsize",   "ytick.labelsize",  "axes.labelweight",   "axes.titleweight",
+        "figure.labelweight", "figure.titleweight", "font.weight"};
+    bool numberForName = false;
+    if (got == Kind::Number)
+        for (const char* k : kNumberOrName) numberForName = numberForName || key == k;
     if (want != Kind::Null && got != want && !numberForName) {
         if (error) *error = "the value given for " + key + " is not of the right kind";
         return false;

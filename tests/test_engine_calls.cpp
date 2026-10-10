@@ -66,10 +66,22 @@ INSTANTIATE_TEST_SUITE_P(
         Refusal{R"({"on": "fig", "call": "subplots_adjust", "kwargs": {"bottom": 0.9, "top": 0.5}})",
                 "fig.subplots_adjust: bottom cannot be >= top"},
         // what the measuring cannot do yet stops the layout
-        Refusal{R"({"on": "axs[0]", "call": "plot", "args": [[0, 1], [0, 1000000]]},
-                   {"on": "axs[0]", "call": "set_title", "args": ["t"]},
-                   {"on": "fig", "call": "tight_layout"})",
-                "fig.tight_layout: titles beside a y offset text are not supported yet"}));
+        Refusal{R"({"on": "fig", "call": "tight_layout", "kwargs": {"pad": 2}},
+                   {"on": "fig", "call": "pie"})",
+                "unsupported call: fig.pie"}));
+
+// What the measuring cannot do yet stops the layout, and says so by the call's name.
+TEST(LayoutCalls, WhatCannotBeMeasuredStopsTheLayout) {
+    std::string error;
+    const auto figure = calculate_plot::model::parseFigure(
+        R"({"version": 1, "rc": {"xtick.minor.visible": true},
+            "calls": [{"call": "subplots", "as": ["fig", "ax"]}, {"on": "fig", "call": "tight_layout"}]})", &error);
+    ASSERT_TRUE(figure.has_value()) << error;
+    calculate_plot::engine::DrawOptions options;
+    options.fontDirectory = std::string(CALCULATE_PLOT_SOURCE_DIR) + "/fonts/ttf";
+    EXPECT_EQ(calculate_plot::engine::drawAgg(*figure, options).error,
+              "fig.tight_layout: minor ticks on linear scales (AutoMinorLocator) are not supported yet");
+}
 
 // None for the optional keywords is the same as leaving them out.
 TEST(LayoutCalls, NoneKeywordsAreTheDefaults) {

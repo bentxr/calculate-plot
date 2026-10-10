@@ -129,6 +129,8 @@ it comes from in its first lines. The changes, as a whole:
   contains_branch, contains_branch_separately, Transform.__sub__ and BlendedGenericTransform.inverted, translated
   to C++; Axes._update_line_limits and _update_patch_limits use them. np.dot is a fused sum (see the comment in
   src/transforms/transforms.cpp).
+  Titles: _update_title_position now clears the y axis' offset text and the x axis' top ticks and labels
+  (Axis._get_ticks_position over a major and a minor tick), as matplotlib does.
 - File names drop the leading underscore (e.g. src/_backend_agg.h is src/agg/backend_agg.h); includes follow.
 - The drawing algorithms themselves (src/_backend_agg.h, src/_backend_agg.cpp, src/path_converters.h,
   src/agg_workaround.h, src/array.h, src/mplutils.h) are otherwise unchanged.

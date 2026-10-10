@@ -1,0 +1,13 @@
+{"version": 1,
+ "rc": {"axes.titlesize": 15, "axes.labelsize": 8.5, "xtick.labelsize": 7, "ytick.labelsize": 12, "legend.fontsize": 6.5,
+        "figure.titlesize": 18, "axes.titleweight": 700, "axes.labelweight": 600, "figure.titleweight": 300,
+        "font.weight": 500, "font.size": 11},
+ "calls": [
+  {"call": "subplots", "kwargs": {"figsize": {"$tuple": [4.0, 3.0]}}, "as": ["fig", "ax"]},
+  {"on": "ax", "call": "plot", "args": [[0, 1, 2], [1000000, 2000000, 4000000]], "kwargs": {"label": "numbers for sizes"}},
+  {"on": "ax", "call": "set_title", "args": ["Title at 15 pt, weight 700"]},
+  {"on": "ax", "call": "set_xlabel", "args": ["x label at 8.5 pt"]},
+  {"on": "ax", "call": "set_ylabel", "args": ["y label"]},
+  {"on": "ax", "call": "legend"},
+  {"on": "fig", "call": "suptitle", "args": ["Suptitle at 18 pt"]}
+]}

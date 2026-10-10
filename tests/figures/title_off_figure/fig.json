@@ -1,0 +1,7 @@
+{"version": 1,
+ "rc": {"figure.subplot.top": -0.2, "figure.subplot.bottom": -0.6},
+ "calls": [
+  {"call": "subplots", "kwargs": {"figsize": {"$tuple": [4.0, 3.0]}}, "as": ["fig", "ax"]},
+  {"on": "ax", "call": "set_title", "args": ["Below the figure"], "kwargs": {"pad": -20}},
+  {"on": "ax", "call": "set_title", "args": ["left"], "kwargs": {"loc": "left", "pad": -20}}
+]}

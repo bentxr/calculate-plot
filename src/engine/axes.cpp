@@ -469,15 +469,21 @@ void Axis::setLabelText(const std::string& t, const std::string& loc) {
 }
 
 std::string Axis::ticksPosition() const {
-    // Axis._get_ticks_position over the major ticks' first tick and label
-    if (majorTicks_.empty()) return isX_ ? "bottom" : "left";
-    const Tick& t = *majorTicks_.front();
-    const bool one = t.tick1line.visible || t.label1.visible;
-    const bool two = t.tick2line.visible || t.label2.visible;
-    if (one && !two) return isX_ ? "bottom" : "left";
-    if (two && !one) return isX_ ? "top" : "right";
-    if (one && two) return "default";
-    return "unknown";
+    // Axis._get_ticks_position over a major tick and, where the minor locator is not a NullLocator
+    // (log scales), a minor one: what the ticks of a group show is what its keywords say
+    std::vector<const TickSwitches*> groups{&majorTickKw_};
+    if (scale_ == "log") groups.push_back(&minorTickKw_);
+    const auto all = [&](bool tick1, bool tick2, bool label1) {
+        for (const TickSwitches* k : groups)
+            if (k->tick1On != tick1 || k->tick2On != tick2 || k->label1On != label1 || k->label2On == label1) return false;
+        return true;
+    };
+    if (all(true, false, true)) return isX_ ? "bottom" : "left";
+    if (all(false, true, false)) return isX_ ? "top" : "right";
+    // 'default': both tick marks, labels on the first side only
+    bool isDefault = true;
+    for (const TickSwitches* k : groups) isDefault = isDefault && k->tick1On && k->tick2On && k->label1On && !k->label2On;
+    return isDefault ? "default" : "unknown";
 }
 
 std::pair<std::vector<transforms::Bbox>, std::vector<transforms::Bbox>> Axis::ticklabelBboxes(
@@ -800,30 +806,48 @@ void Axes::updateTitlePosition(Renderer& renderer) {
     if (!autotitlepos_) return;
     Text* titles[3] = {title.get(), leftTitle.get(), rightTitle.get()};
     if (titles[0]->text.empty() && titles[1]->text.empty() && titles[2]->text.empty()) return;
-    // The siblings are this Axes alone (no twins, children or aligned titles yet).
-    const std::string ticks = xaxis->ticksPosition();
-    if (ticks == "top" || ticks == "unknown" || xaxis->labelPosition == "top") {
-        renderer.unsupported("titles over top ticks or labels are not supported yet");
-        return;
+    // The Axes to clear are this one alone (no twins, children or aligned titles yet): the top of
+    // its x axis when the ticks are on top (or the label: nothing can put it there yet), of its box
+    // otherwise.
+    double top = -std::numeric_limits<double>::infinity();
+    {
+        std::optional<transforms::Bbox> bb;
+        const std::string ticks = xaxis->ticksPosition();
+        if (ticks == "top" || ticks == "unknown") bb = xaxis->tightbbox(renderer, false);
+        // ax.spines.get("outline", ax).get_window_extent(): the Axes' own box
+        const auto p = bb ? bb->points() : bbox->points();
+        const double ymax = std::max(p[1], p[3]);
+        if (ymax > top) top = ymax;
     }
-    // ax.spines.get("outline", ax).get_window_extent(): the Axes' own box
-    const auto box = bbox->points();
-    const double top = std::max(box[1], box[3]);
     for (Text* t : titles) {
         t->y = 1.0;
         if (!t->text.empty()) {
-            yaxis->updateTicks();  // ax.yaxis.get_tightbbox(renderer) updates the offset text
-            if (yaxis->offsetText.visible && !yaxis->offsetText.text.empty())
-                renderer.unsupported("titles beside a y offset text are not supported yet");
-            if (top < 0) return;
-            if (t->windowExtent(renderer).points()[1] < top) {
-                const auto inv = transAxes->inverted();
-                t->y = inv->transform(0, top)[1];
-                const double ymin = t->windowExtent(renderer).points()[1];
-                if (ymin < top) t->y = inv->transform(0., 2 * top - ymin)[1];
+            yaxis->tightbbox(renderer, false);  // updates the offset text
+            if (yaxis->offsetText.visible && !yaxis->offsetText.text.empty()) {
+                // a title that meets the y axis' offset text goes above it
+                const auto bb = yaxis->offsetText.windowExtent(renderer).points();
+                const auto tb = t->windowExtent(renderer).points();
+                const double x0 = std::max(std::min(tb[0], tb[2]), std::min(bb[0], bb[2]));
+                const double x1 = std::min(std::max(tb[0], tb[2]), std::max(bb[0], bb[2]));
+                const double y0 = std::max(std::min(tb[1], tb[3]), std::min(bb[1], bb[3]));
+                const double y1 = std::min(std::max(tb[1], tb[3]), std::max(bb[1], bb[3]));
+                if (x0 <= x1 && y0 <= y1) top = std::max(bb[1], bb[3]);  // Bbox.intersection is not None
             }
         }
+        if (top < 0) return;  // the top of the Axes is not on the figure: the titles stay
+        const auto ymin = [&] {
+            const auto p = t->windowExtent(renderer).points();
+            return std::min(p[1], p[3]);
+        };
+        if (ymin() < top) {
+            const auto inv = transAxes->inverted();
+            t->y = inv->transform(0, top)[1];
+            // this does not always get the bottom to the top, so it is adjusted once more
+            const double low = ymin();
+            if (low < top) t->y = inv->transform(0., 2 * top - low)[1];
+        }
     }
+    // all the titles line up at the highest baseline
     double ymax = titles[0]->y;
     for (Text* t : titles) ymax = std::max(ymax, t->y);
     for (Text* t : titles) t->y = ymax;
@@ -1133,6 +1157,7 @@ void Axes::setPosition(const transforms::BboxBase& pos) { position->setPoints(po
 
 std::optional<transforms::Bbox> Axes::tightbbox(Renderer& renderer, bool forLayoutOnly) {
     if (!visible) return std::nullopt;
+    if (minorTicksUnsupported_) renderer.unsupported("minor ticks on linear scales (AutoMinorLocator) are not supported yet");
     // apply_aspect: the 'auto' aspect keeps the original position
     std::vector<transforms::Bbox> bb;
     if (axisOn)
