@@ -465,7 +465,16 @@
         "data/colors.json",
         "src/colors/colors.cpp",
         "src/transforms/transforms.hpp",
-        "src/transforms/transforms.cpp"
+        "src/transforms/transforms.cpp",
+        "src/engine/path.hpp",
+        "src/engine/path.cpp",
+        "src/engine/gc.hpp",
+        "src/engine/gc.cpp",
+        "src/engine/renderer.hpp",
+        "src/engine/artist.hpp",
+        "src/engine/artist.cpp",
+        "src/engine/figure.hpp",
+        "src/engine/figure.cpp"
       ],
       "header": [
         "Copyright (c) 2012- Matplotlib Development Team; All Rights Reserved",

@@ -42,6 +42,12 @@ it comes from in its first lines. The changes, as a whole:
   to C++ (matrices computed on demand rather than cached and invalidated; the same values). np.dot is reproduced
   (accumulating from +0.0) and numpy.linalg.inv by an LU solve that multiplies by pivot reciprocals as NumPy's
   OpenBLAS does; composites keep matplotlib's distinction between CompositeAffine2D and CompositeGenericTransform.
+- **Figures** (src/engine): path.py's Path (vertices, codes and the simplification settings),
+  backend_bases.py's GraphicsContextBase and the RendererBase interface, artist.py's Artist (clip settings),
+  patches.py's Patch and Rectangle, lines.py's dash patterns and figure.py's Figure (its boxes, transforms and
+  patch) with backend_agg.py's and backend_svg.py's canvas drawing, translated to C++. Artists draw through a
+  renderer interface; calculate-plot's renderers record the calls in its trace format instead of drawing
+  directly. Colours are given as strings for now.
 - File names drop the leading underscore (e.g. src/_backend_agg.h is src/agg/backend_agg.h); includes follow.
 - The drawing algorithms themselves (src/_backend_agg.h, src/_backend_agg.cpp, src/path_converters.h,
   src/agg_workaround.h, src/array.h, src/mplutils.h) are otherwise unchanged.

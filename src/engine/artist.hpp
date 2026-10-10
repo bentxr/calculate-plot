@@ -1,0 +1,88 @@
+// Derived from Matplotlib 3.11.2: lib/matplotlib/artist.py, lib/matplotlib/patches.py (Patch,
+// Rectangle), lib/matplotlib/lines.py (dash patterns).
+// Copyright (c) 2012- Matplotlib Development Team; All Rights Reserved
+// Licence: LICENSES/Matplotlib.txt. Changes: licensing/changes/matplotlib.md
+#pragma once
+
+#include "colors/colors.hpp"
+#include "engine/renderer.hpp"
+#include "transforms/transforms.hpp"
+
+#include <array>
+#include <memory>
+#include <optional>
+#include <string>
+#include <utility>
+#include <vector>
+
+namespace calculate_plot::engine {
+
+// The dash pattern of a named line style ((offset, dashes)), unscaled; lines._get_dash_pattern.
+std::pair<double, std::optional<std::vector<double>>> dashPattern(const std::string& style, const rc::Params& rc);
+// lines._scale_dashes: dashes scaled by the line width when rcParams["lines.scale_dashes"].
+std::pair<double, std::optional<std::vector<double>>> scaleDashes(
+    const std::pair<double, std::optional<std::vector<double>>>& pattern, double linewidth, const rc::Params& rc);
+
+class Artist {
+public:
+    explicit Artist(const rc::Params& rc) : rc_(rc) {}
+    virtual ~Artist() = default;
+    virtual void draw(Renderer& renderer) = 0;
+    const rc::Params& rc() const { return rc_; }
+
+    bool visible = true;
+    std::optional<double> alpha;
+    bool clipOn = true;
+    transforms::BboxPtr clipBox;
+    std::optional<ClipPath> clipPath;
+    std::optional<std::string> gid, url;
+    std::optional<bool> snap;
+    std::optional<std::array<double, 3>> sketch;
+    double zorder = 0;
+    transforms::TransformPtr transform = std::make_shared<transforms::IdentityTransform>();
+
+protected:
+    void setGcClip(GC& gc) const;  // Artist._set_gc_clip
+    const rc::Params& rc_;
+};
+
+class Patch : public Artist {
+public:
+    explicit Patch(const rc::Params& rc);
+    void setEdgecolor(const std::optional<std::string>& color);
+    void setFacecolor(const std::optional<std::string>& color);
+    void setLinewidth(std::optional<double> w);
+    void setLinestyle(const std::string& style);
+    virtual Path path() const = 0;
+    virtual transforms::TransformPtr patchTransform() const { return std::make_shared<transforms::IdentityTransform>(); }
+    void draw(Renderer& renderer) override;
+
+    bool antialiased;
+    std::string capstyle = "butt";
+    std::string joinstyle = "miter";
+
+    void setAlpha(std::optional<double> a);  // Patch.set_alpha: the colours are made again
+    void setFill(bool b);
+
+protected:
+    void applyEdgecolor();
+    void applyFacecolor();
+    bool fill_ = true;
+    bool edgeDefault_ = false;
+    std::optional<std::string> originalEdgecolor_, originalFacecolor_;
+    colors::Rgba edgecolor_{}, facecolor_{};
+    double linewidth_ = 0;
+    std::string linestyle_ = "solid";
+    std::pair<double, std::optional<std::vector<double>>> unscaledDashes_{0.0, std::nullopt}, dashes_{0.0, std::nullopt};
+};
+
+class Rectangle : public Patch {
+public:
+    Rectangle(const rc::Params& rc, double x0, double y0, double width, double height, double angle = 0.0);
+    Path path() const override { return Path::unitRectangle(rc_); }
+    transforms::TransformPtr patchTransform() const override;
+
+    double x0, y0, width, height, angle;
+};
+
+}  // namespace calculate_plot::engine

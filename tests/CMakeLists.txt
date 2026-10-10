@@ -9,6 +9,7 @@ add_executable(calculate-plot-tests
     test_base64.cpp
     test_cli.cpp
     test_colors.cpp
+    test_figures.cpp
     test_glob.cpp
     test_json.cpp
     test_json_writer.cpp

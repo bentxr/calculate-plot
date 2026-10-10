@@ -56,6 +56,12 @@ add_library(calculate-plot STATIC
     src/agg/agg_hooks.cpp
     src/axes/ticker.cpp
     src/colors/colors.cpp
+    src/engine/artist.cpp
+    src/engine/engine.cpp
+    src/engine/figure.cpp
+    src/engine/gc.cpp
+    src/engine/path.cpp
+    src/engine/trace_renderer.cpp
     src/agg/backend_agg.cpp
     src/model/figure_model.cpp
     src/png/png.cpp
