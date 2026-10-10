@@ -130,6 +130,10 @@ TEST(TextLayout, Utf8DecodesEveryLength) {
     EXPECT_EQ(text::codepoints("a\xc3\xa9\xe2\x82\xac\xf0\x9f\x98\x80"), std::u32string({U'a', 0xe9, 0x20ac, 0x1f600}));
     EXPECT_EQ(text::codepoints("\xff"), std::u32string({0xfffd}));
     EXPECT_EQ(text::codepoints("\xc3"), std::u32string({0xfffd}));
+    EXPECT_EQ(text::codepoints("a\xc3"), std::u32string({U'a', 0xfffd}));             // cut at the end
+    EXPECT_EQ(text::codepoints("\xe2\x82"), std::u32string({0xfffd, 0xfffd}));        // three-byte lead, two bytes
+    EXPECT_EQ(text::codepoints("\xe2\x82\xac!"), std::u32string({0x20ac, U'!'}));
+    EXPECT_EQ(text::codepoints("\xc3x"), std::u32string({0xfffd, U'x'}));             // not a continuation
 }
 
 TEST(TextExtent, MatchesMatplotlibsRendererAgg) {

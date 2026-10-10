@@ -94,8 +94,9 @@ std::u32string codepoints(const std::string& utf8) {
     std::u32string out;
     for (std::size_t i = 0; i < utf8.size();) {
         const auto c = static_cast<unsigned char>(utf8[i]);
-        int extra = c < 0x80 ? 0 : (c >> 5) == 6 ? 1 : (c >> 4) == 14 ? 2 : (c >> 3) == 30 ? 3 : -1;
-        if (extra < 0 || i + std::size_t(extra) >= utf8.size() + (extra == 0 ? 1 : 0)) {
+        const int extra = c < 0x80 ? 0 : (c >> 5) == 6 ? 1 : (c >> 4) == 14 ? 2 : (c >> 3) == 30 ? 3 : -1;
+        // A bad lead byte, or a sequence cut by the end of the text.
+        if (extra < 0 || std::size_t(extra) >= utf8.size() - i) {
             out.push_back(0xfffd);
             ++i;
             continue;

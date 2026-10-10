@@ -57,12 +57,12 @@ public:
     }
 
 private:
+    // Parsing stops at the first problem, so this is called at most once.
     std::nullopt_t fail(const char* message) {
-        if (error_ && !failed_) {
+        if (error_) {
             error_->offset = at_;
             error_->message = message;
         }
-        failed_ = true;
         return std::nullopt;
     }
     bool failBool(const char* message) {
@@ -302,7 +302,6 @@ private:
     std::string_view text_;
     JsonError* error_;
     std::size_t at_ = 0;
-    bool failed_ = false;
 };
 
 std::optional<Json> parseJson(std::string_view text, JsonError* error) {

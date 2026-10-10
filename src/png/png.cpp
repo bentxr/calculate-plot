@@ -54,9 +54,8 @@ unsigned char filtered(int type, const unsigned char* row, const unsigned char* 
     }
 }
 
-bool fail(std::string* error, const std::string& message) {
+void fail(std::string* error, const std::string& message) {
     if (error) *error = message;
-    return false;
 }
 
 }  // namespace

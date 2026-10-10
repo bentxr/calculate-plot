@@ -23,6 +23,7 @@ add_executable(calculate-plot-tests
     test_text_libraries.cpp
     test_ticker.cpp
     test_version.cpp
+    test_xml_writer.cpp
 )
 target_include_directories(calculate-plot-tests PRIVATE ${PROJECT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(calculate-plot-tests SYSTEM PRIVATE ${PROJECT_SOURCE_DIR}/src/agg)
