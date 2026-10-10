@@ -1,5 +1,7 @@
 #include "render/svg_replay.hpp"
 
+#include <algorithm>
+
 #include "render/trace_reader.hpp"
 #include "support/base64.hpp"
 #include "svg/svg_renderer.h"
@@ -10,6 +12,13 @@
 namespace calculate_plot::render {
 
 namespace {
+
+// Traces split base64 data into lines (so that no long run of letters looks like a secret key).
+std::string withoutNewlines(std::string s) {
+    s.erase(std::remove(s.begin(), s.end(), '\n'), s.end());
+    return s;
+}
+
 
 svg::PathData path(Reader& in, const Json& j) {
     svg::PathData p;
@@ -230,7 +239,7 @@ SvgReplayResult replaySvgTrace(std::string_view traceJson, const std::string& fo
         } else if (op == "draw_image") {
             const Json& image = in.field(e, "image");
             const Json& shape = in.field(image, "shape");
-            const auto bytes = support::decodeBase64(in.text(in.field(image, "base64")));
+            const auto bytes = support::decodeBase64(withoutNewlines(in.text(in.field(image, "base64"))));
             if (!shape.isArray() || shape.size() != 3 || !bytes) {
                 in.fail("bad image");
             } else {

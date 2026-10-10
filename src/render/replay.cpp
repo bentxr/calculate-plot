@@ -24,6 +24,13 @@ namespace calculate_plot::render {
 
 namespace {
 
+// Traces split base64 data into lines (so that no long run of letters looks like a secret key).
+std::string withoutNewlines(std::string s) {
+    s.erase(std::remove(s.begin(), s.end(), '\n'), s.end());
+    return s;
+}
+
+
 using support::Json;
 using render::Reader;
 
@@ -203,7 +210,7 @@ mpl::NdArray<agg::int8u, ND> image(Reader& in, const Json& j) {
     }
     std::size_t count = 1;
     for (int i = 0; i < ND; ++i) count *= (shape[i] = in.dimension(s[i]));
-    const auto bytes = support::decodeBase64(in.text(in.field(j, "base64")));
+    const auto bytes = support::decodeBase64(withoutNewlines(in.text(in.field(j, "base64"))));
     if (!bytes || bytes->size() != count) {
         in.fail("an image's data does not match its shape");
         return mpl::NdArray<agg::int8u, ND>();

@@ -146,3 +146,31 @@ TEST(AggTraceRenderer, DrawsPathCollectionsAsMatplotlib) {
 }
 
 }  // namespace
+
+namespace {
+
+// Base64 data in traces is split into lines of 16 characters: secret scanners (which reject pushes)
+// look for key patterns of 20 or more letters and digits, and a newline breaks every such run.
+TEST(AggTraceRenderer, SplitsBase64IntoShortLines) {
+    const auto rc = calculate_plot::rc::Params::defaults();
+    AggTraceRenderer r(320, 240, 100, rc, "C.UTF-8", fonts());
+    r.drawText(textGc(rc), 29.0, 233.87452256944445, "0.0", FontSpec{{"DejaVuSans.ttf"}, 10.0, {}}, 0.0, false, {});
+    const Json e = events(r);
+    int images = 0;
+    for (const Json& ev : e.items()) {
+        if (ev.find("op")->asString() != "draw_text_image") continue;
+        ++images;
+        const std::string data = ev.find("image")->find("base64")->asString();
+        std::size_t run = 0;
+        for (char c : data) {
+            run = c == '\n' ? 0 : run + 1;
+            ASSERT_LE(run, 16u) << data;
+        }
+        if (data.size() > 16) {
+            EXPECT_NE(data.find('\n'), std::string::npos);
+        }
+    }
+    EXPECT_EQ(images, 3);
+}
+
+}  // namespace

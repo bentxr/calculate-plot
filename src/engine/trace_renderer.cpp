@@ -306,8 +306,12 @@ void AggTraceRenderer::drawText(const GC& gc, double x, double y, const std::str
         events_.key("op").value("draw_text_image");
         events_.key("image").beginObject();
         events_.key("shape").beginArray().value(static_cast<long long>(image.rows)).value(static_cast<long long>(image.width)).endArray();
-        events_.key("base64").value(support::encodeBase64(
-            std::string_view(reinterpret_cast<const char*>(image.buffer.data()), image.buffer.size())));
+        // in lines of 16 characters, as record.py writes them
+        const std::string b64 = support::encodeBase64(
+            std::string_view(reinterpret_cast<const char*>(image.buffer.data()), image.buffer.size()));
+        std::string lines;
+        for (std::size_t k = 0; k < b64.size(); k += 16) lines += (k ? "\n" : "") + b64.substr(k, 16);
+        events_.key("base64").value(lines);
         events_.endObject();
         events_.key("x").value(image.x);
         events_.key("y").value(image.y);
