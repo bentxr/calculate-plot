@@ -29,6 +29,9 @@ def main():
         for licence in component["licenceFiles"]:
             local = (ROOT / licence["path"]).read_bytes()
             upstream = fetch(licence["upstream"])
+            if "upstreamLines" in licence:  # a licence notice quoted inside a source file
+                first, last = licence["upstreamLines"]
+                upstream = b"".join(upstream.splitlines(keepends=True)[first - 1:last])
             ok = (hashlib.sha256(upstream).hexdigest() == licence["sha256"] and upstream == local)
             if not ok and licence.get("upstreamMayChange"):
                 # An unversioned URL (e.g. the Unicode licence, whose year changes): report, don't fail.

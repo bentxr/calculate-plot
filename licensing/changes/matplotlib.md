@@ -26,6 +26,13 @@ it comes from in its first lines. The changes, as a whole:
   Python's and NumPy's round() are std::nearbyint (halves to even). Fonts are named by file name in a
   font directory. When a text has no language, the port passes the reference locale's language to
   libraqm explicitly instead of letting HarfBuzz read the process locale.
+- **SVG** (src/svg, src/agg/path_text.h): backend_svg.py's RendererSVG and _XMLWriter (from Fredrik
+  Lundh's SimpleXMLWriter, whose notice is kept), backend_bases.py's path collection helpers, textpath.py's
+  glyph handling and colors.to_hex, translated to C++; _path.h's cleanup_path and convert_to_string with
+  Python's float formatting replaced by locale-independent std::to_chars. Python's str()/repr() of the values
+  matplotlib hashes into element ids are reproduced. Embedded images are PNGs from calculate-plot's own
+  encoder (matplotlib uses Pillow). The metadata never names Matplotlib as the creator and never writes the
+  current time: a Date must be given (or None).
 - File names drop the leading underscore (e.g. src/_backend_agg.h is src/agg/backend_agg.h); includes follow.
 - The drawing algorithms themselves (src/_backend_agg.h, src/_backend_agg.cpp, src/path_converters.h,
   src/agg_workaround.h, src/array.h, src/mplutils.h) are otherwise unchanged.

@@ -38,7 +38,10 @@ add_library(calculate-plot STATIC
     src/agg/backend_agg.cpp
     src/png/png.cpp
     src/render/replay.cpp
+    src/render/svg_replay.cpp
     src/support/base64.cpp
+    src/svg/svg_renderer.cpp
+    src/svg/xml_writer.cpp
     src/text/ft2font.cpp
     src/text/text_render.cpp
     src/support/glob.cpp
@@ -52,6 +55,7 @@ target_include_directories(calculate-plot
 # and the files that instantiate its templates get the warnings matplotlib's own build accepts.
 target_include_directories(calculate-plot SYSTEM PRIVATE ${PROJECT_SOURCE_DIR}/src/agg)
 set_source_files_properties(src/agg/backend_agg.cpp src/render/replay.cpp src/text/ft2font.cpp src/text/text_render.cpp
+    src/svg/svg_renderer.cpp src/render/svg_replay.cpp
     PROPERTIES COMPILE_OPTIONS
     "-Wno-unused-parameter;-Wno-shadow;-Wno-sign-compare;-Wno-missing-field-initializers")
 target_compile_definitions(calculate-plot PRIVATE CALCULATE_PLOT_VERSION="${PROJECT_VERSION}")

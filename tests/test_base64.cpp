@@ -26,3 +26,19 @@ TEST(Base64, RefusesMalformedText) {
     EXPECT_FALSE(decodeBase64("Z===").has_value());     // too much padding
     EXPECT_FALSE(decodeBase64("Zg==Zg==").has_value()); // padding before the end
 }
+
+TEST(Base64, EncodesRfc4648Vectors) {
+    using calculate_plot::support::encodeBase64;
+    EXPECT_EQ(encodeBase64(""), "");
+    EXPECT_EQ(encodeBase64("f"), "Zg==");
+    EXPECT_EQ(encodeBase64("fo"), "Zm8=");
+    EXPECT_EQ(encodeBase64("foo"), "Zm9v");
+    EXPECT_EQ(encodeBase64("foobar"), "Zm9vYmFy");
+    EXPECT_EQ(encodeBase64(std::string("\xff\xfe\x00\x80", 4)), "//4AgA==");
+}
+
+TEST(Base64, RoundTripsEveryByte) {
+    std::string all;
+    for (int i = 0; i < 256; ++i) all.push_back(static_cast<char>(i));
+    EXPECT_EQ(decodeBase64(calculate_plot::support::encodeBase64(all)), all);
+}

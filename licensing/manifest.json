@@ -418,12 +418,21 @@
       "version": "3.11.2",
       "homepage": "https://matplotlib.org",
       "use": "runtime",
-      "licence": "LicenseRef-Matplotlib (PSF-style)",
+      "licence": "LicenseRef-Matplotlib (PSF-style); SimpleXMLWriter notice (Fredrik Lundh, HPND-style) for the SVG XML writer",
       "licenceFiles": [
         {
           "path": "LICENSES/Matplotlib.txt",
           "upstream": "https://raw.githubusercontent.com/matplotlib/matplotlib/v3.11.2/LICENSE/LICENSE",
           "sha256": "5a1a81ea301728c8bba2933da832c0cd62229daf20893a024ab3d53244468dbc"
+        },
+        {
+          "path": "LICENSES/SimpleXMLWriter.txt",
+          "upstream": "https://raw.githubusercontent.com/matplotlib/matplotlib/v3.11.2/lib/matplotlib/backends/backend_svg.py",
+          "upstreamLines": [
+            41,
+            65
+          ],
+          "sha256": "d0c034ce8d25ffc0eff24368142403769ad584a57dadede4d0215d2c745d9692"
         }
       ],
       "fetch": [],
@@ -441,7 +450,12 @@
         "src/text/ft2font.h",
         "src/text/ft2font.cpp",
         "src/text/text_render.h",
-        "src/text/text_render.cpp"
+        "src/text/text_render.cpp",
+        "src/agg/path_text.h",
+        "src/svg/xml_writer.h",
+        "src/svg/xml_writer.cpp",
+        "src/svg/svg_renderer.h",
+        "src/svg/svg_renderer.cpp"
       ],
       "header": [
         "Copyright (c) 2012- Matplotlib Development Team; All Rights Reserved",
@@ -449,7 +463,8 @@
       ],
       "notices": [
         "Copyright (c) 2012- Matplotlib Development Team; All Rights Reserved",
-        "Copyright (c) 2002-2011 John D. Hunter; All Rights Reserved"
+        "Copyright (c) 2002-2011 John D. Hunter; All Rights Reserved",
+        "Copyright (c) 2001-2004 by Fredrik Lundh"
       ],
       "changes": "licensing/changes/matplotlib.md",
       "remarks": "C++ derived from Matplotlib's sources; each derived file names its origin. calculate-plot is not affiliated with or endorsed by the Matplotlib project or NumFOCUS."

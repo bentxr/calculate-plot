@@ -1,5 +1,7 @@
 #include "support/base64.hpp"
 
+#include <algorithm>
+
 namespace calculate_plot::support {
 
 namespace {
@@ -37,6 +39,27 @@ std::optional<std::string> decodeBase64(std::string_view text) {
         out.push_back(static_cast<char>((group >> 16) & 0xff));
         if (padding < 2) out.push_back(static_cast<char>((group >> 8) & 0xff));
         if (padding < 1) out.push_back(static_cast<char>(group & 0xff));
+    }
+    return out;
+}
+
+}  // namespace calculate_plot::support
+
+namespace calculate_plot::support {
+
+std::string encodeBase64(std::string_view bytes) {
+    static const char alphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    std::string out;
+    out.reserve((bytes.size() + 2) / 3 * 4);
+    for (std::size_t at = 0; at < bytes.size(); at += 3) {
+        const std::size_t n = std::min<std::size_t>(3, bytes.size() - at);
+        unsigned long group = 0;
+        for (std::size_t i = 0; i < 3; ++i)
+            group = (group << 8) | (i < n ? static_cast<unsigned char>(bytes[at + i]) : 0u);
+        out.push_back(alphabet[(group >> 18) & 63]);
+        out.push_back(alphabet[(group >> 12) & 63]);
+        out.push_back(n > 1 ? alphabet[(group >> 6) & 63] : '=');
+        out.push_back(n > 2 ? alphabet[group & 63] : '=');
     }
     return out;
 }

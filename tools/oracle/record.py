@@ -289,6 +289,8 @@ def svg_gc(g):
     if clip_path is not None:
         clip_index = _svg_clip_paths.setdefault(id(clip_path), (len(_svg_clip_paths), clip_path))[0]
     d.update({"url": g.get_url(), "gid": g.get_gid(), "hatch_string": g.get_hatch(),
+              # Patches keep their hatch as np.str_, collections as str: the id hash spells them apart.
+              "hatch_numpy": isinstance(g.get_hatch(), np.str_),
               "rgb_length": len(g.get_rgb()), "clip_index": clip_index})
     return d
 
