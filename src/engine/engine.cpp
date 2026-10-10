@@ -246,6 +246,7 @@ private:
         }
         if (call.method == "plot") return plot(ax, call, error);
         if (call.method == "scatter") return scatter(ax, call, error);
+        if (call.method == "fill_between") return fillBetween(ax, call, error);
         if (call.method == "set_xscale" || call.method == "set_yscale") {
             if (!call.kwargs.empty()) return *error = where + ": scale options are not supported yet", false;
             if (call.args.size() != 1 || !call.args[0].isString()) return *error = where + ": give the scale's name", false;
@@ -567,6 +568,90 @@ private:
             // matplotlib warns that these are ignored without values to map
         }
         collection->transform = std::make_shared<transforms::IdentityTransform>();
+        collection->transformSet = true;
+        if (zorder) collection->zorder = *zorder;
+        collection->label = label;
+        ax.addCollection(std::move(collection));
+        return true;
+    }
+
+    // Axes.fill_between(x, y1, y2=0, *, where=None, interpolate=False, step=None, **kwargs)
+    bool fillBetween(Axes& ax, const model::Call& call, std::string* error) {
+        const std::string where = call.on + ".fill_between";
+        const Json* xa = call.args.size() > 0 ? &call.args[0] : keyword(call, "x");
+        const Json* y1a = call.args.size() > 1 ? &call.args[1] : keyword(call, "y1");
+        const Json* y2a = call.args.size() > 2 ? &call.args[2] : keyword(call, "y2");
+        if (call.args.size() > 3) return *error = where + ": too many positional arguments", false;
+        std::vector<double> t, f1, f2;
+        if (!xa || !numbers(*xa, &t)) return *error = where + ": x must be a list of numbers", false;
+        // y1 and y2: lists, or numbers broadcast over x
+        const auto values = [&](const Json* j, std::vector<double>* out, double fallback) {
+            double one = fallback;
+            if (!j || j->isNull() || readNumber(*j, &one)) {
+                out->assign(t.size(), one);
+                return true;
+            }
+            return numbers(*j, out) && out->size() == t.size();
+        };
+        if (!y1a || !values(y1a, &f1, 0.0)) return *error = where + ": y1 must be a number or a list as long as x", false;
+        if (!values(y2a, &f2, 0.0)) return *error = where + ": y2 must be a number or a list as long as x", false;
+        std::vector<bool> mask(t.size(), true);
+        ColorArg face, edge;
+        bool faceGiven = false;
+        std::optional<double> alpha, zorder;
+        std::vector<double> linewidths;
+        std::string label;
+        for (const auto& [name, value] : call.kwargs) {
+            if (name == "x" || name == "y1" || name == "y2") continue;
+            if (name == "where") {
+                const Json* seq = sequence(value);
+                if (value.isNull()) continue;
+                if (!seq || seq->size() != t.size()) return *error = where + ": where must be booleans, one per x", false;
+                for (std::size_t i = 0; i < t.size(); ++i) {
+                    if (!(*seq)[i].isBool()) return *error = where + ": where must be booleans", false;
+                    mask[i] = (*seq)[i].asBool();
+                }
+            } else if (name == "interpolate" || name == "step") {
+                if (!value.isNull() && !(value.isBool() && !value.asBool()))
+                    return *error = where + ": " + name + " is not supported yet", false;
+            } else if (name == "color" || name == "facecolor" || name == "facecolors" || name == "fc") {
+                colors::Spec c;
+                if (!color(value, &c)) return *error = where + ": bad " + name, false;
+                face = ColorArg::of(c);
+                faceGiven = true;
+                if (name == "color") edge = ColorArg::of(c);  // set_color: face and edge
+            } else if (name == "edgecolor" || name == "edgecolors" || name == "ec") {
+                colors::Spec c;
+                if (!color(value, &c)) return *error = where + ": bad " + name, false;
+                edge = ColorArg::of(c);
+            } else if (name == "alpha") {
+                double a = 0;
+                if (!value.isNull()) {
+                    if (!readNumber(value, &a)) return *error = where + ": alpha must be a number", false;
+                    alpha = a;
+                }
+            } else if (name == "linewidth" || name == "linewidths" || name == "lw") {
+                double w = 0;
+                if (!readNumber(value, &w)) return *error = where + ": linewidth must be a number", false;
+                linewidths = {w};
+            } else if (name == "zorder") {
+                double z = 0;
+                if (!readNumber(value, &z)) return *error = where + ": zorder must be a number", false;
+                zorder = z;
+            } else if (name == "label") {
+                if (!value.isString()) return *error = where + ": label must be a string", false;
+                label = value.asString();
+            } else {
+                return *error = where + ": unsupported keyword " + name, false;
+            }
+        }
+        if (!faceGiven) face = ColorArg::of(ax.nextPatchColor());
+        auto collection = std::make_unique<FillBetweenPolyCollection>(rc_, t, f1, f2, mask);
+        // the keyword arguments are set after the defaults (_internal_update)
+        collection->setFacecolor(face);
+        if (edge.kind != ColorArg::Default) collection->setEdgecolor(edge);
+        if (!linewidths.empty()) collection->setLinewidths(linewidths);
+        if (alpha) collection->setAlpha(alpha);
         if (zorder) collection->zorder = *zorder;
         collection->label = label;
         ax.addCollection(std::move(collection));

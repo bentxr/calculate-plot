@@ -36,7 +36,8 @@ public:
         std::array<double, 4> points;
         std::array<double, 2> minpos;
     };
-    DataLim dataLim() const;
+    virtual DataLim dataLim() const;
+    bool transformSet = false;  // is_transform_set(): otherwise add_collection gives transData
 
     std::vector<Path> paths;
     std::vector<transforms::Matrix> transforms;  // get_transforms()
@@ -68,6 +69,27 @@ private:
     std::vector<double> linewidths_;
     std::vector<std::pair<double, std::optional<std::vector<double>>>> linestyles_{{0.0, std::nullopt}};
     std::vector<bool> antialiaseds_;
+};
+
+// PolyCollection: closed polygons in the collection's transform (one offset at the origin).
+class PolyCollection : public Collection {
+public:
+    PolyCollection(const rc::Params& rc, const std::vector<std::vector<std::array<double, 2>>>& verts);
+};
+
+// FillBetweenPolyCollection('x', t, f1, f2, where=): the regions between two curves.
+class FillBetweenPolyCollection : public PolyCollection {
+public:
+    FillBetweenPolyCollection(const rc::Params& rc, const std::vector<double>& t, const std::vector<double>& f1,
+                              const std::vector<double>& f2, const std::vector<bool>& where);
+    DataLim dataLim() const override { return bbox_; }
+
+private:
+    static std::vector<std::vector<std::array<double, 2>>> makeVerts(const std::vector<double>& t,
+                                                                     const std::vector<double>& f1,
+                                                                     const std::vector<double>& f2,
+                                                                     const std::vector<bool>& where);
+    DataLim bbox_;
 };
 
 // PathCollection: paths drawn at the offsets, scaled by sizes (areas in points²).

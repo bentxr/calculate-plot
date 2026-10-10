@@ -109,8 +109,11 @@ void Collection::draw(Renderer& renderer) {
     }
     beforeDraw();
     updateScalarMappable();
-    // _prepare_points: the paths' transform is the identity; non-affine offset transforms apply here
-    const transforms::Matrix master{};
+    // _prepare_points: non-affine parts of the transforms apply to the paths and offsets here
+    const transforms::Matrix master = transform->matrix();
+    std::vector<Path> drawPaths = paths;
+    if (!transform->isAffine())
+        for (auto& p : drawPaths) p = transformPathNonAffine(p, *transform);
     transforms::Matrix offsetTrf = offsetTransform->matrix();
     std::vector<std::array<double, 2>> offs = offsets;
     if (!offsetTransform->isAffine())
@@ -125,13 +128,14 @@ void Collection::draw(Renderer& renderer) {
     const std::vector<colors::Rgba> faces = facecolors_, edges = edgecolors();
     bool single = false;
     transforms::Matrix combined = master;
-    if (paths.size() == 1 && transforms.size() <= 1 && faces.size() == 1 && edges.size() == 1 &&
+    if (drawPaths.size() == 1 && transforms.size() <= 1 && faces.size() == 1 && edges.size() == 1 &&
         linewidths_.size() == 1 && antialiaseds_.size() == 1) {
-        if (!transforms.empty()) combined = transforms[0];  // Affine2D(trans[0]) + IdentityTransform
+        // Affine2D(trans[0]) + transform
+        if (!transforms.empty()) combined = transform->isIdentity() ? transforms[0] : transforms::dot(master, transforms[0]);
         // extents of the path through the combined transform, against the figure's box: the control
         // points' hull decides when it fits (the curve then fits too)
         double x0 = std::numeric_limits<double>::infinity(), x1 = -x0, y0 = x0, y1 = -x0;
-        const auto& v = *paths[0].vertices;
+        const auto& v = *drawPaths[0].vertices;
         for (std::size_t i = 0; i + 1 < v.size(); i += 2) {
             const auto p = transforms::apply(combined, v[i], v[i + 1]);
             x0 = std::min(x0, p[0]), x1 = std::max(x1, p[0]), y0 = std::min(y0, p[1]), y1 = std::max(y1, p[1]);
@@ -148,7 +152,7 @@ void Collection::draw(Renderer& renderer) {
         gc.url = url;
         std::vector<double> xy;
         for (const auto& o : offs) xy.push_back(o[0]), xy.push_back(o[1]);
-        renderer.drawMarkers(gc, paths[0], combined, Path::make(std::move(xy), {}, rc_), offsetTrf,
+        renderer.drawMarkers(gc, drawPaths[0], combined, Path::make(std::move(xy), {}, rc_), offsetTrf,
                              std::vector<double>(faces[0].begin(), faces[0].end()));
     } else {
         PathCollectionArgs a;
@@ -166,7 +170,7 @@ void Collection::draw(Renderer& renderer) {
         a.antialiaseds = antialiaseds_;
         a.urls = {url};
         renderer.drawPathCollection(gc, a);  // the probe for the hatchcolors argument (no paths)
-        a.paths = paths;
+        a.paths = drawPaths;
         renderer.drawPathCollection(gc, a);
     }
     renderer.closeGroup(groupName);
@@ -194,6 +198,70 @@ void Collection::updateScalarMappable() {
     } else {
         applyEdgecolor();
     }
+}
+
+PolyCollection::PolyCollection(const rc::Params& rc, const std::vector<std::vector<std::array<double, 2>>>& verts)
+    : Collection(rc) {
+    groupName = "PolyCollection";
+    offsets = {{0.0, 0.0}};  // get_offsets() without offsets: one at the origin
+    // set_verts(closed=True): each region closed with its first vertex (Path._create_closed)
+    for (const auto& xy : verts) {
+        std::vector<double> v;
+        for (const auto& p : xy) v.push_back(p[0]), v.push_back(p[1]);
+        if (xy.empty()) {
+            paths.push_back(Path::make({}, {}, rc));
+            continue;
+        }
+        v.push_back(xy[0][0]), v.push_back(xy[0][1]);
+        paths.push_back(Path::make(std::move(v), {}, rc, true));
+    }
+}
+
+FillBetweenPolyCollection::FillBetweenPolyCollection(const rc::Params& rc, const std::vector<double>& t,
+                                                     const std::vector<double>& f1, const std::vector<double>& f2,
+                                                     const std::vector<bool>& where)
+    : PolyCollection(rc, makeVerts(t, f1, f2, where)) {
+    groupName = "FillBetweenPolyCollection";
+    // _make_verts' box: the points (t, f1) and (t, f2) where drawn, and their minpos
+    const double inf = std::numeric_limits<double>::infinity();
+    bbox_ = DataLim{{inf, inf, -inf, -inf}, {inf, inf}};
+    std::vector<std::array<double, 2>> pts;
+    for (std::size_t i = 0; i < t.size(); ++i)
+        if (where[i]) pts.push_back({t[i], f1[i]});
+    for (std::size_t i = 0; i < t.size(); ++i)
+        if (where[i]) pts.push_back({t[i], f2[i]});
+    for (const auto& p : pts) {
+        if (!std::isfinite(p[0]) || !std::isfinite(p[1])) continue;
+        bbox_.points[0] = std::min(bbox_.points[0], p[0]), bbox_.points[2] = std::max(bbox_.points[2], p[0]);
+        bbox_.points[1] = std::min(bbox_.points[1], p[1]), bbox_.points[3] = std::max(bbox_.points[3], p[1]);
+        if (p[0] > 0) bbox_.minpos[0] = std::min(bbox_.minpos[0], p[0]);
+        if (p[1] > 0) bbox_.minpos[1] = std::min(bbox_.minpos[1], p[1]);
+    }
+}
+
+std::vector<std::vector<std::array<double, 2>>> FillBetweenPolyCollection::makeVerts(const std::vector<double>& t,
+                                                                                    const std::vector<double>& f1,
+                                                                                    const std::vector<double>& f2,
+                                                                                    const std::vector<bool>& where) {
+    std::vector<std::vector<std::array<double, 2>>> regions;
+    // cbook.contiguous_regions(where), then _make_verts_for_region without step or interpolation
+    std::size_t i = 0;
+    while (i < t.size()) {
+        if (!where[i]) {
+            ++i;
+            continue;
+        }
+        std::size_t j = i;
+        while (j < t.size() && where[j]) ++j;
+        std::vector<std::array<double, 2>> pts;
+        pts.push_back({t[i], f2[i]});                              // start
+        for (std::size_t k = i; k < j; ++k) pts.push_back({t[k], f1[k]});
+        pts.push_back({t[j - 1], f2[j - 1]});                      // end
+        for (std::size_t k = j; k-- > i;) pts.push_back({t[k], f2[k]});
+        regions.push_back(std::move(pts));
+        i = j;
+    }
+    return regions;
 }
 
 PathCollection::PathCollection(const rc::Params& rc, std::vector<Path> p, std::vector<double> sizes)

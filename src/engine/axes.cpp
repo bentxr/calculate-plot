@@ -826,7 +826,7 @@ void Axes::updateDatalim(const std::vector<std::array<double, 2>>& xys) {
 Collection& Axes::addCollection(std::unique_ptr<Collection> c) {
     if (c->label.empty()) c->label = "_child" + std::to_string(children.size());
     c->figure = &figure;
-    if (!c->offsetTransform || c->offsetTransform->isIdentity()) c->offsetTransform = transData;
+    if (!c->transformSet) c->transform = transData;  // _set_artist_props
     c->clipBox = std::make_shared<transforms::TransformedBbox>(
         std::make_shared<transforms::Bbox>(std::array<double, 4>{0, 0, 1, 1}), patch->fullTransform());
     unstaleViewLim();
