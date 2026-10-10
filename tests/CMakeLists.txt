@@ -11,6 +11,7 @@ add_executable(calculate-plot-tests
     test_colors.cpp
     test_glob.cpp
     test_json.cpp
+    test_json_writer.cpp
     test_licensing.cpp
     test_model.cpp
     test_notices.cpp

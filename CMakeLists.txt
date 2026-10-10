@@ -70,6 +70,7 @@ add_library(calculate-plot STATIC
     src/text/text_render.cpp
     src/support/glob.cpp
     src/support/json.cpp
+    src/support/json_writer.cpp
     src/support/pyformat.cpp
     src/support/pynum.cpp
     src/support/pyformat_round.cpp
