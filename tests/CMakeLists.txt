@@ -11,6 +11,7 @@ add_executable(calculate-plot-tests
     test_glob.cpp
     test_json.cpp
     test_licensing.cpp
+    test_model.cpp
     test_notices.cpp
     test_png.cpp
     test_pyformat.cpp
@@ -28,6 +29,7 @@ target_include_directories(calculate-plot-tests SYSTEM PRIVATE ${PROJECT_SOURCE_
 target_compile_definitions(calculate-plot-tests PRIVATE
     CALCULATE_PLOT_SOURCE_DIR="${PROJECT_SOURCE_DIR}"
     CALCULATE_PLOT_BINARY_DIR="${PROJECT_BINARY_DIR}"
+    CALCULATE_PLOT_VERSION_FOR_TESTS="${PROJECT_VERSION}"
     CALCULATE_PLOT_TEST_FONT="${PROJECT_SOURCE_DIR}/fonts/ttf/DejaVuSans.ttf")
 target_link_libraries(calculate-plot-tests PRIVATE calculate-plot cplot-cli calculate-plot-warnings GTest::gtest_main)
 if(EMSCRIPTEN)

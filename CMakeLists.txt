@@ -44,6 +44,7 @@ add_library(calculate-plot STATIC
     src/agg/agg_hooks.cpp
     src/axes/ticker.cpp
     src/agg/backend_agg.cpp
+    src/model/figure_model.cpp
     src/png/png.cpp
     src/render/replay.cpp
     src/render/svg_replay.cpp

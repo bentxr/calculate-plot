@@ -1,6 +1,7 @@
 #include "cli.hpp"
 
 #include "calculate-plot/calculate-plot.hpp"
+#include "model/figure_model.hpp"
 #include "png/png.hpp"
 #include "render/replay.hpp"
 #include "render/svg_replay.hpp"
@@ -16,7 +17,8 @@ namespace {
 const char* const kUsage =
     "usage: cplot --version | --licenses | --help\n"
     "       cplot replay TRACE.json OUT.png --fonts DIR\n"
-    "       cplot replay-svg SVG-TRACE.json OUT.svg --fonts DIR\n";
+    "       cplot replay-svg SVG-TRACE.json OUT.svg --fonts DIR\n"
+    "       cplot export-py FIGURE.json OUT.py\n";
 
 const char* const kHelp =
     "cplot: draws figures from calculate-plot figure files.\n"
@@ -26,7 +28,8 @@ const char* const kHelp =
     "  --help       print this help\n"
     "  replay       draw a trace recorded from matplotlib's Agg renderer as a PNG\n"
     "  replay-svg   write a trace recorded from matplotlib's SVG renderer as SVG\n"
-    "  --fonts DIR  where the fonts named in a trace are\n";
+    "  --fonts DIR  where the fonts named in a trace are\n"
+    "  export-py    write a figure file as a Python script that draws it with Matplotlib\n";
 
 std::optional<std::string> readFile(const std::string& path) {
     std::ifstream in(path, std::ios::binary);
@@ -94,6 +97,28 @@ int run(const std::vector<std::string>& args, std::ostream& out, std::ostream& e
         return 0;
     }
     if (option == "replay" || option == "replay-svg") return replay(args, err);
+    if (option == "export-py") {
+        if (args.size() != 3) {
+            err << kUsage;
+            return 2;
+        }
+        const auto text = readFile(args[1]);
+        if (!text) {
+            err << "cplot: cannot read " << args[1] << "\n";
+            return 1;
+        }
+        std::string error;
+        const auto figure = model::parseFigure(*text, &error);
+        if (!figure) {
+            err << "cplot: " << args[1] << ": " << error << "\n";
+            return 1;
+        }
+        if (!writeFile(args[2], model::exportPython(*figure, versionString()))) {
+            err << "cplot: cannot write " << args[2] << "\n";
+            return 1;
+        }
+        return 0;
+    }
     if (option == "--help") {
         out << kHelp;
         return 0;

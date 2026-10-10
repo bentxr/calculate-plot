@@ -115,3 +115,23 @@ TEST(Cli, ReplayNeedsItsArguments) {
     EXPECT_EQ(cplot({"replay"}).status, 2);
     EXPECT_EQ(cplot({"replay-svg", "a.json"}).status, 2);
 }
+
+TEST(Cli, ExportPyWritesTheScript) {
+    const std::string in = tempFile(".json"), out = tempFile(".py");
+    std::ofstream(in) << R"({"version":1,"calls":[{"call":"figure","as":"fig"}]})";
+    const Outcome r = cplot({"export-py", in, out});
+    ASSERT_EQ(r.status, 0) << r.err;
+    const std::string script = fileText(out);
+    EXPECT_NE(script.find("fig = plt.figure()\n"), std::string::npos) << script;
+    std::filesystem::remove(in);
+    std::filesystem::remove(out);
+}
+
+TEST(Cli, ExportPyRefusesABadFigure) {
+    const std::string in = tempFile(".json");
+    std::ofstream(in) << R"({"version":1,"calls":[{"call":"__import__"}]})";
+    const Outcome r = cplot({"export-py", in, tempFile(".py")});
+    EXPECT_EQ(r.status, 1);
+    EXPECT_NE(r.err.find("__import__"), std::string::npos) << r.err;
+    std::filesystem::remove(in);
+}
