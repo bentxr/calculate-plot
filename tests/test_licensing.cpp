@@ -232,10 +232,13 @@ TEST(LicensingChecks, AForbiddenFileAnywhereIsAProblem) {
     EXPECT_TRUE(mentions(lic::checkForbiddenFiles(t.tree()), "agg_conv_gpc.h"));
 }
 
-TEST(LicensingChecks, AForbiddenFileEvenInIgnoredPathsIsAProblem) {
+TEST(LicensingChecks, AForbiddenFileInAFetchedSourceIsAProblem) {
     FakeTree t;
-    t.write("build/stale/agg_conv_gpc.h", "gpc");
-    EXPECT_TRUE(mentions(lic::checkForbiddenFiles(t.tree()), "agg_conv_gpc.h"));
+    t.write("build/_deps/agg-src/include/agg_conv_gpc.h", "gpc");
+    Tree tree = t.tree();
+    EXPECT_TRUE(lic::checkForbiddenFiles(tree).empty());  // build/ is ignored, and not fetched sources yet
+    tree.fetchedSources.push_back(tree.root / "build/_deps/agg-src");
+    EXPECT_TRUE(mentions(lic::checkForbiddenFiles(tree), "agg-src/include/agg_conv_gpc.h"));
 }
 
 TEST(LicensingChecks, AnUndeclaredDownloadIsAProblem) {
@@ -316,6 +319,13 @@ TEST(LicensingChecks, ListedFilesMayMentionCopyrights) {
 
 // The real thing: this repository honours every licence it declares.
 TEST(Licensing, ThisRepositoryIsCompliant) {
-    const Problems problems = lic::checkAll(Tree{CALCULATE_PLOT_SOURCE_DIR});
+    Tree tree{CALCULATE_PLOT_SOURCE_DIR};
+    std::error_code ec;
+    for (const auto& entry : fs::directory_iterator(fs::path(CALCULATE_PLOT_BINARY_DIR) / "_deps", ec)) {
+        const std::string name = entry.path().filename().string();
+        if (name.size() > 4 && name.compare(name.size() - 4, 4, "-src") == 0) tree.fetchedSources.push_back(entry.path());
+    }
+    EXPECT_FALSE(tree.fetchedSources.empty());
+    const Problems problems = lic::checkAll(tree);
     EXPECT_TRUE(problems.empty()) << joined(problems);
 }

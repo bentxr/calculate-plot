@@ -295,8 +295,13 @@ Problems checkForbiddenFiles(const Tree& tree) {
     LOAD_OR_RETURN(tree);
     Problems problems;
     const std::vector<std::string> forbidden = strings(manifest.find("forbidden"));
-    for (const auto& path : files(tree, manifest, true))
+    for (const auto& path : files(tree, manifest, false))
         if (matchesAny(forbidden, path)) problems.push_back(path + " must never be in the tree (forbidden)");
+    const Json noIgnores;
+    for (const auto& source : tree.fetchedSources)
+        for (const auto& path : files(Tree{source}, noIgnores, true))
+            if (matchesAny(forbidden, path))
+                problems.push_back(source.filename().string() + "/" + path + " is fetched and compiled but forbidden");
     return problems;
 }
 

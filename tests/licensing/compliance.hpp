@@ -13,6 +13,9 @@ using Problems = std::vector<std::string>;
 
 struct Tree {
     std::filesystem::path root;
+    // Third-party source trees the build downloads and compiles (FetchContent's *-src folders):
+    // checked for forbidden files too.
+    std::vector<std::filesystem::path> fetchedSources = {};
 };
 
 Problems checkManifest(const Tree& tree);              // the manifest is well formed and consistent
@@ -21,7 +24,7 @@ Problems checkEveryFileAccounted(const Tree& tree);    // each file is ours or c
 Problems checkProvenanceHeaders(const Tree& tree);     // derived files name their origin and licence
 Problems checkNotice(const Tree& tree);                // NOTICE carries every distributed component's notices
 Problems checkChangeSummaries(const Tree& tree);       // derived or modified code summarises its changes
-Problems checkForbiddenFiles(const Tree& tree);        // files we must never ship are absent
+Problems checkForbiddenFiles(const Tree& tree);        // files we must never ship are absent, also from fetched sources
 Problems checkFetchedDependencies(const Tree& tree);   // every download in the build is a declared component
 Problems checkVendoredFiles(const Tree& tree);         // vendored copies are pristine or marked as modified
 Problems checkIgnoredPaths(const Tree& tree);          // the walk skips exactly what git ignores

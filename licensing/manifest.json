@@ -1,6 +1,7 @@
 {
   "version": 1,
   "ignore": [
+    "emsdk-cache/**",
     "build/**",
     ".git/**",
     "tools/oracle/.venv/**",

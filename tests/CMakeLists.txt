@@ -19,6 +19,7 @@ add_executable(calculate-plot-tests
 target_include_directories(calculate-plot-tests PRIVATE ${PROJECT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_definitions(calculate-plot-tests PRIVATE
     CALCULATE_PLOT_SOURCE_DIR="${PROJECT_SOURCE_DIR}"
+    CALCULATE_PLOT_BINARY_DIR="${PROJECT_BINARY_DIR}"
     CALCULATE_PLOT_TEST_FONT="${PROJECT_SOURCE_DIR}/fonts/ttf/DejaVuSans.ttf")
 target_link_libraries(calculate-plot-tests PRIVATE calculate-plot cplot-cli calculate-plot-warnings GTest::gtest_main)
 if(EMSCRIPTEN)
