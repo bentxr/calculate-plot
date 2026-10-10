@@ -455,7 +455,9 @@
         "src/svg/xml_writer.h",
         "src/svg/xml_writer.cpp",
         "src/svg/svg_renderer.h",
-        "src/svg/svg_renderer.cpp"
+        "src/svg/svg_renderer.cpp",
+        "src/axes/ticker.hpp",
+        "src/axes/ticker.cpp"
       ],
       "header": [
         "Copyright (c) 2012- Matplotlib Development Team; All Rights Reserved",
@@ -468,6 +470,35 @@
       ],
       "changes": "licensing/changes/matplotlib.md",
       "remarks": "C++ derived from Matplotlib's sources; each derived file names its origin. calculate-plot is not affiliated with or endorsed by the Matplotlib project or NumFOCUS."
+    },
+    {
+      "id": "numpy",
+      "name": "NumPy",
+      "version": "2.5.3",
+      "homepage": "https://numpy.org",
+      "use": "runtime",
+      "licence": "BSD-3-Clause",
+      "licenceFiles": [
+        {
+          "path": "LICENSES/NumPy.txt",
+          "upstream": "https://raw.githubusercontent.com/numpy/numpy/v2.5.3/LICENSE.txt",
+          "sha256": "1be1df33863f97a7bc1c4d67980bd6c69c9a6fef0a5ee76e6ad6cb91e56e8491"
+        }
+      ],
+      "fetch": [],
+      "vendored": [],
+      "derived": [
+        "src/support/pynum.cpp"
+      ],
+      "header": [
+        "Copyright (c) 2005-2025, NumPy Developers.",
+        "LICENSES/NumPy.txt"
+      ],
+      "notices": [
+        "Copyright (c) 2005-2025, NumPy Developers."
+      ],
+      "changes": "licensing/changes/numpy.md",
+      "remarks": "A few numeric routines translated to C++ so that results match NumPy's bit for bit."
     }
   ]
 }

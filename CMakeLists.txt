@@ -42,6 +42,7 @@ add_library(calculate-plot STATIC
     ${PROJECT_BINARY_DIR}/generated/notices.cpp
     src/version.cpp
     src/agg/agg_hooks.cpp
+    src/axes/ticker.cpp
     src/agg/backend_agg.cpp
     src/png/png.cpp
     src/render/replay.cpp
@@ -54,6 +55,8 @@ add_library(calculate-plot STATIC
     src/support/glob.cpp
     src/support/json.cpp
     src/support/pyformat.cpp
+    src/support/pynum.cpp
+    src/support/pyformat_round.cpp
     src/support/sha256.cpp)
 target_include_directories(calculate-plot
     PUBLIC  ${PROJECT_SOURCE_DIR}/include

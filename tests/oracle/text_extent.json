@@ -1,0 +1,2114 @@
+[
+{
+"s": "0",
+"size": 6.0,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.0000000000000p+2",
+"height": "0x1.0000000000000p+2",
+"descent": "0x0.0p+0"
+},
+{
+"s": "0",
+"size": 6.0,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.4000000000000p+2",
+"height": "0x1.8000000000000p+2",
+"descent": "0x0.0p+0"
+},
+{
+"s": "0",
+"size": 6.0,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.0000000000000p+3",
+"height": "0x1.2000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "0",
+"size": 10.0,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.8000000000000p+2",
+"height": "0x1.c000000000000p+2",
+"descent": "0x0.0p+0"
+},
+{
+"s": "0",
+"size": 10.0,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.2000000000000p+3",
+"height": "0x1.4000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "0",
+"size": 10.0,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.a000000000000p+3",
+"height": "0x1.e000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "0",
+"size": 12.0,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.0000000000000p+3",
+"height": "0x1.2000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "0",
+"size": 12.0,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.6000000000000p+3",
+"height": "0x1.8000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "0",
+"size": 12.0,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.0000000000000p+4",
+"height": "0x1.2000000000000p+4",
+"descent": "0x0.0p+0"
+},
+{
+"s": "0",
+"size": 17.5,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.6000000000000p+3",
+"height": "0x1.a000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "0",
+"size": 17.5,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.e000000000000p+3",
+"height": "0x1.2000000000000p+4",
+"descent": "0x0.0p+0"
+},
+{
+"s": "0",
+"size": 17.5,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.7000000000000p+4",
+"height": "0x1.a000000000000p+4",
+"descent": "0x0.0p+0"
+},
+{
+"s": "1.00",
+"size": 6.0,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.c000000000000p+3",
+"height": "0x1.0000000000000p+2",
+"descent": "0x0.0p+0"
+},
+{
+"s": "1.00",
+"size": 6.0,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.2000000000000p+4",
+"height": "0x1.8000000000000p+2",
+"descent": "0x0.0p+0"
+},
+{
+"s": "1.00",
+"size": 6.0,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.c000000000000p+4",
+"height": "0x1.2000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "1.00",
+"size": 10.0,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.5000000000000p+4",
+"height": "0x1.c000000000000p+2",
+"descent": "0x0.0p+0"
+},
+{
+"s": "1.00",
+"size": 10.0,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.f000000000000p+4",
+"height": "0x1.4000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "1.00",
+"size": 10.0,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.7000000000000p+5",
+"height": "0x1.e000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "1.00",
+"size": 12.0,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.c000000000000p+4",
+"height": "0x1.2000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "1.00",
+"size": 12.0,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.3000000000000p+5",
+"height": "0x1.8000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "1.00",
+"size": 12.0,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.c000000000000p+5",
+"height": "0x1.2000000000000p+4",
+"descent": "0x0.0p+0"
+},
+{
+"s": "1.00",
+"size": 17.5,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.3800000000000p+5",
+"height": "0x1.a000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "1.00",
+"size": 17.5,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.a800000000000p+5",
+"height": "0x1.2000000000000p+4",
+"descent": "0x0.0p+0"
+},
+{
+"s": "1.00",
+"size": 17.5,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.4000000000000p+6",
+"height": "0x1.a000000000000p+4",
+"descent": "0x0.0p+0"
+},
+{
+"s": "−0.75",
+"size": 6.0,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.3000000000000p+4",
+"height": "0x1.0000000000000p+2",
+"descent": "0x0.0p+0"
+},
+{
+"s": "−0.75",
+"size": 6.0,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.9000000000000p+4",
+"height": "0x1.8000000000000p+2",
+"descent": "0x0.0p+0"
+},
+{
+"s": "−0.75",
+"size": 6.0,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.3800000000000p+5",
+"height": "0x1.2000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "−0.75",
+"size": 10.0,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.d000000000000p+4",
+"height": "0x1.c000000000000p+2",
+"descent": "0x0.0p+0"
+},
+{
+"s": "−0.75",
+"size": 10.0,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.5800000000000p+5",
+"height": "0x1.4000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "−0.75",
+"size": 10.0,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.0000000000000p+6",
+"height": "0x1.e000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "−0.75",
+"size": 12.0,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.3000000000000p+5",
+"height": "0x1.2000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "−0.75",
+"size": 12.0,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.a000000000000p+5",
+"height": "0x1.8000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "−0.75",
+"size": 12.0,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.3400000000000p+6",
+"height": "0x1.2000000000000p+4",
+"descent": "0x0.0p+0"
+},
+{
+"s": "−0.75",
+"size": 17.5,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.b000000000000p+5",
+"height": "0x1.a000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "−0.75",
+"size": 17.5,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.2400000000000p+6",
+"height": "0x1.2000000000000p+4",
+"descent": "0x0.0p+0"
+},
+{
+"s": "−0.75",
+"size": 17.5,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.b800000000000p+6",
+"height": "0x1.a000000000000p+4",
+"descent": "0x0.0p+0"
+},
+{
+"s": "x",
+"size": 6.0,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.0000000000000p+2",
+"height": "0x1.8000000000000p+1",
+"descent": "0x0.0p+0"
+},
+{
+"s": "x",
+"size": 6.0,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.4000000000000p+2",
+"height": "0x1.0000000000000p+2",
+"descent": "0x0.0p+0"
+},
+{
+"s": "x",
+"size": 6.0,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.0000000000000p+3",
+"height": "0x1.c000000000000p+2",
+"descent": "0x0.0p+0"
+},
+{
+"s": "x",
+"size": 10.0,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.8000000000000p+2",
+"height": "0x1.4000000000000p+2",
+"descent": "0x0.0p+0"
+},
+{
+"s": "x",
+"size": 10.0,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.0000000000000p+3",
+"height": "0x1.0000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "x",
+"size": 10.0,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.8000000000000p+3",
+"height": "0x1.6000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "x",
+"size": 12.0,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.c000000000000p+2",
+"height": "0x1.c000000000000p+2",
+"descent": "0x0.0p+0"
+},
+{
+"s": "x",
+"size": 12.0,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.4000000000000p+3",
+"height": "0x1.2000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "x",
+"size": 12.0,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.e000000000000p+3",
+"height": "0x1.c000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "x",
+"size": 17.5,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.6000000000000p+3",
+"height": "0x1.4000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "x",
+"size": 17.5,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.c000000000000p+3",
+"height": "0x1.a000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "x",
+"size": 17.5,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.5000000000000p+4",
+"height": "0x1.4000000000000p+4",
+"descent": "0x0.0p+0"
+},
+{
+"s": "value",
+"size": 6.0,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.2000000000000p+4",
+"height": "0x1.4000000000000p+2",
+"descent": "0x0.0p+0"
+},
+{
+"s": "value",
+"size": 6.0,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.6000000000000p+4",
+"height": "0x1.c000000000000p+2",
+"descent": "0x0.0p+0"
+},
+{
+"s": "value",
+"size": 6.0,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.2000000000000p+5",
+"height": "0x1.6000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "value",
+"size": 10.0,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.b000000000000p+4",
+"height": "0x1.0000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "value",
+"size": 10.0,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.3800000000000p+5",
+"height": "0x1.6000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "value",
+"size": 10.0,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.c800000000000p+5",
+"height": "0x1.0000000000000p+4",
+"descent": "0x0.0p+0"
+},
+{
+"s": "value",
+"size": 12.0,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.0000000000000p+5",
+"height": "0x1.4000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "value",
+"size": 12.0,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.7000000000000p+5",
+"height": "0x1.a000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "value",
+"size": 12.0,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.1000000000000p+6",
+"height": "0x1.3000000000000p+4",
+"descent": "0x0.0p+0"
+},
+{
+"s": "value",
+"size": 17.5,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.8800000000000p+5",
+"height": "0x1.c000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "value",
+"size": 17.5,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.0800000000000p+6",
+"height": "0x1.2000000000000p+4",
+"descent": "0x0.0p+0"
+},
+{
+"s": "value",
+"size": 17.5,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.8800000000000p+6",
+"height": "0x1.b000000000000p+4",
+"descent": "0x0.0p+0"
+},
+{
+"s": "Default figure",
+"size": 6.0,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.5700000000000p+5",
+"height": "0x1.8000000000000p+2",
+"descent": "0x1.0000000000000p+0"
+},
+{
+"s": "Default figure",
+"size": 6.0,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.b680000000000p+5",
+"height": "0x1.2000000000000p+3",
+"descent": "0x1.0000000000000p+1"
+},
+{
+"s": "Default figure",
+"size": 6.0,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.62e0000000000p+6",
+"height": "0x1.c000000000000p+3",
+"descent": "0x1.8000000000000p+1"
+},
+{
+"s": "Default figure",
+"size": 10.0,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.0f20000000000p+6",
+"height": "0x1.4000000000000p+3",
+"descent": "0x1.0000000000000p+1"
+},
+{
+"s": "Default figure",
+"size": 10.0,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.86c0000000000p+6",
+"height": "0x1.c000000000000p+3",
+"descent": "0x1.8000000000000p+1"
+},
+{
+"s": "Default figure",
+"size": 10.0,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.1f18000000000p+7",
+"height": "0x1.4000000000000p+4",
+"descent": "0x1.0000000000000p+2"
+},
+{
+"s": "Default figure",
+"size": 12.0,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.4af0000000000p+6",
+"height": "0x1.a000000000000p+3",
+"descent": "0x1.8000000000000p+1"
+},
+{
+"s": "Default figure",
+"size": 12.0,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.d290000000000p+6",
+"height": "0x1.1000000000000p+4",
+"descent": "0x1.0000000000000p+2"
+},
+{
+"s": "Default figure",
+"size": 12.0,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.56e8000000000p+7",
+"height": "0x1.8000000000000p+4",
+"descent": "0x1.4000000000000p+2"
+},
+{
+"s": "Default figure",
+"size": 17.5,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.e670000000000p+6",
+"height": "0x1.2000000000000p+4",
+"descent": "0x1.0000000000000p+2"
+},
+{
+"s": "Default figure",
+"size": 17.5,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.48f0000000000p+7",
+"height": "0x1.7000000000000p+4",
+"descent": "0x1.4000000000000p+2"
+},
+{
+"s": "Default figure",
+"size": 17.5,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.f068000000000p+7",
+"height": "0x1.1000000000000p+5",
+"descent": "0x1.c000000000000p+2"
+},
+{
+"s": "Ag",
+"size": 6.0,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.0000000000000p+3",
+"height": "0x1.4000000000000p+2",
+"descent": "0x1.0000000000000p+0"
+},
+{
+"s": "Ag",
+"size": 6.0,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.4000000000000p+3",
+"height": "0x1.0000000000000p+3",
+"descent": "0x1.0000000000000p+1"
+},
+{
+"s": "Ag",
+"size": 6.0,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.1000000000000p+4",
+"height": "0x1.8000000000000p+3",
+"descent": "0x1.8000000000000p+1"
+},
+{
+"s": "Ag",
+"size": 10.0,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.a000000000000p+3",
+"height": "0x1.2000000000000p+3",
+"descent": "0x1.0000000000000p+1"
+},
+{
+"s": "Ag",
+"size": 10.0,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.3000000000000p+4",
+"height": "0x1.a000000000000p+3",
+"descent": "0x1.8000000000000p+1"
+},
+{
+"s": "Ag",
+"size": 10.0,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.b000000000000p+4",
+"height": "0x1.3000000000000p+4",
+"descent": "0x1.0000000000000p+2"
+},
+{
+"s": "Ag",
+"size": 12.0,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.0000000000000p+4",
+"height": "0x1.8000000000000p+3",
+"descent": "0x1.8000000000000p+1"
+},
+{
+"s": "Ag",
+"size": 12.0,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.7000000000000p+4",
+"height": "0x1.0000000000000p+4",
+"descent": "0x1.0000000000000p+2"
+},
+{
+"s": "Ag",
+"size": 12.0,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.0800000000000p+5",
+"height": "0x1.7000000000000p+4",
+"descent": "0x1.4000000000000p+2"
+},
+{
+"s": "Ag",
+"size": 17.5,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.7000000000000p+4",
+"height": "0x1.1000000000000p+4",
+"descent": "0x1.0000000000000p+2"
+},
+{
+"s": "Ag",
+"size": 17.5,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.f000000000000p+4",
+"height": "0x1.7000000000000p+4",
+"descent": "0x1.4000000000000p+2"
+},
+{
+"s": "Ag",
+"size": 17.5,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.8000000000000p+5",
+"height": "0x1.0800000000000p+5",
+"descent": "0x1.c000000000000p+2"
+},
+{
+"s": "fi",
+"size": 6.0,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.0000000000000p+2",
+"height": "0x1.4000000000000p+2",
+"descent": "0x0.0p+0"
+},
+{
+"s": "fi",
+"size": 6.0,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.4000000000000p+2",
+"height": "0x1.c000000000000p+2",
+"descent": "0x0.0p+0"
+},
+{
+"s": "fi",
+"size": 6.0,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.0000000000000p+3",
+"height": "0x1.6000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "fi",
+"size": 10.0,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.8000000000000p+2",
+"height": "0x1.0000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "fi",
+"size": 10.0,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.2000000000000p+3",
+"height": "0x1.6000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "fi",
+"size": 10.0,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.a000000000000p+3",
+"height": "0x1.0000000000000p+4",
+"descent": "0x0.0p+0"
+},
+{
+"s": "fi",
+"size": 12.0,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.0000000000000p+3",
+"height": "0x1.4000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "fi",
+"size": 12.0,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.6000000000000p+3",
+"height": "0x1.a000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "fi",
+"size": 12.0,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.0000000000000p+4",
+"height": "0x1.3000000000000p+4",
+"descent": "0x0.0p+0"
+},
+{
+"s": "fi",
+"size": 17.5,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.6000000000000p+3",
+"height": "0x1.c000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "fi",
+"size": 17.5,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.e000000000000p+3",
+"height": "0x1.2000000000000p+4",
+"descent": "0x0.0p+0"
+},
+{
+"s": "fi",
+"size": 17.5,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.7000000000000p+4",
+"height": "0x1.b000000000000p+4",
+"descent": "0x0.0p+0"
+},
+{
+"s": "W.V",
+"size": 6.0,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.6a00000000000p+3",
+"height": "0x1.0000000000000p+2",
+"descent": "0x0.0p+0"
+},
+{
+"s": "W.V",
+"size": 6.0,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.e180000000000p+3",
+"height": "0x1.8000000000000p+2",
+"descent": "0x0.0p+0"
+},
+{
+"s": "W.V",
+"size": 6.0,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.8900000000000p+4",
+"height": "0x1.2000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "W.V",
+"size": 10.0,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.2dc0000000000p+4",
+"height": "0x1.c000000000000p+2",
+"descent": "0x0.0p+0"
+},
+{
+"s": "W.V",
+"size": 10.0,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.a680000000000p+4",
+"height": "0x1.4000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "W.V",
+"size": 10.0,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.3ce0000000000p+5",
+"height": "0x1.e000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "W.V",
+"size": 12.0,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.6a00000000000p+4",
+"height": "0x1.2000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "W.V",
+"size": 12.0,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.00c0000000000p+5",
+"height": "0x1.8000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "W.V",
+"size": 12.0,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.7900000000000p+5",
+"height": "0x1.2000000000000p+4",
+"descent": "0x0.0p+0"
+},
+{
+"s": "W.V",
+"size": 17.5,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.0fe0000000000p+5",
+"height": "0x1.a000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "W.V",
+"size": 17.5,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.69a0000000000p+5",
+"height": "0x1.2000000000000p+4",
+"descent": "0x0.0p+0"
+},
+{
+"s": "W.V",
+"size": 17.5,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.0f40000000000p+6",
+"height": "0x1.a000000000000p+4",
+"descent": "0x0.0p+0"
+},
+{
+"s": " ",
+"size": 6.0,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.0000000000000p+1",
+"height": "0x0.0p+0",
+"descent": "0x0.0p+0"
+},
+{
+"s": " ",
+"size": 6.0,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.8000000000000p+1",
+"height": "0x0.0p+0",
+"descent": "0x0.0p+0"
+},
+{
+"s": " ",
+"size": 6.0,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.0000000000000p+2",
+"height": "0x0.0p+0",
+"descent": "0x0.0p+0"
+},
+{
+"s": " ",
+"size": 10.0,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.8000000000000p+1",
+"height": "0x0.0p+0",
+"descent": "0x0.0p+0"
+},
+{
+"s": " ",
+"size": 10.0,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.0000000000000p+2",
+"height": "0x0.0p+0",
+"descent": "0x0.0p+0"
+},
+{
+"s": " ",
+"size": 10.0,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.c000000000000p+2",
+"height": "0x0.0p+0",
+"descent": "0x0.0p+0"
+},
+{
+"s": " ",
+"size": 12.0,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.0000000000000p+2",
+"height": "0x0.0p+0",
+"descent": "0x0.0p+0"
+},
+{
+"s": " ",
+"size": 12.0,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.4000000000000p+2",
+"height": "0x0.0p+0",
+"descent": "0x0.0p+0"
+},
+{
+"s": " ",
+"size": 12.0,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.0000000000000p+3",
+"height": "0x0.0p+0",
+"descent": "0x0.0p+0"
+},
+{
+"s": " ",
+"size": 17.5,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.8000000000000p+2",
+"height": "0x0.0p+0",
+"descent": "0x0.0p+0"
+},
+{
+"s": " ",
+"size": 17.5,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.0000000000000p+3",
+"height": "0x0.0p+0",
+"descent": "0x0.0p+0"
+},
+{
+"s": " ",
+"size": 17.5,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.6000000000000p+3",
+"height": "0x0.0p+0",
+"descent": "0x0.0p+0"
+},
+{
+"s": "",
+"size": 6.0,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x0.0p+0",
+"height": "0x0.0p+0",
+"descent": "0x0.0p+0"
+},
+{
+"s": "",
+"size": 6.0,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x0.0p+0",
+"height": "0x0.0p+0",
+"descent": "0x0.0p+0"
+},
+{
+"s": "",
+"size": 6.0,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x0.0p+0",
+"height": "0x0.0p+0",
+"descent": "0x0.0p+0"
+},
+{
+"s": "",
+"size": 10.0,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x0.0p+0",
+"height": "0x0.0p+0",
+"descent": "0x0.0p+0"
+},
+{
+"s": "",
+"size": 10.0,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x0.0p+0",
+"height": "0x0.0p+0",
+"descent": "0x0.0p+0"
+},
+{
+"s": "",
+"size": 10.0,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x0.0p+0",
+"height": "0x0.0p+0",
+"descent": "0x0.0p+0"
+},
+{
+"s": "",
+"size": 12.0,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x0.0p+0",
+"height": "0x0.0p+0",
+"descent": "0x0.0p+0"
+},
+{
+"s": "",
+"size": 12.0,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x0.0p+0",
+"height": "0x0.0p+0",
+"descent": "0x0.0p+0"
+},
+{
+"s": "",
+"size": 12.0,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x0.0p+0",
+"height": "0x0.0p+0",
+"descent": "0x0.0p+0"
+},
+{
+"s": "",
+"size": 17.5,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x0.0p+0",
+"height": "0x0.0p+0",
+"descent": "0x0.0p+0"
+},
+{
+"s": "",
+"size": 17.5,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x0.0p+0",
+"height": "0x0.0p+0",
+"descent": "0x0.0p+0"
+},
+{
+"s": "",
+"size": 17.5,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x0.0p+0",
+"height": "0x0.0p+0",
+"descent": "0x0.0p+0"
+},
+{
+"s": "100%",
+"size": 6.0,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.2000000000000p+4",
+"height": "0x1.0000000000000p+2",
+"descent": "0x0.0p+0"
+},
+{
+"s": "100%",
+"size": 6.0,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.7000000000000p+4",
+"height": "0x1.8000000000000p+2",
+"descent": "0x0.0p+0"
+},
+{
+"s": "100%",
+"size": 6.0,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.2000000000000p+5",
+"height": "0x1.2000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "100%",
+"size": 10.0,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.c000000000000p+4",
+"height": "0x1.c000000000000p+2",
+"descent": "0x0.0p+0"
+},
+{
+"s": "100%",
+"size": 10.0,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.4000000000000p+5",
+"height": "0x1.4000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "100%",
+"size": 10.0,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.d800000000000p+5",
+"height": "0x1.e000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "100%",
+"size": 12.0,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.1800000000000p+5",
+"height": "0x1.2000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "100%",
+"size": 12.0,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.8800000000000p+5",
+"height": "0x1.8000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "100%",
+"size": 12.0,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.2000000000000p+6",
+"height": "0x1.2000000000000p+4",
+"descent": "0x0.0p+0"
+},
+{
+"s": "100%",
+"size": 17.5,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.9000000000000p+5",
+"height": "0x1.a000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "100%",
+"size": 17.5,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.1000000000000p+6",
+"height": "0x1.2000000000000p+4",
+"descent": "0x0.0p+0"
+},
+{
+"s": "100%",
+"size": 17.5,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.9c00000000000p+6",
+"height": "0x1.a000000000000p+4",
+"descent": "0x0.0p+0"
+},
+{
+"s": "αβγ",
+"size": 6.0,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.8000000000000p+3",
+"height": "0x1.8000000000000p+2",
+"descent": "0x1.0000000000000p+0"
+},
+{
+"s": "αβγ",
+"size": 6.0,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.e000000000000p+3",
+"height": "0x1.0000000000000p+3",
+"descent": "0x1.0000000000000p+1"
+},
+{
+"s": "αβγ",
+"size": 6.0,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.9000000000000p+4",
+"height": "0x1.a000000000000p+3",
+"descent": "0x1.8000000000000p+1"
+},
+{
+"s": "αβγ",
+"size": 10.0,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.3000000000000p+4",
+"height": "0x1.2000000000000p+3",
+"descent": "0x1.0000000000000p+1"
+},
+{
+"s": "αβγ",
+"size": 10.0,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.a000000000000p+4",
+"height": "0x1.c000000000000p+3",
+"descent": "0x1.8000000000000p+1"
+},
+{
+"s": "αβγ",
+"size": 10.0,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.3800000000000p+5",
+"height": "0x1.4000000000000p+4",
+"descent": "0x1.0000000000000p+2"
+},
+{
+"s": "αβγ",
+"size": 12.0,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.7000000000000p+4",
+"height": "0x1.8000000000000p+3",
+"descent": "0x1.8000000000000p+1"
+},
+{
+"s": "αβγ",
+"size": 12.0,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.0000000000000p+5",
+"height": "0x1.1000000000000p+4",
+"descent": "0x1.0000000000000p+2"
+},
+{
+"s": "αβγ",
+"size": 12.0,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.7800000000000p+5",
+"height": "0x1.8000000000000p+4",
+"descent": "0x1.4000000000000p+2"
+},
+{
+"s": "αβγ",
+"size": 17.5,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.1000000000000p+5",
+"height": "0x1.2000000000000p+4",
+"descent": "0x1.0000000000000p+2"
+},
+{
+"s": "αβγ",
+"size": 17.5,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.6800000000000p+5",
+"height": "0x1.8000000000000p+4",
+"descent": "0x1.4000000000000p+2"
+},
+{
+"s": "αβγ",
+"size": 17.5,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.1000000000000p+6",
+"height": "0x1.1800000000000p+5",
+"descent": "0x1.c000000000000p+2"
+},
+{
+"s": "Hello, world",
+"size": 6.0,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.3000000000000p+5",
+"height": "0x1.4000000000000p+2",
+"descent": "0x0.0p+0"
+},
+{
+"s": "Hello, world",
+"size": 6.0,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.8000000000000p+5",
+"height": "0x1.0000000000000p+3",
+"descent": "0x1.0000000000000p+0"
+},
+{
+"s": "Hello, world",
+"size": 6.0,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.3800000000000p+6",
+"height": "0x1.8000000000000p+3",
+"descent": "0x1.0000000000000p+0"
+},
+{
+"s": "Hello, world",
+"size": 10.0,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.d800000000000p+5",
+"height": "0x1.2000000000000p+3",
+"descent": "0x1.0000000000000p+0"
+},
+{
+"s": "Hello, world",
+"size": 10.0,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.5000000000000p+6",
+"height": "0x1.8000000000000p+3",
+"descent": "0x1.0000000000000p+0"
+},
+{
+"s": "Hello, world",
+"size": 10.0,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.f800000000000p+6",
+"height": "0x1.2000000000000p+4",
+"descent": "0x1.0000000000000p+1"
+},
+{
+"s": "Hello, world",
+"size": 12.0,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.1800000000000p+6",
+"height": "0x1.6000000000000p+3",
+"descent": "0x1.0000000000000p+0"
+},
+{
+"s": "Hello, world",
+"size": 12.0,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.9000000000000p+6",
+"height": "0x1.e000000000000p+3",
+"descent": "0x1.0000000000000p+1"
+},
+{
+"s": "Hello, world",
+"size": 12.0,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.2600000000000p+7",
+"height": "0x1.6000000000000p+4",
+"descent": "0x1.8000000000000p+1"
+},
+{
+"s": "Hello, world",
+"size": 17.5,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.ac00000000000p+6",
+"height": "0x1.0000000000000p+4",
+"descent": "0x1.0000000000000p+1"
+},
+{
+"s": "Hello, world",
+"size": 17.5,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.2200000000000p+7",
+"height": "0x1.5000000000000p+4",
+"descent": "0x1.8000000000000p+1"
+},
+{
+"s": "Hello, world",
+"size": 17.5,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.a800000000000p+7",
+"height": "0x1.0000000000000p+5",
+"descent": "0x1.4000000000000p+2"
+},
+{
+"s": "1e6",
+"size": 6.0,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.8000000000000p+3",
+"height": "0x1.0000000000000p+2",
+"descent": "0x0.0p+0"
+},
+{
+"s": "1e6",
+"size": 6.0,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.e000000000000p+3",
+"height": "0x1.8000000000000p+2",
+"descent": "0x0.0p+0"
+},
+{
+"s": "1e6",
+"size": 6.0,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.8000000000000p+4",
+"height": "0x1.2000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "1e6",
+"size": 10.0,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.2000000000000p+4",
+"height": "0x1.c000000000000p+2",
+"descent": "0x0.0p+0"
+},
+{
+"s": "1e6",
+"size": 10.0,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.b000000000000p+4",
+"height": "0x1.4000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "1e6",
+"size": 10.0,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.3800000000000p+5",
+"height": "0x1.e000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "1e6",
+"size": 12.0,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.7000000000000p+4",
+"height": "0x1.2000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "1e6",
+"size": 12.0,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.0000000000000p+5",
+"height": "0x1.8000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "1e6",
+"size": 12.0,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.7800000000000p+5",
+"height": "0x1.2000000000000p+4",
+"descent": "0x0.0p+0"
+},
+{
+"s": "1e6",
+"size": 17.5,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.0800000000000p+5",
+"height": "0x1.a000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "1e6",
+"size": 17.5,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.6800000000000p+5",
+"height": "0x1.2000000000000p+4",
+"descent": "0x0.0p+0"
+},
+{
+"s": "1e6",
+"size": 17.5,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.1000000000000p+6",
+"height": "0x1.a000000000000p+4",
+"descent": "0x0.0p+0"
+},
+{
+"s": "+1.234e3",
+"size": 6.0,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.f000000000000p+4",
+"height": "0x1.4000000000000p+2",
+"descent": "0x0.0p+0"
+},
+{
+"s": "+1.234e3",
+"size": 6.0,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.4000000000000p+5",
+"height": "0x1.8000000000000p+2",
+"descent": "0x0.0p+0"
+},
+{
+"s": "+1.234e3",
+"size": 6.0,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.f800000000000p+5",
+"height": "0x1.2000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "+1.234e3",
+"size": 10.0,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.7800000000000p+5",
+"height": "0x1.c000000000000p+2",
+"descent": "0x0.0p+0"
+},
+{
+"s": "+1.234e3",
+"size": 10.0,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.1800000000000p+6",
+"height": "0x1.4000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "+1.234e3",
+"size": 10.0,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.9c00000000000p+6",
+"height": "0x1.e000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "+1.234e3",
+"size": 12.0,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.e800000000000p+5",
+"height": "0x1.2000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "+1.234e3",
+"size": 12.0,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.5000000000000p+6",
+"height": "0x1.8000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "+1.234e3",
+"size": 12.0,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.f000000000000p+6",
+"height": "0x1.2000000000000p+4",
+"descent": "0x0.0p+0"
+},
+{
+"s": "+1.234e3",
+"size": 17.5,
+"dpi": 72.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.5c00000000000p+6",
+"height": "0x1.a000000000000p+3",
+"descent": "0x0.0p+0"
+},
+{
+"s": "+1.234e3",
+"size": 17.5,
+"dpi": 100.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.d800000000000p+6",
+"height": "0x1.2000000000000p+4",
+"descent": "0x0.0p+0"
+},
+{
+"s": "+1.234e3",
+"size": 17.5,
+"dpi": 150.0,
+"fonts": [
+"DejaVuSans.ttf"
+],
+"width": "0x1.6400000000000p+7",
+"height": "0x1.a000000000000p+4",
+"descent": "0x0.0p+0"
+}
+]

@@ -33,6 +33,10 @@ it comes from in its first lines. The changes, as a whole:
   matplotlib hashes into element ids are reproduced. Embedded images are PNGs from calculate-plot's own
   encoder (matplotlib uses Pillow). The metadata never names Matplotlib as the creator and never writes the
   current time: a Date must be given (or None).
+- **Ticks** (src/axes/ticker): ticker.py's scale_range, _Edge_integer, MaxNLocator (AutoLocator) and
+  ScalarFormatter (offset, order of magnitude, format, labels and offset text, with the default rcParams) and
+  transforms.py's _nonsingular, translated to C++ with Python's and NumPy's numeric semantics (floor division,
+  divmod, rounding, %-formatting) reproduced exactly; the axis' view interval is passed in.
 - File names drop the leading underscore (e.g. src/_backend_agg.h is src/agg/backend_agg.h); includes follow.
 - The drawing algorithms themselves (src/_backend_agg.h, src/_backend_agg.cpp, src/path_converters.h,
   src/agg_workaround.h, src/array.h, src/mplutils.h) are otherwise unchanged.

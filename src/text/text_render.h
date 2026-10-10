@@ -75,6 +75,14 @@ std::vector<Glyph> layoutText(FontCache& fonts, const std::vector<std::string>& 
                               const std::optional<std::string>& language, std::string& error,
                               const std::string& defaultLanguage = kReferenceLocale);
 
+// RendererAgg.get_text_width_height_descent for plain text, in pixels.
+struct TextExtent {
+    double width = 0, height = 0, descent = 0;
+};
+TextExtent textExtent(FontCache& fonts, const std::vector<std::string>& names, const std::string& text, double size,
+                      double dpi, FT_Int32 flags, const std::optional<std::string>& language, std::string& error,
+                      const std::string& defaultLanguage = kReferenceLocale);
+
 // RendererAgg._draw_text_glyphs_and_boxes: renders each glyph with FreeType at its place and
 // composites it, then fills the boxes. x, y in pixels from the top-left, angle in degrees.
 std::string drawGlyphsAndBoxes(RendererAgg& renderer, GCAgg& gc, double x, double y, double angle,

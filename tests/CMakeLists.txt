@@ -20,6 +20,7 @@ add_executable(calculate-plot-tests
     test_svg.cpp
     test_text.cpp
     test_text_libraries.cpp
+    test_ticker.cpp
     test_version.cpp
 )
 target_include_directories(calculate-plot-tests PRIVATE ${PROJECT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR})

@@ -1,10 +1,8 @@
 #include "support/json.hpp"
+#include "support/pyformat.hpp"
 
 #include <charconv>
 #include <cstdlib>
-#if defined(__GLIBC__)
-#include <locale.h>
-#endif
 
 namespace calculate_plot::support {
 
@@ -12,19 +10,6 @@ namespace {
 
 constexpr int kMaxDepth = 1000;
 
-// The decimal point is always '.', whatever locale the program set (Qt applications set the user's).
-// glibc honours LC_NUMERIC, so it reads through a fixed "C" locale; other C libraries (musl, used by
-// Emscripten) always read '.'.
-bool readDouble(const std::string& text, double& value) {
-    char* end = nullptr;
-#if defined(__GLIBC__)
-    static const locale_t c = newlocale(LC_ALL_MASK, "C", locale_t(nullptr));
-    value = strtod_l(text.c_str(), &end, c);
-#else
-    value = std::strtod(text.c_str(), &end);
-#endif
-    return end == text.c_str() + text.size() && std::abs(value) <= 1.7976931348623157e308;
-}
 
 void appendUtf8(std::string& out, unsigned long cp) {
     if (cp < 0x80) {
@@ -153,7 +138,8 @@ private:
         if (peek() >= '0' && peek() <= '9') return failBool("leading zeros are not allowed");
         out.type_ = Json::Type::Number;
         out.text_ = std::string(text_.substr(start, at_ - start));
-        if (!readDouble(out.text_, out.number_)) return failBool("number out of range");
+        if (!readDouble(out.text_, out.number_) || !(std::abs(out.number_) <= 1.7976931348623157e308))
+            return failBool("number out of range");
         return true;
     }
 

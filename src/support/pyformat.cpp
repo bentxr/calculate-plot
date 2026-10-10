@@ -2,6 +2,9 @@
 
 #include <algorithm>
 #include <charconv>
+#if defined(__GLIBC__)
+#include <locale.h>
+#endif
 #include <cmath>
 #include <cstdlib>
 
@@ -35,6 +38,20 @@ std::string pythonRepr(double x) {
     if (count > 1) mantissa += "." + digits.substr(1);
     const int shown = std::abs(exponent);
     return sign + mantissa + "e" + (exponent < 0 ? "-" : "+") + (shown < 10 ? "0" : "") + std::to_string(shown);
+}
+
+bool readDouble(const std::string& text, double& value) {
+    // The decimal point is always '.', whatever locale the program set (Qt applications set the
+    // user's). glibc honours LC_NUMERIC, so it reads through a fixed "C" locale; other C libraries
+    // (musl, used by Emscripten) always read '.'.
+    char* end = nullptr;
+#if defined(__GLIBC__)
+    static const locale_t c = newlocale(LC_ALL_MASK, "C", locale_t(nullptr));
+    value = strtod_l(text.c_str(), &end, c);
+#else
+    value = std::strtod(text.c_str(), &end);
+#endif
+    return !text.empty() && end == text.c_str() + text.size();
 }
 
 std::string numpyRepr(double x) { return "np.float64(" + pythonRepr(x) + ")"; }

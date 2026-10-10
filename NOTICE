@@ -87,3 +87,10 @@ Copyright (C) 2002-2005 Maxim Shemanarev (McSeem)
 Permission to copy, use, modify, sell and distribute this software is granted provided this
 copyright notice appears in all copies. (LICENSES/AGG.txt; Matplotlib's patches to it are under
 the Matplotlib License. Changes made here: licensing/changes/agg.md)
+
+
+NumPy 2.5.3
+-----------
+A few numeric routines are translated from NumPy: Copyright (c) 2005-2025, NumPy Developers.
+All rights reserved. Used under the BSD 3-Clause licence (LICENSES/NumPy.txt; changes:
+licensing/changes/numpy.md).

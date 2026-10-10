@@ -131,3 +131,29 @@ TEST(TextLayout, Utf8DecodesEveryLength) {
     EXPECT_EQ(text::codepoints("\xff"), std::u32string({0xfffd}));
     EXPECT_EQ(text::codepoints("\xc3"), std::u32string({0xfffd}));
 }
+
+TEST(TextExtent, MatchesMatplotlibsRendererAgg) {
+    // RendererAgg.get_text_width_height_descent for 192 strings, sizes and dpis, recorded from matplotlib.
+    std::ifstream in(std::string(CALCULATE_PLOT_SOURCE_DIR) + "/tests/oracle/text_extent.json");
+    std::ostringstream content;
+    content << in.rdbuf();
+    const auto cases = calculate_plot::support::parseJson(content.str(), nullptr);
+    ASSERT_TRUE(cases.has_value());
+    text::FontCache fonts(kFonts);
+    int checked = 0;
+    for (const auto& c : cases->items()) {
+        std::vector<std::string> names;
+        for (const auto& n : c.find("fonts")->items()) names.push_back(n.asString());
+        std::string error;
+        const auto e = text::textExtent(fonts, names, c.find("s")->asString(), c.find("size")->asNumber(),
+                                        c.find("dpi")->asNumber(), FT_LOAD_DEFAULT, std::nullopt, error);
+        ASSERT_TRUE(error.empty()) << error;
+        const std::string where = "\"" + c.find("s")->asString() + "\" " + std::to_string(c.find("size")->asNumber()) +
+                                  "pt " + std::to_string(c.find("dpi")->asNumber()) + "dpi";
+        EXPECT_EQ(e.width, std::strtod(c.find("width")->asString().c_str(), nullptr)) << where;
+        EXPECT_EQ(e.height, std::strtod(c.find("height")->asString().c_str(), nullptr)) << where;
+        EXPECT_EQ(e.descent, std::strtod(c.find("descent")->asString().c_str(), nullptr)) << where;
+        ++checked;
+    }
+    EXPECT_EQ(checked, 192);
+}

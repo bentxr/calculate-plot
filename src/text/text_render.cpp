@@ -141,6 +141,30 @@ std::vector<Glyph> layoutText(FontCache& fonts, const std::vector<std::string>& 
     return glyphs;
 }
 
+TextExtent textExtent(FontCache& fonts, const std::vector<std::string>& names, const std::string& text, double size,
+                      double dpi, FT_Int32 flags, const std::optional<std::string>& language, std::string& error,
+                      const std::string& defaultLanguage) {
+    FT2Font* font = fonts.get(names);
+    if (!font) {
+        error = fonts.error;
+        return {};
+    }
+    font->clear();
+    font->set_size(size, dpi);
+    const std::u32string cps = codepoints(text);
+    const FT2Font::LanguageType languages =
+        std::vector<FT2Font::LanguageRange>{{language ? *language : defaultLanguage, 0, int(cps.size())}};
+    std::vector<double> xys;
+    font->set_text(cps, 0.0, flags, std::nullopt, languages, xys);
+    if (!font->error.empty()) {
+        error = font->error;
+        return {};
+    }
+    const auto [w, h] = font->get_width_height();  // of the unrotated string
+    const long d = font->get_descent();
+    return TextExtent{double(w) / 64.0, double(h) / 64.0, double(d) / 64.0};  // convert from subpixels
+}
+
 std::string drawGlyphsAndBoxes(RendererAgg& renderer, GCAgg& gc, double x, double y, double angle,
                                const std::vector<Glyph>& glyphs, const std::vector<Box>& boxes, FT_Int32 flags) {
     // y is downwards.
