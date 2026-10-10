@@ -37,7 +37,8 @@
     "tests/test_licensing.cpp",
     "tools/oracle/make_rcdefaults.py",
     "tools/oracle/make_colors.py",
-    "tools/oracle/make_fonts.py"
+    "tools/oracle/make_fonts.py",
+    "tools/oracle/make_marker_paths.py"
   ],
   "notice": "NOTICE",
   "components": [
@@ -486,7 +487,8 @@
         "src/engine/text.cpp",
         "src/text/font_manager.hpp",
         "src/text/font_manager.cpp",
-        "data/fonts.json"
+        "data/fonts.json",
+        "data/marker_paths.json"
       ],
       "header": [
         "Copyright (c) 2012- Matplotlib Development Team; All Rights Reserved",

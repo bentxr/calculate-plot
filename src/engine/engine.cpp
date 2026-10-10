@@ -5,6 +5,8 @@
 #include "rc/rc_params.hpp"
 
 #include <cctype>
+#include <cstring>
+#include <limits>
 #include <map>
 #include <memory>
 
@@ -22,6 +24,12 @@ const Json* sequence(const Json& v) {
 }
 
 bool readNumber(const Json& v, double* out) {
+    if (v.isObject() && v.members().size() == 1 && v.members()[0].first == "$float") {
+        const std::string& f = v.members()[0].second.asString();
+        *out = f == "nan" ? std::numeric_limits<double>::quiet_NaN()
+                          : (f == "inf" ? 1 : -1) * std::numeric_limits<double>::infinity();
+        return true;
+    }
     if (!v.isNumber()) return false;
     *out = v.asNumber();
     return true;
@@ -229,8 +237,192 @@ private:
             axis.setLim(v[0], v[1], false);
             return true;
         }
+        if (call.method == "plot") return plot(ax, call, error);
         *error = "unsupported call: " + where;
         return false;
+    }
+
+    // A one-dimensional list of numbers (ints and floats alike).
+    bool numbers(const Json& v, std::vector<double>* out) {
+        const Json* s = sequence(v);
+        if (!s) return false;
+        out->clear();
+        for (const Json& x : s->items()) {
+            double d = 0;
+            if (!readNumber(x, &d)) return false;
+            out->push_back(d);
+        }
+        return true;
+    }
+
+    bool color(const Json& v, colors::Spec* out) {
+        if (v.isString()) {
+            *out = v.asString();
+            return true;
+        }
+        std::vector<double> t;
+        if (!numbers(v, &t) || (t.size() != 3 && t.size() != 4)) return false;
+        *out = t;
+        return true;
+    }
+
+    // axes._base._process_plot_format: (linestyle, marker, color) of a format string; false if invalid.
+    bool plotFormat(const std::string& fmt, std::optional<std::string>* linestyle, std::optional<std::string>* marker,
+                    std::optional<colors::Spec>* colorOut, std::string* error) {
+        if (fmt != "0" && fmt != "1" && colors::toRgba(fmt, std::nullopt, rc_, nullptr)) {
+            *colorOut = colors::Spec(fmt);
+            return true;
+        }
+        static const char* const kMarkers = ".,ov^<>12348spP*hH+xXDd|_";
+        static const char* const kColors = "bgrcmykw";
+        for (std::size_t i = 0; i < fmt.size();) {
+            const char c = fmt[i];
+            const std::string two = fmt.substr(i, 2);
+            if (two == "--" || two == "-.") {
+                if (*linestyle) return *error = "'" + fmt + "' is not a valid format string (two linestyle symbols)", false;
+                *linestyle = two;
+                i += 2;
+            } else if (c == '-' || c == ':' || c == ' ') {
+                if (*linestyle) return *error = "'" + fmt + "' is not a valid format string (two linestyle symbols)", false;
+                *linestyle = std::string(1, c);
+                i += 1;
+            } else if (std::strchr(kMarkers, c) && c) {
+                if (*marker) return *error = "'" + fmt + "' is not a valid format string (two marker symbols)", false;
+                *marker = std::string(1, c);
+                i += 1;
+            } else if (std::strchr(kColors, c) && c) {
+                if (*colorOut) return *error = "'" + fmt + "' is not a valid format string (two color symbols)", false;
+                *colorOut = colors::Spec(std::string(1, c));
+                i += 1;
+            } else if (c == 'C') {
+                std::size_t j = i + 1;
+                while (j < fmt.size() && std::isdigit(static_cast<unsigned char>(fmt[j]))) ++j;
+                if (j == i + 1) return *error = "'" + fmt + "' is not a valid format string ('C' must be followed by a number)", false;
+                *colorOut = colors::Spec(fmt.substr(i, j - i));
+                i = j;
+            } else {
+                return *error = "'" + fmt + "' is not a valid format string (unrecognized character '" + std::string(1, c) + "')", false;
+            }
+        }
+        if (!*linestyle && !*marker) *linestyle = rc_.text("lines.linestyle");
+        if (!*linestyle) *linestyle = std::string("None");
+        if (!*marker) *marker = std::string("None");
+        return true;
+    }
+
+    // Axes.plot(*args, **kwargs): [x], y, [fmt] groups; one line each (1-D data).
+    bool plot(Axes& ax, const model::Call& call, std::string* error) {
+        const std::string where = call.on + ".plot";
+        // Line2D properties by their full names (aliases normalised)
+        std::vector<std::pair<std::string, const Json*>> props;
+        for (const auto& [name, value] : call.kwargs) {
+            static const std::pair<const char*, const char*> aliases[] = {
+                {"aa", "antialiased"}, {"c", "color"}, {"ds", "drawstyle"}, {"ls", "linestyle"}, {"lw", "linewidth"},
+                {"mec", "markeredgecolor"}, {"mew", "markeredgewidth"}, {"mfc", "markerfacecolor"},
+                {"mfcalt", "markerfacecoloralt"}, {"ms", "markersize"}};
+            std::string full = name;
+            for (const auto& [a, f] : aliases)
+                if (name == a) full = f;
+            props.emplace_back(full, &value);
+        }
+        std::vector<const Json*> args;
+        for (const Json& a : call.args) args.push_back(&a);
+        std::size_t i = 0;
+        while (i < args.size()) {
+            // this = args[:2], plus a following format string
+            std::vector<const Json*> group(args.begin() + long(i), args.begin() + long(std::min(i + 2, args.size())));
+            i += group.size();
+            if (i < args.size() && args[i]->isString()) group.push_back(args[i++]);
+            std::optional<std::string> linestyle, marker;
+            std::optional<colors::Spec> fmtColor;
+            if (group.size() > 1 && group.back()->isString()) {
+                if (!plotFormat(group.back()->asString(), &linestyle, &marker, &fmtColor, error)) return false;
+                group.pop_back();
+            } else if (group.size() == 3) {
+                return *error = where + ": third arg must be a format string", false;
+            }
+            std::vector<double> x, y;
+            if (group.size() == 2) {
+                if (!numbers(*group[0], &x) || !numbers(*group[1], &y))
+                    return *error = where + ": x and y must be lists of numbers", false;
+            } else {
+                if (!numbers(*group[0], &y)) return *error = where + ": y must be a list of numbers", false;
+                for (std::size_t k = 0; k < y.size(); ++k) x.push_back(double(k));  // index_of
+            }
+            if (x.size() != y.size())
+                return *error = where + ": x and y must have same first dimension", false;
+
+            auto line = std::make_unique<Line2D>(rc_, x, y);
+            // kw from the format, then the keyword arguments over it
+            bool hasColor = fmtColor.has_value();
+            if (linestyle && !line->setLinestyle(*linestyle, error)) return false;
+            if (marker && !line->setMarker(*marker, error)) return false;
+            if (fmtColor) line->color = *fmtColor;
+            for (const auto& [name, value] : props) {
+                if (!lineProperty(*line, name, *value, where, error)) return false;
+                if (name == "color" && !value->isNull()) hasColor = true;
+            }
+            if (!hasColor) line->color = ax.nextColor();  // _PropCycle.getdefaults
+            ax.addLine(std::move(line));
+        }
+        ax.requestAutoscaleView(true, true);
+        return true;
+    }
+
+    bool lineProperty(Line2D& line, const std::string& name, const Json& v, const std::string& where, std::string* error) {
+        double n = 0;
+        if (name == "color") {
+            if (v.isNull()) return true;
+            if (!color(v, &line.color)) return *error = where + ": bad color", false;
+        } else if (name == "linestyle") {
+            if (!v.isString() || !line.setLinestyle(v.asString(), error)) return *error = where + ": bad linestyle", false;
+        } else if (name == "linewidth") {
+            if (!readNumber(v, &n)) return *error = where + ": linewidth must be a number", false;
+            line.setLinewidth(n);
+        } else if (name == "marker") {
+            if (!v.isString()) return *error = where + ": marker must be a string", false;
+            if (!line.setMarker(v.asString(), error)) return false;
+        } else if (name == "markersize") {
+            if (!readNumber(v, &n)) return *error = where + ": markersize must be a number", false;
+            line.markersize = n;
+        } else if (name == "markeredgewidth") {
+            if (!readNumber(v, &n)) return *error = where + ": markeredgewidth must be a number", false;
+            line.markeredgewidth = n;
+        } else if (name == "markerfacecolor" || name == "markeredgecolor" || name == "markerfacecoloralt") {
+            colors::Spec c;
+            if (!color(v, &c)) return *error = where + ": bad " + name, false;
+            (name == "markerfacecolor" ? line.markerfacecolor : name == "markeredgecolor" ? line.markeredgecolor : line.markerfacecoloralt) = c;
+        } else if (name == "alpha") {
+            if (v.isNull()) line.alpha.reset();
+            else if (!readNumber(v, &n)) return *error = where + ": alpha must be a number", false;
+            else line.alpha = n;
+        } else if (name == "solid_capstyle" || name == "dash_capstyle" || name == "solid_joinstyle" || name == "dash_joinstyle") {
+            if (!v.isString()) return *error = where + ": " + name + " must be a string", false;
+            const std::string s = v.asString();
+            const bool cap = name.find("cap") != std::string::npos;
+            if (cap ? (s != "butt" && s != "projecting" && s != "round") : (s != "miter" && s != "round" && s != "bevel"))
+                return *error = where + ": bad " + name + " " + s, false;
+            (name == "solid_capstyle" ? line.solidCapstyle : name == "dash_capstyle" ? line.dashCapstyle
+             : name == "solid_joinstyle" ? line.solidJoinstyle : line.dashJoinstyle) = s;
+        } else if (name == "antialiased") {
+            if (!v.isBool()) return *error = where + ": antialiased must be True or False", false;
+            line.antialiased = v.asBool();
+        } else if (name == "zorder") {
+            if (!readNumber(v, &n)) return *error = where + ": zorder must be a number", false;
+            line.zorder = n;
+        } else if (name == "label") {
+            if (!v.isString()) return *error = where + ": label must be a string", false;
+            line.label = v.asString();
+        } else if (name == "visible") {
+            if (!v.isBool()) return *error = where + ": visible must be True or False", false;
+            line.visible = v.asBool();
+        } else if (name == "fillstyle") {
+            if (!v.isString()) return *error = where + ": fillstyle must be a string", false;
+            if (!line.markerStyle.set(line.markerStyle.marker(), v.asString(), rc_, error)) return false;
+        } else {
+            return *error = where + ": unsupported keyword " + name, false;
+        }
+        return true;
     }
 
     rc::Params rc_;

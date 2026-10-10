@@ -128,14 +128,34 @@ MaxNLocator MaxNLocator::autoLocator() {
 
 void MaxNLocator::setSteps(const std::vector<double>& s) { steps = validateSteps(s); }
 
+std::pair<double, double> MaxNLocator::viewLimits(double dmin, double dmax) const {
+    if (symmetric) {
+        dmax = std::max(std::abs(dmin), std::abs(dmax));
+        dmin = -dmax;
+    }
+    std::tie(dmin, dmax) = nonsingular(dmin, dmax, 1e-12, 1e-13);
+    if (roundNumbers) {
+        const auto ticks = rawTicks(dmin, dmax);  // _raw_ticks(dmin, dmax)[[0, -1]]
+        return {ticks.front(), ticks.back()};
+    }
+    return {dmin, dmax};
+}
+
 std::vector<double> MaxNLocator::tickValues(double vmin, double vmax) const {
     if (symmetric) {
         vmax = std::max(std::abs(vmin), std::abs(vmax));
         vmin = -vmax;
     }
     std::tie(vmin, vmax) = nonsingular(vmin, vmax, 1e-13, 1e-14);
+    std::vector<double> ticks = rawTicks(vmin, vmax);
+    if (prune == "lower" && !ticks.empty()) ticks.erase(ticks.begin());
+    else if (prune == "upper" && !ticks.empty()) ticks.pop_back();
+    else if (prune == "both" && ticks.size() >= 2) ticks = std::vector<double>(ticks.begin() + 1, ticks.end() - 1);
+    else if (prune == "both") ticks.clear();
+    return ticks;
+}
 
-    // _raw_ticks
+std::vector<double> MaxNLocator::rawTicks(double vmin, double vmax) const {
     // 'auto': np.clip(axis.get_tick_space(), max(1, min_n_ticks - 1), 9), or 9 without an axis
     const int n = nbins == 0 ? (tickSpace ? std::clamp(*tickSpace, std::max(1, minNTicks - 1), 9) : 9) : nbins;
     const auto [scale, offset] = scaleRange(vmin, vmax, n);
@@ -181,11 +201,6 @@ std::vector<double> MaxNLocator::tickValues(double vmin, double vmax) const {
         if (nticks >= minNTicks) break;
     }
     for (double& t : ticks) t = t + offset;
-
-    if (prune == "lower" && !ticks.empty()) ticks.erase(ticks.begin());
-    else if (prune == "upper" && !ticks.empty()) ticks.pop_back();
-    else if (prune == "both" && ticks.size() >= 2) ticks = std::vector<double>(ticks.begin() + 1, ticks.end() - 1);
-    else if (prune == "both") ticks.clear();
     return ticks;
 }
 

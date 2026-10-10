@@ -49,10 +49,13 @@ public:
     void setData(std::vector<double> x, std::vector<double> y);
     void setXdata(std::vector<double> x);
     void setYdata(std::vector<double> y);
+    const Path& path();  // the data path (recached if the data changed)
+    const std::string& linestyle() const { return linestyle_; }
+    std::string label;
     void draw(Renderer& renderer) override;
 
-    std::string color;
-    std::string markeredgecolor, markerfacecolor, markerfacecoloralt = "none";  // or "auto"
+    colors::Spec color;
+    colors::Spec markeredgecolor, markerfacecolor, markerfacecoloralt = std::string("none");  // or "auto"
     double markersize, markeredgewidth;
     bool antialiased;
     std::string dashCapstyle, dashJoinstyle, solidCapstyle, solidJoinstyle;
@@ -61,8 +64,8 @@ public:
 
 private:
     bool isDashed() const { return linestyle_ == "--" || linestyle_ == "-." || linestyle_ == ":"; }
-    std::string markerEdgeColor() const;
-    std::string markerFaceColor(bool alt) const;
+    colors::Spec markerEdgeColor() const;
+    colors::Spec markerFaceColor(bool alt) const;
     void recache();
 
     std::vector<double> x_, y_;

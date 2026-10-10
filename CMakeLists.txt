@@ -39,7 +39,7 @@ add_custom_command(
     VERBATIM)
 
 # Data files compiled into the library.
-set(embedded_files data/rcdefaults.json data/colors.json data/fonts.json)
+set(embedded_files data/rcdefaults.json data/colors.json data/fonts.json data/marker_paths.json)
 list(TRANSFORM embedded_files PREPEND "${PROJECT_SOURCE_DIR}/" OUTPUT_VARIABLE embedded_paths)
 add_custom_command(
     OUTPUT  ${PROJECT_BINARY_DIR}/generated/embedded.cpp

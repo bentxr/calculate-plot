@@ -127,4 +127,17 @@ std::optional<Rgba> toRgba(const std::string& spec, std::optional<double> alpha,
     return fail(error, "Invalid RGBA argument: " + spec), std::nullopt;
 }
 
+std::optional<Rgba> toRgba(const Spec& spec, std::optional<double> alpha, const rc::Params& rc, std::string* error) {
+    if (const auto* text = std::get_if<std::string>(&spec)) return toRgba(*text, alpha, rc, error);
+    return toRgba(std::get<std::vector<double>>(spec), alpha, error);
+}
+
+bool isNone(const Spec& spec) {
+    const auto* text = std::get_if<std::string>(&spec);
+    if (!text) return false;
+    std::string lower = *text;
+    for (char& c : lower) c = char(std::tolower(static_cast<unsigned char>(c)));
+    return lower == "none";
+}
+
 }  // namespace calculate_plot::colors

@@ -38,9 +38,15 @@ bool validValue(const Json& v, std::string* error) {
         return true;
     }
     if (v.isObject()) {
+        if (v.members().size() == 1 && v.members()[0].first == "$float") {
+            const Json& f = v.members()[0].second;
+            if (f.isString() && (f.asString() == "nan" || f.asString() == "inf" || f.asString() == "-inf")) return true;
+            if (error) *error = "{\"$float\": ...} must be \"nan\", \"inf\" or \"-inf\"";
+            return false;
+        }
         if (v.members().size() != 1 || v.members()[0].first != "$tuple" || !v.members()[0].second.isArray()) {
             if (error)
-                *error = "an object value must be {\"$tuple\": [...]}, not " +
+                *error = "an object value must be {\"$tuple\": [...]} or {\"$float\": ...}, not " +
                          (v.members().empty() ? std::string("{}") : v.members()[0].first);
             return false;
         }
@@ -65,6 +71,7 @@ std::string python(const Json& v) {
         return out + "]";
     }
     case Json::Type::Object: {
+        if (v.members()[0].first == "$float") return "float('" + v.members()[0].second.asString() + "')";
         const Json& items = v.members()[0].second;
         std::string out = "(";
         for (std::size_t i = 0; i < items.size(); ++i) out += (i ? ", " : "") + python(items[i]);

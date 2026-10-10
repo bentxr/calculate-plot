@@ -120,6 +120,7 @@ public:
     std::unique_ptr<Axis> xaxis, yaxis;
     std::unique_ptr<Text> title, leftTitle, rightTitle;
     double xmargin, ymargin;
+    bool tight = false;  // _tight (None and False alike)
     bool axisOn = true, frameOn = true;
 
     // get_xaxis_text1_transform(pad) and friends: the transform, then the vertical and horizontal alignment.
@@ -130,6 +131,13 @@ public:
     TextTransform xaxisTextTransform(int which, double padPoints);
     TextTransform yaxisTextTransform(int which, double padPoints);
 
+    // Axes.add_line: the line in data coordinates, clipped to the Axes, counted in the data limits.
+    Line2D& addLine(std::unique_ptr<Line2D> line);
+    // The next colour of the property cycle when a line has none (_PropCycle.getdefaults).
+    colors::Spec nextColor();
+    void requestAutoscaleView(bool x, bool y);
+    std::vector<std::unique_ptr<Artist>> children;  // _children: lines, ...
+
     // Axes.set_title(label, loc=, pad=, y=)
     void setTitle(const std::string& label, const std::string& loc, std::optional<double> pad, std::optional<double> y);
 
@@ -137,7 +145,12 @@ private:
     void setLimAndTransforms();
     void setTitleOffsetTrans(double points);
     void updateTitlePosition(Renderer& renderer);
+    void unstaleViewLim();
+    void autoscaleView(bool scalex, bool scaley);
     bool autotitlepos_ = true;
+    bool ignoreExistingDataLimits_ = true;
+    bool staleX_ = false, staleY_ = false;
+    std::size_t cycleIndex_ = 0;
 };
 
 }  // namespace calculate_plot::engine

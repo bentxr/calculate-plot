@@ -107,3 +107,13 @@ TEST(FigureModel, TheCorpusScriptsAreWhatTheExporterWrites) {
     }
     EXPECT_GE(checked, 1);
 }
+
+// JSON has no NaN or infinities; {"$float": "nan" | "inf" | "-inf"} stands for them, exported as
+// Python's float('nan') etc.
+TEST(FigureModel, NonFiniteFloatsHaveTheirOwnForm) {
+    const auto f = parsed(R"({"version":1,"calls":[{"call":"figure","args":[[1, {"$float":"nan"}, {"$float":"inf"}, {"$float":"-inf"}]]}]})");
+    EXPECT_NE(m::exportPython(f, "x").find("plt.figure([1, float('nan'), float('inf'), float('-inf')])"), std::string::npos)
+        << m::exportPython(f, "x");
+    EXPECT_NE(refused(R"({"version":1,"calls":[{"call":"figure","args":[{"$float":"1.5"}]}]})").find("$float"), std::string::npos);
+    EXPECT_NE(refused(R"({"version":1,"calls":[{"call":"figure","args":[{"$float":1}]}]})").find("$float"), std::string::npos);
+}

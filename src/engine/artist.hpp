@@ -55,6 +55,7 @@ public:
     void setLinestyle(const std::string& style);
     virtual Path path() const = 0;
     virtual transforms::TransformPtr patchTransform() const { return std::make_shared<transforms::IdentityTransform>(); }
+    transforms::TransformPtr fullTransform() const { return transforms::compose(patchTransform(), transform); }  // get_transform
     void draw(Renderer& renderer) override;
 
     bool antialiased;

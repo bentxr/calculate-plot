@@ -14,7 +14,8 @@ namespace calculate_plot::model {
 //   {"version": 1, "rc": {...rcParams...},
 //    "calls": [{"on": "ax", "call": "plot", "args": [...], "kwargs": {...}, "as": "line"}, ...]}
 // A call without "on" is a pyplot function (plt.figure, plt.subplots). "as" names the result (a list
-// of names unpacks it). Values are JSON values; {"$tuple": [...]} is a Python tuple.
+// of names unpacks it). Values are JSON values; {"$tuple": [...]} is a Python tuple and
+// {"$float": "nan" | "inf" | "-inf"} a float JSON cannot write.
 struct Call {
     std::string on;      // the object called ("fig", "ax", "axs[1]"), or empty for pyplot
     std::string method;

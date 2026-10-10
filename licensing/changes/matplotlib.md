@@ -64,7 +64,12 @@ it comes from in its first lines. The changes, as a whole:
   same visibility. transforms.py's TransformWrapper is added to the transforms. Also translated: Axes.set_title,
   set_xlabel/set_ylabel, set_xlim/set_ylim (Axis._set_lim), the title placement (_update_title_position, for an Axes
   without twins or top ticks), XAxis/YAxis._update_label_position and _update_offset_text_position, Spine's window
-  extent with its ticks, Bbox.union, and XAxis/YAxis.get_tick_space feeding AutoLocator's 'auto' bins.
+  extent with its ticks, Bbox.union, and XAxis/YAxis.get_tick_space feeding AutoLocator's 'auto' bins. For
+  Axes.plot: _process_plot_format, the argument grouping of _process_plot_var_args, the property cycle's colours,
+  add_line (clipping to the Axes patch, data limits as Bbox.update_from_path), autoscale_view (linear scales, no
+  sticky edges yet) with MaxNLocator.view_limits, and every marker of markers.py with full or no fill (half fills
+  come later); the unit polygons and star the markers use are data (data/marker_paths.json) taken from
+  matplotlib, since NumPy's vectorised sin and cos made them.
 - File names drop the leading underscore (e.g. src/_backend_agg.h is src/agg/backend_agg.h); includes follow.
 - The drawing algorithms themselves (src/_backend_agg.h, src/_backend_agg.cpp, src/path_converters.h,
   src/agg_workaround.h, src/array.h, src/mplutils.h) are otherwise unchanged.

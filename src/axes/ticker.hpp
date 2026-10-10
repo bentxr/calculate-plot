@@ -29,6 +29,9 @@ struct MaxNLocator {
     static MaxNLocator autoLocator();
     void setSteps(const std::vector<double>& steps);
     std::vector<double> tickValues(double vmin, double vmax) const;
+    // MaxNLocator.view_limits (axes.autolimit_mode 'data'; 'round_numbers' when roundNumbers)
+    std::pair<double, double> viewLimits(double dmin, double dmax) const;
+    std::vector<double> rawTicks(double vmin, double vmax) const;  // _raw_ticks
 };
 
 // ticker.ScalarFormatter with the default rcParams (offset on, threshold 4, power limits -5..6,

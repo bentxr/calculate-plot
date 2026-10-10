@@ -326,6 +326,7 @@ Axis::Axis(const rc::Params& rc, Axes& axes, bool isX)
     zorder = 1.5;  // set_axisbelow('line')
     labelpad = rc.number("axes.labelpad");
     labelPosition = isX ? "bottom" : "left";
+    locator.roundNumbers = rc.text("axes.autolimit_mode") == "round_numbers";
 }
 
 void Axis::setViewInterval(double vmin, double vmax) {
@@ -613,6 +614,96 @@ void Axes::updateTitlePosition(Renderer& renderer) {
     for (Text* t : titles) t->y = ymax;
 }
 
+Line2D& Axes::addLine(std::unique_ptr<Line2D> line) {
+    // _set_artist_props: the data transform unless one was set
+    line->transform = transData;
+    // set_clip_path(self.patch): a Rectangle clips by its box
+    line->clipBox = std::make_shared<transforms::TransformedBbox>(
+        std::make_shared<transforms::Bbox>(std::array<double, 4>{0, 0, 1, 1}), patch->fullTransform());
+    // _update_line_limits: the transform is transData, so the data path updates both limits
+    const Path& path = line->path();
+    if (path.size()) {
+        auto points = ignoreExistingDataLimits_
+                          ? std::array<double, 4>{std::numeric_limits<double>::infinity(),
+                                                  std::numeric_limits<double>::infinity(),
+                                                  -std::numeric_limits<double>::infinity(),
+                                                  -std::numeric_limits<double>::infinity()}
+                          : dataLim->points();
+        const std::vector<double>& v = *path.vertices;
+        double minx = std::numeric_limits<double>::infinity(), maxx = -minx, miny = minx, maxy = -minx;
+        for (std::size_t i = 0; i + 1 < v.size(); i += 2) {
+            if (!std::isfinite(v[i]) || !std::isfinite(v[i + 1])) continue;
+            minx = std::min(minx, v[i]), maxx = std::max(maxx, v[i]);
+            miny = std::min(miny, v[i + 1]), maxy = std::max(maxy, v[i + 1]);
+        }
+        // Python's min(a, b) / max(a, b): the first unless the second is beyond it
+        points[0] = minx < points[0] ? minx : points[0];
+        points[2] = maxx > points[2] ? maxx : points[2];
+        points[1] = miny < points[1] ? miny : points[1];
+        points[3] = maxy > points[3] ? maxy : points[3];
+        dataLim->setPoints(points);
+        ignoreExistingDataLimits_ = false;
+    }
+    if (line->label.empty()) line->label = "_child" + std::to_string(children.size());
+    children.push_back(std::move(line));
+    return static_cast<Line2D&>(*children.back());
+}
+
+colors::Spec Axes::nextColor() {
+    const auto cycle = rc_.colorCycle();
+    if (cycle.empty()) return std::string("k");
+    colors::Spec c = cycle[cycleIndex_];
+    cycleIndex_ = (cycleIndex_ + 1) % cycle.size();
+    return c;
+}
+
+void Axes::requestAutoscaleView(bool x, bool y) {
+    staleX_ = staleX_ || x;
+    staleY_ = staleY_ || y;
+}
+
+void Axes::unstaleViewLim() {
+    if (!staleX_ && !staleY_) return;
+    const bool x = staleX_, y = staleY_;
+    staleX_ = staleY_ = false;
+    autoscaleView(x, y);
+}
+
+void Axes::autoscaleView(bool scalex, bool scaley) {
+    // No artist has sticky edges yet (lines have none); linear scales only.
+    const auto handle = [&](bool scale, Axis& axis, bool isX, double margin) {
+        if (!(scale && axis.autoscaleOn)) return;
+        const auto d = dataLim->points();
+        const double a = isX ? d[0] : d[1], b = isX ? d[2] : d[3];
+        double x0, x1;
+        if (std::isfinite(a) || std::isfinite(b)) {
+            // min/max of the finite ones
+            if (std::isfinite(a) && std::isfinite(b)) x0 = b < a ? b : a, x1 = b > a ? b : a;
+            else x0 = x1 = std::isfinite(a) ? a : b;
+        } else {
+            const auto v = viewLim->points();
+            const bool mutated = isX ? (v[0] != 0 || v[2] != 1) : (v[1] != 0 || v[3] != 1);
+            if (mutated) return;
+            x0 = -std::numeric_limits<double>::infinity();
+            x1 = std::numeric_limits<double>::infinity();
+        }
+        std::tie(x0, x1) = axes::nonsingular(x0, x1, 0.05);  // locator.nonsingular
+        double delta = (x1 - x0) * margin;
+        if (!std::isfinite(delta)) delta = 0;
+        x0 = x0 - delta, x1 = x1 + delta;
+        axis.locator.tickSpace = axis.tickSpace();  // the locator's axis
+        if (!tight) std::tie(x0, x1) = axis.locator.viewLimits(x0, x1);
+        // set_xbound: sorted, reversed if the axis is inverted
+        const auto view = axis.viewInterval();
+        const bool inverted = view[0] > view[1];
+        if ((x0 > x1) != inverted && x0 != x1) std::swap(x0, x1);
+        const bool keep = axis.autoscaleOn;
+        axis.setLim(x0, x1, keep);  // auto=None keeps the autoscale state
+    };
+    handle(scalex, *xaxis, true, xmargin);
+    handle(scaley, *yaxis, false, ymargin);
+}
+
 Spine& Axes::spine(const std::string& type) {
     for (auto& s : spines)
         if (s->type == type) return *s;
@@ -647,9 +738,11 @@ Axes::TextTransform Axes::yaxisTextTransform(int which, double padPoints) {
 
 void Axes::draw(Renderer& renderer) {
     if (!visible) return;
+    unstaleViewLim();
     renderer.openGroup("axes", gid);
-    // get_children without the patch: spines, axes, titles; sorted by zorder (stable)
+    // get_children without the patch: children, spines, axes, titles; sorted by zorder (stable)
     std::vector<Artist*> artists;
+    for (auto& c : children) artists.push_back(c.get());
     if (axisOn && frameOn)
         for (auto& s : spines) artists.push_back(s.get());
     if (axisOn) {

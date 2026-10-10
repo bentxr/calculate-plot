@@ -3,6 +3,7 @@
 #include <array>
 #include <optional>
 #include <string>
+#include <variant>
 #include <vector>
 
 namespace calculate_plot::rc { class Params; }
@@ -18,5 +19,11 @@ std::optional<Rgba> toRgba(const std::string& spec, std::optional<double> alpha,
                            std::string* error);
 // The same for an RGB or RGBA tuple.
 std::optional<Rgba> toRgba(const std::vector<double>& tuple, std::optional<double> alpha, std::string* error);
+
+// A colour as a figure file gives it: a specification string, or an RGB(A) tuple.
+using Spec = std::variant<std::string, std::vector<double>>;
+std::optional<Rgba> toRgba(const Spec& spec, std::optional<double> alpha, const rc::Params& rc, std::string* error);
+// cbook._str_lower_equal(spec, "none"), false for tuples.
+bool isNone(const Spec& spec);
 
 }  // namespace calculate_plot::colors
