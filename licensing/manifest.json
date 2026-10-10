@@ -476,6 +476,8 @@
         "src/engine/artist.cpp",
         "src/engine/figure.hpp",
         "src/engine/figure.cpp",
+        "src/engine/text.hpp",
+        "src/engine/text.cpp",
         "src/text/font_manager.hpp",
         "src/text/font_manager.cpp",
         "data/fonts.json"

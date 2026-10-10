@@ -98,6 +98,15 @@ std::vector<GlyphImage> renderGlyphs(double height, double dpi, double x, double
                                      const std::vector<Glyph>& glyphs, bool antialiased, FT_Int32 flags,
                                      std::string& error);
 
+// The line metrics Text._get_layout reads from the first font: the OS/2 table's typographic line gap,
+// ascender and descender, else the hhea table's, scaled to `size` points at `dpi` (descent
+// positive); nullopt when the font has neither table.
+struct FontHeightMetrics {
+    double lineGap, ascent, descent;
+};
+std::optional<FontHeightMetrics> fontHeightMetrics(FontCache& fonts, const std::vector<std::string>& names,
+                                                   double size, double dpi, std::string& error);
+
 // RendererAgg._draw_text_glyphs_and_boxes: renders each glyph with FreeType at its place and
 // composites it, then fills the boxes. x, y in pixels from the top-left, angle in degrees.
 std::string drawGlyphsAndBoxes(RendererAgg& renderer, GCAgg& gc, double x, double y, double angle,

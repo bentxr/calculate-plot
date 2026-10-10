@@ -61,6 +61,7 @@ add_library(calculate-plot STATIC
     src/engine/figure.cpp
     src/engine/gc.cpp
     src/engine/path.cpp
+    src/engine/text.cpp
     src/engine/trace_renderer.cpp
     src/agg/backend_agg.cpp
     src/model/figure_model.cpp

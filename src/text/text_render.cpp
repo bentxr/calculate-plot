@@ -7,6 +7,8 @@
 
 #include "agg/backend_agg.h"
 
+#include <freetype/tttables.h>
+
 #include <cmath>
 
 namespace calculate_plot::text {
@@ -88,6 +90,24 @@ FT2Font* FontCache::byPath(const std::string& name) {
             if (f->path() == path) return f.get();
     }
     return get({name}, true);
+}
+
+std::optional<FontHeightMetrics> fontHeightMetrics(FontCache& fonts, const std::vector<std::string>& names,
+                                                   double size, double dpi, std::string& error) {
+    FT2Font* font = fonts.get(names);
+    if (!font) {
+        error = fonts.error;
+        return std::nullopt;
+    }
+    const FT_Face face = font->get_face();
+    // scale = 1 / units_per_em * fontsize * dpi / 72, in Python's order of operations
+    const double scale = 1.0 / double(face->units_per_EM) * size * dpi / 72;
+    if (const auto* os2 = static_cast<const TT_OS2*>(FT_Get_Sfnt_Table(face, FT_SFNT_OS2)))
+        return FontHeightMetrics{os2->sTypoLineGap * scale, os2->sTypoAscender * scale,
+                                 -double(os2->sTypoDescender) * scale};
+    if (const auto* hhea = static_cast<const TT_HoriHeader*>(FT_Get_Sfnt_Table(face, FT_SFNT_HHEA)))
+        return FontHeightMetrics{hhea->Line_Gap * scale, hhea->Ascender * scale, -double(hhea->Descender) * scale};
+    return std::nullopt;
 }
 
 std::string FontCache::nameOf(const FT2Font* font) const {

@@ -25,6 +25,7 @@ public:
     double width() const override { return width_; }
     double height() const override { return height_; }
     const rc::Params& rc() const override { return rc_; }
+    text::FontCache& fontCache() override { return fonts_; }
 
     virtual std::string trace() = 0;  // the whole trace, as JSON
     const std::string& error() const { return error_; }  // what the trace format cannot express yet

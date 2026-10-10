@@ -51,7 +51,9 @@ it comes from in its first lines. The changes, as a whole:
   patches.py's Patch and Rectangle, lines.py's dash patterns and figure.py's Figure (its boxes, transforms and
   patch) with backend_agg.py's and backend_svg.py's canvas drawing, translated to C++. Artists draw through a
   renderer interface; calculate-plot's renderers record the calls in its trace format instead of drawing
-  directly. Colours are given as strings for now.
+  directly. Colours are given as strings for now. text.py's Text (_get_layout, draw, get_window_extent, the
+  rotation and math-text checks) and textpath.py's TextToPath.get_text_width_height_descent are translated to C++;
+  the font's line metrics are read with FreeType's FT_Get_Sfnt_Table.
 - File names drop the leading underscore (e.g. src/_backend_agg.h is src/agg/backend_agg.h); includes follow.
 - The drawing algorithms themselves (src/_backend_agg.h, src/_backend_agg.cpp, src/path_converters.h,
   src/agg_workaround.h, src/array.h, src/mplutils.h) are otherwise unchanged.

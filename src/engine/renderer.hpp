@@ -12,6 +12,7 @@
 #include <vector>
 
 namespace calculate_plot::rc { class Params; }
+namespace calculate_plot::text { class FontCache; }
 
 namespace calculate_plot::engine {
 
@@ -55,6 +56,8 @@ public:
                           bool ismath, const TextOptions& mtext) = 0;
     virtual TextMetrics textWidthHeightDescent(const std::string& s, const FontSpec& font, bool ismath) = 0;
     virtual bool flipy() const { return true; }
+    // The fonts the renderer opened (matplotlib's get_font cache), for the font metrics of layouts.
+    virtual text::FontCache& fontCache() = 0;
 
     GC newGc() const { return GC(rc()); }
     double pointsToPixels(double points) const { return points * dpi() / 72; }

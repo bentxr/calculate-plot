@@ -345,14 +345,49 @@ void SvgTraceRenderer::drawMarkers(const GC&, const Path&, const transforms::Mat
     error_ = "SVG markers are not supported yet";
 }
 
-void SvgTraceRenderer::drawText(const GC&, double, double, const std::string&, const FontSpec&, double, bool,
-                                const TextOptions&) {
-    error_ = "SVG text is not supported yet";
+void SvgTraceRenderer::drawText(const GC& gc, double x, double y, const std::string& s, const FontSpec& font,
+                                double angle, bool ismath, const TextOptions& mtext) {
+    events_.beginObject();
+    events_.key("op").value("draw_text");
+    events_.key("gc");
+    writeSvgGc(gc);
+    events_.key("x").value(x);
+    events_.key("y").value(y);
+    events_.key("s").value(s);
+    events_.key("fonts").beginArray();
+    for (const auto& f : font.files) events_.value(f);
+    events_.endArray();
+    events_.key("size").value(font.size);
+    events_.key("angle").value(angle);
+    events_.key("ismath").value(ismath);
+    events_.key("features");
+    if (mtext.features) {
+        events_.beginArray();
+        for (const auto& f : *mtext.features) events_.value(f);
+        events_.endArray();
+    } else {
+        events_.null();
+    }
+    events_.key("language");
+    writeOptionalText(mtext.language);
+    events_.key("clip_transform");
+    writeClipTransform(gc);
+    events_.endObject();
+    if (ismath) error_ = "mathtext is not supported yet: " + s;
 }
 
-TextMetrics SvgTraceRenderer::textWidthHeightDescent(const std::string&, const FontSpec&, bool) {
-    error_ = "SVG text is not supported yet";
-    return {};
+TextMetrics SvgTraceRenderer::textWidthHeightDescent(const std::string& s, const FontSpec& font, bool ismath) {
+    if (ismath) {
+        error_ = "mathtext is not supported yet: " + s;
+        return {};
+    }
+    constexpr double kFontScale = 100.0;  // TextToPath.FONT_SCALE, at TextToPath.DPI = 72
+    const double scale = font.size / kFontScale;
+    std::string error;
+    const auto e = text::textExtent(fonts_, font.files, s, kFontScale, 72.0, FT_LOAD_NO_HINTING, std::nullopt, error,
+                                    locale_);
+    if (!error.empty()) error_ = error;
+    return {e.width * scale, e.height * scale, e.descent * scale};
 }
 
 std::string SvgTraceRenderer::trace() {
