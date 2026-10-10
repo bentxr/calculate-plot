@@ -5,6 +5,7 @@ Run with the reference environment (requirements.lock), e.g.
   MPL_IGNORE_SYSTEM_FONTS=1 tools/oracle/.venv/bin/python -I tools/oracle/make_refs.py [case ...]
 The PNG holds the exact RGBA buffer matplotlib's Agg renderer produced.
 """
+import hashlib
 import json
 import os
 import pathlib
@@ -46,6 +47,12 @@ def main(names):
         out.mkdir(parents=True, exist_ok=True)
         (out / "trace.json").write_text(json.dumps(trace, separators=(",", ":")) + "\n")
         Image.fromarray(rgba, "RGBA").save(out / "ref.png", optimize=True)
+        # An independent check of PNG decoding: the hash of the raw pixels, row by row, RGBA.
+        decoded = np.asarray(Image.open(out / "ref.png").convert("RGBA"))
+        assert np.array_equal(decoded, rgba)
+        (out / "ref.json").write_text(json.dumps({
+            "width": int(rgba.shape[1]), "height": int(rgba.shape[0]),
+            "rgba_sha256": hashlib.sha256(rgba.tobytes()).hexdigest()}, indent=1) + "\n")
         print(f"{name}: {len(trace['events'])} events, {rgba.shape[1]}x{rgba.shape[0]}")
 
 

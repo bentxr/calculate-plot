@@ -11,6 +11,7 @@ add_executable(calculate-plot-tests
     test_json.cpp
     test_licensing.cpp
     test_notices.cpp
+    test_png.cpp
     licensing/compliance.cpp
     test_sha256.cpp
     test_text_libraries.cpp

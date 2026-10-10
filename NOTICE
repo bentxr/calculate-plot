@@ -60,3 +60,9 @@ Original fonts: http://www.ctan.org/tex-archive/fonts/cm/ps-type1/bakoma (LICENS
 
 Last Resort High-Efficiency font 16.000: Copyright (C) 2020-2024 Unicode, Inc. Licensed under the
 SIL Open Font License 1.1 (LICENSES/LastResort.txt).
+
+
+zlib 1.3.2
+----------
+Copyright (C) 1995-2026 Jean-loup Gailly and Mark Adler. Used unmodified, under the zlib licence
+(LICENSES/zlib-1.3.2.txt), to read and write PNG files.
