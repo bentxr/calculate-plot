@@ -167,6 +167,12 @@ TEST(LicensingChecks, IgnoredFilesNeedNoAccount) {
     EXPECT_TRUE(lic::checkEveryFileAccounted(t.tree()).empty());
 }
 
+TEST(LicensingChecks, AGitFileIsSkippedLikeTheGitFolder) {
+    FakeTree t;  // in a git worktree or submodule, .git is a file that points to the repository
+    t.write(".git", "gitdir: /somewhere/else\n");
+    EXPECT_TRUE(lic::checkEveryFileAccounted(t.tree()).empty()) << joined(lic::checkEveryFileAccounted(t.tree()));
+}
+
 TEST(LicensingChecks, AFileClaimedByTwoComponentsIsAProblem) {
     FakeTree t;
     t.editManifest(R"("derived": [], "header": [])", R"("derived": ["src/ported.cpp"], "header": [])");

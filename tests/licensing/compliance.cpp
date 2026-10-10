@@ -104,6 +104,7 @@ std::vector<std::string> files(const Tree& tree, const Json& manifest, bool incl
             if (rel == ".git" || (!includeIgnored && matchesAny(ignore, rel + "/."))) it.disable_recursion_pending();
             continue;
         }
+        if (rel == ".git") continue;  // a worktree's or submodule's link to its repository
         if (!includeIgnored && matchesAny(ignore, rel)) continue;
         out.push_back(rel);
     }
