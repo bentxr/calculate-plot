@@ -36,6 +36,7 @@ ax::MaxNLocator locatorFor(const Json& c) {
     if (const Json* v = p.find("integer")) l.integer = v->asBool();
     if (const Json* v = p.find("symmetric")) l.symmetric = v->asBool();
     if (const Json* v = p.find("prune")) l.prune = v->asString();
+    if (const Json* v = p.find("round_numbers")) l.roundNumbers = v->asBool();
     if (const Json* v = p.find("steps")) {
         std::vector<double> steps;
         for (const Json& s : v->items()) steps.push_back(s.asNumber());
@@ -54,7 +55,7 @@ std::string hexText(double v) {
 
 TEST(Ticker, TickValuesMatchMatplotlibBitForBit) {
     const auto cases = oracle();
-    ASSERT_GT(cases.size(), 9000u);
+    ASSERT_GT(cases.size(), 10900u);
     int mismatches = 0;
     for (const auto& c : cases) {
         const double vmin = hex(*c.find("vmin")), vmax = hex(*c.find("vmax"));

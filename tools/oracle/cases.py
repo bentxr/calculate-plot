@@ -298,3 +298,23 @@ def default_figure():
     ax.set_title("Default figure")
     ax.legend()
     return fig
+
+
+@case
+def scatter_constant_size():
+    fig = figure()
+    ax = fig.add_axes((0.12, 0.12, 0.83, 0.83))
+    rng = np.random.default_rng(6)
+    # Two sizes taken in turn: each path is used 40 times, so the SVG defines it once and reuses it.
+    from matplotlib.collections import CircleCollection
+    ax.add_collection(CircleCollection([15, 40], offsets=rng.random((80, 2)), offset_transform=ax.transData,
+                                       facecolors="C2", edgecolors="C3", linewidths=0.8))
+    return fig
+
+
+@case
+def image_unsampled():
+    fig = figure()
+    ax = fig.add_axes((0.1, 0.1, 0.8, 0.8))
+    ax.imshow(np.arange(30).reshape(5, 6), interpolation="none", cmap="plasma")
+    return fig

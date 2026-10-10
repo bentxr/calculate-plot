@@ -110,13 +110,23 @@ TEST(TextLayout, HintingNamesMapToFreeTypeFlags) {
 TEST(TextLayout, MissingGlyphsFallBackToTheLastResortFont) {
     text::FontCache fonts(kFonts);
     std::string error;
-    // U+0F00 TIBETAN SYLLABLE OM is not in DejaVu Sans.
-    const auto glyphs = text::layoutText(fonts, {"DejaVuSans.ttf"}, "a\xe0\xbc\x80", 10, 100, FT_LOAD_DEFAULT,
-                                         std::nullopt, std::nullopt, error);
+    // U+0F00 TIBETAN SYLLABLE OM and U+4E2D are not in DejaVu Sans. Glyph indices as matplotlib's
+    // (the Last Resort font is read through its first character map, as matplotlib sets it).
+    const auto glyphs = text::layoutText(fonts, {"DejaVuSans.ttf"}, "a\xe0\xbc\x80\xe4\xb8\xad", 12, 100,
+                                         FT_LOAD_DEFAULT, std::nullopt, std::nullopt, error);
     ASSERT_TRUE(error.empty()) << error;
-    ASSERT_EQ(glyphs.size(), 2u);
+    ASSERT_EQ(glyphs.size(), 3u);
     EXPECT_EQ(fileName(glyphs[0].font->path()), "DejaVuSans.ttf");
     EXPECT_EQ(fileName(glyphs[1].font->path()), "LastResortHE-Regular.ttf");
+    EXPECT_EQ(glyphs[0].index, 68u);
+    EXPECT_EQ(glyphs[1].index, 36u);
+    EXPECT_EQ(glyphs[2].index, 122u);
+    // The Last Resort font alone, first in its own list.
+    const auto alone = text::layoutText(fonts, {"LastResortHE-Regular.ttf"}, "a\xe0\xbc\x80", 12, 100,
+                                        FT_LOAD_DEFAULT, std::nullopt, std::nullopt, error);
+    ASSERT_EQ(alone.size(), 2u);
+    EXPECT_EQ(alone[0].index, 2u);
+    EXPECT_EQ(alone[1].index, 36u);
 }
 
 TEST(TextLayout, AnUnknownFontIsAnError) {
@@ -129,6 +139,7 @@ TEST(TextLayout, AnUnknownFontIsAnError) {
 TEST(TextLayout, Utf8DecodesEveryLength) {
     EXPECT_EQ(text::codepoints("a\xc3\xa9\xe2\x82\xac\xf0\x9f\x98\x80"), std::u32string({U'a', 0xe9, 0x20ac, 0x1f600}));
     EXPECT_EQ(text::codepoints("\xff"), std::u32string({0xfffd}));
+    EXPECT_EQ(text::codepoints("\x80"), std::u32string({0xfffd}));  // a continuation byte cannot start
     EXPECT_EQ(text::codepoints("\xc3"), std::u32string({0xfffd}));
     EXPECT_EQ(text::codepoints("a\xc3"), std::u32string({U'a', 0xfffd}));             // cut at the end
     EXPECT_EQ(text::codepoints("\xe2\x82"), std::u32string({0xfffd, 0xfffd}));        // three-byte lead, two bytes

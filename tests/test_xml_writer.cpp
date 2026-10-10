@@ -1,3 +1,4 @@
+#include "svg/svg_renderer.h"
 #include "svg/xml_writer.h"
 
 #include <gtest/gtest.h>
@@ -31,4 +32,12 @@ TEST(XmlWriter, IndentationStopsAt64Spaces) {
     expected += std::string(64, ' ') + "<p/>\n";
     for (int i = 65; i >= 0; --i) expected += std::string(std::min(i, 64), ' ') + "</g>\n";
     EXPECT_EQ(out, expected);
+}
+
+TEST(PythonRepr, BytesAsPythonSpellsThem) {
+    using calculate_plot::svg::pythonBytesRepr;
+    // repr() of the same bytes in Python 3.14.
+    EXPECT_EQ(pythonBytesRepr(std::string("\x00\x7f\xff'\"\\\n\t\r A", 11)), "b'\\x00\\x7f\\xff\\'\"\\\\\\n\\t\\r A'");
+    EXPECT_EQ(pythonBytesRepr("it's"), "b\"it's\"");
+    EXPECT_EQ(pythonBytesRepr("say \"hi\""), "b'say \"hi\"'");
 }

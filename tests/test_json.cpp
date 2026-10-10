@@ -61,6 +61,16 @@ TEST(Json, IntegersBeyondDoublePrecisionAreReadExactly) {
     EXPECT_EQ(parsed("-9223372036854775808").asInteger(), std::numeric_limits<long long>::min());
 }
 
+TEST(Json, IntegersBeyondLongLongReadAsZero) {
+    EXPECT_EQ(parsed("99999999999999999999").asInteger(), 0);
+}
+
+TEST(Json, ABadEscapeSaysSo) {
+    JsonError error;
+    EXPECT_FALSE(parseJson("\"\\u12\"", &error).has_value());
+    EXPECT_NE(error.message.find("hexadecimal"), std::string::npos) << error.message;
+}
+
 TEST(Json, Strings) {
     EXPECT_EQ(parsed(R"("")").asString(), "");
     EXPECT_EQ(parsed(R"("abc")").asString(), "abc");
@@ -110,7 +120,7 @@ TEST(Json, RejectsEveryMalformedClass) {
     for (const char* bad : {"nul", "tru", "falsy", "01", "-", "1.", ".5", "1e", "1e+", "+1", "0x10",
                             "\"\\x\"", "\"\\u12\"", "\"\\ud800\"", "\"\\udc00\"", "\"a\nb\"", "[", "]",
                             "{", "{\"a\":}", "{\"a\":1,}", "{1:2}", "[1 2]", "NaN", "Infinity",
-                            "{\"a\":1,\"a\":2}", "\"\xff\"", "\"\xc3\""}) {
+                            "{\"a\":1,\"a\":2}", "\"\xff\"", "\"\xc3\"", "\"\x80\""}) {
         JsonError error;
         EXPECT_FALSE(parseJson(bad, &error).has_value()) << bad;
         EXPECT_FALSE(error.message.empty()) << bad;

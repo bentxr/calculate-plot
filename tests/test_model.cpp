@@ -67,6 +67,11 @@ TEST(FigureModel, IntegersStayIntegersAndFloatsStayExact) {
         << m::exportPython(f, "x");
 }
 
+TEST(FigureModel, MinusZeroWithoutAPointIsAnInteger) {
+    const auto f = parsed(R"({"version":1,"calls":[{"call":"figure","args":[-0, -0.0]}]})");
+    EXPECT_NE(m::exportPython(f, "x").find("plt.figure(-0, -0.0)"), std::string::npos) << m::exportPython(f, "x");
+}
+
 TEST(FigureModel, OneElementTuplesKeepTheirComma) {
     const auto f = parsed(R"({"version":1,"calls":[{"call":"figure","args":[{"$tuple":[5]}, {"$tuple":[]}]}]})");
     EXPECT_NE(m::exportPython(f, "x").find("plt.figure((5,), ())"), std::string::npos) << m::exportPython(f, "x");

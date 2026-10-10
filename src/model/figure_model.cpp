@@ -55,7 +55,7 @@ std::string python(const Json& v) {
     case Json::Type::Bool: return v.asBool() ? "True" : "False";
     case Json::Type::Number: {
         const std::string& t = v.numberText();
-        if (t.find_first_of(".eE") == std::string::npos && t != "-0") return t;  // a Python int
+        if (t.find_first_of(".eE") == std::string::npos) return t;  // a Python int
         return support::pythonRepr(v.asNumber());
     }
     case Json::Type::String: return svg::pythonStrRepr(v.asString());

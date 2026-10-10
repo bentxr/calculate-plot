@@ -57,12 +57,14 @@ def locators():
     yield "maxn10int", {"nbins": 10, "integer": True}, ticker.MaxNLocator(nbins=10, integer=True)
     yield "maxn4steps", {"nbins": 4, "steps": [1, 3, 10]}, ticker.MaxNLocator(nbins=4, steps=[1, 3, 10])
     yield "maxn7sym", {"nbins": 7, "symmetric": True, "prune": "both"}, ticker.MaxNLocator(nbins=7, symmetric=True, prune="both")
+    yield "maxn6round", {"nbins": 6, "round_numbers": True}, ticker.MaxNLocator(nbins=6)
 
 
 cases = []
 for vmin, vmax in ranges():
     for name, params, locator in locators():
-        ticks = locator.tick_values(vmin, vmax)
+        with matplotlib.rc_context({"axes.autolimit_mode": "round_numbers" if params.get("round_numbers") else "data"}):
+            ticks = locator.tick_values(vmin, vmax)
         entry = {"vmin": h(vmin), "vmax": h(vmax), "locator": name, "params": params,
                  "ticks": [h(float(t)) for t in ticks]}
         if name == "auto":

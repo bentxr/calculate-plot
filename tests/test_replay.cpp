@@ -151,3 +151,20 @@ TEST(ReplayErrors, EveryMissingFieldIsReportedNeverCrashes) {
         EXPECT_GT(checked, 5) << name;
     }
 }
+
+TEST(ReplayModes, GlyphsModeDrawsTheGlyphListNotTheString) {
+    // A forged trace: the string says "A", its glyph list holds "B" (glyph 37 in DejaVu Sans). Glyphs mode
+    // must draw B, Text mode A.
+    const std::string gc = R"({"linewidth":1.0,"alpha":1.0,"forced_alpha":false,"rgb":[0,0,0,1],"antialiased":true,"capstyle":"butt","joinstyle":"round","dashes":[0,null],"cliprect":null,"clippath":null,"snap":null,"hatch":null,"hatch_color":null,"hatch_linewidth":1.0,"sketch":null})";
+    const std::string trace = R"({"version":1,"locale":"C.UTF-8","width":40,"height":30,"dpi":100.0,"events":[)"
+        R"({"op":"text","s":"A","x":5.0,"y":20.0,"angle":0.0,"ismath":false,"fonts":["DejaVuSans.ttf"],"size":12.0,"features":null,"language":null,"antialiased":true,"hinting":"default","gc":)" + gc + "},"
+        R"({"op":"glyphs","x":5.0,"y":20.0,"angle":0.0,"dpi":100.0,"height":30.0,"glyphs":[{"font":"DejaVuSans.ttf","size":12.0,"index":37,"slant":0.0,"extend":1.0,"dx":0.0,"dy":0.0}],"boxes":[],"hinting":"default","gc":)" + gc + "}]}";
+    calculate_plot::render::ReplayOptions options;
+    options.fontDirectory = std::string(CALCULATE_PLOT_SOURCE_DIR) + "/fonts/ttf";
+    options.text = calculate_plot::render::TextMode::Glyphs;
+    const auto glyphs = calculate_plot::render::replayTrace(trace, options);
+    options.text = calculate_plot::render::TextMode::Text;
+    const auto text = calculate_plot::render::replayTrace(trace, options);
+    ASSERT_TRUE(glyphs.error.empty() && text.error.empty()) << glyphs.error << text.error;
+    EXPECT_NE(glyphs.image.rgba, text.image.rgba);
+}
