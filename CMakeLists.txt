@@ -16,7 +16,20 @@ if(PROJECT_IS_TOP_LEVEL)  # warnings are errors here, but never break a project 
     target_compile_options(calculate-plot-warnings INTERFACE -Werror)
 endif()
 
+include(cmake/notices.cmake)
+calculate_plot_notice_files(notice_files)
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/licensing/manifest.json)
+list(TRANSFORM notice_files PREPEND "${PROJECT_SOURCE_DIR}/" OUTPUT_VARIABLE notice_paths)
+add_custom_command(
+    OUTPUT  ${PROJECT_BINARY_DIR}/generated/notices.cpp
+    COMMAND ${CMAKE_COMMAND} -DSOURCE_DIR=${PROJECT_SOURCE_DIR} "-DFILES=${notice_files}"
+            -DOUTPUT=${PROJECT_BINARY_DIR}/generated/notices.cpp -P ${PROJECT_SOURCE_DIR}/cmake/notices.cmake
+    DEPENDS ${notice_paths} ${PROJECT_SOURCE_DIR}/cmake/notices.cmake ${PROJECT_SOURCE_DIR}/licensing/manifest.json
+    COMMENT "Embedding the third-party notices"
+    VERBATIM)
+
 add_library(calculate-plot STATIC
+    ${PROJECT_BINARY_DIR}/generated/notices.cpp
     src/version.cpp
     src/support/glob.cpp
     src/support/json.cpp
@@ -27,6 +40,17 @@ target_include_directories(calculate-plot
 target_compile_definitions(calculate-plot PRIVATE CALCULATE_PLOT_VERSION="${PROJECT_VERSION}")
 target_compile_options(calculate-plot PRIVATE -fno-exceptions)
 target_link_libraries(calculate-plot PRIVATE calculate-plot-warnings)
+
+add_library(cplot-cli STATIC cli/cli.cpp)
+target_include_directories(cplot-cli PUBLIC ${PROJECT_SOURCE_DIR}/cli)
+target_compile_options(cplot-cli PRIVATE -fno-exceptions)
+target_link_libraries(cplot-cli PUBLIC calculate-plot PRIVATE calculate-plot-warnings)
+
+add_executable(cplot cli/main.cpp)
+target_link_libraries(cplot PRIVATE cplot-cli calculate-plot-warnings)
+if(EMSCRIPTEN)
+    target_link_options(cplot PRIVATE -sALLOW_MEMORY_GROWTH=1 -sSTACK_SIZE=1048576 -sNODERAWFS=1)
+endif()
 
 include(CTest)
 if(BUILD_TESTING AND PROJECT_IS_TOP_LEVEL)

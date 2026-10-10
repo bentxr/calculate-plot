@@ -2,7 +2,7 @@
   "version": 1,
   "ignore": ["build/**", ".git/**", "tools/oracle/.venv/**", "**/__pycache__/**"],
   "own": [
-    "README.md", ".gitignore", "CMakeLists.txt", "CMakePresets.json", ".github/**",
+    "README.md", ".gitignore", "CMakeLists.txt", "CMakePresets.json", ".github/**", "cmake/**",
     "include/**", "src/**", "cli/**", "tests/**", "tools/**", "licensing/**", "NOTICE"
   ],
   "forbidden": [
