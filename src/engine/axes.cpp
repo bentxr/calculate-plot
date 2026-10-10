@@ -972,6 +972,7 @@ void Axes::draw(Renderer& renderer) {
     }
     updateTitlePosition(renderer);
     for (Text* t : {title.get(), leftTitle.get(), rightTitle.get()}) artists.push_back(t);
+    if (legend) artists.push_back(legend.get());
     std::stable_sort(artists.begin(), artists.end(), [](const Artist* a, const Artist* b) { return a->zorder < b->zorder; });
     if (axisOn && frameOn) artists.insert(artists.begin(), patch.get());
     for (Artist* a : artists) a->draw(renderer);

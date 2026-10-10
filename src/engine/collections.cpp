@@ -177,6 +177,29 @@ void Collection::draw(Renderer& renderer) {
     renderer.closeGroup(groupName);
 }
 
+void Collection::updateFrom(const Collection& o) {
+    transform = o.transform;
+    transformSet = o.transformSet;
+    visible = o.visible;
+    alpha = o.alpha;
+    clipBox = o.clipBox;
+    clipOn = o.clipOn;
+    clipPath = o.clipPath;
+    label = o.label;
+    sketch = o.sketch;
+    antialiaseds_ = o.antialiaseds_;
+    originalEdgecolor_ = o.originalEdgecolor_;
+    edgecolors_ = o.edgecolors_;
+    edgeIsFace_ = o.edgeIsFace_;
+    originalFacecolor_ = o.originalFacecolor_;
+    facecolors_ = o.facecolors_;
+    linewidths_ = o.linewidths_;
+    linestyles_ = o.linestyles_;
+    array = o.array;
+    norm = o.norm;
+    cmap = o.cmap;
+}
+
 void Collection::updateScalarMappable() {
     // _set_mappable_flags: faces are mapped unless 'none'; edges when they are 'face', or when the
     // face is 'none' and no edge colour was given

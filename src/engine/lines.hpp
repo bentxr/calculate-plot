@@ -52,8 +52,11 @@ public:
     const Path& path();  // the data path (recached if the data changed)
     const std::string& linestyle() const { return linestyle_; }
     void draw(Renderer& renderer) override;
+    // Line2D.update_from: the style (not the data, the antialiasing or markevery) and the Artist part
+    void updateFrom(const Line2D& other);
 
     colors::Spec color;
+    std::optional<std::vector<long long>> markevery;  // the indices of the points that get markers
     colors::Spec markeredgecolor, markerfacecolor, markerfacecoloralt = std::string("none");  // or "auto"
     double markersize, markeredgewidth;
     bool antialiased;

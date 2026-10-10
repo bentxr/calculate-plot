@@ -47,6 +47,9 @@ public:
         std::array<double, 2> minpos;
     };
     virtual DataLim dataLim() const;
+    // Collection.update_from: colours (originals, resolved, mapped), widths, styles and the Artist part
+    void updateFrom(const Collection& other);
+    const std::vector<double>& linewidths() const { return linewidths_; }
     bool transformSet = false;  // is_transform_set(): otherwise add_collection gives transData
 
     std::vector<Path> paths;
@@ -115,6 +118,7 @@ class PathCollection : public Collection {
 public:
     PathCollection(const rc::Params& rc, std::vector<Path> paths, std::vector<double> sizes);
     void setSizes(const std::vector<double>& sizes, double dpi);
+    const std::vector<double>& sizes() const { return sizes_; }
 
 protected:
     void beforeDraw() override;

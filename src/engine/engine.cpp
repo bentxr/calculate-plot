@@ -2,6 +2,7 @@
 
 #include "engine/axes.hpp"
 #include "engine/figure.hpp"
+#include "engine/legend.hpp"
 #include "rc/rc_params.hpp"
 
 #include <cctype>
@@ -248,6 +249,7 @@ private:
         if (call.method == "scatter") return scatter(ax, call, error);
         if (call.method == "fill_between") return fillBetween(ax, call, error);
         if (call.method == "errorbar") return errorbar(ax, call, error);
+        if (call.method == "legend") return legend(ax, call, error);
         if (call.method == "set_xscale" || call.method == "set_yscale") {
             if (!call.kwargs.empty()) return *error = where + ": scale options are not supported yet", false;
             if (call.args.size() != 1 || !call.args[0].isString()) return *error = where + ": give the scale's name", false;
@@ -760,6 +762,8 @@ private:
             if (!color(*c, &baseColor)) return *error = where + ": bad color", false;
             baseColorSet = true;
         }
+        if (const Json* l = keyword(call, "label"); l && l->isString() && !l->asString().empty() && l->asString()[0] != '_')
+            ax.labelledContainers = true;
         if (lowerFmt != "none") {
             auto line = std::make_unique<Line2D>(rc_, x, y);
             if (linestyle && !line->setLinestyle(*linestyle, error)) return false;
@@ -847,6 +851,74 @@ private:
         }
         for (auto& l : capLines) ax.addLine(std::move(l));
         ax.requestAutoscaleView(true, true);
+        return true;
+    }
+
+    // Axes.legend(**kwargs): the labelled lines, patches and collections, in the order they were added
+    bool legend(Axes& ax, const model::Call& call, std::string* error) {
+        const std::string where = call.on + ".legend";
+        if (!call.args.empty()) return *error = where + ": handles and labels as arguments are not supported yet", false;
+        if (ax.labelledContainers) return *error = where + ": legend entries for error bars are not supported yet", false;
+        LegendOptions o;
+        for (const auto& [name, value] : call.kwargs) {
+            double n = 0;
+            if (value.isNull()) continue;
+            if (name == "loc") {
+                if (!value.isString()) return *error = where + ": loc must be a location name", false;
+                o.loc = value.asString();
+            } else if (name == "title") {
+                if (!value.isString()) return *error = where + ": title must be a string", false;
+                o.title = value.asString();
+            } else if (name == "fontsize") {
+                if (value.isString()) {
+                    const auto size = text::fontSize(value.asString(), rc_);
+                    if (!size) return *error = where + ": unknown font size " + value.asString(), false;
+                    o.fontsize = *size;
+                } else if (readNumber(value, &n)) {
+                    o.fontsize = n;
+                } else {
+                    return *error = where + ": bad fontsize", false;
+                }
+            } else if (name == "frameon" || name == "fancybox") {
+                if (!value.isBool()) return *error = where + ": " + name + " must be True or False", false;
+                (name == "frameon" ? o.frameon : o.fancybox) = value.asBool();
+            } else if (name == "markerfirst") {
+                if (!value.isBool()) return *error = where + ": markerfirst must be True or False", false;
+                o.markerfirst = value.asBool();
+            } else if (name == "ncols" || name == "ncol") {
+                if (!readNumber(value, &n) || n < 1) return *error = where + ": ncols must be a positive integer", false;
+                o.ncols = int(n);
+            } else if (name == "facecolor" || name == "edgecolor") {
+                colors::Spec c;
+                if (!color(value, &c)) return *error = where + ": bad " + name, false;
+                (name == "facecolor" ? o.facecolor : o.edgecolor) = c;
+            } else {
+                static const char* const numeric[] = {"framealpha", "borderpad", "labelspacing", "handlelength",
+                                                      "handletextpad", "borderaxespad", "columnspacing"};
+                std::optional<double>* targets[] = {&o.framealpha, &o.borderpad, &o.labelspacing, &o.handlelength,
+                                                    &o.handletextpad, &o.borderaxespad, &o.columnspacing};
+                bool found = false;
+                for (int i = 0; i < 7; ++i)
+                    if (name == numeric[i]) {
+                        if (!readNumber(value, &n)) return *error = where + ": " + name + " must be a number", false;
+                        *targets[i] = n;
+                        found = true;
+                    }
+                if (!found) return *error = where + ": unsupported keyword " + name, false;
+            }
+        }
+        std::vector<Artist*> handles;
+        std::vector<std::string> labels;
+        for (const auto& child : ax.children) {
+            const std::string& l = child->label;
+            if (l.empty() || l[0] == '_') continue;
+            handles.push_back(child.get());
+            labels.push_back(l);
+        }
+        std::string problem;
+        auto made = std::make_unique<Legend>(rc_, ax, handles, labels, o, &problem);
+        if (!problem.empty()) return *error = where + ": " + problem, false;
+        ax.legend = std::move(made);
         return true;
     }
 

@@ -64,6 +64,12 @@ public:
     std::string joinstyle = "miter";
 
     void setAlpha(std::optional<double> a);  // Patch.set_alpha: the colours are made again
+    // What HandlerPolyCollection._update_prop sets directly: the resolved colours (no alpha applied)
+    void setResolvedColors(const colors::Rgba& face, const colors::Rgba& edge) {
+        facecolor_ = face;
+        edgecolor_ = edge;
+    }
+    double linewidth() const { return linewidth_; }
     void setFill(bool b);
 
 protected:
@@ -85,6 +91,23 @@ public:
     transforms::TransformPtr patchTransform() const override;
 
     double x0, y0, width, height, angle;
+};
+
+// FancyBboxPatch with the box styles "round" (pad, rounding_size) and "square" (pad).
+class FancyBboxPatch : public Patch {
+public:
+    FancyBboxPatch(const rc::Params& rc, double x, double y, double width, double height, std::string boxstyle,
+                   double pad, std::optional<double> roundingSize, double mutationScale);
+    Path path() const override;
+    void setBounds(double l, double b, double w, double h) { x_ = l, y_ = b, width_ = w, height_ = h; }
+    double mutationScale;
+    double mutationAspect = 1;
+
+private:
+    double x_, y_, width_, height_;
+    std::string boxstyle_;
+    double pad_;
+    std::optional<double> roundingSize_;
 };
 
 }  // namespace calculate_plot::engine

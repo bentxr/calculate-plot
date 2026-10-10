@@ -311,6 +311,34 @@ void Line2D::recache() {
     invalid_ = false;
 }
 
+void Line2D::updateFrom(const Line2D& o) {
+    // Artist.update_from
+    transform = o.transform;
+    visible = o.visible;
+    alpha = o.alpha;
+    clipBox = o.clipBox;
+    clipOn = o.clipOn;
+    clipPath = o.clipPath;
+    label = o.label;
+    sketch = o.sketch;
+    linestyle_ = o.linestyle_;
+    linewidth_ = o.linewidth_;
+    color = o.color;
+    markersize = o.markersize;
+    markerfacecolor = o.markerfacecolor;
+    markerfacecoloralt = o.markerfacecoloralt;
+    markeredgecolor = o.markeredgecolor;
+    markeredgewidth = o.markeredgewidth;
+    unscaledDashes_ = o.unscaledDashes_;
+    dashes_ = o.dashes_;
+    dashCapstyle = o.dashCapstyle;
+    dashJoinstyle = o.dashJoinstyle;
+    solidCapstyle = o.solidCapstyle;
+    solidJoinstyle = o.solidJoinstyle;
+    markerStyle = o.markerStyle;
+    drawstyle = o.drawstyle;
+}
+
 const Path& Line2D::path() {
     if (invalid_) recache();
     return path_;
@@ -385,7 +413,23 @@ void Line2D::draw(Renderer& renderer) {
             const double w = renderer.pointsToPixels(markersize);
             if (markerStyle.marker() == ",") gc.linewidth = 0;
             else markerTrans.scale(w);
-            renderer.drawMarkers(gc, markerStyle.path(), markerTrans.matrix(), tpath, affine,
+            Path subsampled = tpath;
+            if (markevery) {  // _mark_every_path with a list of indices
+                std::vector<double> v;
+                const auto& all = *tpath.vertices;
+                const long long n = (long long)tpath.size();
+                for (long long i : *markevery) {
+                    const long long k = i < 0 ? i + n : i;
+                    if (k < 0 || k >= n) {
+                        renderer.unsupported("markevery index out of range");
+                        continue;
+                    }
+                    v.push_back(all[std::size_t(2 * k)]), v.push_back(all[std::size_t(2 * k + 1)]);
+                }
+                subsampled = Path::make(std::move(v), {}, rc_);
+                if (tpath.codes) renderer.unsupported("markevery on paths with codes is not supported yet");
+            }
+            renderer.drawMarkers(gc, markerStyle.path(), markerTrans.matrix(), subsampled, affine,
                                  std::vector<double>(fc.begin(), fc.end()));
         }
     }

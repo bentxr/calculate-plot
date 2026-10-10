@@ -1,0 +1,7 @@
+{"version": 1, "calls": [
+  {"call": "subplots", "kwargs": {"figsize": {"$tuple": [4.0, 3.0]}}, "as": ["fig", "ax"]},
+  {"on": "ax", "call": "plot", "args": [[0, 1, 2], [1, 2, 1.5]], "kwargs": {"label": "line", "ls": "--", "marker": "s"}},
+  {"on": "ax", "call": "scatter", "args": [[0.5, 1.5], [1, 1.8]], "kwargs": {"label": "points", "c": "C3"}},
+  {"on": "ax", "call": "fill_between", "args": [[0, 1, 2], [0.2, 0.6, 0.4]], "kwargs": {"label": "band", "alpha": 0.4}},
+  {"on": "ax", "call": "legend", "kwargs": {"loc": "lower right", "title": "kinds"}}
+]}

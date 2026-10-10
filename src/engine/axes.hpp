@@ -170,6 +170,8 @@ public:
     void clearStale(bool x) { (x ? staleX_ : staleY_) = false; }
     std::array<double, 2> minpos{std::numeric_limits<double>::infinity(), std::numeric_limits<double>::infinity()};
     std::vector<std::unique_ptr<Artist>> children;  // _children: lines, ...
+    std::unique_ptr<Artist> legend;                  // legend_
+    bool labelledContainers = false;                 // errorbar labels (containers are not supported yet)
 
     // Axes.set_title(label, loc=, pad=, y=)
     void setTitle(const std::string& label, const std::string& loc, std::optional<double> pad, std::optional<double> y);

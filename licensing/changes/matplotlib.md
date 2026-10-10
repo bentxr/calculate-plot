@@ -96,6 +96,12 @@ it comes from in its first lines. The changes, as a whole:
   box), with Axes.fill_between's arguments and the collections' general paths transform. LineCollection (its
   defaults from lines.*), the vlines/hlines insertion (add_collection without autolimits, then the corners), and
   Axes.errorbar (data line, error bars, caps; no limit markers or errorevery yet), translated to C++.
+  Legends: legend.py's Legend (options from the rcParams, the frame, _init_legend_box, the anchored and 'best'
+  locations, draw), offsetbox.py's TextArea, DrawingArea, HPacker, VPacker with _get_packed_offsets and
+  _get_aligned_offsets, legend_handler.py's HandlerLine2D, HandlerPathCollection and HandlerPolyCollection,
+  patches.py's FancyBboxPatch with the round and square box styles, Line2D.update_from and markevery lists,
+  Collection.update_from, and src/_path.h's path_intersects_rectangle (unfilled) and count_bboxes_overlapping_bbox
+  (in src/agg/path_queries.h), translated to C++. Shadows, other handlers and figure legends come later.
 - File names drop the leading underscore (e.g. src/_backend_agg.h is src/agg/backend_agg.h); includes follow.
 - The drawing algorithms themselves (src/_backend_agg.h, src/_backend_agg.cpp, src/path_converters.h,
   src/agg_workaround.h, src/array.h, src/mplutils.h) are otherwise unchanged.
