@@ -39,7 +39,8 @@
     "tools/oracle/make_colors.py",
     "tools/oracle/make_fonts.py",
     "tools/oracle/make_marker_paths.py",
-    "tools/oracle/make_tex2uni.py"
+    "tools/oracle/make_tex2uni.py",
+    "tools/oracle/make_colormaps.py"
   ],
   "notice": "NOTICE",
   "components": [
@@ -469,6 +470,9 @@
         "data/rcdefaults.json",
         "data/colors.json",
         "src/colors/colors.cpp",
+        "src/colors/colormap.hpp",
+        "src/colors/colormap.cpp",
+        "data/colormaps.json",
         "src/transforms/transforms.hpp",
         "src/transforms/transforms.cpp",
         "src/engine/path.hpp",

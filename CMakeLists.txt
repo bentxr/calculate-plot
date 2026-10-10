@@ -39,7 +39,7 @@ add_custom_command(
     VERBATIM)
 
 # Data files compiled into the library.
-set(embedded_files data/rcdefaults.json data/colors.json data/fonts.json data/marker_paths.json data/tex2uni.json)
+set(embedded_files data/rcdefaults.json data/colors.json data/fonts.json data/marker_paths.json data/tex2uni.json data/colormaps.json)
 list(TRANSFORM embedded_files PREPEND "${PROJECT_SOURCE_DIR}/" OUTPUT_VARIABLE embedded_paths)
 add_custom_command(
     OUTPUT  ${PROJECT_BINARY_DIR}/generated/embedded.cpp
@@ -56,6 +56,7 @@ add_library(calculate-plot STATIC
     src/agg/agg_hooks.cpp
     src/axes/log_ticker.cpp
     src/axes/ticker.cpp
+    src/colors/colormap.cpp
     src/colors/colors.cpp
     src/engine/artist.cpp
     src/engine/axes.cpp

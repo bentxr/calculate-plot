@@ -108,9 +108,7 @@ void Collection::draw(Renderer& renderer) {
         return;
     }
     beforeDraw();
-    // update_scalarmappable without an array: the colours are made again from the originals
-    applyFacecolor();
-    applyEdgecolor();
+    updateScalarMappable();
     // _prepare_points: the paths' transform is the identity; non-affine offset transforms apply here
     const transforms::Matrix master{};
     transforms::Matrix offsetTrf = offsetTransform->matrix();
@@ -172,6 +170,30 @@ void Collection::draw(Renderer& renderer) {
         renderer.drawPathCollection(gc, a);
     }
     renderer.closeGroup(groupName);
+}
+
+void Collection::updateScalarMappable() {
+    // _set_mappable_flags: faces are mapped unless 'none'; edges when they are 'face', or when the
+    // face is 'none' and no edge colour was given
+    bool faceMapped = false, edgeMapped = false;
+    if (array) {
+        if (originalFacecolor_.kind != ColorArg::None) {
+            faceMapped = true;
+            if (originalEdgecolor_.kind == ColorArg::Face) edgeMapped = true;
+        } else if (originalEdgecolor_.kind == ColorArg::Default) {
+            edgeMapped = true;
+        }
+    }
+    std::vector<colors::Rgba> mapped;
+    if (array) mapped = colors::mapColors(*array, norm, *cmap, alpha);
+    if (faceMapped) facecolors_ = mapped;
+    else applyFacecolor();
+    if (edgeMapped) {
+        edgecolors_ = mapped;
+        edgeIsFace_ = false;
+    } else {
+        applyEdgecolor();
+    }
 }
 
 PathCollection::PathCollection(const rc::Params& rc, std::vector<Path> p, std::vector<double> sizes)

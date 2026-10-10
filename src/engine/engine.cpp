@@ -434,10 +434,22 @@ private:
         std::optional<double> alpha;
         std::vector<double> linewidths;
         bool linewidthsGiven = false;
-        std::optional<double> zorder;
-        std::string label;
+        std::optional<double> zorder, vmin, vmax;
+        std::string label, cmapName = rc_.text("image.cmap");
         for (const auto& [name, value] : call.kwargs) {
             if (name == "x" || name == "y" || name == "s" || name == "c") continue;
+            if (name == "cmap") {
+                if (!value.isNull() && !value.isString()) return *error = where + ": cmap must be a colormap name", false;
+                if (value.isString()) cmapName = value.asString();
+                continue;
+            }
+            if (name == "vmin" || name == "vmax") {
+                double v = 0;
+                if (value.isNull()) continue;
+                if (!readNumber(value, &v)) return *error = where + ": " + name + " must be a number", false;
+                (name == "vmin" ? vmin : vmax) = v;
+                continue;
+            }
             if (name == "facecolors" || name == "facecolor" || name == "fc") {
                 std::vector<colors::Spec> l;
                 if (!colorList(value, &l)) return *error = where + ": bad facecolors", false;
@@ -491,17 +503,18 @@ private:
             else edgecolors = std::vector<colors::Spec>{e};
         }
         std::vector<colors::Spec> faces;
+        std::optional<std::vector<double>> mappedValues;
         if (c && !c->isNull()) {
+            // c looks suitable for value-mapping when it is numbers, one per point (c.size == x.size)
             std::vector<double> values;
-            if (!c->isString() && numbers(*c, &values) && values.size() == xs.size() && !(values.size() == 3 || values.size() == 4))
-                return *error = where + ": colour-mapped c values are not supported yet", false;
-            if (!colorList(*c, &faces)) return *error = where + ": 'c' must be a color or a sequence of colors", false;
+            if (!c->isString() && numbers(*c, &values) && values.size() == xs.size()) mappedValues = values;
+            else if (!colorList(*c, &faces)) return *error = where + ": 'c' must be a color or a sequence of colors", false;
         } else if (facecolors) {
             faces = *facecolors;
         } else {
             faces = {ax.nextPatchColor()};
         }
-        if (faces.size() != 1 && faces.size() != xs.size() && !faces.empty())
+        if (!mappedValues && faces.size() != 1 && faces.size() != xs.size() && !faces.empty())
             return *error = where + ": 'c' has a size inconsistent with x and y", false;
 
         MarkerStyle style;
@@ -521,7 +534,7 @@ private:
             a.colors = l;
             return a;
         };
-        ColorArg faceArg = argOf(faces), edgeArg;
+        ColorArg faceArg = mappedValues ? ColorArg{} : argOf(faces), edgeArg;
         if (edgeFace) edgeArg.kind = ColorArg::Face;
         else if (edgeNone) edgeArg.kind = ColorArg::None;
         else edgeArg = argOf(*edgecolors);
@@ -543,6 +556,16 @@ private:
         for (std::size_t i = 0; i < xs.size(); ++i) collection->offsets.push_back({xs[i], ys[i]});
         collection->offsetTransform = ax.transData;
         if (alpha) collection->setAlpha(alpha);
+        if (mappedValues) {  // set_cmap, set_norm(Normalize()), set_array(c), _scale_norm
+            collection->cmap = colors::ListedColormap::named(cmapName);
+            if (!collection->cmap) return *error = where + ": the colormap " + cmapName + " is not supported yet", false;
+            collection->array = mappedValues;
+            collection->norm.vmin = vmin;
+            collection->norm.vmax = vmax;
+            collection->norm.autoscaleNone(*mappedValues);
+        } else if (vmin || vmax || cmapName != rc_.text("image.cmap")) {
+            // matplotlib warns that these are ignored without values to map
+        }
         collection->transform = std::make_shared<transforms::IdentityTransform>();
         if (zorder) collection->zorder = *zorder;
         collection->label = label;

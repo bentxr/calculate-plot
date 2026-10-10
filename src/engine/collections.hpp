@@ -3,6 +3,7 @@
 // Licence: LICENSES/Matplotlib.txt. Changes: licensing/changes/matplotlib.md
 #pragma once
 
+#include "colors/colormap.hpp"
 #include "engine/artist.hpp"
 
 #include <array>
@@ -44,6 +45,11 @@ public:
     const Figure* figure = nullptr;
     std::string groupName = "Collection";
 
+    // ScalarMappable: the values mapped through the norm and the colormap (set_array)
+    std::optional<std::vector<double>> array;
+    colors::Normalize norm;
+    std::optional<colors::ListedColormap> cmap;
+
     std::vector<colors::Rgba> facecolors() const { return facecolors_; }
     std::vector<colors::Rgba> edgecolors() const;  // get_edgecolor: the face colours for 'face'
 
@@ -53,6 +59,7 @@ protected:
 private:
     void applyFacecolor();
     void applyEdgecolor();
+    void updateScalarMappable();
     std::vector<colors::Rgba> toRgbaArray(const ColorArg& c) const;
 
     ColorArg originalFacecolor_, originalEdgecolor_;

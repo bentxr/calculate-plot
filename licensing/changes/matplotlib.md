@@ -89,7 +89,9 @@ it comes from in its first lines. The changes, as a whole:
   'face', line widths, antialiasing, the draw with its single-path draw_markers optimisation and the hatch-colour
   probe call of draw_path_collection, the data limits of offset collections) and PathCollection (sizes), and
   axes/_axes.py's scatter with _parse_scatter_color_args and Axes.add_collection, translated to C++; the patches'
-  own colour cycle is kept apart from the lines'. Colour-mapped values come later.
+  own colour cycle is kept apart from the lines'. colors.py's ListedColormap (with its under/over/bad entries),
+  Normalize and cm.py's ScalarMappable.to_rgba map scatter's values (data/colormaps.json holds viridis so far), with
+  Collection.update_scalarmappable's choice of mapped faces and edges.
 - File names drop the leading underscore (e.g. src/_backend_agg.h is src/agg/backend_agg.h); includes follow.
 - The drawing algorithms themselves (src/_backend_agg.h, src/_backend_agg.cpp, src/path_converters.h,
   src/agg_workaround.h, src/array.h, src/mplutils.h) are otherwise unchanged.
