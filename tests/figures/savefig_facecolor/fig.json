@@ -1,0 +1,6 @@
+{"version": 1,
+ "rc": {"savefig.facecolor": "#ddeeff", "savefig.edgecolor": "red", "figure.facecolor": "yellow"},
+ "calls": [
+  {"call": "subplots", "kwargs": {"figsize": {"$tuple": [3.0, 2.0]}}, "as": ["fig", "ax"]},
+  {"on": "ax", "call": "plot", "args": [[0, 1], [0, 1]]}
+]}

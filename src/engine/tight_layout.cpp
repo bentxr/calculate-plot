@@ -59,19 +59,6 @@ double xmax(const std::array<double, 4>& p) { return std::max(p[0], p[2]); }
 double ymin(const std::array<double, 4>& p) { return std::min(p[1], p[3]); }
 double ymax(const std::array<double, 4>& p) { return std::max(p[1], p[3]); }
 
-// Bbox.union
-std::array<double, 4> unionOf(const std::vector<transforms::Bbox>& boxes) {
-    std::array<double, 4> u{};
-    for (std::size_t i = 0; i < boxes.size(); ++i) {
-        const auto p = boxes[i].points();
-        if (i == 0 || xmin(p) < u[0]) u[0] = xmin(p);
-        if (i == 0 || ymin(p) < u[1]) u[1] = ymin(p);
-        if (i == 0 || xmax(p) > u[2]) u[2] = xmax(p);
-        if (i == 0 || ymax(p) > u[3]) u[3] = ymax(p);
-    }
-    return u;
-}
-
 // _auto_adjust_subplotpars
 std::optional<SubplotsAdjustment> autoAdjust(Figure& figure, Renderer& renderer, int rows, int cols,
                                              const std::vector<std::pair<Span, Span>>& spanPairs,
@@ -97,7 +84,7 @@ std::optional<SubplotsAdjustment> autoAdjust(Figure& figure, Renderer& renderer,
             if (ax->visible)
                 if (auto b = ax->tightbbox(renderer, true)) bb.push_back(*b);
         if (bb.empty()) continue;  // all invisible
-        const auto tight = toFigure(figure, transforms::Bbox(unionOf(bb)));
+        const auto tight = toFigure(figure, transforms::unionOf(bb));
         const auto& ax = axBboxes[g];
         const auto [rowspan, colspan] = spanPairs[g];
         for (int r = rowspan.start; r < rowspan.stop; ++r) {
@@ -219,9 +206,8 @@ std::optional<SubplotsAdjustment> tightLayoutParameters(Figure& figure, Renderer
 bool tightLayout(Figure& figure, const TightLayoutOptions& options, const std::string& locale,
                  const std::string& fontDirectory, std::string* error) {
     // TightLayoutEngine.execute with fig._get_renderer(): the Agg canvas' renderer at the figure's dpi
-    const auto p = figure.bbox->points();
-    AggTraceRenderer renderer(double(int(p[2] - p[0])), double(int(p[3] - p[1])), figure.dpi, figure.rc(), locale,
-                              fontDirectory);
+    const auto size = figure.canvasSize();
+    AggTraceRenderer renderer(size[0], size[1], figure.dpi, figure.rc(), locale, fontDirectory);
     const auto kwargs = tightLayoutParameters(figure, renderer, options);
     if (!renderer.error().empty()) {
         *error = renderer.error();

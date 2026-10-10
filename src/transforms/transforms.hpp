@@ -3,8 +3,11 @@
 // Licence: LICENSES/Matplotlib.txt. Changes: licensing/changes/matplotlib.md
 #pragma once
 
+#include <algorithm>
 #include <array>
 #include <memory>
+#include <optional>
+#include <utility>
 #include <vector>
 
 namespace calculate_plot::transforms {
@@ -14,7 +17,7 @@ struct Matrix {
     double sx = 1, shx = 0, tx = 0, shy = 0, sy = 1, ty = 0;
 };
 
-// np.dot(b, a): a, then b, accumulating each entry from +0.0 as NumPy does.
+// np.dot(b, a): a, then b; each entry accumulates its products fused, from +0.0, as NumPy's BLAS does.
 Matrix dot(const Matrix& b, const Matrix& a);
 // numpy.linalg.inv of the 3x3 matrix (LU with partial pivoting, as LAPACK's dgesv).
 Matrix inverse(const Matrix& m);
@@ -47,6 +50,9 @@ private:
     std::array<double, 4> points_;
 };
 
+// Bbox.union: the box around the boxes (at least one).
+Bbox unionOf(const std::vector<Bbox>& boxes);
+
 // A box carried through a transform, as TransformedBbox.
 class TransformedBbox : public BboxBase {
 public:
@@ -75,7 +81,20 @@ public:
         return apply(matrix(), p[0], p[1]);
     }
     virtual TransformPtr inverted() const;  // of affine transforms
+
+    // __eq__: true or false, or nothing where Python's returns NotImplemented. The affine classes
+    // compare matrices with any affine transform (AffineBase.__eq__); the others equal themselves.
+    virtual std::optional<bool> eq(const Transform& other) const;
+    // depth: how many transforms are chained to make this one
+    virtual int depth() const { return 1; }
+    // _iter_break_from_left_to_right: (what comes first, the rest) at each place the chain can be cut
+    virtual std::vector<std::pair<TransformPtr, TransformPtr>> breaks() const;
+    // contains_branch: `other` is a sub-tree of this transform (by transform equality)
+    virtual bool containsBranch(const Transform& other) const;
 };
+
+// a == b in Python: a's __eq__, then b's, then identity.
+bool equal(const Transform& a, const Transform& b);
 
 // LogTransform: a one-dimensional transform (log of its coordinate; non-positive values clip to
 // -1000) used for one direction of a blended transform. As a 2-D transform it is only meaningful
@@ -119,6 +138,9 @@ class BboxTransformTo : public Transform {
 public:
     explicit BboxTransformTo(BboxPtr boxout) : boxout_(std::move(boxout)) {}
     Matrix matrix() const override;
+    // _boxout, which saving a part of the figure replaces for a while (_tight_bbox.adjust_bbox)
+    const BboxPtr& boxout() const { return boxout_; }
+    void setBoxout(BboxPtr boxout) { boxout_ = std::move(boxout); }
 
 private:
     BboxPtr boxout_;
@@ -154,6 +176,12 @@ public:
     std::array<double, 2> transformNonAffine(double x, double y) const override;
     const TransformPtr& x() const { return x_; }
     const TransformPtr& y() const { return y_; }
+    std::optional<bool> eq(const Transform& other) const override;  // _BlendedMixin.__eq__
+    // BlendedGenericTransform.inverted: the blend of the two inverses (BlendedAffine2D inverts its matrix)
+    TransformPtr inverted() const override;
+    int depth() const override { return generic_ ? std::max(x_->depth(), y_->depth()) : 1; }
+    // BlendedGenericTransform never contains a branch
+    bool containsBranch(const Transform& other) const override { return generic_ ? false : Transform::containsBranch(other); }
 
 private:
     TransformPtr x_, y_;
@@ -175,6 +203,9 @@ public:
     TransformPtr inverted() const override;
     const TransformPtr& a() const { return a_; }
     const TransformPtr& b() const { return b_; }
+    std::optional<bool> eq(const Transform& other) const override;  // CompositeGenericTransform.__eq__ when generic
+    int depth() const override { return a_->depth() + b_->depth(); }
+    std::vector<std::pair<TransformPtr, TransformPtr>> breaks() const override;
 
 private:
     TransformPtr a_, b_;
@@ -204,14 +235,18 @@ public:
     bool isAffine2DBase() const override { return false; }
     std::array<double, 2> transformNonAffine(double x, double y) const override { return child_->transformNonAffine(x, y); }
     TransformPtr inverted() const override { return child_->inverted(); }
+    std::optional<bool> eq(const Transform& other) const override { return child_->eq(other); }
 
 private:
     TransformPtr child_;
 };
 
-// Transform.contains_branch_separately(other) for the transforms artists carry: a blended transform
-// answers per direction; another answers the same for both (whether it is `other` or composes it last).
+// Transform.contains_branch_separately(other): a blended transform answers per direction; a generic
+// composite is `other` or answers as its second part; another answers the same for both.
 std::array<bool, 2> containsBranchSeparately(const TransformPtr& t, const TransformPtr& other);
+// a - b (Transform.__sub__): what is left of `a` before a sub-tree equal to `b`, or the inverse of
+// what `b` has before a sub-tree equal to `a`, or a + b.inverted().
+TransformPtr subtract(const TransformPtr& a, const TransformPtr& b);
 
 // a + b in matplotlib (composite_transform_factory): a, then b; identities drop out.
 TransformPtr compose(const TransformPtr& a, const TransformPtr& b);

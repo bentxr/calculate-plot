@@ -1,0 +1,5 @@
+{"version": 1,
+ "rc": {"savefig.bbox": "tight"},
+ "calls": [
+  {"call": "figure", "kwargs": {"figsize": {"$tuple": [2.0, 1.5]}, "facecolor": "0.8"}, "as": ["fig"]}
+]}

@@ -1,0 +1,8 @@
+{"version": 1, "calls": [
+  {"call": "subplots", "args": [1, 3], "kwargs": {"figsize": {"$tuple": [7.0, 2.5]}}, "as": ["fig", "axs"]},
+  {"on": "axs[0]", "call": "axhspan", "args": [0.2, 0.6]},
+  {"on": "axs[1]", "call": "axvspan", "args": [-3, 12], "kwargs": {"ymin": 0.25, "ymax": 0.75}},
+  {"on": "axs[2]", "call": "axhspan", "args": [5, 50]},
+  {"on": "axs[2]", "call": "axvspan", "args": [2, 3], "kwargs": {"alpha": 0.5}},
+  {"on": "axs[2]", "call": "set_yscale", "args": ["log"]}
+]}

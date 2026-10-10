@@ -52,20 +52,7 @@ bool intervalContainsClose(double a, double b, double val, double rtol = 1e-10) 
     return a - rtol <= val && val <= b + rtol;
 }
 
-// Bbox.union
-transforms::Bbox unionOf(const std::vector<transforms::Bbox>& boxes) {
-    double x0 = 0, x1 = 0, y0 = 0, y1 = 0;
-    for (std::size_t i = 0; i < boxes.size(); ++i) {
-        const auto p = boxes[i].points();
-        const double xmin = std::min(p[0], p[2]), xmax = std::max(p[0], p[2]);
-        const double ymin = std::min(p[1], p[3]), ymax = std::max(p[1], p[3]);
-        if (i == 0 || xmin < x0) x0 = xmin;
-        if (i == 0 || xmax > x1) x1 = xmax;
-        if (i == 0 || ymin < y0) y0 = ymin;
-        if (i == 0 || ymax > y1) y1 = ymax;
-    }
-    return transforms::Bbox({x0, y0, x1, y1});
-}
+using transforms::unionOf;
 
 // BboxBase._is_finite
 bool isFiniteBox(const transforms::Bbox& b) {
@@ -881,11 +868,13 @@ Line2D& Axes::addLine(std::unique_ptr<Line2D> line, bool keepTransform) {
     if (path.size()) {
         std::vector<double> v = *path.vertices;
         const auto update = transforms::containsBranchSeparately(line->transform, transData);
-        if (line->transform != transData && (update[0] || update[1])) {
-            // trf_to_data = line_trf - transData: line_trf + transData.inverted(), applied as one affine
+        // A line whose transform equals transData (as transforms compare: an axhline's blend does
+        // while the view limits are still (0, 1)) gives its path as it is; otherwise
+        // trf_to_data = line_trf - transData, applied as one affine.
+        if (!transforms::equal(*line->transform, *transData) && (update[0] || update[1])) {
             if (!transData->isAffine() || !line->transform->isAffine())
                 unsupported_ = "lines in axes coordinates on log scales are not supported yet";
-            const auto m = transforms::compose(line->transform, transData->inverted())->matrix();
+            const auto m = transforms::subtract(line->transform, transData)->matrix();
             for (std::size_t k = 0; k + 1 < v.size(); k += 2) {
                 const auto q = transforms::apply(m, v[k], v[k + 1]);
                 v[k] = q[0], v[k + 1] = q[1];
@@ -910,10 +899,10 @@ Patch& Axes::addPatch(std::unique_ptr<Rectangle> p) {
         if (update[0] || update[1]) {
             if (!transData->isAffine() || !t->isAffine())
                 unsupported_ = "patches on log scales are not supported yet";
-            const auto m = transforms::compose(t, transData->inverted())->matrix();
+            const auto toData = transforms::subtract(t, transData);
             std::vector<std::array<double, 2>> xys;
             const double corners[8][2] = {{0, 0}, {1, 0}, {1, 0}, {1, 1}, {1, 1}, {0, 1}, {0, 1}, {0, 0}};
-            for (const auto& c : corners) xys.push_back(transforms::apply(m, c[0], c[1]));
+            for (const auto& c : corners) xys.push_back(toData->transform(c[0], c[1]));
             updateDatalim(xys, update[0], update[1]);
         }
     }

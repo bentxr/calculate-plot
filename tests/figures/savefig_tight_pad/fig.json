@@ -1,0 +1,10 @@
+{"version": 1,
+ "rc": {"savefig.bbox": "tight", "savefig.pad_inches": 0.3, "savefig.dpi": 150},
+ "calls": [
+  {"call": "subplots", "args": [1, 2], "kwargs": {"figsize": {"$tuple": [6.0, 2.5]}}, "as": ["fig", "axs"]},
+  {"on": "axs[0]", "call": "plot", "args": [[1, 10, 100], [1, 2, 3]], "kwargs": {"label": "data"}},
+  {"on": "axs[0]", "call": "set_xscale", "args": ["log"]},
+  {"on": "axs[0]", "call": "legend"},
+  {"on": "axs[1]", "call": "scatter", "args": [[1, 2, 3], [10000, 10001, 10003]]},
+  {"on": "axs[1]", "call": "set_xlabel", "args": ["x"]}
+]}

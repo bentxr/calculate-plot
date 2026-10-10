@@ -120,6 +120,15 @@ it comes from in its first lines. The changes, as a whole:
   _label_outer_xaxis/_label_outer_yaxis and what Axis.set_tick_params does to the offset text, translated to C++.
   Collection._prepare_points: scatter's offsets are a masked array, so the logarithm of a non-positive offset is
   NaN, not the clipped -1000.
+  Saving: Figure.savefig (transparent), FigureCanvasBase.print_figure (rcParams savefig.dpi, facecolor, edgecolor,
+  bbox 'tight' with pad_inches), FigureBase.get_tightbbox, _tight_bbox.adjust_bbox with its restore, and
+  FigureCanvasBase.get_width_height (the canvas in whole pixels), translated to C++. The draw with drawing
+  disabled that print_figure makes before measuring is left out: get_tightbbox places what it measures.
+  Transforms: equality (AffineBase.__eq__ by matrix, _BlendedMixin.__eq__, CompositeGenericTransform.__eq__,
+  TransformWrapper.__eq__, with Python's order of trying both sides), depth, _iter_break_from_left_to_right,
+  contains_branch, contains_branch_separately, Transform.__sub__ and BlendedGenericTransform.inverted, translated
+  to C++; Axes._update_line_limits and _update_patch_limits use them. np.dot is a fused sum (see the comment in
+  src/transforms/transforms.cpp).
 - File names drop the leading underscore (e.g. src/_backend_agg.h is src/agg/backend_agg.h); includes follow.
 - The drawing algorithms themselves (src/_backend_agg.h, src/_backend_agg.cpp, src/path_converters.h,
   src/agg_workaround.h, src/array.h, src/mplutils.h) are otherwise unchanged.

@@ -1,0 +1,8 @@
+{"version": 1,
+ "rc": {"savefig.bbox": "tight", "savefig.pad_inches": 0, "savefig.dpi": 72, "savefig.facecolor": "0.9"},
+ "calls": [
+  {"call": "subplots", "kwargs": {"figsize": {"$tuple": [3.0, 2.0]}}, "as": ["fig", "ax"]},
+  {"on": "ax", "call": "plot", "args": [[0, 1], [0, 1]], "kwargs": {"label": "line"}},
+  {"on": "ax", "call": "legend", "kwargs": {"loc": "upper left"}},
+  {"on": "ax", "call": "set_title", "args": ["Right"], "kwargs": {"loc": "right"}}
+]}

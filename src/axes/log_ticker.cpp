@@ -6,6 +6,7 @@
 #include "axes/log_ticker.hpp"
 
 #include "axes/ticker.hpp"
+#include "support/log10.hpp"
 #include "support/pyformat.hpp"
 #include "support/pynum.hpp"
 
@@ -28,7 +29,7 @@ long long pyMod(long long a, long long b) {
 
 // LogLocator._log_b
 double logB(double x, double base) {
-    if (base == 10) return std::log10(x);
+    if (base == 10) return support::log10(x);
     if (base == 2) return std::log2(x);
     return std::log(x) / std::log(base);
 }

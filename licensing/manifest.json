@@ -547,6 +547,39 @@
       ],
       "changes": "licensing/changes/numpy.md",
       "remarks": "A few numeric routines translated to C++ so that results match NumPy's bit for bit."
+    },
+    {
+      "id": "fdlibm",
+      "name": "FDLIBM",
+      "version": "5.3",
+      "homepage": "https://www.netlib.org/fdlibm/",
+      "use": "runtime",
+      "licence": "LicenseRef-SunPro (Sun Microsystems' permission notice)",
+      "licenceFiles": [
+        {
+          "path": "LICENSES/fdlibm.txt",
+          "upstream": "https://www.netlib.org/fdlibm/e_log10.c",
+          "upstreamLines": [
+            2,
+            12
+          ],
+          "sha256": "3a7d446191456190f08af566f65d9b175ac39b031ea8da213de905bb3db237b8"
+        }
+      ],
+      "fetch": [],
+      "vendored": [],
+      "derived": [
+        "src/support/log10.cpp"
+      ],
+      "header": [
+        "Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.",
+        "LICENSES/fdlibm.txt"
+      ],
+      "notices": [
+        "Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved."
+      ],
+      "changes": "licensing/changes/fdlibm.md",
+      "remarks": "One function (the base-10 logarithm), so that log scales give the same last bit on every C library."
     }
   ]
 }

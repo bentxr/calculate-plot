@@ -71,6 +71,16 @@ public:
         edgecolor_ = edge;
     }
     double linewidth() const { return linewidth_; }
+    // The colours as they were set and as they resolved, to put back what a save changes for a while
+    struct Colors {
+        std::optional<std::string> originalEdge, originalFace;
+        colors::Rgba edge, face;
+    };
+    Colors colorState() const { return {originalEdgecolor_, originalFacecolor_, edgecolor_, facecolor_}; }
+    void setColorState(const Colors& c) {
+        originalEdgecolor_ = c.originalEdge, originalFacecolor_ = c.originalFace;
+        edgecolor_ = c.edge, facecolor_ = c.face;
+    }
     void setFill(bool b);
     void setColor(const std::string& c) {  // Patch.set_color: edge and face
         setEdgecolor(c);

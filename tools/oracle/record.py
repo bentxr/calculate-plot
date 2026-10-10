@@ -196,6 +196,9 @@ class RecordingRenderer:
         return self._inner.draw_gouraud_triangles(g, points, colors, transform)
 
     def clear(self):
+        # A draw starts by clearing: only the last one is the figure that is saved (saving with a
+        # tight bounding box first draws once, with drawing disabled, to place the artists).
+        del self._events[:]
         self._events.append({"op": "clear"})
         return self._inner.clear()
 
@@ -219,7 +222,8 @@ def font_paths(prop):
 
 
 def record(fig):
-    """Draws `fig` with Agg; returns (trace dict, RGBA numpy array of the result)."""
+    """Saves `fig` as a PNG with Agg (Figure.savefig, so that rcParams["savefig.*"] count); returns
+    (trace dict of the draw that is saved, RGBA numpy array of the result)."""
     events = []
     _identities.clear()
     canvas = FigureCanvasAgg(fig)
@@ -263,11 +267,11 @@ def record(fig):
     RendererAgg.draw_text = draw_text
     RendererAgg._draw_text_glyphs_and_boxes = draw_text_glyphs_and_boxes
     try:
-        canvas.draw()
+        fig.savefig(__import__("io").BytesIO(), format="png")
     finally:
         RendererAgg.draw_text = original_text
         RendererAgg._draw_text_glyphs_and_boxes = original_glyphs
-    renderer = canvas.get_renderer()
+    renderer = canvas.renderer  # the one that drew what was saved (get_renderer would make a new one)
     rgba = np.asarray(canvas.buffer_rgba()).copy()
     # HarfBuzz takes its default text language from the process locale (LC_CTYPE), and that changes
     # shaping (e.g. ligatures): the trace says which locale matplotlib ran in.
@@ -413,6 +417,10 @@ def record_svg(fig, metadata):
     originals["__init__"] = original_init
 
     def init(self, width, height, svgwriter, basename=None, image_dpi=72, *, metadata=None):
+        # only the last renderer writes the file (a tight bounding box makes one more, to measure)
+        del events[:]
+        del ids[:]
+        _svg_clip_paths.clear()
         events.insert(0, {"op": "begin", "width": number(width), "height": number(height),
                           "image_dpi": number(image_dpi)})
         return original_init(self, width, height, svgwriter, basename, image_dpi, metadata=metadata)
@@ -420,7 +428,7 @@ def record_svg(fig, metadata):
 
     out = io.StringIO()
     try:
-        FigureCanvasSVG(fig).print_svg(out, metadata=metadata)
+        fig.savefig(out, format="svg", metadata=metadata)
     finally:
         for name, original in originals.items():
             setattr(RendererSVG, name, original)

@@ -5,6 +5,7 @@
 
 #include "axes/ticker.hpp"
 
+#include "support/log10.hpp"
 #include "support/pyformat.hpp"
 #include "support/pynum.hpp"
 
@@ -36,9 +37,9 @@ std::pair<double, double> scaleRange(double vmin, double vmax, double n = 1, dou
     if (std::abs(meanv) / dv < threshold) {
         offset = 0;
     } else {
-        offset = std::copysign(std::pow(10.0, floorDivide(std::log10(std::abs(meanv)), 1.0)), meanv);
+        offset = std::copysign(std::pow(10.0, floorDivide(support::log10(std::abs(meanv)), 1.0)), meanv);
     }
-    const double scale = std::pow(10.0, floorDivide(std::log10(dv / n), 1.0));
+    const double scale = std::pow(10.0, floorDivide(support::log10(dv / n), 1.0));
     return {scale, offset};
 }
 
@@ -54,7 +55,7 @@ struct EdgeInteger {
         // Allow more slop when the offset is large compared to the step.
         double tol;
         if (offset > 0) {
-            const double digits = std::log10(offset / step);
+            const double digits = support::log10(offset / step);
             tol = std::max(1e-10, std::pow(10.0, digits - 12));
             tol = std::min(0.4999, tol);
         } else {
@@ -237,7 +238,7 @@ void ScalarFormatter::setLocs(const std::vector<double>& locs) {
             double absMin = std::abs(lmin), absMax = std::abs(lmax);
             if (absMin > absMax) std::swap(absMin, absMax);
             const double sign = std::copysign(1.0, lmin);
-            const double oomMax = std::ceil(std::log10(absMax));
+            const double oomMax = std::ceil(support::log10(absMax));
             // The smallest power of ten at which abs_min and abs_max are equal.
             double oom = oomMax;
             for (int guard = 0; guard < 4000 && floorDivide(absMin, std::pow(10.0, oom)) ==
@@ -270,10 +271,10 @@ void ScalarFormatter::setLocs(const std::vector<double>& locs) {
         int oom;
         if (offset_ != 0) {
             const double vmin = std::min(vmin_, vmax_), vmax = std::max(vmin_, vmax_);
-            oom = int(std::floor(std::log10(vmax - vmin)));
+            oom = int(std::floor(support::log10(vmax - vmin)));
         } else {
             const double val = *std::max_element(absVis.begin(), absVis.end());
-            oom = val == 0 ? 0 : int(std::floor(std::log10(val)));
+            oom = val == 0 ? 0 : int(std::floor(support::log10(val)));
         }
         if (oom <= -5 || oom >= 6) orderOfMagnitude_ = oom;
     }
@@ -293,7 +294,7 @@ void ScalarFormatter::setLocs(const std::vector<double>& locs) {
     }
     if (locRange == 0) locRange = 1;
     if (locs_.size() < 2) l.resize(l.size() - 2);
-    const int locRangeOom = int(std::floor(std::log10(locRange)));
+    const int locRangeOom = int(std::floor(support::log10(locRange)));
     int sigfigs = std::max(0, 3 - locRangeOom);
     const double thresh = 1e-3 * std::pow(10.0, locRangeOom);
     while (sigfigs >= 0) {
@@ -316,7 +317,7 @@ namespace {
 
 // ScalarFormatter.format_data for the offset: "1e6", "1.5e-3", "12345".
 std::string formatData(double value) {
-    const int e = int(std::floor(std::log10(std::abs(value))));
+    const int e = int(std::floor(support::log10(std::abs(value))));
     const double s = support::pythonRound(value / std::pow(10.0, e), 10);
     const bool integral = support::divmod(s, 1.0).second == 0;
     const std::string significand =

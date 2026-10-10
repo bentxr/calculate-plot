@@ -1,0 +1,6 @@
+{"version": 1, "calls": [
+  {"call": "subplots", "kwargs": {"figsize": {"$tuple": [5.1, 2.3]}}, "as": ["fig", "ax"]},
+  {"on": "ax", "call": "plot", "args": [[0, 1, 2], [0, 1, 4]]},
+  {"on": "ax", "call": "set_title", "args": ["510 by 230 pixels"]},
+  {"on": "ax", "call": "set_ylabel", "args": ["y"]}
+]}

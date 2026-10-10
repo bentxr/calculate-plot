@@ -1,0 +1,9 @@
+{"version": 1,
+ "rc": {"savefig.bbox": "tight", "savefig.pad_inches": 0.05},
+ "calls": [
+  {"call": "subplots", "args": [2, 1], "kwargs": {"figsize": {"$tuple": [3.0, 3.0]}, "dpi": 80, "sharex": true}, "as": ["fig", "axs"]},
+  {"on": "axs[0]", "call": "plot", "args": [[0, 1, 2], [3, 1, 2]]},
+  {"on": "axs[1]", "call": "plot", "args": [[0, 1, 2], [0.001, 0.002, 0.004]]},
+  {"on": "axs[1]", "call": "set_xlabel", "args": ["shared"]},
+  {"on": "fig", "call": "tight_layout"}
+]}

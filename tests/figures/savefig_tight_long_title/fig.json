@@ -1,0 +1,8 @@
+{"version": 1,
+ "rc": {"savefig.bbox": "tight"},
+ "calls": [
+  {"call": "subplots", "kwargs": {"figsize": {"$tuple": [2.0, 1.6]}}, "as": ["fig", "ax"]},
+  {"on": "ax", "call": "set_title", "args": ["A title much wider than the small figure it sits on"]},
+  {"on": "ax", "call": "set_xlabel", "args": ["and an x label that is also wider than the Axes"]},
+  {"on": "ax", "call": "set_ylabel", "args": ["a y label taller than the Axes are"]}
+]}

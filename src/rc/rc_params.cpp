@@ -79,7 +79,9 @@ bool Params::set(const std::string& key, const Json& v, std::string* error) {
     }
     const Kind want = kindOf(it->second), got = kindOf(v);
     // A default of None accepts anything matplotlib would validate; otherwise the kinds must agree.
-    if (want != Kind::Null && got != want) {
+    // savefig.dpi is 'figure' or a number.
+    const bool numberForName = key == "savefig.dpi" && got == Kind::Number;
+    if (want != Kind::Null && got != want && !numberForName) {
         if (error) *error = "the value given for " + key + " is not of the right kind";
         return false;
     }

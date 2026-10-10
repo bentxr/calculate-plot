@@ -3,6 +3,9 @@
 #include "calculate-plot/calculate-plot.hpp"
 #include "png/png.hpp"
 
+#include "support/json.hpp"
+#include "trace_compare.hpp"
+
 #include <gtest/gtest.h>
 
 #include <filesystem>
@@ -134,4 +137,86 @@ TEST(Cli, ExportPyRefusesABadFigure) {
     EXPECT_EQ(r.status, 1);
     EXPECT_NE(r.err.find("__import__"), std::string::npos) << r.err;
     std::filesystem::remove(in);
+}
+
+namespace {
+
+std::string figureFile(const std::string& name) {
+    return std::string(CALCULATE_PLOT_SOURCE_DIR) + "/tests/figures/" + name;
+}
+
+}  // namespace
+
+// cplot draw FIGURE.json OUT --fonts DIR: the figure as Figure.savefig would write it; the kind of
+// file follows OUT's ending.
+TEST(Cli, DrawWritesMatplotlibsPixels) {
+    const std::string out = tempFile(".png");
+    const Outcome r = cplot({"draw", figureFile("savefig_tight_pad/fig.json"), out, "--fonts", kFontDir});
+    ASSERT_EQ(r.status, 0) << r.err;
+    std::string error;
+    const auto got = calculate_plot::png::decodePng(fileText(out), &error);
+    const auto want = calculate_plot::png::decodePng(fileText(figureFile("savefig_tight_pad/ref.png")), &error);
+    ASSERT_TRUE(got && want) << error;
+    EXPECT_EQ(got->width, want->width);
+    EXPECT_EQ(got->height, want->height);
+    EXPECT_TRUE(got->rgba == want->rgba);
+    std::filesystem::remove(out);
+}
+
+TEST(Cli, DrawWritesMatplotlibsSvgBytes) {
+    const std::string out = tempFile(".svg");
+    const Outcome r = cplot({"draw", figureFile("legend_basic/fig.json"), out, "--fonts", kFontDir});
+    ASSERT_EQ(r.status, 0) << r.err;
+    EXPECT_EQ(fileText(out), fileText(figureFile("legend_basic/ref.svg")));
+    std::filesystem::remove(out);
+}
+
+TEST(Cli, DrawWritesTheDrawCalls) {
+    const std::string out = tempFile(".json");
+    const Outcome r = cplot({"draw", figureFile("plot_line/fig.json"), out, "--fonts", kFontDir});
+    ASSERT_EQ(r.status, 0) << r.err;
+    const auto got = calculate_plot::support::parseJson(fileText(out), nullptr);
+    const auto want = calculate_plot::support::parseJson(fileText(figureFile("plot_line/trace.json")), nullptr);
+    ASSERT_TRUE(got && want);
+    EXPECT_EQ(calculate_plot::testing_support::firstDifference(*got, *want, "trace"), "");
+    std::filesystem::remove(out);
+}
+
+TEST(Cli, DrawRefusesAnotherKindOfFile) {
+    const Outcome r = cplot({"draw", figureFile("plot_line/fig.json"), tempFile(".pdf"), "--fonts", kFontDir});
+    EXPECT_EQ(r.status, 2);
+    EXPECT_NE(r.err.find(".png, .svg or .json"), std::string::npos) << r.err;
+}
+
+TEST(Cli, DrawSaysWhatItCannotDraw) {
+    const std::string in = tempFile(".json");
+    std::ofstream(in) << R"({"version":1,"calls":[{"call":"subplots","as":["fig","ax"]},{"on":"ax","call":"pie","args":[[1,2]]}]})";
+    for (const char* ending : {".png", ".svg", ".json"}) {
+        const std::string out = tempFile(ending);
+        const Outcome r = cplot({"draw", in, out, "--fonts", kFontDir});
+        EXPECT_EQ(r.status, 1);
+        EXPECT_NE(r.err.find("ax.pie"), std::string::npos) << r.err;
+        EXPECT_FALSE(std::filesystem::exists(out)) << "nothing is written for a figure that cannot be drawn";
+    }
+    std::filesystem::remove(in);
+}
+
+TEST(Cli, DrawReportsABadFigureFile) {
+    const std::string in = tempFile(".json");
+    std::ofstream(in) << R"({"version":1,"calls":[{"call":"__import__"}]})";
+    const Outcome r = cplot({"draw", in, tempFile(".png"), "--fonts", kFontDir});
+    EXPECT_EQ(r.status, 1);
+    EXPECT_NE(r.err.find("__import__"), std::string::npos) << r.err;
+    std::filesystem::remove(in);
+    const Outcome missing = cplot({"draw", "/no/such/fig.json", tempFile(".png"), "--fonts", kFontDir});
+    EXPECT_EQ(missing.status, 1);
+    EXPECT_NE(missing.err.find("/no/such/fig.json"), std::string::npos);
+}
+
+TEST(Cli, DrawNeedsItsArguments) {
+    EXPECT_EQ(cplot({"draw"}).status, 2);
+    EXPECT_EQ(cplot({"draw", "fig.json", "out.png"}).status, 2);
+    EXPECT_EQ(cplot({"draw", "fig.json", "out.png", "--font", kFontDir}).status, 2);
+    EXPECT_NE(cplot({"--help"}).out.find("draw"), std::string::npos);
+    EXPECT_NE(cplot({}).err.find("cplot draw FIGURE.json"), std::string::npos);
 }

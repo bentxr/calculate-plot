@@ -5,6 +5,8 @@
 
 #include "transforms/transforms.hpp"
 
+#include "support/log10.hpp"
+
 #include <algorithm>
 #include <cmath>
 
@@ -12,11 +14,15 @@ namespace calculate_plot::transforms {
 
 namespace {
 
+// One entry of np.dot: NumPy's BLAS (OpenBLAS, on processors with fused multiply-add: x86-64 since
+// about 2013, arm64) accumulates each product fused, in order, from +0.0. The difference from
+// rounding each product first only shows when two of the products are inexact, that is with
+// rotations or shears.
 double dot3(double b0, double a0, double b1, double a1, double b2, double a2) {
     double acc = 0.0;
-    acc += b0 * a0;
-    acc += b1 * a1;
-    acc += b2 * a2;
+    acc = std::fma(b0, a0, acc);
+    acc = std::fma(b1, a1, acc);
+    acc = std::fma(b2, a2, acc);
     return acc;
 }
 
@@ -84,6 +90,20 @@ std::array<double, 4> BboxBase::bounds() const {
     return {p[0], p[1], p[2] - p[0], p[3] - p[1]};
 }
 double BboxBase::width() const { return points()[2] - points()[0]; }
+
+Bbox unionOf(const std::vector<Bbox>& boxes) {
+    double x0 = 0, x1 = 0, y0 = 0, y1 = 0;
+    for (std::size_t i = 0; i < boxes.size(); ++i) {
+        const auto p = boxes[i].points();
+        const double xmin = std::min(p[0], p[2]), xmax = std::max(p[0], p[2]);
+        const double ymin = std::min(p[1], p[3]), ymax = std::max(p[1], p[3]);
+        if (i == 0 || xmin < x0) x0 = xmin;
+        if (i == 0 || xmax > x1) x1 = xmax;
+        if (i == 0 || ymin < y0) y0 = ymin;
+        if (i == 0 || ymax > y1) y1 = ymax;
+    }
+    return Bbox({x0, y0, x1, y1});
+}
 double BboxBase::height() const { return points()[3] - points()[1]; }
 
 std::shared_ptr<Bbox> Bbox::fromBounds(double x0, double y0, double width, double height) {
@@ -189,7 +209,7 @@ std::array<double, 2> BlendedAffine2D::transformNonAffine(double x, double y) co
 double LogTransform::transform1d(double v) const {
     // np.log10 / np.log2 / np.log(v) / np.log(base); clip: values <= 0 give -1000
     double out;
-    if (base_ == 10) out = std::log10(v);
+    if (base_ == 10) out = support::log10(v);
     else if (base_ == 2) out = std::log2(v);
     else out = std::log(v) / std::log(base_);
     if (v <= 0) out = -1000;
@@ -204,18 +224,81 @@ double LogTransform::inverse1d(double v) const {
 }
 
 namespace {
-// Transform.contains_branch: other is t itself, or the right-hand side of one of t's compositions
-bool containsBranch(const TransformPtr& t, const TransformPtr& other) {
-    if (t == other) return true;
-    if (const auto* c = dynamic_cast<const CompositeTransform*>(t.get())) return containsBranch(c->b(), other);
-    return false;
+// (self.get_matrix() == other.get_matrix()).all()
+bool sameMatrix(const Matrix& a, const Matrix& b) {
+    return a.sx == b.sx && a.shx == b.shx && a.tx == b.tx && a.shy == b.shy && a.sy == b.sy && a.ty == b.ty;
 }
 }  // namespace
 
+std::optional<bool> Transform::eq(const Transform& other) const {
+    if (isAffine2DBase()) {  // AffineBase.__eq__
+        if (!other.isAffine()) return std::nullopt;
+        return sameMatrix(matrix(), other.matrix());
+    }
+    return std::nullopt;  // object.__eq__ (equal() then compares the objects)
+}
+
+bool equal(const Transform& a, const Transform& b) {
+    if (const auto r = a.eq(b)) return *r;
+    if (const auto r = b.eq(a)) return *r;
+    return &a == &b;
+}
+
+std::vector<std::pair<TransformPtr, TransformPtr>> Transform::breaks() const {
+    return {{std::make_shared<IdentityTransform>(), shared_from_this()}};
+}
+
+bool Transform::containsBranch(const Transform& other) const {
+    if (depth() < other.depth()) return false;
+    for (const auto& [left, subTree] : breaks())
+        if (equal(*subTree, other)) return true;
+    return false;
+}
+
+std::optional<bool> BlendedAffine2D::eq(const Transform& other) const {
+    if (const auto* o = dynamic_cast<const BlendedAffine2D*>(&other)) return equal(*x_, *o->x_) && equal(*y_, *o->y_);
+    if (equal(*x_, *y_)) return equal(*x_, other);
+    return std::nullopt;
+}
+
+TransformPtr BlendedAffine2D::inverted() const {
+    if (!generic_) return Transform::inverted();
+    return std::make_shared<BlendedAffine2D>(x_->inverted(), y_->inverted(), true);
+}
+
+std::optional<bool> CompositeTransform::eq(const Transform& other) const {
+    if (!generic_) return Transform::eq(other);  // CompositeAffine2D is an Affine2DBase
+    if (const auto* o = dynamic_cast<const CompositeTransform*>(&other))
+        return this == o || (equal(*a_, *o->a_) && equal(*b_, *o->b_));
+    return false;
+}
+
+std::vector<std::pair<TransformPtr, TransformPtr>> CompositeTransform::breaks() const {
+    std::vector<std::pair<TransformPtr, TransformPtr>> out;
+    for (const auto& [left, right] : a_->breaks()) out.emplace_back(left, compose(right, b_));
+    for (const auto& [left, right] : b_->breaks()) out.emplace_back(compose(a_, left), right);
+    return out;
+}
+
 std::array<bool, 2> containsBranchSeparately(const TransformPtr& t, const TransformPtr& other) {
-    if (const auto* b = dynamic_cast<const BlendedAffine2D*>(t.get())) return {containsBranch(b->x(), other), containsBranch(b->y(), other)};
-    const bool c = containsBranch(t, other);
+    if (const auto* b = dynamic_cast<const BlendedAffine2D*>(t.get()))
+        return {b->x()->containsBranch(*other), b->y()->containsBranch(*other)};
+    // CompositeGenericTransform: itself, or what its second part says (a patch's own transform before
+    // a blended one keeps the blend's answer)
+    if (const auto* c = dynamic_cast<const CompositeTransform*>(t.get()); c && !c->isAffine2DBase()) {
+        if (equal(*t, *other)) return {true, true};
+        return containsBranchSeparately(c->b(), other);
+    }
+    const bool c = t->containsBranch(*other);
     return {c, c};
+}
+
+TransformPtr subtract(const TransformPtr& a, const TransformPtr& b) {
+    for (const auto& [remainder, subTree] : a->breaks())
+        if (equal(*subTree, *b)) return remainder;
+    for (const auto& [remainder, subTree] : b->breaks())
+        if (equal(*subTree, *a)) return remainder->inverted();
+    return compose(a, b->inverted());
 }
 
 TransformPtr compose(const TransformPtr& a, const TransformPtr& b) {
