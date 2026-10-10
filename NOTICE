@@ -66,3 +66,22 @@ zlib 1.3.2
 ----------
 Copyright (C) 1995-2026 Jean-loup Gailly and Mark Adler. Used unmodified, under the zlib licence
 (LICENSES/zlib-1.3.2.txt), to read and write PNG files.
+
+
+Matplotlib 3.11.2
+-----------------
+Parts of calculate-plot are derived from Matplotlib (https://matplotlib.org):
+Copyright (c) 2012- Matplotlib Development Team; All Rights Reserved
+Copyright (c) 2002-2011 John D. Hunter; All Rights Reserved
+Used under the Matplotlib License (LICENSES/Matplotlib.txt). The derived files name their origin, and
+licensing/changes/matplotlib.md summarises the changes made. calculate-plot is not affiliated with
+or endorsed by the Matplotlib project or NumFOCUS.
+
+
+Anti-Grain Geometry 2.4 (Matplotlib 3.11.2's copy)
+--------------------------------------------------
+Anti-Grain Geometry - Version 2.4
+Copyright (C) 2002-2005 Maxim Shemanarev (McSeem)
+Permission to copy, use, modify, sell and distribute this software is granted provided this
+copyright notice appears in all copies. (LICENSES/AGG.txt; Matplotlib's patches to it are under
+the Matplotlib License. Changes made here: licensing/changes/agg.md)

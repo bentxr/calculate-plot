@@ -75,6 +75,20 @@ def bbox(b):
     return None if b is None else numbers(np.asarray(b, dtype=float))
 
 
+_identities = {}
+
+
+def identity(p):
+    """What matplotlib's C++ renderer uses to recognise a clip path it has just drawn: the address
+    of the Python vertex array (id() in CPython), when the array is passed through unconverted
+    (float64). Numbered in order of first appearance; an address reused by a later array maps to
+    the same number, exactly as matplotlib's comparison sees it."""
+    vertices = p.vertices
+    if not (isinstance(vertices, np.ndarray) and vertices.dtype == np.float64):
+        return None  # converted to a temporary array: a fresh identity each call
+    return _identities.setdefault(id(vertices), len(_identities))
+
+
 def gc(g):
     """The graphics context, field by field as matplotlib's C++ GCAgg reads it."""
     clip_path, clip_trans = g.get_clip_path()
@@ -88,7 +102,8 @@ def gc(g):
         "joinstyle": g._joinstyle.name,
         "dashes": dashes(g.get_dashes()),
         "cliprect": bbox(g._cliprect),
-        "clippath": None if clip_path is None else {"path": path(clip_path), "transform": affine(clip_trans)},
+        "clippath": None if clip_path is None else {"path": path(clip_path), "id": identity(clip_path),
+                                                     "transform": affine(clip_trans)},
         "snap": g.get_snap(),
         "hatch": path(g.get_hatch_path()),
         "hatch_color": color(g.get_hatch_color()),
@@ -203,6 +218,7 @@ def font_paths(prop):
 def record(fig):
     """Draws `fig` with Agg; returns (trace dict, RGBA numpy array of the result)."""
     events = []
+    _identities.clear()
     canvas = FigureCanvasAgg(fig)
     original_get_renderer = canvas.get_renderer
 

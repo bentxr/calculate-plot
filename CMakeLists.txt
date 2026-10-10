@@ -11,6 +11,7 @@ add_compile_options(-ffp-contract=off)
 include(FetchContent)
 include(cmake/text-libraries.cmake)
 include(cmake/zlib.cmake)
+include(cmake/agg.cmake)
 
 add_library(calculate-plot-warnings INTERFACE)
 target_compile_options(calculate-plot-warnings INTERFACE -Wall -Wextra -Wpedantic -Wshadow)
@@ -33,16 +34,25 @@ add_custom_command(
 add_library(calculate-plot STATIC
     ${PROJECT_BINARY_DIR}/generated/notices.cpp
     src/version.cpp
+    src/agg/agg_hooks.cpp
+    src/agg/backend_agg.cpp
     src/png/png.cpp
+    src/render/replay.cpp
+    src/support/base64.cpp
     src/support/glob.cpp
     src/support/json.cpp
     src/support/sha256.cpp)
 target_include_directories(calculate-plot
     PUBLIC  ${PROJECT_SOURCE_DIR}/include
     PRIVATE ${PROJECT_SOURCE_DIR}/src)
+# Matplotlib's renderer, ported: its headers keep upstream's style, so they are system headers here,
+# and the files that instantiate its templates get the warnings matplotlib's own build accepts.
+target_include_directories(calculate-plot SYSTEM PRIVATE ${PROJECT_SOURCE_DIR}/src/agg)
+set_source_files_properties(src/agg/backend_agg.cpp src/render/replay.cpp PROPERTIES COMPILE_OPTIONS
+    "-Wno-unused-parameter;-Wno-shadow;-Wno-sign-compare")
 target_compile_definitions(calculate-plot PRIVATE CALCULATE_PLOT_VERSION="${PROJECT_VERSION}")
 target_compile_options(calculate-plot PRIVATE -fno-exceptions)
-target_link_libraries(calculate-plot PUBLIC calculate-plot-raqm calculate-plot-zlib PRIVATE calculate-plot-warnings)
+target_link_libraries(calculate-plot PUBLIC calculate-plot-raqm calculate-plot-zlib calculate-plot-agg PRIVATE calculate-plot-warnings)
 
 add_library(cplot-cli STATIC cli/cli.cpp)
 target_include_directories(cplot-cli PUBLIC ${PROJECT_SOURCE_DIR}/cli)

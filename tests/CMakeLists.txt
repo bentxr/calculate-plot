@@ -6,18 +6,21 @@ set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
 add_executable(calculate-plot-tests
+    test_base64.cpp
     test_cli.cpp
     test_glob.cpp
     test_json.cpp
     test_licensing.cpp
     test_notices.cpp
     test_png.cpp
+    test_replay.cpp
     licensing/compliance.cpp
     test_sha256.cpp
     test_text_libraries.cpp
     test_version.cpp
 )
 target_include_directories(calculate-plot-tests PRIVATE ${PROJECT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(calculate-plot-tests SYSTEM PRIVATE ${PROJECT_SOURCE_DIR}/src/agg)
 target_compile_definitions(calculate-plot-tests PRIVATE
     CALCULATE_PLOT_SOURCE_DIR="${PROJECT_SOURCE_DIR}"
     CALCULATE_PLOT_BINARY_DIR="${PROJECT_BINARY_DIR}"
