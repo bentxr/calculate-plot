@@ -3,6 +3,7 @@
 // Licence: LICENSES/Matplotlib.txt. Changes: licensing/changes/matplotlib.md
 #pragma once
 
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -22,7 +23,8 @@ struct MaxNLocator {
     bool symmetric = false;
     std::string prune;  // "", "lower", "upper" or "both"
     int minNTicks = 2;
-    bool roundNumbers = false;  // rcParams["axes.autolimit_mode"] == "round_numbers"
+    bool roundNumbers = false;
+    std::optional<int> tickSpace;  // the axis' get_tick_space(), when the locator has an axis  // rcParams["axes.autolimit_mode"] == "round_numbers"
 
     static MaxNLocator autoLocator();
     void setSteps(const std::vector<double>& steps);

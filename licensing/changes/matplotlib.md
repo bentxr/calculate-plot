@@ -61,7 +61,10 @@ it comes from in its first lines. The changes, as a whole:
   ticks from AutoLocator and ScalarFormatter, tick visibility from the rcParams), spines.py's linear Spine and
   axes/_base.py's _AxesBase (position from the subplot spec, transforms, patch, spines, axes, titles, drawing
   order) are translated to C++; ticks are made when the axis is drawn rather than lazily on first access, with the
-  same visibility. transforms.py's TransformWrapper is added to the transforms.
+  same visibility. transforms.py's TransformWrapper is added to the transforms. Also translated: Axes.set_title,
+  set_xlabel/set_ylabel, set_xlim/set_ylim (Axis._set_lim), the title placement (_update_title_position, for an Axes
+  without twins or top ticks), XAxis/YAxis._update_label_position and _update_offset_text_position, Spine's window
+  extent with its ticks, Bbox.union, and XAxis/YAxis.get_tick_space feeding AutoLocator's 'auto' bins.
 - File names drop the leading underscore (e.g. src/_backend_agg.h is src/agg/backend_agg.h); includes follow.
 - The drawing algorithms themselves (src/_backend_agg.h, src/_backend_agg.cpp, src/path_converters.h,
   src/agg_workaround.h, src/array.h, src/mplutils.h) are otherwise unchanged.

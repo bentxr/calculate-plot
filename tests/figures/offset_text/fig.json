@@ -1,0 +1,6 @@
+{"version": 1, "calls": [
+  {"call": "subplots", "kwargs": {"figsize": {"$tuple": [4.0, 3.0]}}, "as": ["fig", "ax"]},
+  {"on": "ax", "call": "set_xlim", "args": [100000, 100010]},
+  {"on": "ax", "call": "set_ylim", "args": [-1e-06, 3e-06]},
+  {"on": "ax", "call": "set_xlabel", "args": ["position"]}
+]}

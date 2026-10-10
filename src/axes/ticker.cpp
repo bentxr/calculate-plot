@@ -136,7 +136,8 @@ std::vector<double> MaxNLocator::tickValues(double vmin, double vmax) const {
     std::tie(vmin, vmax) = nonsingular(vmin, vmax, 1e-13, 1e-14);
 
     // _raw_ticks
-    const int n = nbins == 0 ? 9 : nbins;  // 'auto' without an axis
+    // 'auto': np.clip(axis.get_tick_space(), max(1, min_n_ticks - 1), 9), or 9 without an axis
+    const int n = nbins == 0 ? (tickSpace ? std::clamp(*tickSpace, std::max(1, minNTicks - 1), 9) : 9) : nbins;
     const auto [scale, offset] = scaleRange(vmin, vmax, n);
     const double vmin_ = vmin - offset;
     const double vmax_ = vmax - offset;

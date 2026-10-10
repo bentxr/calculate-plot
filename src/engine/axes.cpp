@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <tuple>
 
 namespace calculate_plot::engine {
 
@@ -48,6 +49,21 @@ bool intervalContainsClose(double a, double b, double val, double rtol = 1e-10) 
     if (a > b) std::swap(a, b);
     rtol = (b - a) * rtol;
     return a - rtol <= val && val <= b + rtol;
+}
+
+// Bbox.union
+transforms::Bbox unionOf(const std::vector<transforms::Bbox>& boxes) {
+    double x0 = 0, x1 = 0, y0 = 0, y1 = 0;
+    for (std::size_t i = 0; i < boxes.size(); ++i) {
+        const auto p = boxes[i].points();
+        const double xmin = std::min(p[0], p[2]), xmax = std::max(p[0], p[2]);
+        const double ymin = std::min(p[1], p[3]), ymax = std::max(p[1], p[3]);
+        if (i == 0 || xmin < x0) x0 = xmin;
+        if (i == 0 || xmax > x1) x1 = xmax;
+        if (i == 0 || ymin < y0) y0 = ymin;
+        if (i == 0 || ymax > y1) y1 = ymax;
+    }
+    return transforms::Bbox({x0, y0, x1, y1});
 }
 
 }  // namespace
@@ -91,6 +107,45 @@ void Spine::adjustLocation() {
         vertices[2] = v[2];
     }
     path_.vertices = std::make_shared<std::vector<double>>(std::move(vertices));
+}
+
+transforms::Bbox Spine::windowExtent() {
+    adjustLocation();
+    // Patch.get_window_extent: the path's extents through the transform
+    const transforms::Matrix m = transforms::compose(patchTransform(), transform)->matrix();
+    const std::vector<double>& v = *path_.vertices;
+    double x0 = 0, y0 = 0, x1 = 0, y1 = 0;
+    for (std::size_t i = 0; i + 1 < v.size(); i += 2) {
+        const auto q = transforms::apply(m, v[i], v[i + 1]);
+        if (i == 0 || q[0] < x0) x0 = q[0];
+        if (i == 0 || q[0] > x1) x1 = q[0];
+        if (i == 0 || q[1] < y0) y0 = q[1];
+        if (i == 0 || q[1] > y1) y1 = q[1];
+    }
+    const transforms::Bbox bb({x0, y0, x1, y1});
+    if (!axis || !axis->visible) return bb;
+    std::vector<transforms::Bbox> boxes{bb};
+    const std::vector<Tick*> drawn = axis->updateTicks();
+    if (!drawn.empty()) {
+        const Tick& tick = *drawn.front();
+        auto p = bb.points();
+        double padout = 0.5, padin = 0.5;
+        if (tick.tickdir() == "out") padout = 1, padin = 0;
+        else if (tick.tickdir() == "in") padout = 0, padin = 1;
+        const double dpi = axes_.figure.dpi;
+        padout = padout * tick.size() / 72 * dpi;
+        padin = padin * tick.size() / 72 * dpi;
+        if (tick.tick1line.visible) {
+            if (type == "left") p[0] = p[0] - padout, p[2] = p[2] + padin;
+            else if (type == "bottom") p[1] = p[1] - padout, p[3] = p[3] + padin;
+        }
+        if (tick.tick2line.visible) {
+            if (type == "right") p[2] = p[2] + padout, p[0] = p[0] - padin;
+            else if (type == "top") p[3] = p[3] + padout, p[1] = p[1] - padout;  // (sic: padout, as matplotlib)
+        }
+        boxes.push_back(transforms::Bbox(p));
+    }
+    return unionOf(boxes);
 }
 
 void Spine::draw(Renderer& renderer) {
@@ -269,6 +324,99 @@ Axis::Axis(const rc::Params& rc, Axes& axes, bool isX)
     majorTickKw_.gridOn = rc.boolean("axes.grid") &&
                           (rc.text("axes.grid.which") == "both" || rc.text("axes.grid.which") == "major");
     zorder = 1.5;  // set_axisbelow('line')
+    labelpad = rc.number("axes.labelpad");
+    labelPosition = isX ? "bottom" : "left";
+}
+
+void Axis::setViewInterval(double vmin, double vmax) {
+    auto p = axes_.viewLim->points();
+    if (isX_) p[0] = vmin, p[2] = vmax;
+    else p[1] = vmin, p[3] = vmax;
+    axes_.viewLim->setPoints(p);
+}
+
+void Axis::setLim(double v0, double v1, bool autoscale) {
+    const bool reverse = v0 > v1;
+    std::tie(v0, v1) = axes::nonsingular(v0, v1, 0.05);  // Locator.nonsingular
+    // limit_range_for_scale: linear scales keep the range; then sorted(..., reverse=reverse)
+    if ((v0 > v1) != reverse && v0 != v1) std::swap(v0, v1);
+    setViewInterval(v0, v1);
+    autoscaleOn = autoscale;
+}
+
+void Axis::setLabelText(const std::string& t, const std::string& loc) {
+    label.text = t;
+    if (isX_) label.x = loc == "left" ? 0 : loc == "right" ? 1 : 0.5;
+    else label.y = loc == "bottom" ? 0 : loc == "top" ? 1 : 0.5;
+    label.horizontalAlignment = isX_ ? loc : (loc == "bottom" ? "left" : loc == "top" ? "right" : "center");
+}
+
+std::string Axis::ticksPosition() const {
+    // Axis._get_ticks_position over the major ticks' first tick and label
+    if (majorTicks_.empty()) return isX_ ? "bottom" : "left";
+    const Tick& t = *majorTicks_.front();
+    const bool one = t.tick1line.visible || t.label1.visible;
+    const bool two = t.tick2line.visible || t.label2.visible;
+    if (one && !two) return isX_ ? "bottom" : "left";
+    if (two && !one) return isX_ ? "top" : "right";
+    if (one && two) return "default";
+    return "unknown";
+}
+
+std::pair<std::vector<transforms::Bbox>, std::vector<transforms::Bbox>> Axis::ticklabelBboxes(
+    const std::vector<Tick*>& ticks, Renderer& renderer) {
+    std::pair<std::vector<transforms::Bbox>, std::vector<transforms::Bbox>> out;
+    for (Tick* t : ticks)
+        if (t->label1.visible) out.first.push_back(t->label1.windowExtent(renderer));
+    for (Tick* t : ticks)
+        if (t->label2.visible) out.second.push_back(t->label2.windowExtent(renderer));
+    return out;
+}
+
+void Axis::updateLabelPosition(Renderer& renderer) {
+    // _get_tick_boxes_siblings: this Axes alone (no aligned labels yet)
+    const auto [bboxes, bboxes2] = ticklabelBboxes(updateTicks(), renderer);
+    const double dpi = axes_.figure.dpi;
+    if (isX_) {
+        if (labelPosition == "bottom") {
+            std::vector<transforms::Bbox> all = bboxes;
+            all.push_back(axes_.spine("bottom").windowExtent());
+            const auto b = unionOf(all).points();
+            label.y = b[1] - labelpad * dpi / 72;
+        } else {
+            std::vector<transforms::Bbox> all = bboxes2;
+            all.push_back(axes_.spine("top").windowExtent());
+            const auto b = unionOf(all).points();
+            label.y = b[3] + labelpad * dpi / 72;
+        }
+    } else {
+        if (labelPosition == "left") {
+            std::vector<transforms::Bbox> all = bboxes;
+            all.push_back(axes_.spine("left").windowExtent());
+            const auto b = unionOf(all).points();
+            label.x = b[0] - labelpad * dpi / 72;
+        } else {
+            std::vector<transforms::Bbox> all = bboxes2;
+            all.push_back(axes_.spine("right").windowExtent());
+            const auto b = unionOf(all).points();
+            label.x = b[2] + labelpad * dpi / 72;
+        }
+    }
+}
+
+void Axis::updateOffsetTextPosition(const std::vector<transforms::Bbox>& bboxes,
+                                    const std::vector<transforms::Bbox>& bboxes2) {
+    constexpr double kOffsetTextPad = 3;  // Axis.OFFSETTEXTPAD
+    const double dpi = axes_.figure.dpi;
+    const auto box = axes_.bbox->points();
+    if (isX_) {
+        // _tick_position stays 'bottom' unless the ticks are moved (set_ticks_position)
+        const double bottom = bboxes.empty() ? std::min(box[1], box[3]) : unionOf(bboxes).points()[1];
+        offsetText.y = bottom - kOffsetTextPad * dpi / 72;
+        (void)bboxes2;
+    } else {
+        offsetText.y = std::max(box[1], box[3]) + kOffsetTextPad * dpi / 72;
+    }
 }
 
 std::array<double, 2> Axis::viewInterval() const {
@@ -289,8 +437,20 @@ std::vector<Tick*> Axis::majorTicks(std::size_t count) {
     return out;
 }
 
+int Axis::tickSpace() const {
+    // Bbox.unit().transformed(transAxes - dpi_scale_trans): transAxes, then the inches' inverse
+    const auto t = transforms::compose(axes_.transAxes, axes_.figure.dpiScaleTrans->inverted());
+    const auto ll = t->transform(0, 0), ul = t->transform(0, 1), lr = t->transform(1, 0);
+    const double length = (isX_ ? lr[0] - ll[0] : ul[1] - ll[1]) * 72;
+    // _get_tick_label_size: rcParams[xtick.labelsize] (tick_params(labelsize=) is not supported yet)
+    const double size = fontSizeOf(rc_, isX_ ? "xtick.labelsize" : "ytick.labelsize") * (isX_ ? 3 : 2);
+    if (size > 0) return int(std::floor(length / size));
+    return 2147483647;
+}
+
 std::vector<Tick*> Axis::updateTicks() {
     const auto view = viewInterval();
+    locator.tickSpace = tickSpace();
     const std::vector<double> locs = locator.tickValues(view[0], view[1]);
     formatter.setViewInterval(view[0], view[1]);
     formatter.setLocs(locs);
@@ -312,10 +472,13 @@ void Axis::draw(Renderer& renderer) {
     if (!visible) return;
     renderer.openGroup("matplotlib.axis", gid);
     const std::vector<Tick*> ticks = updateTicks();
+    const auto [tlb1, tlb2] = ticklabelBboxes(ticks, renderer);
     for (Tick* t : ticks) t->draw(renderer);
-    if (!label.text.empty()) renderer.unsupported("axis labels are not supported yet");
+    updateLabelPosition(renderer);
+    label.draw(renderer);
+    updateOffsetTextPosition(tlb1, tlb2);
     offsetText.text = formatter.offsetText();
-    if (!offsetText.text.empty()) renderer.unsupported("axis offset texts are not supported yet");
+    offsetText.draw(renderer);
     renderer.closeGroup("matplotlib.axis");
 }
 
@@ -334,15 +497,17 @@ Axes::Axes(const rc::Params& rc, Figure& fig, const SubplotSpec& spec)
     const char* sides[4] = {"left", "right", "bottom", "top"};
     for (int i = 0; i < 4; ++i) spines[i] = std::make_unique<Spine>(rc, *this, sides[i]);
     xaxis = std::make_unique<Axis>(rc, *this, true);
+    spine("bottom").axis = spine("top").axis = xaxis.get();
     yaxis = std::make_unique<Axis>(rc, *this, false);
+    spine("left").axis = spine("right").axis = yaxis.get();
 
     // clear(): the titles and the patch; the view limits (0, 1) stay.
     const double titleSize = fontSizeOf(rc, "axes.titlesize");
     const text::FontValue titleWeight = rc.value("axes.titleweight").isNumber()
                                             ? text::FontValue(int(rc.number("axes.titleweight")))
                                             : text::FontValue(rc.text("axes.titleweight"));
-    const double titleY = rc.value("axes.titley").isNull() ? 1.0 : rc.number("axes.titley");
-    auto titleOffset = std::make_shared<transforms::ScaledTranslation>(0.0, rc.number("axes.titlepad") / 72, fig.dpiScaleTrans);
+    autotitlepos_ = rc.value("axes.titley").isNull();
+    const double titleY = autotitlepos_ ? 1.0 : rc.number("axes.titley");
     const double xs[3] = {0.5, 0.0, 1.0};
     const char* has[3] = {"center", "left", "right"};
     std::unique_ptr<Text>* titles[3] = {&title, &leftTitle, &rightTitle};
@@ -352,10 +517,10 @@ Axes::Axes(const rc::Params& rc, Figure& fig, const SubplotSpec& spec)
         t->font.weight = titleWeight;
         t->verticalAlignment = "baseline";
         t->horizontalAlignment = has[i];
-        t->transform = transforms::compose(transAxes, titleOffset);
         t->figure = &fig;
         *titles[i] = std::move(t);
     }
+    setTitleOffsetTrans(rc.number("axes.titlepad"));
     patch = std::make_unique<Rectangle>(rc, 0.0, 0.0, 1.0, 1.0);
     patch->setFacecolor(rc.text("axes.facecolor"));
     patch->setEdgecolor("none");
@@ -382,6 +547,70 @@ Axes::Axes(const rc::Params& rc, Figure& fig, const SubplotSpec& spec)
     };
     xaxis->setTickSwitches(sw(true));
     yaxis->setTickSwitches(sw(false));
+}
+
+void Axes::setTitleOffsetTrans(double points) {
+    auto offset = std::make_shared<transforms::ScaledTranslation>(0.0, points / 72, figure.dpiScaleTrans);
+    for (Text* t : {title.get(), leftTitle.get(), rightTitle.get()}) {
+        t->transform = transforms::compose(transAxes, offset);
+        t->clipBox.reset();
+    }
+}
+
+void Axes::setTitle(const std::string& label, const std::string& loc, std::optional<double> pad, std::optional<double> y) {
+    double ty = 1.0;
+    if (y) {
+        ty = *y;
+        autotitlepos_ = false;
+    } else if (!rc_.value("axes.titley").isNull()) {
+        ty = rc_.number("axes.titley");
+        autotitlepos_ = false;
+    }
+    Text& t = loc == "left" ? *leftTitle : loc == "right" ? *rightTitle : *title;
+    setTitleOffsetTrans(pad ? *pad : rc_.number("axes.titlepad"));
+    t.text = label;
+    const auto& size = rc_.value("axes.titlesize");
+    t.font.size = size.isNumber() ? size.asNumber() : *text::fontSize(size.asString(), rc_);
+    const auto& weight = rc_.value("axes.titleweight");
+    t.font.weight = weight.isNumber() ? text::FontValue(int(weight.asNumber())) : text::FontValue(weight.asString());
+    t.verticalAlignment = "baseline";
+    t.horizontalAlignment = loc;
+    const std::string color = rc_.text("axes.titlecolor");
+    if (color != "auto" && color != "AUTO" && color != "Auto") t.setColor(color);
+    t.y = ty;
+}
+
+void Axes::updateTitlePosition(Renderer& renderer) {
+    if (!autotitlepos_) return;
+    Text* titles[3] = {title.get(), leftTitle.get(), rightTitle.get()};
+    if (titles[0]->text.empty() && titles[1]->text.empty() && titles[2]->text.empty()) return;
+    // The siblings are this Axes alone (no twins, children or aligned titles yet).
+    const std::string ticks = xaxis->ticksPosition();
+    if (ticks == "top" || ticks == "unknown" || xaxis->labelPosition == "top") {
+        renderer.unsupported("titles over top ticks or labels are not supported yet");
+        return;
+    }
+    // ax.spines.get("outline", ax).get_window_extent(): the Axes' own box
+    const auto box = bbox->points();
+    const double top = std::max(box[1], box[3]);
+    for (Text* t : titles) {
+        t->y = 1.0;
+        if (!t->text.empty()) {
+            yaxis->updateTicks();  // ax.yaxis.get_tightbbox(renderer) updates the offset text
+            if (yaxis->offsetText.visible && !yaxis->formatter.offsetText().empty())
+                renderer.unsupported("titles beside a y offset text are not supported yet");
+            if (top < 0) return;
+            if (t->windowExtent(renderer).points()[1] < top) {
+                const auto inv = transAxes->inverted();
+                t->y = inv->transform(0, top)[1];
+                const double ymin = t->windowExtent(renderer).points()[1];
+                if (ymin < top) t->y = inv->transform(0., 2 * top - ymin)[1];
+            }
+        }
+    }
+    double ymax = titles[0]->y;
+    for (Text* t : titles) ymax = std::max(ymax, t->y);
+    for (Text* t : titles) t->y = ymax;
 }
 
 Spine& Axes::spine(const std::string& type) {
@@ -427,10 +656,8 @@ void Axes::draw(Renderer& renderer) {
         artists.push_back(xaxis.get());
         artists.push_back(yaxis.get());
     }
-    for (Text* t : {title.get(), leftTitle.get(), rightTitle.get()}) {
-        if (!t->text.empty()) renderer.unsupported("titles are not supported yet");
-        artists.push_back(t);
-    }
+    updateTitlePosition(renderer);
+    for (Text* t : {title.get(), leftTitle.get(), rightTitle.get()}) artists.push_back(t);
     std::stable_sort(artists.begin(), artists.end(), [](const Artist* a, const Artist* b) { return a->zorder < b->zorder; });
     if (axisOn && frameOn) artists.insert(artists.begin(), patch.get());
     for (Artist* a : artists) a->draw(renderer);

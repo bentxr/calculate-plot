@@ -1,8 +1,11 @@
 #include "engine/engine.hpp"
 
+#include "engine/axes.hpp"
 #include "engine/figure.hpp"
 #include "rc/rc_params.hpp"
 
+#include <cctype>
+#include <map>
 #include <memory>
 
 namespace calculate_plot::engine {
@@ -32,6 +35,8 @@ public:
     bool run(const model::Call& call, std::string* error) {
         if (call.on.empty() && call.method == "figure") return figure(call, error);
         if (call.on.empty() && call.method == "subplots") return subplots(call, error);
+        const auto ax = axes_.find(call.on);
+        if (ax != axes_.end()) return axesCall(*ax->second, call, error);
         *error = "unsupported call: " + (call.on.empty() ? "plt" : call.on) + "." + call.method;
         return false;
     }
@@ -117,12 +122,120 @@ private:
             return false;
         }
         figure_ = std::make_unique<Figure>(rc_, options);
-        figure_->subplots(1, 1);
+        Axes* ax = figure_->subplots(1, 1).front();
+        axes_.clear();
+        if (call.as.size() == 2) axes_[call.as[1]] = ax;
+        else if (!call.as.empty()) {
+            *error = "plt.subplots returns (fig, ax): name both";
+            return false;
+        }
         return true;
+    }
+
+    // The keyword arguments of a call, checked against the ones it takes.
+    bool keywords(const model::Call& call, std::initializer_list<const char*> allowed, std::string* error) {
+        for (const auto& [name, value] : call.kwargs) {
+            bool ok = false;
+            for (const char* a : allowed) ok = ok || name == a;
+            if (!ok) {
+                *error = call.on + "." + call.method + ": unsupported keyword " + name;
+                return false;
+            }
+        }
+        return true;
+    }
+
+    const Json* keyword(const model::Call& call, const std::string& name) {
+        for (const auto& [n, v] : call.kwargs)
+            if (n == name) return &v;
+        return nullptr;
+    }
+
+    bool text(const Json* v, std::string* out) {
+        if (!v || !v->isString()) return false;
+        *out = v->asString();
+        return true;
+    }
+
+    bool axesCall(Axes& ax, const model::Call& call, std::string* error) {
+        const std::string where = call.on + "." + call.method;
+        if (call.method == "set_title") {
+            if (!keywords(call, {"label", "loc", "pad", "y"}, error)) return false;
+            std::string label, loc = rc_.text("axes.titlelocation");
+            if (!(call.args.size() == 1 ? text(&call.args[0], &label) : text(keyword(call, "label"), &label))) {
+                *error = where + ": the title must be a string";
+                return false;
+            }
+            if (const Json* l = keyword(call, "loc"); l && !text(l, &loc)) {
+                *error = where + ": loc must be 'left', 'center' or 'right'";
+                return false;
+            }
+            for (char& c : loc) c = char(std::tolower(static_cast<unsigned char>(c)));
+            if (loc != "left" && loc != "center" && loc != "right") {
+                *error = where + ": loc must be 'left', 'center' or 'right'";
+                return false;
+            }
+            std::optional<double> pad, y;
+            double n = 0;
+            if (const Json* v = keyword(call, "pad")) {
+                if (!readNumber(*v, &n)) return *error = where + ": pad must be a number", false;
+                pad = n;
+            }
+            if (const Json* v = keyword(call, "y")) {
+                if (!readNumber(*v, &n)) return *error = where + ": y must be a number", false;
+                y = n;
+            }
+            ax.setTitle(label, loc, pad, y);
+            return true;
+        }
+        if (call.method == "set_xlabel" || call.method == "set_ylabel") {
+            const bool isX = call.method == "set_xlabel";
+            if (!keywords(call, {isX ? "xlabel" : "ylabel", "labelpad", "loc"}, error)) return false;
+            std::string label, loc = rc_.text(isX ? "xaxis.labellocation" : "yaxis.labellocation");
+            if (!(call.args.size() == 1 ? text(&call.args[0], &label) : text(keyword(call, isX ? "xlabel" : "ylabel"), &label))) {
+                *error = where + ": the label must be a string";
+                return false;
+            }
+            Axis& axis = isX ? *ax.xaxis : *ax.yaxis;
+            if (const Json* v = keyword(call, "labelpad")) {
+                double n = 0;
+                if (!readNumber(*v, &n)) return *error = where + ": labelpad must be a number", false;
+                axis.labelpad = n;
+            }
+            if (const Json* l = keyword(call, "loc"); l && !text(l, &loc)) return *error = where + ": bad loc", false;
+            const bool okLoc = isX ? (loc == "left" || loc == "center" || loc == "right")
+                                   : (loc == "bottom" || loc == "center" || loc == "top");
+            if (!okLoc) return *error = where + ": bad loc " + loc, false;
+            axis.setLabelText(label, loc);
+            return true;
+        }
+        if (call.method == "set_xlim" || call.method == "set_ylim") {
+            const bool isX = call.method == "set_xlim";
+            const char* lo = isX ? "left" : "bottom";
+            const char* hi = isX ? "right" : "top";
+            if (!keywords(call, {lo, hi}, error)) return false;
+            Axis& axis = isX ? *ax.xaxis : *ax.yaxis;
+            const auto view = axis.viewInterval();
+            double v[2] = {view[0], view[1]};
+            const Json* given[2] = {call.args.size() > 0 ? &call.args[0] : keyword(call, lo),
+                                    call.args.size() > 1 ? &call.args[1] : keyword(call, hi)};
+            if (call.args.size() == 1 && sequence(call.args[0]) && sequence(call.args[0])->size() == 2) {
+                given[0] = &(*sequence(call.args[0]))[0];
+                given[1] = &(*sequence(call.args[0]))[1];
+            }
+            for (int i = 0; i < 2; ++i)
+                if (given[i] && !given[i]->isNull() && !readNumber(*given[i], &v[i]))
+                    return *error = where + ": limits must be numbers", false;
+            axis.setLim(v[0], v[1], false);
+            return true;
+        }
+        *error = "unsupported call: " + where;
+        return false;
     }
 
     rc::Params rc_;
     std::unique_ptr<Figure> figure_;
+    std::map<std::string, Axes*> axes_;
 };
 
 }  // namespace
