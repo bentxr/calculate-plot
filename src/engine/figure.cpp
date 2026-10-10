@@ -51,22 +51,24 @@ void Figure::setDpi(double value) {
     dpiScaleTrans->scale(dpi);
 }
 
-std::string drawAggTrace(Figure& figure, const std::string& locale, std::string* error) {
+std::string drawAggTrace(Figure& figure, const std::string& locale, const std::string& fontDirectory,
+                         std::string* error) {
     // RendererAgg(w, h, dpi) takes int(w), int(h) of the figure's box.
     const auto p = figure.bbox->points();
-    AggTraceRenderer renderer(double(int(p[2] - p[0])), double(int(p[3] - p[1])), figure.dpi, figure.rc(), locale);
+    AggTraceRenderer renderer(double(int(p[2] - p[0])), double(int(p[3] - p[1])), figure.dpi, figure.rc(), locale, fontDirectory);
     renderer.clear();
     figure.draw(renderer);
     *error = renderer.error();
     return renderer.trace();
 }
 
-std::string drawSvgTrace(Figure& figure, const std::string& locale, const SvgMetadata& metadata,
+std::string drawSvgTrace(Figure& figure, const std::string& locale, const std::string& fontDirectory,
+                         const SvgMetadata& metadata,
                          const std::string& hashsalt, std::string* error) {
     const double dpi = figure.dpi;
     figure.setDpi(72);
     const auto inches = figure.bboxInches->points();
-    SvgTraceRenderer renderer(inches[2] * 72, inches[3] * 72, dpi, figure.rc(), locale, metadata, hashsalt);
+    SvgTraceRenderer renderer(inches[2] * 72, inches[3] * 72, dpi, figure.rc(), locale, fontDirectory, metadata, hashsalt);
     figure.draw(renderer);
     figure.setDpi(dpi);  // print_figure puts the dpi back
     *error = renderer.error();

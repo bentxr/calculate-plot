@@ -15,8 +15,13 @@ struct AggDrawing {
     std::string error;  // empty when every call of the figure file was understood
 };
 
+struct DrawOptions {
+    std::string fontDirectory;                    // where matplotlib's bundled fonts are
+    std::string locale = text::kReferenceLocale;  // the shaping language of texts that set none
+};
+
 // Runs a figure file's calls and draws the figure as matplotlib's FigureCanvasAgg.draw would.
-AggDrawing drawAgg(const model::Figure& figure, const std::string& locale = text::kReferenceLocale);
+AggDrawing drawAgg(const model::Figure& figure, const DrawOptions& options);
 
 struct SvgDrawing {
     std::string trace;  // the draw calls, in the trace format of record.py's record_svg
@@ -32,6 +37,6 @@ inline const std::vector<std::pair<std::string, std::optional<std::string>>> kSv
 inline const char* const kSvgHashSalt = "calculate-plot";
 
 // Runs a figure file's calls and draws the figure as matplotlib's FigureCanvasSVG.print_svg would.
-SvgDrawing drawSvg(const model::Figure& figure, const std::string& locale = text::kReferenceLocale);
+SvgDrawing drawSvg(const model::Figure& figure, const DrawOptions& options);
 
 }  // namespace calculate_plot::engine

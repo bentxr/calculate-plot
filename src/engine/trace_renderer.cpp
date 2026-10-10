@@ -1,11 +1,13 @@
 #include "engine/trace_renderer.hpp"
 
 #include "rc/rc_params.hpp"
+#include "support/base64.hpp"
 
 namespace calculate_plot::engine {
 
-TraceRenderer::TraceRenderer(double width, double height, double dpi, const rc::Params& rc, std::string locale)
-    : width_(width), height_(height), dpi_(dpi), rc_(rc), locale_(std::move(locale)) {
+TraceRenderer::TraceRenderer(double width, double height, double dpi, const rc::Params& rc, std::string locale,
+                             std::string fontDirectory)
+    : width_(width), height_(height), dpi_(dpi), rc_(rc), locale_(std::move(locale)), fonts_(std::move(fontDirectory)) {
     events_.beginArray();
 }
 
@@ -116,9 +118,144 @@ void AggTraceRenderer::drawPath(const GC& gc, const Path& path, const transforms
     events_.key("transform");
     writeMatrix(affine);
     events_.key("face");
+    writeFace(face);
+    events_.endObject();
+}
+
+void AggTraceRenderer::writeFace(const std::optional<std::vector<double>>& face) {
     if (face) writeNumbers(*face);
     else events_.null();
+}
+
+void AggTraceRenderer::drawMarkers(const GC& gc, const Path& markerPath, const transforms::Matrix& markerTrans,
+                                   const Path& path, const transforms::Matrix& trans,
+                                   const std::optional<std::vector<double>>& face) {
+    events_.beginObject();
+    events_.key("op").value("draw_markers");
+    events_.key("gc");
+    writeGc(gc);
+    events_.key("marker_path");
+    writePath(markerPath);
+    events_.key("marker_transform");
+    writeMatrix(markerTrans);
+    events_.key("path");
+    writePath(path);
+    events_.key("transform");
+    writeMatrix(trans);
+    events_.key("face");
+    writeFace(face);
     events_.endObject();
+}
+
+void AggTraceRenderer::drawText(const GC& gc, double x, double y, const std::string& s, const FontSpec& font,
+                                double angle, bool ismath, const TextOptions& mtext) {
+    const std::string hinting = rc_.text("text.hinting");
+    events_.beginObject();
+    events_.key("op").value("text");
+    events_.key("s").value(s);
+    events_.key("x").value(x);
+    events_.key("y").value(y);
+    events_.key("angle").value(angle);
+    events_.key("ismath").value(ismath);
+    events_.key("fonts").beginArray();
+    for (const auto& f : font.files) events_.value(f);
+    events_.endArray();
+    events_.key("size").value(font.size);
+    events_.key("features");
+    if (mtext.features) {
+        events_.beginArray();
+        for (const auto& f : *mtext.features) events_.value(f);
+        events_.endArray();
+    } else {
+        events_.null();
+    }
+    events_.key("language");
+    writeOptionalText(mtext.language);
+    events_.key("antialiased").value(gc.antialiased);
+    events_.key("hinting").value(hinting);
+    events_.key("gc");
+    writeGc(gc);
+    events_.endObject();
+    if (ismath) {
+        error_ = "mathtext is not supported yet: " + s;
+        return;
+    }
+
+    // RendererAgg.draw_text: the layout, then _draw_text_glyphs_and_boxes.
+    const auto flags = text::hintingFlags(hinting);
+    if (!flags) {
+        error_ = "unknown text.hinting " + hinting;
+        return;
+    }
+    std::string error;
+    const auto glyphs =
+        text::layoutText(fonts_, font.files, s, font.size, dpi_, *flags, mtext.features, mtext.language, error, locale_);
+    if (!error.empty()) {
+        error_ = error;
+        return;
+    }
+    events_.beginObject();
+    events_.key("op").value("glyphs");
+    events_.key("x").value(x);
+    events_.key("y").value(y);
+    events_.key("angle").value(angle);
+    events_.key("dpi").value(dpi_);
+    events_.key("height").value(height_);
+    events_.key("glyphs").beginArray();
+    for (const auto& g : glyphs) {
+        events_.beginObject();
+        events_.key("font").value(fonts_.nameOf(g.font));
+        events_.key("size").value(g.size);
+        events_.key("index").value(static_cast<long long>(g.index));
+        events_.key("slant").value(g.slant);
+        events_.key("extend").value(g.extend);
+        events_.key("dx").value(g.dx);
+        events_.key("dy").value(g.dy);
+        events_.endObject();
+    }
+    events_.endArray();
+    events_.key("boxes").beginArray().endArray();
+    events_.key("hinting").value(hinting);
+    events_.key("gc");
+    writeGc(gc);
+    events_.endObject();
+
+    const auto images = text::renderGlyphs(height_, dpi_, x, y, angle, glyphs, gc.antialiased, *flags, error);
+    if (!error.empty()) {
+        error_ = error;
+        return;
+    }
+    for (const auto& image : images) {
+        events_.beginObject();
+        events_.key("op").value("draw_text_image");
+        events_.key("image").beginObject();
+        events_.key("shape").beginArray().value(static_cast<long long>(image.rows)).value(static_cast<long long>(image.width)).endArray();
+        events_.key("base64").value(support::encodeBase64(
+            std::string_view(reinterpret_cast<const char*>(image.buffer.data()), image.buffer.size())));
+        events_.endObject();
+        events_.key("x").value(image.x);
+        events_.key("y").value(image.y);
+        events_.key("angle").value(0.0);
+        events_.key("gc");
+        writeGc(gc);
+        events_.endObject();
+    }
+}
+
+TextMetrics AggTraceRenderer::textWidthHeightDescent(const std::string& s, const FontSpec& font, bool ismath) {
+    if (ismath) {
+        error_ = "mathtext is not supported yet: " + s;
+        return {};
+    }
+    const auto flags = text::hintingFlags(rc_.text("text.hinting"));
+    if (!flags) {
+        error_ = "unknown text.hinting";
+        return {};
+    }
+    std::string error;
+    const auto e = text::textExtent(fonts_, font.files, s, font.size, dpi_, *flags, std::nullopt, error, locale_);
+    if (!error.empty()) error_ = error;
+    return {e.width, e.height, e.descent};
 }
 
 std::string AggTraceRenderer::trace() {
@@ -136,8 +273,9 @@ std::string AggTraceRenderer::trace() {
 }
 
 SvgTraceRenderer::SvgTraceRenderer(double width, double height, double imageDpi, const rc::Params& rc,
-                                   std::string locale, SvgMetadata metadata, std::string hashsalt)
-    : TraceRenderer(width, height, 72.0, rc, std::move(locale)),
+                                   std::string locale, std::string fontDirectory, SvgMetadata metadata,
+                                   std::string hashsalt)
+    : TraceRenderer(width, height, 72.0, rc, std::move(locale), std::move(fontDirectory)),
       imageDpi_(imageDpi),
       metadata_(std::move(metadata)),
       hashsalt_(std::move(hashsalt)) {
@@ -200,6 +338,21 @@ void SvgTraceRenderer::drawPath(const GC& gc, const Path& path, const transforms
     events_.key("clip_transform");
     writeClipTransform(gc);
     events_.endObject();
+}
+
+void SvgTraceRenderer::drawMarkers(const GC&, const Path&, const transforms::Matrix&, const Path&,
+                                   const transforms::Matrix&, const std::optional<std::vector<double>>&) {
+    error_ = "SVG markers are not supported yet";
+}
+
+void SvgTraceRenderer::drawText(const GC&, double, double, const std::string&, const FontSpec&, double, bool,
+                                const TextOptions&) {
+    error_ = "SVG text is not supported yet";
+}
+
+TextMetrics SvgTraceRenderer::textWidthHeightDescent(const std::string&, const FontSpec&, bool) {
+    error_ = "SVG text is not supported yet";
+    return {};
 }
 
 std::string SvgTraceRenderer::trace() {

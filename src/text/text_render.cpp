@@ -90,6 +90,12 @@ FT2Font* FontCache::byPath(const std::string& name) {
     return get({name}, true);
 }
 
+std::string FontCache::nameOf(const FT2Font* font) const {
+    const std::string& path = font->path();
+    const std::string prefix = directory_ + "/";
+    return path.compare(0, prefix.size(), prefix) == 0 ? path.substr(prefix.size()) : path;
+}
+
 std::u32string codepoints(const std::string& utf8) {
     std::u32string out;
     for (std::size_t i = 0; i < utf8.size();) {
@@ -166,14 +172,15 @@ TextExtent textExtent(FontCache& fonts, const std::vector<std::string>& names, c
     return TextExtent{double(w) / 64.0, double(h) / 64.0, double(d) / 64.0};  // convert from subpixels
 }
 
-std::string drawGlyphsAndBoxes(RendererAgg& renderer, GCAgg& gc, double x, double y, double angle,
-                               const std::vector<Glyph>& glyphs, const std::vector<Box>& boxes, FT_Int32 flags) {
+std::vector<GlyphImage> renderGlyphs(double height, double dpi, double x, double y, double angle,
+                                     const std::vector<Glyph>& glyphs, bool antialiased, FT_Int32 flags,
+                                     std::string& error) {
     // y is downwards.
+    std::vector<GlyphImage> images;
     const double cos = std::cos(angle * kDegreesToRadians);
     const double sin = std::sin(angle * kDegreesToRadians);
-    const double height = renderer.get_height();
     for (const Glyph& g : glyphs) {  // dy is upwards.
-        g.font->set_size(g.size, renderer.dpi);
+        g.font->set_size(g.size, dpi);
         // (0x10000 * [[cos, -sin], [sin, cos]]) @ [[extend, extend * slant], [0, 1]], rounded.
         const double a00 = 0x10000 * cos, a01 = 0x10000 * -sin, a10 = 0x10000 * sin, a11 = 0x10000 * cos;
         const double b00 = g.extend, b01 = g.extend * g.slant, b10 = 0.0, b11 = 1.0;
@@ -186,13 +193,29 @@ std::string drawGlyphsAndBoxes(RendererAgg& renderer, GCAgg& gc, double x, doubl
             FT_Fixed(pythonRound(0x40 * (height - y + g.dx * sin + g.dy * cos)))};
         g.font->_set_transform(matrix, delta);
         PositionedBitmap bitmap =
-            g.font->render_glyph(g.index, flags, gc.isaa ? FT_RENDER_MODE_NORMAL : FT_RENDER_MODE_MONO);
-        if (!g.font->error.empty()) return g.font->error;
-        if (!gc.isaa)
+            g.font->render_glyph(g.index, flags, antialiased ? FT_RENDER_MODE_NORMAL : FT_RENDER_MODE_MONO);
+        if (!g.font->error.empty()) {
+            error = g.font->error;
+            return images;
+        }
+        if (!antialiased)
             for (auto& v : bitmap.buffer) v = static_cast<unsigned char>(v * 0xff);
-        mpl::NdArray<agg::int8u, 2> image({bitmap.rows, bitmap.width}, bitmap.buffer);
         // draw_text_image's y is downwards & the bitmap bottom side.
-        renderer.draw_text_image(gc, image, bitmap.left, int(height) - bitmap.top + int(bitmap.rows), 0.0);
+        images.push_back(GlyphImage{bitmap.rows, bitmap.width, std::move(bitmap.buffer), int(bitmap.left),
+                                    int(height) - int(bitmap.top) + int(bitmap.rows)});
+    }
+    return images;
+}
+
+std::string drawGlyphsAndBoxes(RendererAgg& renderer, GCAgg& gc, double x, double y, double angle,
+                               const std::vector<Glyph>& glyphs, const std::vector<Box>& boxes, FT_Int32 flags) {
+    const double height = renderer.get_height();
+    std::string error;
+    auto images = renderGlyphs(height, renderer.dpi, x, y, angle, glyphs, gc.isaa, flags, error);
+    if (!error.empty()) return error;
+    for (auto& g : images) {
+        mpl::NdArray<agg::int8u, 2> image({g.rows, g.width}, g.buffer);
+        renderer.draw_text_image(gc, image, g.x, g.y, 0.0);
     }
 
     if (boxes.empty()) return {};

@@ -15,6 +15,24 @@ namespace calculate_plot::rc { class Params; }
 
 namespace calculate_plot::engine {
 
+// The fonts of a text as the font manager found them (file names in the font directory, the
+// fallback chain in order) and its size in points: what RendererAgg takes from FontProperties.
+struct FontSpec {
+    std::vector<std::string> files;
+    double size = 10.0;
+};
+
+// What draw_text takes from the Text artist when the text has one line (mtext).
+struct TextOptions {
+    std::optional<std::vector<std::string>> features;
+    std::optional<std::string> language;
+};
+
+// get_text_width_height_descent, in pixels.
+struct TextMetrics {
+    double width = 0, height = 0, descent = 0;
+};
+
 // What artists draw with: matplotlib's RendererBase methods.
 class Renderer {
 public:
@@ -28,6 +46,15 @@ public:
     virtual void closeGroup(const std::string& s) { (void)s; }
     virtual void drawPath(const GC& gc, const Path& path, const transforms::Matrix& affine,
                           const std::optional<std::vector<double>>& face) = 0;
+
+    virtual void drawMarkers(const GC& gc, const Path& markerPath, const transforms::Matrix& markerTrans,
+                             const Path& path, const transforms::Matrix& trans,
+                             const std::optional<std::vector<double>>& face) = 0;
+    // x, y: the text's origin in pixels from the top-left (flipy); angle in degrees.
+    virtual void drawText(const GC& gc, double x, double y, const std::string& s, const FontSpec& font, double angle,
+                          bool ismath, const TextOptions& mtext) = 0;
+    virtual TextMetrics textWidthHeightDescent(const std::string& s, const FontSpec& font, bool ismath) = 0;
+    virtual bool flipy() const { return true; }
 
     GC newGc() const { return GC(rc()); }
     double pointsToPixels(double points) const { return points * dpi() / 72; }

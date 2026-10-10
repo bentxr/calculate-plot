@@ -38,10 +38,12 @@ public:
 
 // FigureCanvasAgg.draw into a trace: the renderer is cleared, then the figure drawn. Returns the
 // trace JSON (render/replay draws it to pixels); `error` says what could not be traced.
-std::string drawAggTrace(Figure& figure, const std::string& locale, std::string* error);
+std::string drawAggTrace(Figure& figure, const std::string& locale, const std::string& fontDirectory,
+                         std::string* error);
 // FigureCanvasSVG.print_svg into a trace (render/svg_replay writes the SVG): the figure is drawn at
 // 72 dpi, its images at its own dpi, which it keeps afterwards.
-std::string drawSvgTrace(Figure& figure, const std::string& locale, const SvgMetadata& metadata,
+std::string drawSvgTrace(Figure& figure, const std::string& locale, const std::string& fontDirectory,
+                         const SvgMetadata& metadata,
                          const std::string& hashsalt, std::string* error);
 
 }  // namespace calculate_plot::engine

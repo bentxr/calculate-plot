@@ -25,6 +25,7 @@ add_executable(calculate-plot-tests
     test_svg.cpp
     test_text.cpp
     test_text_libraries.cpp
+    test_trace_renderer.cpp
     test_ticker.cpp
     test_transforms.cpp
     test_version.cpp

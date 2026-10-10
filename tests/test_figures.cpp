@@ -7,6 +7,7 @@
 #include "render/replay.hpp"
 #include "render/svg_replay.hpp"
 #include "support/json.hpp"
+#include "trace_compare.hpp"
 
 #include <gtest/gtest.h>
 
@@ -18,6 +19,7 @@
 
 namespace fs = std::filesystem;
 using calculate_plot::support::Json;
+using calculate_plot::testing_support::firstDifference;
 
 namespace {
 
@@ -38,56 +40,6 @@ std::vector<std::string> cases() {
     return names;
 }
 
-std::string describe(const Json& v) {
-    switch (v.type()) {
-        case Json::Type::Null: return "null";
-        case Json::Type::Bool: return v.asBool() ? "true" : "false";
-        case Json::Type::Number: return v.numberText();
-        case Json::Type::String: return '"' + v.asString() + '"';
-        case Json::Type::Array: return "array of " + std::to_string(v.size());
-        case Json::Type::Object: return "object";
-    }
-    return {};
-}
-
-// Where two traces first differ ("events[3].gc.linewidth: 1.5 instead of 1.25"); empty when equal.
-// Numbers compare as doubles, the sign of zero included (it reaches the SVG).
-// `ignored` names object members left out of the comparison.
-std::string firstDifference(const Json& got, const Json& want, const std::string& where,
-                            const std::vector<std::string>& ignored = {}) {
-    if (got.type() != want.type()) return where + ": " + describe(got) + " instead of " + describe(want);
-    switch (want.type()) {
-        case Json::Type::Null: return {};
-        case Json::Type::Bool:
-            return got.asBool() == want.asBool() ? std::string() : where + ": " + describe(got) + " instead of " + describe(want);
-        case Json::Type::Number:
-            if (got.asNumber() == want.asNumber() && std::signbit(got.asNumber()) == std::signbit(want.asNumber())) return {};
-            return where + ": " + describe(got) + " instead of " + describe(want);
-        case Json::Type::String:
-            return got.asString() == want.asString() ? std::string() : where + ": " + describe(got) + " instead of " + describe(want);
-        case Json::Type::Array:
-            for (std::size_t i = 0; i < std::min(got.size(), want.size()); ++i) {
-                const std::string d = firstDifference(got[i], want[i], where + "[" + std::to_string(i) + "]", ignored);
-                if (!d.empty()) return d;
-            }
-            if (got.size() != want.size())
-                return where + ": " + std::to_string(got.size()) + " elements instead of " + std::to_string(want.size());
-            return {};
-        case Json::Type::Object:
-            for (const auto& [key, value] : want.members()) {
-                if (std::find(ignored.begin(), ignored.end(), key) != ignored.end()) continue;
-                const Json* mine = got.find(key);
-                if (!mine) return where + "." + key + ": missing";
-                const std::string d = firstDifference(*mine, value, where + "." + key, ignored);
-                if (!d.empty()) return d;
-            }
-            for (const auto& [key, value] : got.members())
-                if (!want.find(key)) return where + "." + key + ": not in matplotlib's trace";
-            return {};
-    }
-    return {};
-}
-
 std::string pixelDifference(const calculate_plot::png::Image& got, const calculate_plot::png::Image& want) {
     if (got.width != want.width || got.height != want.height)
         return "size " + std::to_string(got.width) + "x" + std::to_string(got.height) + " instead of " +
@@ -98,17 +50,31 @@ std::string pixelDifference(const calculate_plot::png::Image& got, const calcula
     return differing ? std::to_string(differing) + " pixels differ" : std::string();
 }
 
+calculate_plot::engine::DrawOptions drawOptions() {
+    calculate_plot::engine::DrawOptions options;
+    options.fontDirectory = std::string(CALCULATE_PLOT_SOURCE_DIR) + "/fonts/ttf";
+    return options;
+}
+
 std::string drawnTrace(const std::string& name) {
     std::string error;
     const auto figure = calculate_plot::model::parseFigure(readFile(figures() / name / "fig.json"), &error);
     EXPECT_TRUE(figure.has_value()) << error;
     if (!figure) return {};
-    const auto drawing = calculate_plot::engine::drawAgg(*figure);
+    const auto drawing = calculate_plot::engine::drawAgg(*figure, drawOptions());
     EXPECT_TRUE(drawing.error.empty()) << drawing.error;
     return drawing.trace;
 }
 
-class Figures : public testing::TestWithParam<std::string> {};
+// A case whose figure the engine cannot draw yet carries a PENDING file saying why (its references
+// already serve the renderers' tests); the figure tests skip it.
+class Figures : public testing::TestWithParam<std::string> {
+protected:
+    void SetUp() override {
+        const fs::path pending = figures() / GetParam() / "PENDING";
+        if (fs::exists(pending)) GTEST_SKIP() << readFile(pending);
+    }
+};
 
 TEST_P(Figures, DrawCallsEqualMatplotlibs) {
     const std::string mine = drawnTrace(GetParam());
@@ -136,7 +102,7 @@ std::string drawnSvgTrace(const std::string& name) {
     const auto figure = calculate_plot::model::parseFigure(readFile(figures() / name / "fig.json"), &error);
     EXPECT_TRUE(figure.has_value()) << error;
     if (!figure) return {};
-    const auto drawing = calculate_plot::engine::drawSvg(*figure);
+    const auto drawing = calculate_plot::engine::drawSvg(*figure, drawOptions());
     EXPECT_TRUE(drawing.error.empty()) << drawing.error;
     return drawing.trace;
 }

@@ -106,22 +106,22 @@ std::string runFigure(const model::Figure& model, Draw draw) {
     return draw(*figure);
 }
 
-AggDrawing drawAgg(const model::Figure& model, const std::string& locale) {
+AggDrawing drawAgg(const model::Figure& model, const DrawOptions& options) {
     AggDrawing out;
     out.error = runFigure(model, [&](Figure& figure) {
         std::string error;
-        out.trace = drawAggTrace(figure, locale, &error);
+        out.trace = drawAggTrace(figure, options.locale, options.fontDirectory, &error);
         return error;
     });
     return out;
 }
 
-SvgDrawing drawSvg(const model::Figure& model, const std::string& locale) {
+SvgDrawing drawSvg(const model::Figure& model, const DrawOptions& options) {
     SvgDrawing out;
     out.error = runFigure(model, [&](Figure& figure) {
         const auto& salt = figure.rc().value("svg.hashsalt");
         std::string error;
-        out.trace = drawSvgTrace(figure, locale, kSvgMetadata, salt.isString() ? salt.asString() : kSvgHashSalt, &error);
+        out.trace = drawSvgTrace(figure, options.locale, options.fontDirectory, kSvgMetadata, salt.isString() ? salt.asString() : kSvgHashSalt, &error);
         return error;
     });
     return out;

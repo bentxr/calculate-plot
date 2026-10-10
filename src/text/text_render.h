@@ -32,6 +32,7 @@ public:
     // nullptr if a font cannot be opened (`error` says why).
     FT2Font* get(const std::vector<std::string>& names, bool enableLastResort = true);
     FT2Font* byPath(const std::string& name);  // a font already opened under this file name
+    std::string nameOf(const FT2Font* font) const;  // the file name a font was opened from
     std::string error;
 
 private:
@@ -82,6 +83,20 @@ struct TextExtent {
 TextExtent textExtent(FontCache& fonts, const std::vector<std::string>& names, const std::string& text, double size,
                       double dpi, FT_Int32 flags, const std::optional<std::string>& language, std::string& error,
                       const std::string& defaultLanguage = kReferenceLocale);
+
+// A glyph bitmap as _draw_text_glyphs_and_boxes hands it to draw_text_image: x is its left side,
+// y its bottom side (downwards from the canvas' top).
+struct GlyphImage {
+    unsigned rows = 0, width = 0;
+    std::vector<unsigned char> buffer;  // rows * width coverage bytes
+    int x = 0, y = 0;
+};
+
+// The glyph half of _draw_text_glyphs_and_boxes: each glyph rendered with FreeType at its place, on
+// a canvas `height` pixels high. x, y in pixels from the top-left, angle in degrees.
+std::vector<GlyphImage> renderGlyphs(double height, double dpi, double x, double y, double angle,
+                                     const std::vector<Glyph>& glyphs, bool antialiased, FT_Int32 flags,
+                                     std::string& error);
 
 // RendererAgg._draw_text_glyphs_and_boxes: renders each glyph with FreeType at its place and
 // composites it, then fills the boxes. x, y in pixels from the top-left, angle in degrees.

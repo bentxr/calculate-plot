@@ -2,6 +2,7 @@
 
 #include "engine/renderer.hpp"
 #include "support/json_writer.hpp"
+#include "text/text_render.h"
 
 #include <map>
 #include <optional>
@@ -16,7 +17,9 @@ namespace calculate_plot::engine {
 // matplotlib's call by call, then replayed to pixels (render/replay) or SVG (render/svg_replay).
 class TraceRenderer : public Renderer {
 public:
-    TraceRenderer(double width, double height, double dpi, const rc::Params& rc, std::string locale);
+    // `fontDirectory` holds the fonts that texts name (FontSpec::files).
+    TraceRenderer(double width, double height, double dpi, const rc::Params& rc, std::string locale,
+                  std::string fontDirectory);
 
     double dpi() const override { return dpi_; }
     double width() const override { return width_; }
@@ -39,6 +42,7 @@ protected:
     double width_, height_, dpi_;
     const rc::Params& rc_;
     std::string locale_;
+    text::FontCache fonts_;
     support::JsonWriter events_;
     std::string error_;
 
@@ -54,7 +58,17 @@ public:
     void clear();
     void drawPath(const GC& gc, const Path& path, const transforms::Matrix& affine,
                   const std::optional<std::vector<double>>& face) override;
+    void drawMarkers(const GC& gc, const Path& markerPath, const transforms::Matrix& markerTrans, const Path& path,
+                     const transforms::Matrix& trans, const std::optional<std::vector<double>>& face) override;
+    // The draw_text call, then what it hands on: the laid-out glyphs (_draw_text_glyphs_and_boxes) and
+    // each glyph's bitmap (draw_text_image).
+    void drawText(const GC& gc, double x, double y, const std::string& s, const FontSpec& font, double angle,
+                  bool ismath, const TextOptions& mtext) override;
+    TextMetrics textWidthHeightDescent(const std::string& s, const FontSpec& font, bool ismath) override;
     std::string trace() override;
+
+private:
+    void writeFace(const std::optional<std::vector<double>>& face);
 };
 
 using SvgMetadata = std::vector<std::pair<std::string, std::optional<std::string>>>;
@@ -64,12 +78,18 @@ using SvgMetadata = std::vector<std::pair<std::string, std::optional<std::string
 class SvgTraceRenderer : public TraceRenderer {
 public:
     SvgTraceRenderer(double width, double height, double imageDpi, const rc::Params& rc, std::string locale,
-                     SvgMetadata metadata, std::string hashsalt);
+                     std::string fontDirectory, SvgMetadata metadata, std::string hashsalt);
 
     void openGroup(const std::string& s, const std::optional<std::string>& gid) override;
     void closeGroup(const std::string& s) override;
     void drawPath(const GC& gc, const Path& path, const transforms::Matrix& affine,
                   const std::optional<std::vector<double>>& face) override;
+    void drawMarkers(const GC& gc, const Path& markerPath, const transforms::Matrix& markerTrans, const Path& path,
+                     const transforms::Matrix& trans, const std::optional<std::vector<double>>& face) override;
+    void drawText(const GC& gc, double x, double y, const std::string& s, const FontSpec& font, double angle,
+                  bool ismath, const TextOptions& mtext) override;
+    // TextToPath.get_text_width_height_descent: unhinted, at TextToPath.FONT_SCALE, scaled to the size.
+    TextMetrics textWidthHeightDescent(const std::string& s, const FontSpec& font, bool ismath) override;
     std::string trace() override;
 
 private:
