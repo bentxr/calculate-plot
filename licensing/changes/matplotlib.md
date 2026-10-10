@@ -105,7 +105,8 @@ it comes from in its first lines. The changes, as a whole:
   Spans and grids: Axes.axhline/axvline, axhspan/axvspan, vlines/hlines and grid with Axis.grid's keywords on the
   ticks; Axes.add_patch with _update_patch_limits, the general _update_line_limits (lines in axes coordinates, via
   transform - transData), Bbox.update_from_path's per-direction updates, contains_branch_separately, and the
-  collections' line styles (_bcast_lwls), translated to C++.
+  collections' line styles (_bcast_lwls), translated to C++. Figure.subplots grids (the returned array's names
+  follow squeeze) and FigureBase.suptitle (_suplabels), translated to C++.
 - File names drop the leading underscore (e.g. src/_backend_agg.h is src/agg/backend_agg.h); includes follow.
 - The drawing algorithms themselves (src/_backend_agg.h, src/_backend_agg.cpp, src/path_converters.h,
   src/agg_workaround.h, src/array.h, src/mplutils.h) are otherwise unchanged.

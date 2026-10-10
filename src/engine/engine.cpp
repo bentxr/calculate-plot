@@ -47,6 +47,7 @@ public:
         if (call.on.empty() && call.method == "subplots") return subplots(call, error);
         const auto ax = axes_.find(call.on);
         if (ax != axes_.end()) return axesCall(*ax->second, call, error);
+        if (!figureName_.empty() && call.on == figureName_) return figureCall(call, error);
         *error = "unsupported call: " + (call.on.empty() ? "plt" : call.on) + "." + call.method;
         return false;
     }
@@ -101,6 +102,8 @@ private:
         for (const auto& [name, value] : call.kwargs)
             if (!figureKeyword(name, value, options, "plt.figure", error)) return false;
         figure_ = std::make_unique<Figure>(rc_, options);
+        axes_.clear();
+        figureName_ = call.as.size() == 1 ? call.as[0] : std::string();
         return true;
     }
 
@@ -117,29 +120,90 @@ private:
                 return false;
             }
         FigureOptions options;
+        bool squeeze = true;
         for (const auto& [name, value] : call.kwargs) {
             if (name == "nrows" || name == "ncols") {
                 if (!readNumber(value, &grid[name == "nrows" ? 0 : 1])) {
                     *error = "plt.subplots: " + name + " must be an integer";
                     return false;
                 }
+            } else if (name == "squeeze") {
+                if (!value.isBool()) return *error = "plt.subplots: squeeze must be True or False", false;
+                squeeze = value.asBool();
+            } else if (name == "sharex" || name == "sharey") {
+                if (!(value.isBool() && !value.asBool()) && !(value.isString() && value.asString() == "none"))
+                    return *error = "plt.subplots: shared axes are not supported yet", false;
             } else if (!figureKeyword(name, value, options, "plt.subplots", error)) {
                 return false;
             }
         }
-        if (grid[0] != 1 || grid[1] != 1) {
-            *error = "plt.subplots: grids of several Axes are not supported yet";
-            return false;
-        }
+        const int nrows = int(grid[0]), ncols = int(grid[1]);
+        if (nrows < 1 || ncols < 1) return *error = "plt.subplots: nrows and ncols must be positive", false;
         figure_ = std::make_unique<Figure>(rc_, options);
-        Axes* ax = figure_->subplots(1, 1).front();
+        const std::vector<Axes*> made = figure_->subplots(nrows, ncols);
         axes_.clear();
-        if (call.as.size() == 2) axes_[call.as[1]] = ax;
-        else if (!call.as.empty()) {
-            *error = "plt.subplots returns (fig, ax): name both";
-            return false;
-        }
+        figureName_.clear();
+        if (call.as.empty()) return true;
+        if (call.as.size() != 2) return *error = "plt.subplots returns (fig, axs): name both", false;
+        figureName_ = call.as[0];
+        // the names the returned array answers to: squeezed to a single Axes or a 1-d array when it can be
+        const std::string& n = call.as[1];
+        for (int r = 0; r < nrows; ++r)
+            for (int c = 0; c < ncols; ++c) {
+                Axes* ax = made[std::size_t(r * ncols + c)];
+                if (squeeze && nrows == 1 && ncols == 1) axes_[n] = ax;
+                else if (squeeze && (nrows == 1 || ncols == 1)) axes_[n + "[" + std::to_string(nrows == 1 ? c : r) + "]"] = ax;
+                else axes_[n + "[" + std::to_string(r) + ", " + std::to_string(c) + "]"] = ax;
+            }
         return true;
+    }
+
+    bool figureCall(const model::Call& call, std::string* error) {
+        const std::string where = call.on + "." + call.method;
+        if (call.method == "suptitle") {
+            // FigureBase._suplabels with suptitle's info: (0.5, 0.98), centred, top, figure.titlesize/titleweight
+            const Json* t = argument(call, 0, "t");
+            if (!t || !t->isString()) return *error = where + ": the title must be a string", false;
+            double x = 0.5, y = 0.98, n = 0;
+            std::string ha = "center", va = "top";
+            const auto& size = rc_.value("figure.titlesize");
+            double fontsize = size.isNumber() ? size.asNumber() : *text::fontSize(size.asString(), rc_);
+            const auto& weight = rc_.value("figure.titleweight");
+            text::FontValue fontweight = weight.isNumber() ? text::FontValue(int(weight.asNumber())) : text::FontValue(weight.asString());
+            for (const auto& [name, value] : call.kwargs) {
+                if (name == "t") continue;
+                if (name == "x" || name == "y") {
+                    if (!readNumber(value, &n)) return *error = where + ": " + name + " must be a number", false;
+                    (name == "x" ? x : y) = n;
+                } else if (name == "ha" || name == "horizontalalignment" || name == "va" || name == "verticalalignment") {
+                    if (!value.isString()) return *error = where + ": bad alignment", false;
+                    (name[0] == 'h' ? ha : va) = value.asString();
+                } else if (name == "fontsize" || name == "size") {
+                    if (value.isString() && text::fontSize(value.asString(), rc_)) fontsize = *text::fontSize(value.asString(), rc_);
+                    else if (!readNumber(value, &fontsize)) return *error = where + ": bad fontsize", false;
+                } else if (name == "fontweight" || name == "weight") {
+                    if (value.isString()) fontweight = value.asString();
+                    else if (readNumber(value, &n)) fontweight = int(n);
+                    else return *error = where + ": bad fontweight", false;
+                } else {
+                    return *error = where + ": unsupported keyword " + name, false;
+                }
+            }
+            if (figure_->suptitle) return *error = where + ": setting the suptitle again is not supported yet", false;
+            auto label = std::make_unique<Text>(rc_, x, y, t->asString());
+            label->transform = figure_->transSubfigure;
+            label->horizontalAlignment = ha;
+            label->verticalAlignment = va;
+            label->setRotation(0.0);
+            label->font.size = fontsize;
+            label->font.weight = fontweight;
+            label->figure = figure_.get();
+            figure_->suptitle = label.get();
+            figure_->texts.push_back(std::move(label));
+            return true;
+        }
+        *error = "unsupported call: " + where;
+        return false;
     }
 
     // The keyword arguments of a call, checked against the ones it takes.
@@ -1209,6 +1273,7 @@ private:
     rc::Params rc_;
     std::unique_ptr<Figure> figure_;
     std::map<std::string, Axes*> axes_;
+    std::string figureName_;
 };
 
 }  // namespace

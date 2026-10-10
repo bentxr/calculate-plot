@@ -60,6 +60,7 @@ void Figure::draw(Renderer& renderer) {
     // _get_draw_artists: the children but the patch, sorted by zorder (stable)
     std::vector<Artist*> artists;
     for (auto& a : axes) artists.push_back(a.get());
+    for (auto& t : texts) artists.push_back(t.get());
     std::stable_sort(artists.begin(), artists.end(), [](const Artist* a, const Artist* b) { return a->zorder < b->zorder; });
     renderer.openGroup("figure", gid);
     patch->draw(renderer);

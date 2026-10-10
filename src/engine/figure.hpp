@@ -41,6 +41,8 @@ public:
     SubplotParams subplotpars;
     std::vector<std::unique_ptr<Axes>> axes;
     std::vector<std::unique_ptr<GridSpec>> gridspecs;  // kept alive for the axes' subplot specs
+    std::vector<std::unique_ptr<Artist>> texts;         // figure texts (suptitle)
+    Artist* suptitle = nullptr;
 
     // Figure.subplots(nrows, ncols): the axes in row-major order.
     std::vector<Axes*> subplots(int nrows, int ncols);
