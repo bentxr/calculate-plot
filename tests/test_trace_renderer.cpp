@@ -94,3 +94,55 @@ TEST(AggTraceRenderer, ReportsFontsItCannotOpen) {
 }
 
 }  // namespace
+
+namespace {
+
+// draw_path_collection: the second (non-probe) call of the second scatter in scatter_basic, built
+// from its own recorded fields, writes the same event.
+TEST(AggTraceRenderer, DrawsPathCollectionsAsMatplotlib) {
+    const auto rc = calculate_plot::rc::Params::defaults();
+    const Json trace = recorded("scatter_basic");
+    const Json* want = nullptr;
+    for (const Json& e : trace.find("events")->items())
+        if (e.find("op")->asString() == "draw_path_collection" && e.find("paths")->size() == 1) want = &e;
+    ASSERT_NE(want, nullptr);
+    const auto numbers = [](const Json& j) {
+        std::vector<double> out;
+        for (const Json& v : j.items()) out.push_back(v.asNumber());
+        return out;
+    };
+    const auto matrix = [&](const Json& j) {
+        const auto v = numbers(j);
+        return calculate_plot::transforms::Matrix{v[0], v[1], v[2], v[3], v[4], v[5]};
+    };
+    PathCollectionArgs a;
+    a.master = matrix(*want->find("master_transform"));
+    const Json& p = (*want->find("paths"))[0];
+    std::vector<unsigned char> codes;
+    for (const Json& c : p.find("codes")->items()) codes.push_back(static_cast<unsigned char>(c.asInteger()));
+    a.paths.push_back(Path::make(numbers(*p.find("vertices")), codes, rc));
+    const auto t = numbers(*want->find("transforms")->find("data"));
+    for (std::size_t i = 0; i + 8 < t.size() + 1; i += 9) a.transforms.push_back({t[i], t[i + 1], t[i + 2], t[i + 3], t[i + 4], t[i + 5]});
+    const auto o = numbers(*want->find("offsets")->find("data"));
+    for (std::size_t i = 0; i + 1 < o.size(); i += 2) a.offsets.push_back({o[i], o[i + 1]});
+    a.offsetTrans = matrix(*want->find("offset_transform"));
+    const auto colors = [&](const char* key) {
+        std::vector<std::array<double, 4>> out;
+        const auto d = numbers(*want->find(key)->find("data"));
+        for (std::size_t i = 0; i + 3 < d.size(); i += 4) out.push_back({d[i], d[i + 1], d[i + 2], d[i + 3]});
+        return out;
+    };
+    a.facecolors = colors("facecolors");
+    a.edgecolors = colors("edgecolors");
+    a.hatchcolors = colors("hatchcolors");
+    a.linewidths = numbers(*want->find("linewidths")->find("data"));
+    a.dashes = {{0.0, std::nullopt}};
+    a.antialiaseds = {true};
+    AggTraceRenderer r(400, 300, 100, rc, "C.UTF-8", fonts());
+    GC gc(rc);
+    gc.cliprect = std::array<double, 4>{50.0, 32.99999999999999, 360.0, 264.0};
+    r.drawPathCollection(gc, a);
+    EXPECT_EQ(firstDifference(events(r)[0], *want, "event"), "");
+}
+
+}  // namespace

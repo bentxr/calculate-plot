@@ -480,6 +480,8 @@
         "src/engine/artist.cpp",
         "src/engine/figure.hpp",
         "src/engine/figure.cpp",
+        "src/engine/collections.hpp",
+        "src/engine/collections.cpp",
         "src/engine/axes.hpp",
         "src/engine/axes.cpp",
         "src/engine/lines.hpp",

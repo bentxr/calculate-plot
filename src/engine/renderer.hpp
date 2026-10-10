@@ -8,6 +8,7 @@
 #include "text/font_manager.hpp"
 #include "transforms/transforms.hpp"
 
+#include <array>
 #include <optional>
 #include <string>
 #include <vector>
@@ -36,6 +37,20 @@ struct TextMetrics {
     double width = 0, height = 0, descent = 0;
 };
 
+// The arguments of draw_path_collection (offset_position is always "screen").
+struct PathCollectionArgs {
+    transforms::Matrix master;
+    std::vector<Path> paths;
+    std::vector<transforms::Matrix> transforms;  // each with the row 0 0 1 below
+    std::vector<std::array<double, 2>> offsets;
+    transforms::Matrix offsetTrans;
+    std::vector<std::array<double, 4>> facecolors, edgecolors, hatchcolors;
+    std::vector<double> linewidths;
+    std::vector<std::pair<double, std::optional<std::vector<double>>>> dashes;
+    std::vector<bool> antialiaseds;
+    std::vector<std::optional<std::string>> urls;
+};
+
 // What artists draw with: matplotlib's RendererBase methods.
 class Renderer {
 public:
@@ -53,6 +68,7 @@ public:
     virtual void drawMarkers(const GC& gc, const Path& markerPath, const transforms::Matrix& markerTrans,
                              const Path& path, const transforms::Matrix& trans,
                              const std::optional<std::vector<double>>& face) = 0;
+    virtual void drawPathCollection(const GC& gc, const PathCollectionArgs& args) = 0;
     // x, y: the text's origin in pixels from the top-left (flipy); angle in degrees.
     virtual void drawText(const GC& gc, double x, double y, const std::string& s, const FontSpec& font, double angle,
                           bool ismath, const TextOptions& mtext) = 0;

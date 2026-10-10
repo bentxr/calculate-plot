@@ -59,6 +59,7 @@ add_library(calculate-plot STATIC
     src/colors/colors.cpp
     src/engine/artist.cpp
     src/engine/axes.cpp
+    src/engine/collections.cpp
     src/engine/engine.cpp
     src/engine/figure.cpp
     src/engine/gc.cpp

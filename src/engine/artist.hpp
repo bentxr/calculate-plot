@@ -39,6 +39,7 @@ public:
     std::optional<bool> snap;
     std::optional<std::array<double, 3>> sketch;
     double zorder = 0;
+    std::string label;
     transforms::TransformPtr transform = std::make_shared<transforms::IdentityTransform>();
 
 protected:

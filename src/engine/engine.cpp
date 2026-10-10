@@ -5,6 +5,7 @@
 #include "rc/rc_params.hpp"
 
 #include <cctype>
+#include <cmath>
 #include <cstring>
 #include <limits>
 #include <map>
@@ -244,6 +245,7 @@ private:
             return true;
         }
         if (call.method == "plot") return plot(ax, call, error);
+        if (call.method == "scatter") return scatter(ax, call, error);
         if (call.method == "set_xscale" || call.method == "set_yscale") {
             if (!call.kwargs.empty()) return *error = where + ": scale options are not supported yet", false;
             if (call.args.size() != 1 || !call.args[0].isString()) return *error = where + ": give the scale's name", false;
@@ -380,6 +382,171 @@ private:
             ax.addLine(std::move(line));
         }
         ax.requestAutoscaleView(true, true);
+        return true;
+    }
+
+    // A colour or a list of colours (to_rgba_array's inputs that are colour specifications).
+    bool colorList(const Json& v, std::vector<colors::Spec>* out) {
+        out->clear();
+        colors::Spec one;
+        if (color(v, &one)) {
+            out->push_back(one);
+            return true;
+        }
+        const Json* seq = sequence(v);
+        if (!seq) return false;
+        for (const Json& item : seq->items()) {
+            if (!color(item, &one)) return false;
+            out->push_back(one);
+        }
+        return true;
+    }
+
+    // Axes.scatter(x, y, s=None, c=None, *, marker=None, alpha=None, linewidths=None, edgecolors=None, ...)
+    bool scatter(Axes& ax, const model::Call& call, std::string* error) {
+        const std::string where = call.on + ".scatter";
+        const Json* x = call.args.size() > 0 ? &call.args[0] : keyword(call, "x");
+        const Json* y = call.args.size() > 1 ? &call.args[1] : keyword(call, "y");
+        const Json* s = call.args.size() > 2 ? &call.args[2] : keyword(call, "s");
+        const Json* c = call.args.size() > 3 ? &call.args[3] : keyword(call, "c");
+        if (call.args.size() > 4) return *error = where + ": marker and the rest are keyword arguments", false;
+        std::vector<double> xs, ys;
+        if (!x || !y || !numbers(*x, &xs) || !numbers(*y, &ys)) return *error = where + ": x and y must be lists of numbers", false;
+        if (xs.size() != ys.size()) return *error = where + ": x and y must be the same size", false;
+        for (std::size_t i = 0; i < xs.size(); ++i)
+            if (!std::isfinite(xs[i]) || !std::isfinite(ys[i]))
+                return *error = where + ": non-finite points are not supported yet", false;
+        // s: lines.markersize ** 2 by default; one size or one per point
+        std::vector<double> sizes;
+        if (!s || s->isNull()) sizes = {std::pow(rc_.number("lines.markersize"), 2.0)};
+        else {
+            double one = 0;
+            if (readNumber(*s, &one)) sizes = {one};
+            else if (!numbers(*s, &sizes)) return *error = where + ": s must be a number or a list of numbers", false;
+        }
+        if (sizes.size() != 1 && sizes.size() != xs.size())
+            return *error = where + ": s cannot be broadcast to match x and y", false;
+        // _parse_scatter_color_args
+        std::optional<std::vector<colors::Spec>> facecolors, edgecolors, kwcolor;
+        std::optional<colors::Spec> edgeSingle;
+        bool edgeFace = false, edgeNone = false;
+        std::string marker = rc_.text("scatter.marker");
+        std::optional<double> alpha;
+        std::vector<double> linewidths;
+        bool linewidthsGiven = false;
+        std::optional<double> zorder;
+        std::string label;
+        for (const auto& [name, value] : call.kwargs) {
+            if (name == "x" || name == "y" || name == "s" || name == "c") continue;
+            if (name == "facecolors" || name == "facecolor" || name == "fc") {
+                std::vector<colors::Spec> l;
+                if (!colorList(value, &l)) return *error = where + ": bad facecolors", false;
+                facecolors = l;
+            } else if (name == "edgecolors" || name == "edgecolor" || name == "ec") {
+                if (value.isString() && (value.asString() == "face")) edgeFace = true;
+                else if (value.isString() && (value.asString() == "none" || value.asString() == "None")) edgeNone = true;
+                else {
+                    std::vector<colors::Spec> l;
+                    if (!colorList(value, &l)) return *error = where + ": bad edgecolors", false;
+                    edgecolors = l;
+                }
+            } else if (name == "color") {
+                std::vector<colors::Spec> l;
+                if (!colorList(value, &l)) return *error = where + ": bad color", false;
+                kwcolor = l;
+            } else if (name == "marker") {
+                if (!value.isString()) return *error = where + ": marker must be a string", false;
+                marker = value.asString();
+            } else if (name == "alpha") {
+                double a = 0;
+                if (!value.isNull()) {
+                    if (!readNumber(value, &a)) return *error = where + ": alpha must be a number", false;
+                    alpha = a;
+                }
+            } else if (name == "linewidths" || name == "linewidth" || name == "lw") {
+                double one = 0;
+                if (readNumber(value, &one)) linewidths = {one};
+                else if (!numbers(value, &linewidths)) return *error = where + ": bad linewidths", false;
+                linewidthsGiven = true;
+            } else if (name == "zorder") {
+                double z = 0;
+                if (!readNumber(value, &z)) return *error = where + ": zorder must be a number", false;
+                zorder = z;
+            } else if (name == "label") {
+                if (!value.isString()) return *error = where + ": label must be a string", false;
+                label = value.asString();
+            } else {
+                return *error = where + ": unsupported keyword " + name, false;
+            }
+        }
+        if (kwcolor && c && !c->isNull()) return *error = where + ": supply a 'c' argument or a 'color' kwarg but not both", false;
+        if (kwcolor) {
+            if (!edgecolors && !edgeFace && !edgeNone) edgecolors = kwcolor;
+            if (!facecolors) facecolors = kwcolor;
+        }
+        if (!edgecolors && !edgeFace && !edgeNone) {
+            const std::string e = rc_.text("scatter.edgecolors");
+            if (e == "face") edgeFace = true;
+            else if (e == "none") edgeNone = true;
+            else edgecolors = std::vector<colors::Spec>{e};
+        }
+        std::vector<colors::Spec> faces;
+        if (c && !c->isNull()) {
+            std::vector<double> values;
+            if (!c->isString() && numbers(*c, &values) && values.size() == xs.size() && !(values.size() == 3 || values.size() == 4))
+                return *error = where + ": colour-mapped c values are not supported yet", false;
+            if (!colorList(*c, &faces)) return *error = where + ": 'c' must be a color or a sequence of colors", false;
+        } else if (facecolors) {
+            faces = *facecolors;
+        } else {
+            faces = {ax.nextPatchColor()};
+        }
+        if (faces.size() != 1 && faces.size() != xs.size() && !faces.empty())
+            return *error = where + ": 'c' has a size inconsistent with x and y", false;
+
+        MarkerStyle style;
+        if (!style.set(marker, std::nullopt, rc_, error)) return false;
+        // marker.get_path().transformed(marker.get_transform())
+        std::vector<double> v = style.path().vertices ? *style.path().vertices : std::vector<double>{};
+        for (std::size_t i = 0; i + 1 < v.size(); i += 2) {
+            const auto p = transforms::apply(style.transform(), v[i], v[i + 1]);
+            v[i] = p[0], v[i + 1] = p[1];
+        }
+        Path path = Path::make(std::move(v), style.path().codes ? *style.path().codes : std::vector<unsigned char>{}, rc_);
+        // one colour may be 'none' (to_rgba_array gives no colours) or 'face'
+        const auto argOf = [](const std::vector<colors::Spec>& l) {
+            if (l.size() == 1) return ColorArg::of(l[0]);
+            ColorArg a;
+            a.kind = ColorArg::Colors;
+            a.colors = l;
+            return a;
+        };
+        ColorArg faceArg = argOf(faces), edgeArg;
+        if (edgeFace) edgeArg.kind = ColorArg::Face;
+        else if (edgeNone) edgeArg.kind = ColorArg::None;
+        else edgeArg = argOf(*edgecolors);
+        if (!style.filled()) {
+            if (style.fillstyle() == "none") {
+                edgeArg = faceArg;
+                faceArg = ColorArg{};
+                faceArg.kind = ColorArg::None;
+            } else {
+                edgeArg = ColorArg{};
+                edgeArg.kind = ColorArg::Face;
+            }
+            if (!linewidthsGiven) linewidths = {rc_.number("lines.linewidth")}, linewidthsGiven = true;
+        }
+        auto collection = std::make_unique<PathCollection>(rc_, std::vector<Path>{path}, sizes);
+        collection->setFacecolor(faceArg);
+        collection->setEdgecolor(edgeArg);
+        collection->setLinewidths(linewidthsGiven ? linewidths : std::vector<double>{});
+        for (std::size_t i = 0; i < xs.size(); ++i) collection->offsets.push_back({xs[i], ys[i]});
+        collection->offsetTransform = ax.transData;
+        if (alpha) collection->setAlpha(alpha);
+        collection->transform = std::make_shared<transforms::IdentityTransform>();
+        if (zorder) collection->zorder = *zorder;
+        collection->label = label;
+        ax.addCollection(std::move(collection));
         return true;
     }
 

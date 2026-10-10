@@ -85,7 +85,11 @@ it comes from in its first lines. The changes, as a whole:
   formatters, limit_range_for_scale), Axis._set_axes_scale (with its immediate autoscale), minor ticks
   (Axis._update_ticks, get_minorticklocs), the data limits' minpos, autoscale_view through the scale's transform, and
   Axes.viewLim running a pending autoscale before it is read, translated to C++; mathtext texts are drawn and
-  measured through the mathtext layout in both renderers.
+  measured through the mathtext layout in both renderers. collections.py's Collection (colours with 'none' and
+  'face', line widths, antialiasing, the draw with its single-path draw_markers optimisation and the hatch-colour
+  probe call of draw_path_collection, the data limits of offset collections) and PathCollection (sizes), and
+  axes/_axes.py's scatter with _parse_scatter_color_args and Axes.add_collection, translated to C++; the patches'
+  own colour cycle is kept apart from the lines'. Colour-mapped values come later.
 - File names drop the leading underscore (e.g. src/_backend_agg.h is src/agg/backend_agg.h); includes follow.
 - The drawing algorithms themselves (src/_backend_agg.h, src/_backend_agg.cpp, src/path_converters.h,
   src/agg_workaround.h, src/array.h, src/mplutils.h) are otherwise unchanged.

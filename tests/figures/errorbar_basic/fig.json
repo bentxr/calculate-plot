@@ -1,0 +1,4 @@
+{"version": 1, "calls": [
+  {"call": "subplots", "kwargs": {"figsize": {"$tuple": [4.0, 3.0]}}, "as": ["fig", "ax"]},
+  {"on": "ax", "call": "errorbar", "args": [[0, 1, 2, 3], [1, 2.5, 2, 3]], "kwargs": {"yerr": [0.2, 0.4, 0.3, 0.5], "fmt": "o", "capsize": 3}}
+]}

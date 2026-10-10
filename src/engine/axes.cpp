@@ -204,10 +204,10 @@ Tick::Tick(const rc::Params& rc, Axes& axes, bool isX, bool major, const TickSwi
     gridline.setLinestyle(gridLinestyle, &error);
     gridline.setLinewidth(gridLinewidth);
     gridline.setMarker("", &error);
-    for (Text* label : {&label1, &label2}) {
-        label->font.size = labelsize;
-        label->setColor(labelcolor);
-        label->figure = &axes.figure;
+    for (Text* tickLabel : {&label1, &label2}) {
+        tickLabel->font.size = labelsize;
+        tickLabel->setColor(labelcolor);
+        tickLabel->figure = &axes.figure;
     }
     label1.visible = sw.label1On;
     label2.visible = sw.label2On;
@@ -684,7 +684,7 @@ void Axes::setTitleOffsetTrans(double points) {
     }
 }
 
-void Axes::setTitle(const std::string& label, const std::string& loc, std::optional<double> pad, std::optional<double> y) {
+void Axes::setTitle(const std::string& titleText, const std::string& loc, std::optional<double> pad, std::optional<double> y) {
     double ty = 1.0;
     if (y) {
         ty = *y;
@@ -695,7 +695,7 @@ void Axes::setTitle(const std::string& label, const std::string& loc, std::optio
     }
     Text& t = loc == "left" ? *leftTitle : loc == "right" ? *rightTitle : *title;
     setTitleOffsetTrans(pad ? *pad : rc_.number("axes.titlepad"));
-    t.text = label;
+    t.text = titleText;
     const auto& size = rc_.value("axes.titlesize");
     t.font.size = size.isNumber() ? size.asNumber() : *text::fontSize(size.asString(), rc_);
     const auto& weight = rc_.value("axes.titleweight");
@@ -787,6 +787,58 @@ colors::Spec Axes::nextColor() {
     colors::Spec c = cycle[cycleIndex_];
     cycleIndex_ = (cycleIndex_ + 1) % cycle.size();
     return c;
+}
+
+colors::Spec Axes::nextPatchColor() {
+    const auto cycle = rc_.colorCycle();
+    if (cycle.empty()) return std::string("k");
+    colors::Spec c = cycle[patchCycleIndex_];
+    patchCycleIndex_ = (patchCycleIndex_ + 1) % cycle.size();
+    return c;
+}
+
+void Axes::updateDatalim(const std::vector<std::array<double, 2>>& xys) {
+    // update_datalim: nothing unless some value is finite; then Bbox.update_from_data_xy
+    bool anyFinite = false;
+    for (const auto& p : xys) anyFinite = anyFinite || std::isfinite(p[0]) || std::isfinite(p[1]);
+    if (!anyFinite) return;
+    const double inf = std::numeric_limits<double>::infinity();
+    auto points = ignoreExistingDataLimits_ ? std::array<double, 4>{inf, inf, -inf, -inf} : dataLim->points();
+    if (ignoreExistingDataLimits_) minpos = {inf, inf};
+    double minx = inf, maxx = -inf, miny = inf, maxy = -inf, posx = inf, posy = inf;
+    for (const auto& p : xys) {
+        if (!std::isfinite(p[0]) || !std::isfinite(p[1])) continue;
+        minx = std::min(minx, p[0]), maxx = std::max(maxx, p[0]);
+        miny = std::min(miny, p[1]), maxy = std::max(maxy, p[1]);
+        if (p[0] > 0) posx = std::min(posx, p[0]);
+        if (p[1] > 0) posy = std::min(posy, p[1]);
+    }
+    points[0] = minx < points[0] ? minx : points[0];
+    points[2] = maxx > points[2] ? maxx : points[2];
+    points[1] = miny < points[1] ? miny : points[1];
+    points[3] = maxy > points[3] ? maxy : points[3];
+    minpos[0] = posx < minpos[0] ? posx : minpos[0];
+    minpos[1] = posy < minpos[1] ? posy : minpos[1];
+    dataLim->setPoints(points);
+    ignoreExistingDataLimits_ = false;
+}
+
+Collection& Axes::addCollection(std::unique_ptr<Collection> c) {
+    if (c->label.empty()) c->label = "_child" + std::to_string(children.size());
+    c->figure = &figure;
+    if (!c->offsetTransform || c->offsetTransform->isIdentity()) c->offsetTransform = transData;
+    c->clipBox = std::make_shared<transforms::TransformedBbox>(
+        std::make_shared<transforms::Bbox>(std::array<double, 4>{0, 0, 1, 1}), patch->fullTransform());
+    unstaleViewLim();
+    // _update_collection_limits: the box's corners and its minpos (when finite)
+    const auto d = c->dataLim();
+    std::vector<std::array<double, 2>> points{{d.points[0], d.points[1]}, {d.points[2], d.points[3]}};
+    if (std::isfinite(d.minpos[0]) || std::isfinite(d.minpos[1])) points.push_back(d.minpos);
+    updateDatalim(points);
+    requestAutoscaleView(true, true);
+    Collection& ref = *c;
+    children.push_back(std::move(c));
+    return ref;
 }
 
 void Axes::requestAutoscaleView(bool x, bool y) {

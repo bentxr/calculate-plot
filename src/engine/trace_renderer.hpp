@@ -40,6 +40,8 @@ protected:
     void writeMatrix(const transforms::Matrix& m);
     void writeNumbers(const std::vector<double>& values);
     void writeOptionalText(const std::optional<std::string>& text);
+    void writeArray(const std::vector<std::size_t>& shape, const std::vector<double>& data);  // record.py's array()
+    void writeCollectionFields(const PathCollectionArgs& args);
     int clipIndex(const ClipPath& clip);  // clip paths numbered by the identity of their Path
     std::string events();                 // the events array
 
@@ -64,6 +66,7 @@ public:
                   const std::optional<std::vector<double>>& face) override;
     void drawMarkers(const GC& gc, const Path& markerPath, const transforms::Matrix& markerTrans, const Path& path,
                      const transforms::Matrix& trans, const std::optional<std::vector<double>>& face) override;
+    void drawPathCollection(const GC& gc, const PathCollectionArgs& args) override;
     // The draw_text call, then what it hands on: the laid-out glyphs (_draw_text_glyphs_and_boxes) and
     // each glyph's bitmap (draw_text_image).
     void drawText(const GC& gc, double x, double y, const std::string& s, const FontSpec& font, double angle,
@@ -90,6 +93,7 @@ public:
                   const std::optional<std::vector<double>>& face) override;
     void drawMarkers(const GC& gc, const Path& markerPath, const transforms::Matrix& markerTrans, const Path& path,
                      const transforms::Matrix& trans, const std::optional<std::vector<double>>& face) override;
+    void drawPathCollection(const GC& gc, const PathCollectionArgs& args) override;
     void drawText(const GC& gc, double x, double y, const std::string& s, const FontSpec& font, double angle,
                   bool ismath, const TextOptions& mtext) override;
     // TextToPath.get_text_width_height_descent: unhinted, at TextToPath.FONT_SCALE, scaled to the size.

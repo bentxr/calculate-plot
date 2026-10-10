@@ -91,6 +91,56 @@ void TraceRenderer::writeOptionalText(const std::optional<std::string>& text) {
     else events_.null();
 }
 
+void TraceRenderer::writeArray(const std::vector<std::size_t>& shape, const std::vector<double>& data) {
+    events_.beginObject().key("shape").beginArray();
+    for (std::size_t n : shape) events_.value(static_cast<long long>(n));
+    events_.endArray().key("data");
+    writeNumbers(data);
+    events_.endObject();
+}
+
+void TraceRenderer::writeCollectionFields(const PathCollectionArgs& a) {
+    events_.key("master_transform");
+    writeMatrix(a.master);
+    events_.key("paths").beginArray();
+    for (const Path& p : a.paths) writePath(p);
+    events_.endArray();
+    std::vector<double> t;
+    for (const auto& m : a.transforms) {
+        for (double v : {m.sx, m.shx, m.tx, m.shy, m.sy, m.ty, 0.0, 0.0, 1.0}) t.push_back(v);
+    }
+    events_.key("transforms");
+    writeArray({a.transforms.size(), 3, 3}, t);
+    std::vector<double> o;
+    for (const auto& p : a.offsets) o.push_back(p[0]), o.push_back(p[1]);
+    events_.key("offsets");
+    writeArray({a.offsets.size(), 2}, o);
+    events_.key("offset_transform");
+    writeMatrix(a.offsetTrans);
+    const auto colors = [&](const char* key, const std::vector<std::array<double, 4>>& c) {
+        std::vector<double> d;
+        for (const auto& x : c) d.insert(d.end(), x.begin(), x.end());
+        events_.key(key);
+        writeArray({c.size(), 4}, d);
+    };
+    colors("facecolors", a.facecolors);
+    colors("edgecolors", a.edgecolors);
+    events_.key("linewidths");
+    writeArray({a.linewidths.size()}, a.linewidths);
+    events_.key("dashes").beginArray();
+    for (const auto& [offset, pattern] : a.dashes) {
+        events_.beginArray().value(offset);
+        if (pattern) writeNumbers(*pattern);
+        else events_.null();
+        events_.endArray();
+    }
+    events_.endArray();
+    std::vector<double> aa;
+    for (bool b : a.antialiaseds) aa.push_back(b ? 1.0 : 0.0);
+    events_.key("antialiaseds");
+    writeArray({a.antialiaseds.size()}, aa);
+}
+
 int TraceRenderer::clipIndex(const ClipPath& clip) {
     const void* identity = clip.path.vertices.get();
     auto it = clipIds_.find(identity);
@@ -145,6 +195,19 @@ void AggTraceRenderer::drawMarkers(const GC& gc, const Path& markerPath, const t
     writeMatrix(trans);
     events_.key("face");
     writeFace(face);
+    events_.endObject();
+}
+
+void AggTraceRenderer::drawPathCollection(const GC& gc, const PathCollectionArgs& a) {
+    events_.beginObject();
+    events_.key("op").value("draw_path_collection");
+    events_.key("gc");
+    writeGc(gc);
+    writeCollectionFields(a);
+    std::vector<double> h;
+    for (const auto& x : a.hatchcolors) h.insert(h.end(), x.begin(), x.end());
+    events_.key("hatchcolors");
+    writeArray({a.hatchcolors.size(), 4}, h);
     events_.endObject();
 }
 
@@ -376,6 +439,24 @@ void SvgTraceRenderer::drawMarkers(const GC& gc, const Path& markerPath, const t
     events_.key("face");
     if (face) writeNumbers(*face);
     else events_.null();
+    events_.key("clip_transform");
+    writeClipTransform(gc);
+    events_.endObject();
+}
+
+void SvgTraceRenderer::drawPathCollection(const GC& gc, const PathCollectionArgs& a) {
+    events_.beginObject();
+    events_.key("op").value("draw_path_collection");
+    events_.key("gc");
+    writeSvgGc(gc);
+    writeCollectionFields(a);
+    events_.key("urls").beginArray();
+    for (const auto& u : a.urls) writeOptionalText(u);
+    events_.endArray();
+    std::vector<double> h;
+    for (const auto& x : a.hatchcolors) h.insert(h.end(), x.begin(), x.end());
+    events_.key("hatchcolors");
+    writeArray({a.hatchcolors.size(), 4}, h);
     events_.key("clip_transform");
     writeClipTransform(gc);
     events_.endObject();

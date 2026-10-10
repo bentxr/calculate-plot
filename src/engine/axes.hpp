@@ -7,6 +7,7 @@
 #include "axes/log_ticker.hpp"
 #include "axes/ticker.hpp"
 #include "engine/artist.hpp"
+#include "engine/collections.hpp"
 #include "engine/gridspec.hpp"
 #include "engine/lines.hpp"
 #include "engine/text.hpp"
@@ -155,6 +156,11 @@ public:
     Line2D& addLine(std::unique_ptr<Line2D> line);
     // The next colour of the property cycle when a line has none (_PropCycle.getdefaults).
     colors::Spec nextColor();
+    // The patches' own cycle (_get_patches_for_fill.get_next_color), used by scatter and fills.
+    colors::Spec nextPatchColor();
+    // Axes.add_collection(autolim=True): a pending autoscale runs first, then the data limits grow
+    // by the collection's and an autoscale is requested.
+    Collection& addCollection(std::unique_ptr<Collection> collection);
     void requestAutoscaleView(bool x, bool y);
     void setScale(bool x, const std::string& name);  // set_xscale / set_yscale
     void unstaleViewLim();                            // what reading Axes.viewLim does first
@@ -175,7 +181,8 @@ private:
     bool ignoreExistingDataLimits_ = true;
     bool minorTicksUnsupported_ = false;
     bool staleX_ = false, staleY_ = false;
-    std::size_t cycleIndex_ = 0;
+    std::size_t cycleIndex_ = 0, patchCycleIndex_ = 0;
+    void updateDatalim(const std::vector<std::array<double, 2>>& xys);
 };
 
 }  // namespace calculate_plot::engine

@@ -51,7 +51,6 @@ public:
     void setYdata(std::vector<double> y);
     const Path& path();  // the data path (recached if the data changed)
     const std::string& linestyle() const { return linestyle_; }
-    std::string label;
     void draw(Renderer& renderer) override;
 
     colors::Spec color;
