@@ -1,0 +1,9 @@
+calculate-plot: third-party notices
+===================================
+
+calculate-plot contains or is built from the third-party components listed below. Their licence
+texts are in the LICENSES directory and are shipped with every binary. The machine-readable list
+of every borrowed file, its origin and its licence is licensing/manifest.json; an automated test
+fails the build if anything listed there is missing.
+
+(No third-party component is part of the distributed library yet.)

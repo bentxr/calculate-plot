@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "ignore": ["build/**", ".git/**", "tools/oracle/.venv/**", "**/__pycache__/**"],
+  "own": [
+    "README.md", ".gitignore", "CMakeLists.txt", "CMakePresets.json", ".github/**",
+    "include/**", "src/**", "cli/**", "tests/**", "tools/**", "licensing/**", "NOTICE"
+  ],
+  "forbidden": [
+    "**/agg_conv_gpc.h", "**/gpc.c", "**/gpc.h", "**/cmr10.pfb", "**/Courier10PitchBT-Bold.pfb"
+  ],
+  "mayMentionCopyright": ["NOTICE", "licensing/**", "tests/licensing/**", "tests/test_licensing.cpp"],
+  "notice": "NOTICE",
+  "components": [
+    {
+      "id": "googletest",
+      "name": "GoogleTest",
+      "version": "1.18.0",
+      "homepage": "https://github.com/google/googletest",
+      "use": "test",
+      "licence": "BSD-3-Clause",
+      "licenceFiles": [
+        {
+          "path": "LICENSES/GoogleTest.txt",
+          "upstream": "https://raw.githubusercontent.com/google/googletest/v1.18.0/LICENSE",
+          "sha256": "9702de7e4117a8e2b20dafab11ffda58c198aede066406496bef670d40a22138"
+        }
+      ],
+      "fetch": [
+        {
+          "url": "https://github.com/google/googletest/archive/refs/tags/v1.18.0.tar.gz",
+          "sha256": "6e3191c1455468b3fc35a417fb565c1c5071aee1b7e7f85e30cf48a98d37d8b5"
+        }
+      ],
+      "vendored": [],
+      "derived": [],
+      "header": [],
+      "notices": [],
+      "changes": null
+    }
+  ]
+}
