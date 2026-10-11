@@ -1300,8 +1300,12 @@ private:
                 if (!readNumber(value, &n) || n < 1) return *error = where + ": ncols must be a positive integer", false;
                 o.ncols = int(n);
             } else if (name == "facecolor" || name == "edgecolor") {
+                // a colour that to_rgba takes, or 'inherit' (the Axes' own)
                 colors::Spec c;
                 if (!color(value, &c)) return *error = where + ": bad " + name, false;
+                const std::string* word = std::get_if<std::string>(&c);
+                if (!(word && *word == "inherit") && !colors::toRgba(c, std::nullopt, rc_, nullptr))
+                    return *error = where + ": bad " + name, false;
                 (name == "facecolor" ? o.facecolor : o.edgecolor) = c;
             } else {
                 static const char* const numeric[] = {"framealpha", "borderpad", "labelspacing", "handlelength",
@@ -1422,15 +1426,15 @@ private:
             return true;
         };
         std::string str;
-        if (name == "color") {
-            if (!text(&str)) return *error = where + ": patch colours must be strings so far", false;
-            p.setColor(str);
-        } else if (name == "facecolor" || name == "fc") {
-            if (!text(&str)) return *error = where + ": patch colours must be strings so far", false;
-            p.setFacecolor(str);
-        } else if (name == "edgecolor" || name == "ec") {
-            if (!text(&str)) return *error = where + ": patch colours must be strings so far", false;
-            p.setEdgecolor(str);
+        if (name == "color" || name == "facecolor" || name == "fc" || name == "edgecolor" || name == "ec") {
+            // set_color / set_facecolor / set_edgecolor: a colour that to_rgba takes
+            colors::Spec spec;
+            std::string why;
+            if (!color(v, &spec) || !colors::toRgba(spec, std::nullopt, rc_, &why))
+                return *error = where + ": " + name + " is not a colour" + (why.empty() ? "" : ": " + why), false;
+            if (name == "color") p.setColor(spec);
+            else if (name[0] == 'f') p.setFacecolor(spec);
+            else p.setEdgecolor(spec);
         } else if (name == "alpha") {
             if (!readNumber(v, &n)) return *error = where + ": alpha must be a number", false;
             p.setAlpha(n);

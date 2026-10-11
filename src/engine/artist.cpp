@@ -52,26 +52,26 @@ Patch::Patch(const rc::Params& rc) : Artist(rc), antialiased(rc.boolean("patch.a
     setLinewidth(std::nullopt);
 }
 
-void Patch::setEdgecolor(const std::optional<std::string>& color) {
+void Patch::setEdgecolor(const std::optional<colors::Spec>& color) {
     originalEdgecolor_ = color;
     applyEdgecolor();
 }
 
 void Patch::applyEdgecolor() {
-    std::string c;
+    colors::Spec c;
     if (originalEdgecolor_) c = *originalEdgecolor_;
     else if (rc_.boolean("patch.force_edgecolor") || !fill_ || edgeDefault_) c = rc_.text("patch.edgecolor");
-    else c = "none";
+    else c = std::string("none");
     edgecolor_ = *colors::toRgba(c, alpha, rc_, nullptr);
 }
 
-void Patch::setFacecolor(const std::optional<std::string>& color) {
+void Patch::setFacecolor(const std::optional<colors::Spec>& color) {
     originalFacecolor_ = color;
     applyFacecolor();
 }
 
 void Patch::applyFacecolor() {
-    const std::string c = originalFacecolor_ ? *originalFacecolor_ : rc_.text("patch.facecolor");
+    const colors::Spec c = originalFacecolor_ ? *originalFacecolor_ : colors::Spec(rc_.text("patch.facecolor"));
     facecolor_ = *colors::toRgba(c, fill_ ? alpha : std::optional<double>(0.0), rc_, nullptr);
 }
 

@@ -378,6 +378,33 @@ TEST(TextKeywordCalls, NoneKeywordsAreTheDefaults) {
     EXPECT_EQ(drawing.error, "");
 }
 
+class SpanRefusals : public testing::TestWithParam<Refusal> {};
+
+// A span's colours are what to_rgba takes: a name or three or four parts.
+TEST_P(SpanRefusals, NameTheCallAndTheReason) {
+    const auto drawing = draw(kSubplots + GetParam().call);
+    EXPECT_EQ(drawing.error, GetParam().error);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    Engine, SpanRefusals,
+    testing::Values(
+        Refusal{R"({"on": "axs[0]", "call": "axvspan", "args": [0, 1], "kwargs": {"color": [1, 2]}})",
+                "axs[0].axvspan: color is not a colour"},
+        Refusal{R"({"on": "axs[0]", "call": "axvspan", "args": [0, 1], "kwargs": {"color": 3}})",
+                "axs[0].axvspan: color is not a colour"},
+        Refusal{R"({"on": "axs[0]", "call": "axhspan", "args": [0, 1], "kwargs": {"fc": "no such colour"}})",
+                "axs[0].axhspan: fc is not a colour: Invalid RGBA argument: no such colour"},
+        Refusal{R"({"on": "axs[0]", "call": "axhspan", "args": [0, 1], "kwargs": {"facecolor": [0.1, 0.2, 0.3, 0.4, 0.5]}})",
+                "axs[0].axhspan: facecolor is not a colour"},
+        Refusal{R"({"on": "axs[0]", "call": "axhspan", "args": [0, 1], "kwargs": {"edgecolor": [0.1, 0.2, 7]}})",
+                "axs[0].axhspan: edgecolor is not a colour: RGBA values should be within 0-1 range"},
+        Refusal{R"({"on": "axs[0]", "call": "axvspan", "args": [0, 1], "kwargs": {"ec": null}})",
+                "axs[0].axvspan: ec is not a colour"},
+        Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"facecolor": "no such colour"}})",
+                "axs[0].legend: bad facecolor"},
+        Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"edgecolor": [1, 2]}})", "axs[0].legend: bad edgecolor"}));
+
 TEST(LayoutCalls, WhatCannotBeMeasuredStopsTheLayout) {
     std::string error;
     const auto figure = calculate_plot::model::parseFigure(

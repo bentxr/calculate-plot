@@ -51,8 +51,9 @@ protected:
 class Patch : public Artist {
 public:
     explicit Patch(const rc::Params& rc);
-    void setEdgecolor(const std::optional<std::string>& color);
-    void setFacecolor(const std::optional<std::string>& color);
+    // set_edgecolor / set_facecolor: a colour (a name or its parts), or None for the default
+    void setEdgecolor(const std::optional<colors::Spec>& color);
+    void setFacecolor(const std::optional<colors::Spec>& color);
     void setLinewidth(std::optional<double> w);
     void setLinestyle(const std::string& style);
     virtual Path path() const = 0;
@@ -73,7 +74,7 @@ public:
     double linewidth() const { return linewidth_; }
     // The colours as they were set and as they resolved, to put back what a save changes for a while
     struct Colors {
-        std::optional<std::string> originalEdge, originalFace;
+        std::optional<colors::Spec> originalEdge, originalFace;
         colors::Rgba edge, face;
     };
     Colors colorState() const { return {originalEdgecolor_, originalFacecolor_, edgecolor_, facecolor_}; }
@@ -83,7 +84,7 @@ public:
     }
     void setFill(bool b);
     void updateFrom(const Patch& other);  // Patch.update_from, for the handle of a legend
-    void setColor(const std::string& c) {  // Patch.set_color: edge and face
+    void setColor(const colors::Spec& c) {  // Patch.set_color: edge and face
         setEdgecolor(c);
         setFacecolor(c);
     }
@@ -93,7 +94,7 @@ protected:
     void applyFacecolor();
     bool fill_ = true;
     bool edgeDefault_ = false;
-    std::optional<std::string> originalEdgecolor_, originalFacecolor_;
+    std::optional<colors::Spec> originalEdgecolor_, originalFacecolor_;
     colors::Rgba edgecolor_{}, facecolor_{};
     double linewidth_ = 0;
     std::string linestyle_ = "solid";

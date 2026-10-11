@@ -256,10 +256,8 @@ Legend::Legend(const rc::Params& rc, Axes& parent, const std::vector<Artist*>& h
     const bool fancybox = o.fancybox ? *o.fancybox : rc.boolean("legend.fancybox");
     patch_ = std::make_unique<FancyBboxPatch>(rc, 0, 0, 1, 1, fancybox ? "round" : "square", 0.0,
                                               fancybox ? std::optional<double>(0.2) : std::nullopt, fontsize_);
-    const auto specText = [](const colors::Spec& c) { return std::get_if<std::string>(&c) ? *std::get_if<std::string>(&c) : std::string(); };
-    if (!std::get_if<std::string>(&face) || !std::get_if<std::string>(&edge)) *error = "legend colours must be strings so far";
-    patch_->setEdgecolor(specText(edge));
-    patch_->setFacecolor(specText(face));
+    patch_->setEdgecolor(edge);
+    patch_->setFacecolor(face);
     if (!rc.value("legend.linewidth").isNull()) patch_->setLinewidth(rc.number("legend.linewidth"));
     patch_->setAlpha(o.framealpha ? *o.framealpha : rc.number("legend.framealpha"));
     patch_->snap = true;
