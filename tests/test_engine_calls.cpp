@@ -637,6 +637,34 @@ TEST(RcCalls, SettingsThatBreakWhenUsed) {
     EXPECT_EQ(negative.second, "All values in the dash list must be non-negative");
 }
 
+// An Axes of no width has a transform that cannot be inverted, and matplotlib stops with numpy's
+// "Singular matrix" where the inverse is first needed: not for an axhline on fresh limits (its
+// transform then equals the Axes' own and no inverse is taken), but after a plot has changed them.
+TEST(RcCalls, ATransformThatCannotBeInvertedStopsTheDrawing) {
+    const auto error = [](const std::string& calls) {
+        std::string parseError;
+        const auto figure = calculate_plot::model::parseFigure(
+            R"({"version": 1, "rc": {"figure.subplot.wspace": 1e300}, "calls": [{"call": "subplots", "args": [2, 2], "as": ["fig", "axs"]})" +
+                calls + "]}", &parseError);
+        EXPECT_TRUE(figure.has_value()) << parseError;
+        if (!figure) return std::string();
+        calculate_plot::engine::DrawOptions options;
+        options.fontDirectory = std::string(CALCULATE_PLOT_SOURCE_DIR) + "/fonts/ttf";
+        const std::string agg = calculate_plot::engine::drawAgg(*figure, options).error;
+        EXPECT_EQ(calculate_plot::engine::drawSvg(*figure, options).error, agg);
+        return agg;
+    };
+    const std::string plot = R"(, {"on": "axs[0, 0]", "call": "plot", "args": [[1, 2], [1, 2]]})";
+    const std::string line = R"(, {"on": "axs[0, 0]", "call": "axhline", "args": [3.0]})";
+    EXPECT_EQ(error(""), "");
+    EXPECT_EQ(error(plot), "");
+    EXPECT_EQ(error(line), "");
+    EXPECT_EQ(error(plot + line), "axs[0, 0].axhline: Singular matrix");
+    EXPECT_EQ(error(plot + line + plot), "axs[0, 0].axhline: Singular matrix");
+    // and the next figure starts clean
+    EXPECT_EQ(error(plot), "");
+}
+
 // None for the optional keywords is the same as leaving them out.
 TEST(LayoutCalls, NoneKeywordsAreTheDefaults) {
     const auto plain = draw(kSubplots + R"({"on": "fig", "call": "tight_layout"})");

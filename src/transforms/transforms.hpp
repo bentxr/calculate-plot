@@ -21,6 +21,10 @@ struct Matrix {
 Matrix dot(const Matrix& b, const Matrix& a);
 // numpy.linalg.inv of the 3x3 matrix (LU with partial pivoting, as LAPACK's dgesv).
 Matrix inverse(const Matrix& m);
+// numpy.linalg.inv raises LinAlgError("Singular matrix") where a pivot is exactly zero, and
+// matplotlib lets that end the drawing. inverse() cannot raise: it notes it here (per thread) for
+// whoever runs the drawing to ask and clear.
+bool& singularMatrixSeen();
 // Transform.transform of one point: (sx*x + shx*y) + tx, as matplotlib's C++ affine_transform.
 std::array<double, 2> apply(const Matrix& m, double x, double y);
 

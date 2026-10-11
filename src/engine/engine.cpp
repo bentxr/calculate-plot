@@ -1672,14 +1672,20 @@ std::string runFigure(const model::Figure& model, const DrawOptions& options, Dr
         std::string error;
         if (!probe.set(rc.text("lines.marker"), std::string("full"), rc, &error)) return "rc lines.marker: " + error;
     }
+    // A transform that cannot be inverted (an Axes of no width, say) ends the drawing in matplotlib
+    // where its inverse is first asked for ("Singular matrix").
+    transforms::singularMatrixSeen() = false;
+    const char* const singular = "Singular matrix";
     Executor executor(std::move(rc), options);
     for (const auto& call : model.calls) {
         std::string error;
         if (!executor.run(call, &error)) return error;
+        if (transforms::singularMatrixSeen()) return (call.on.empty() ? "plt" : call.on) + "." + call.method + ": " + singular;
     }
     Figure* figure = executor.currentFigure();
     if (!figure) return "the figure file makes no figure";
-    return draw(*figure);
+    const std::string error = draw(*figure);
+    return error.empty() && transforms::singularMatrixSeen() ? singular : error;
 }
 
 AggDrawing drawAgg(const model::Figure& model, const DrawOptions& options) {

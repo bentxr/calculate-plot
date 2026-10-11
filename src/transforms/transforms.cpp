@@ -39,6 +39,11 @@ Matrix dot(const Matrix& b, const Matrix& a) {
     return r;
 }
 
+bool& singularMatrixSeen() {
+    thread_local bool seen = false;
+    return seen;
+}
+
 Matrix inverse(const Matrix& m) {
     // dgesv(A, I): dgetf2 (LU, partial pivoting, the column scaled by the reciprocal of the pivot,
     // rank-one updates), then dgetrs (forward then back substitution), column by column. The back
@@ -56,6 +61,8 @@ Matrix inverse(const Matrix& m) {
         if (a[j][j] != 0.0) {
             const double r = 1.0 / a[j][j];
             for (int i = j + 1; i < 3; ++i) a[i][j] *= r;
+        } else {
+            singularMatrixSeen() = true;  // (info > 0: the factor U is exactly singular)
         }
         for (int i = j + 1; i < 3; ++i)
             for (int k = j + 1; k < 3; ++k) a[i][k] -= a[i][j] * a[j][k];
