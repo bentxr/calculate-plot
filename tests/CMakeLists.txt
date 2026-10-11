@@ -26,10 +26,12 @@ add_executable(calculate-plot-tests
     test_fontconfig.cpp
     test_mathtext.cpp
     test_pyparse.cpp
+    test_pyliteral.cpp
     test_model.cpp
     test_notices.cpp
     test_png.cpp
     test_rc.cpp
+    test_rc_validate.cpp
     test_pyformat.cpp
     test_pynum.cpp
     test_replay.cpp

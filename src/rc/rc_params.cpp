@@ -1,11 +1,10 @@
 #include "rc/rc_params.hpp"
 
 #include <algorithm>
-#include <cstring>
+#include <cmath>
 
+#include "rc/rc_validate.hpp"
 #include "support/embedded.hpp"
-#include "support/fontconfig_pattern.hpp"
-#include "support/json_writer.hpp"
 
 namespace calculate_plot::rc {
 
@@ -27,9 +26,55 @@ Kind kindOf(const Json& v) {
     }
 }
 
+// Whether a stored value is the default of its key (a number by its value), for the keys that take
+// their default only.
+bool same(const Json& a, const Json& b) {
+    if (a.type() != b.type()) return false;
+    if (a.isBool()) return a.asBool() == b.asBool();
+    if (a.isNumber()) return a.asNumber() == b.asNumber();
+    if (a.isString()) return a.asString() == b.asString();
+    if (a.isArray()) return a.size() == 0 && b.size() == 0;  // (the lists compared here are empty by default)
+    return true;
+}
+
+// No number in the value is a nan or an infinity.
+bool finite(const Json& v) {
+    if (v.isNumber()) return std::isfinite(v.asNumber());
+    for (const Json& item : v.items())
+        if (!finite(item)) return false;
+    return true;
+}
+
+// No integer in the value is beyond 32 bits (the engine reads them as int).
+bool fitsInt(const Json& v) {
+    if (v.isNumber()) return !v.isInteger() || std::fabs(v.asNumber()) <= 2147483647.0;
+    for (const Json& item : v.items())
+        if (!fitsInt(item)) return false;
+    return true;
+}
+
+// Whether the engine reads a value of kind `got` for a key whose default is of kind `want`: the
+// same kind as the default, anything where the default is None, and for a few keys whose default is
+// a name a number as well (savefig.dpi: 'figure'; the font sizes: 'medium', 'large'; the font
+// weights: 'normal') or None (mathtext.fallback).
+bool readable(const std::string& key, Kind want, Kind got) {
+    static const char* const kNumberOrName[] = {
+        "savefig.dpi",     "axes.labelsize",   "axes.titlesize",  "figure.titlesize",   "legend.fontsize",
+        "xtick.labelsize", "ytick.labelsize",  "axes.labelweight", "axes.titleweight",  "figure.titleweight",
+        "font.weight"};
+    if (want == Kind::Null || got == want) return true;
+    if (got == Kind::Null) return key == "mathtext.fallback";
+    // (their validators give a name or a number, nothing else)
+    for (const char* k : kNumberOrName)
+        if (key == k) return true;
+    return false;
+}
+
+std::set<std::string>* readLog = nullptr;
+
 }  // namespace
 
-Params Params::defaults() {
+const Params& Params::standard() {
     static const Params loaded = [] {
         Params p;
         const auto doc = support::parseJson(embedded::file("data/rcdefaults.json"), nullptr);
@@ -41,8 +86,17 @@ Params Params::defaults() {
     return loaded;
 }
 
+Params Params::defaults() { return standard(); }
+
+std::vector<std::string> Params::keys() const {
+    std::vector<std::string> out;
+    for (const auto& [key, value] : values_) out.push_back(key);
+    return out;
+}
+
 const Json& Params::value(const std::string& key) const {
     static const Json null;
+    if (readLog) readLog->insert(key);
     auto it = values_.find(key);
     return it == values_.end() ? null : it->second;
 }
@@ -76,116 +130,79 @@ std::vector<std::vector<double>> Params::colorCycle() const {
     return out;
 }
 
+const std::vector<std::string>& Params::inertKeys() {
+    // Animations, 3D axes, box plots, contours, dates, images, the keys and windows of the interactive
+    // backends, PDF, PGF and PostScript output, and the like.
+    static const std::vector<std::string> keys = {
+        "animation.bitrate", "animation.codec", "animation.convert_args", "animation.convert_path",
+        "animation.embed_limit", "animation.ffmpeg_args", "animation.ffmpeg_path", "animation.frame_format",
+        "animation.html", "animation.writer", "axes.zmargin", "axes3d.automargin", "axes3d.depthshade",
+        "axes3d.depthshade_minalpha", "axes3d.grid", "axes3d.mouserotationstyle", "axes3d.snap_rotation",
+        "axes3d.trackballborder", "axes3d.trackballsize", "axes3d.xaxis.panecolor", "axes3d.yaxis.panecolor",
+        "axes3d.zaxis.panecolor", "backend_fallback", "boxplot.bootstrap", "boxplot.boxprops.color",
+        "boxplot.boxprops.linestyle", "boxplot.boxprops.linewidth", "boxplot.capprops.color",
+        "boxplot.capprops.linestyle", "boxplot.capprops.linewidth", "boxplot.flierprops.color",
+        "boxplot.flierprops.linestyle", "boxplot.flierprops.linewidth", "boxplot.flierprops.marker",
+        "boxplot.flierprops.markeredgecolor", "boxplot.flierprops.markeredgewidth",
+        "boxplot.flierprops.markerfacecolor", "boxplot.flierprops.markersize", "boxplot.meanline",
+        "boxplot.meanprops.color", "boxplot.meanprops.linestyle", "boxplot.meanprops.linewidth",
+        "boxplot.meanprops.marker", "boxplot.meanprops.markeredgecolor", "boxplot.meanprops.markerfacecolor",
+        "boxplot.meanprops.markersize", "boxplot.medianprops.color", "boxplot.medianprops.linestyle",
+        "boxplot.medianprops.linewidth", "boxplot.notch", "boxplot.patchartist", "boxplot.showbox",
+        "boxplot.showcaps", "boxplot.showfliers", "boxplot.showmeans", "boxplot.vertical",
+        "boxplot.whiskerprops.color", "boxplot.whiskerprops.linestyle", "boxplot.whiskerprops.linewidth",
+        "boxplot.whiskers", "contour.algorithm", "contour.corner_mask", "contour.linewidth",
+        "contour.negative_linestyle", "date.autoformatter.day", "date.autoformatter.hour",
+        "date.autoformatter.microsecond", "date.autoformatter.minute", "date.autoformatter.month",
+        "date.autoformatter.second", "date.autoformatter.year", "date.converter", "date.epoch",
+        "date.interval_multiples", "docstring.hardcopy", "figure.constrained_layout.h_pad",
+        "figure.constrained_layout.hspace", "figure.constrained_layout.w_pad", "figure.constrained_layout.wspace",
+        "figure.labelsize", "figure.labelweight", "figure.max_open_warning", "figure.raise_window", "hatch.color",
+        "hist.bins", "image.aspect", "image.composite_image", "image.interpolation", "image.interpolation_stage",
+        "image.lut", "image.origin", "image.resample", "interactive", "keymap.back", "keymap.copy", "keymap.forward",
+        "keymap.fullscreen", "keymap.grid", "keymap.grid_minor", "keymap.help", "keymap.home", "keymap.pan",
+        "keymap.quit", "keymap.quit_all", "keymap.save", "keymap.xscale", "keymap.yscale", "keymap.zoom",
+        "macosx.window_mode", "pcolor.shading", "pcolormesh.snap", "pdf.compression", "pdf.fonttype",
+        "pdf.inheritcolor", "pdf.use14corefonts", "pgf.preamble", "pgf.rcfonts", "pgf.texsystem", "polaraxes.grid",
+        "ps.distiller.res", "ps.fonttype", "ps.papersize", "ps.useafm", "ps.usedistiller", "savefig.directory",
+        "savefig.format", "savefig.orientation", "text.latex.engine", "text.latex.preamble", "timezone",
+        "tk.window_focus", "toolbar", "webagg.address", "webagg.open_in_browser", "webagg.port", "webagg.port_retries"};
+    return keys;
+}
+
+const std::vector<std::string>& Params::unsupportedKeys() {
+    static const std::vector<std::string> keys = {
+        "_internal.classic_mode", "agg.path.chunksize", "axes.axisbelow", "axes.formatter.use_locale", "backend",
+        "figure.autolayout", "figure.constrained_layout.use", "figure.hooks", "font.enable_last_resort",
+        "legend.labelcolor", "path.effects", "path.sketch", "path.snap", "text.hinting_factor", "text.kerning_factor",
+        "text.usetex", "xtick.minor.ndivs", "ytick.minor.ndivs"};
+    return keys;
+}
+
+void Params::logReads(std::set<std::string>* log) { readLog = log; }
+
 bool Params::set(const std::string& key, const Json& v, std::string* error) {
+    const auto fail = [&](const std::string& why) {
+        if (error) *error = why;
+        return false;
+    };
     auto it = values_.find(key);
-    if (it == values_.end()) {
-        if (error) *error = key + " is not a valid rc parameter";
-        return false;
-    }
-    // The mathtext settings that are a choice (ValidateInStrings, _validate_mathtext_fallback)
-    static const std::vector<std::string> kFontsets = {"dejavusans", "dejavuserif", "cm", "stix", "stixsans", "custom"};
-    static const std::vector<std::string> kMathDefaults = {"rm", "cal", "bfit", "it", "tt", "sf", "bf", "default", "bb",
-                                                           "frak", "scr", "regular", "normal"};
-    if (key == "mathtext.fontset" || key == "mathtext.default") {
-        const auto& valid = key == "mathtext.fontset" ? kFontsets : kMathDefaults;
-        if (v.isString() && std::find(valid.begin(), valid.end(), v.asString()) == valid.end()) {
-            if (error) {
-                *error = "'" + v.asString() + "' is not a valid value for " + key + "; supported values are";
-                for (const auto& name : valid) *error += " " + name;
-            }
-            return false;
+    if (it == values_.end()) return fail(key + " is not a valid rc parameter");
+    // rcParams[key] = v: the validator of the key takes the value, in the form it stores, or refuses it
+    Validated checked = validate(key, v);
+    if (checked.state != Validated::State::Taken) return fail(checked.error);
+    const auto listed = [&](const std::vector<std::string>& keys) { return std::binary_search(keys.begin(), keys.end(), key); };
+    if (!listed(inertKeys())) {
+        const Json& standard = Params::standard().values_.at(key);
+        if (listed(unsupportedKeys())) {
+            if (!same(checked.value, standard)) return fail("rcParams[\"" + key + "\"] is not supported yet");
+        } else if (!finite(checked.value) || !fitsInt(checked.value) || !readable(key, kindOf(standard), kindOf(checked.value)) ||
+                   (key == "axes.formatter.offset_threshold" && checked.value.asNumber() > 23)) {
+            // (10 ** (offset_threshold - 1) is an integer of any size in Python, and a double here, exact up to 1e22)
+            return fail("this value of " + key + " is not supported yet");
         }
     }
-    // validate_font_properties: the fonts of the custom math fontset are fontconfig patterns
-    static const char* const kPatterns[] = {"mathtext.rm", "mathtext.it", "mathtext.bf", "mathtext.bfit",
-                                            "mathtext.cal", "mathtext.sf", "mathtext.tt"};
-    if (std::find_if(std::begin(kPatterns), std::end(kPatterns), [&](const char* k) { return key == k; }) != std::end(kPatterns) &&
-        v.isString() && !support::parseFontconfigPattern(v.asString())) {
-        if (error) *error = "'" + v.asString() + "' is not a fontconfig pattern";
-        return false;
-    }
-    // validate_stringlist: the font lists take a list of strings (the empty ones go), or one
-    // string with the names between commas
-    static const char* const kFontLists[] = {"font.family", "font.serif", "font.sans-serif",
-                                             "font.cursive", "font.fantasy", "font.monospace"};
-    if (std::find_if(std::begin(kFontLists), std::end(kFontLists), [&](const char* k) { return key == k; }) != std::end(kFontLists)) {
-        std::vector<std::string> names;
-        if (v.isString()) {
-            const std::string& text = v.asString();
-            for (std::size_t a = 0; a <= text.size();) {
-                const std::size_t comma = std::min(text.find(',', a), text.size());
-                std::size_t from = a, to = comma;
-                // (str.strip(): the blanks of ASCII)
-                while (from < to && std::strchr(" \t\n\r\f\v", text[from])) ++from;
-                while (to > from && std::strchr(" \t\n\r\f\v", text[to - 1])) --to;
-                if (to > from) names.push_back(text.substr(from, to - from));
-                a = comma + 1;
-            }
-        } else if (v.isArray()) {
-            for (const Json& item : v.items()) {
-                if (!item.isString()) {
-                    if (error) *error = "the value given for " + key + " is not a list of strings";
-                    return false;
-                }
-                if (!item.asString().empty()) names.push_back(item.asString());
-            }
-        } else {
-            if (error) *error = "the value given for " + key + " is not of the right kind";
-            return false;
-        }
-        support::JsonWriter list;
-        list.beginArray();
-        for (const std::string& name : names) list.value(name);
-        list.endArray();
-        it->second = *support::parseJson(list.text(), nullptr);
-        return true;
-    }
-    if (key == "mathtext.fallback") {
-        if (!v.isString() && !v.isNull()) {
-            if (error) *error = "the value given for " + key + " is not of the right kind";
-            return false;
-        }
-        std::string name = v.isString() ? v.asString() : "none";
-        for (char& c : name) c = c >= 'A' && c <= 'Z' ? char(c - 'A' + 'a') : c;
-        if (name == "none") {
-            it->second = Json();
-        } else if (name == "cm" || name == "stix" || name == "stixsans") {
-            it->second = *support::parseJson("\"" + name + "\"", nullptr);
-        } else {
-            if (error)
-                *error = name + " is not a valid fallback font name. Valid fallback font names are cm,stix,stixsans. "
-                                "Passing 'None' will turn fallback off.";
-            return false;
-        }
-        return true;
-    }
-    // validate_string_or_None: a string, or None ("none" in any case of letters is None too)
-    if (key == "text.language" || key == "svg.hashsalt" || key == "svg.id") {
-        if (!v.isString() && !v.isNull()) {
-            if (error) *error = "the value given for " + key + " is not of the right kind";
-            return false;
-        }
-        std::string lower = v.isString() ? v.asString() : "none";
-        for (char& c : lower) c = c >= 'A' && c <= 'Z' ? char(c - 'A' + 'a') : c;
-        it->second = lower == "none" ? Json() : v;
-        return true;
-    }
-    const Kind want = kindOf(it->second), got = kindOf(v);
-    // A default of None accepts anything matplotlib would validate; otherwise the kinds must agree.
-    // A few defaults are names where a number is as good: savefig.dpi ('figure'), the font sizes
-    // ('medium', 'large') and the font weights ('normal').
-    static const char* const kNumberOrName[] = {
-        "savefig.dpi",      "axes.labelsize",    "axes.titlesize",   "figure.labelsize",   "figure.titlesize",
-        "legend.fontsize",  "xtick.labelsize",   "ytick.labelsize",  "axes.labelweight",   "axes.titleweight",
-        "figure.labelweight", "figure.titleweight", "font.weight"};
-    bool numberForName = false;
-    if (got == Kind::Number)
-        for (const char* k : kNumberOrName) numberForName = numberForName || key == k;
-    if (want != Kind::Null && got != want && !numberForName) {
-        if (error) *error = "the value given for " + key + " is not of the right kind";
-        return false;
-    }
-    it->second = v;
+    it->second = std::move(checked.value);
     return true;
 }
 

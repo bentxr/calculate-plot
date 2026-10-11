@@ -1,0 +1,11 @@
+{"version": 1,
+ "rc": {"axes.formatter.useoffset": false, "axes.formatter.limits": [-2, 3], "axes.formatter.min_exponent": 2},
+ "calls": [
+  {"call": "subplots", "args": [2, 2], "kwargs": {"figsize": {"$tuple": [8.0, 5.0]}}, "as": ["fig", "axs"]},
+  {"on": "axs[0, 0]", "call": "plot", "args": [[1, 2, 3, 4], [1234500.0, 1234502.5, 1234501.0, 1234507.0]]},
+  {"on": "axs[0, 1]", "call": "plot", "args": [[100, 200, 300, 400], [0.01, 0.03, 0.02, 0.05]]},
+  {"on": "axs[1, 0]", "call": "plot", "args": [[-0.5, 0, 0.5, 1], [-500, 300, 999, 1000]]},
+  {"on": "axs[1, 1]", "call": "plot", "args": [[0.001, 0.01, 0.1, 1, 10, 100, 1000], [1, 2, 3, 4, 5, 6, 7]]},
+  {"on": "axs[1, 1]", "call": "set_xscale", "args": ["log"]},
+  {"on": "fig", "call": "tight_layout", "args": []}
+]}

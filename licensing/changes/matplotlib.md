@@ -69,6 +69,13 @@ it comes from in its first lines. The changes, as a whole:
   _fontconfig_pattern.py's parse_fontconfig_pattern and FontProperties' set_fontconfig_pattern with its setters,
   translated to C++; the pyparsing grammar is a hand-written parser that expands tabs and skips blanks as
   pyparsing does. A pattern that names a font file (file=) is refused where a font is asked for with it.
+- **The validators of the rcParams** (src/rc/rc_validate, and "validators" in data/rcdefaults.json): rcsetup.py's
+  validators (ValidateInStrings, _listify_validator, validate_bool, validate_color and the others) and colors.py's
+  is_color_like, translated to C++ over the values of a figure file (JSON) instead of Python objects; which key has
+  which validator is a table written by tools/oracle/make_rcdefaults.py. The stored values are JSON values (a tuple
+  is a list). Text that matplotlib reads with ast.literal_eval is read by calculate-plot's own reader of Python
+  literals (src/support/pyliteral), which leaves some spellings unread; cyclers written as text, dates and backend
+  names are not validated but refused as not supported. The error messages are calculate-plot's.
   path.py's Path (vertices, codes and the simplification settings),
   backend_bases.py's GraphicsContextBase and the RendererBase interface, artist.py's Artist (clip settings),
   patches.py's Patch and Rectangle, lines.py's dash patterns and figure.py's Figure (its boxes, transforms and

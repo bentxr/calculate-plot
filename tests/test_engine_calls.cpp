@@ -491,13 +491,26 @@ TEST(SaveOptions, RefuseWhatCannotBeSaved) {
     EXPECT_EQ(error(R"({"savefig.dpi": 0})"), "rc savefig.dpi must be positive");
     EXPECT_EQ(error(R"({"savefig.dpi": -72})"), "rc savefig.dpi must be positive");
     EXPECT_EQ(error(R"({"savefig.dpi": {"$float": "nan"}})"),
-              "rc savefig.dpi: the value given for savefig.dpi is not of the right kind");
-    EXPECT_EQ(error(R"({"savefig.dpi": "screen"})"), "rc savefig.dpi must be 'figure' or a number");
-    EXPECT_EQ(error(R"({"savefig.bbox": "loose"})"), "rc savefig.bbox must be 'tight', 'standard' or None");
-    EXPECT_EQ(error(R"({"savefig.bbox": 1})"), "rc savefig.bbox must be 'tight', 'standard' or None");
-    EXPECT_EQ(error(R"({"savefig.facecolor": "not a colour"})"), "rc savefig.facecolor is not a colour");
-    EXPECT_EQ(error(R"({"savefig.edgecolor": "not a colour"})"), "rc savefig.edgecolor is not a colour");
+              "rc savefig.dpi: this value of savefig.dpi is not supported yet");
+    EXPECT_EQ(error(R"({"savefig.dpi": "screen"})"),
+              "rc savefig.dpi: the value given for savefig.dpi is not valid: the value is not the string \"figure\" and could "
+              "not be converted to float");
+    EXPECT_EQ(error(R"({"savefig.bbox": "loose"})"),
+              "rc savefig.bbox: the value given for savefig.bbox is not valid: bbox should be 'tight' or 'standard'");
+    EXPECT_EQ(error(R"({"savefig.bbox": 1})"),
+              "rc savefig.bbox: the value given for savefig.bbox is not valid: bbox should be 'tight' or 'standard'");
+    EXPECT_EQ(error(R"({"savefig.facecolor": "not a colour"})"),
+              "rc savefig.facecolor: the value given for savefig.facecolor is not valid: the value does not look like a color arg");
+    EXPECT_EQ(error(R"({"savefig.edgecolor": "not a colour"})"),
+              "rc savefig.edgecolor: the value given for savefig.edgecolor is not valid: the value does not look like a color arg");
     EXPECT_EQ(error(R"({"savefig.bbox": null, "savefig.dpi": 50.5, "savefig.facecolor": "auto", "savefig.edgecolor": "C1"})"), "");
+    // the other spellings matplotlib takes
+    EXPECT_EQ(error(R"({"savefig.bbox": "Standard", "savefig.dpi": "150", "savefig.facecolor": "Auto", "savefig.edgecolor": "ff0000"})"),
+              "rc savefig.facecolor: the value given for savefig.facecolor is not valid: the value does not look like a color arg");
+    EXPECT_EQ(error(R"({"savefig.bbox": "Standard", "savefig.dpi": "150", "savefig.facecolor": "auto", "savefig.edgecolor": "ff0000"})"), "");
+    EXPECT_EQ(error(R"({"savefig.bbox": "TIGHT", "savefig.dpi": "Figure"})"),
+              "rc savefig.dpi: the value given for savefig.dpi is not valid: the value is not the string \"figure\" and could "
+              "not be converted to float");
 }
 
 }  // namespace

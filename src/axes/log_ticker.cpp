@@ -199,7 +199,7 @@ std::string LogFormatterSciNotation::operator()(double x) const {
     if (sublabels_ && !sublabels_->count(coeff)) return "";
     if (isDecade) fx = pyRoundInt(fx);
     const std::string baseText = std::fmod(b, 1.0) == 0.0 ? std::to_string((long long)b) : support::pythonRepr(b);
-    // abs(fx) < rcParams['axes.formatter.min_exponent'] (0 by default) never holds
+    if (std::fabs(fx) < minExponent) return "$\\mathdefault{" + sign + support::percentG(x, 6) + "}$";
     if (!isDecade) {
         // LogFormatterSciNotation._non_decade_format
         const double fb = b;

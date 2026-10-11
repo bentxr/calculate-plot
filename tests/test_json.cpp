@@ -150,3 +150,43 @@ TEST(Json, OverflowingNumbersAreRefused) {
     EXPECT_FALSE(parseJson("-1e400", nullptr).has_value());
     EXPECT_TRUE(sameBits(parsed("1e-400").asNumber(), 0.0));  // underflow rounds to zero, as Python does
 }
+
+// Values made in code are as the parsed ones: a real number is told from the integer of its value.
+TEST(Json, ValuesMadeInCode) {
+    using calculate_plot::support::Json;
+    EXPECT_TRUE(Json().isNull());
+    EXPECT_TRUE(Json::boolean(true).asBool());
+    EXPECT_FALSE(Json::boolean(false).asBool());
+    const Json i = Json::integer(-42);
+    EXPECT_TRUE(i.isNumber());
+    EXPECT_TRUE(i.isInteger());
+    EXPECT_EQ(i.asNumber(), -42.0);
+    EXPECT_EQ(i.asInteger(), -42);
+    EXPECT_EQ(i.numberText(), "-42");
+    const Json r = Json::real(2.0);
+    EXPECT_TRUE(r.isNumber());
+    EXPECT_FALSE(r.isInteger());
+    EXPECT_EQ(r.asNumber(), 2.0);
+    EXPECT_EQ(r.numberText(), "2.0");
+    EXPECT_EQ(Json::real(1e22).numberText(), "1e+22");
+    EXPECT_FALSE(Json::real(1e22).isInteger());
+    EXPECT_FALSE(Json::real(std::numeric_limits<double>::infinity()).isInteger());
+    EXPECT_FALSE(Json::real(std::numeric_limits<double>::quiet_NaN()).isInteger());
+    EXPECT_EQ(Json::string("a\"b").asString(), "a\"b");
+    const Json list = Json::array({Json::integer(1), Json::string("x")});
+    ASSERT_EQ(list.size(), 2u);
+    EXPECT_EQ(list[1].asString(), "x");
+    const Json object = Json::object({{"k", Json::integer(7)}});
+    ASSERT_TRUE(object.isObject());
+    EXPECT_EQ(object.find("k")->asInteger(), 7);
+    // parsed numbers: an exponent or a fraction makes a float
+    const auto parsed = calculate_plot::support::parseJson("[1, -0, 1.0, 1e5, 1E5, 12345678901234567890]", nullptr);
+    ASSERT_TRUE(parsed.has_value());
+    EXPECT_TRUE((*parsed)[0].isInteger());
+    EXPECT_TRUE((*parsed)[1].isInteger());
+    EXPECT_FALSE((*parsed)[2].isInteger());
+    EXPECT_FALSE((*parsed)[3].isInteger());
+    EXPECT_FALSE((*parsed)[4].isInteger());
+    EXPECT_TRUE((*parsed)[5].isInteger());
+    EXPECT_FALSE(Json::string("12").isInteger());
+}

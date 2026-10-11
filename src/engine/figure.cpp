@@ -130,22 +130,15 @@ struct SaveOptions {
 bool saveOptions(const Figure& figure, SaveOptions* o, std::string* error) {
     const rc::Params& rc = figure.rc();
     const auto& dpi = rc.value("savefig.dpi");
-    if (dpi.isNumber()) o->dpi = dpi.asNumber();
-    else if (dpi.isString() && dpi.asString() == "figure") o->dpi = figure.dpi;
-    else return *error = "rc savefig.dpi must be 'figure' or a number", false;
+    o->dpi = dpi.isNumber() ? dpi.asNumber() : figure.dpi;  // or 'figure'
     if (!(o->dpi > 0)) return *error = "rc savefig.dpi must be positive", false;
     for (const bool face : {true, false}) {
         const std::string key = face ? "savefig.facecolor" : "savefig.edgecolor";
         const std::string color = rc.text(key);
-        if (color == "auto") continue;
-        if (!colors::toRgba(color, std::nullopt, rc, nullptr)) return *error = "rc " + key + " is not a colour", false;
-        (face ? o->facecolor : o->edgecolor) = color;
+        if (color != "auto") (face ? o->facecolor : o->edgecolor) = color;
     }
     o->transparent = rc.boolean("savefig.transparent");
-    const auto& bbox = rc.value("savefig.bbox");
-    if (bbox.isString() && bbox.asString() == "tight") o->tight = true;
-    else if (!bbox.isNull() && !(bbox.isString() && bbox.asString() == "standard"))
-        return *error = "rc savefig.bbox must be 'tight', 'standard' or None", false;
+    o->tight = rc.value("savefig.bbox").isString();  // 'tight', or None ('standard' is stored as None)
     o->pad = rc.number("savefig.pad_inches");
     return true;
 }

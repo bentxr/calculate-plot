@@ -25,6 +25,7 @@ def h(x):
 
 
 rnd = random.Random(12)
+rnd_exponent = random.Random(13)
 cases = []
 for i in range(600):
     w, hgt = rnd.choice([1.5, 2.5, 4.0, 6.4]), rnd.choice([1.2, 2.0, 3.0, 4.8])
@@ -49,12 +50,18 @@ for i in range(600):
     minor = axis.get_minorticklocs()
     major_labels = axis.get_major_formatter().format_ticks(major)
     minor_labels = axis.get_minor_formatter().format_ticks(minor)
+    # the same labels with rcParams["axes.formatter.min_exponent"] (read when a label is written)
+    min_exponent = rnd_exponent.choice([1, 2, 3, 5, 8])
+    with matplotlib.rc_context({"axes.formatter.min_exponent": min_exponent}):
+        major_labels_min = axis.get_major_formatter().format_ticks(major)
+        minor_labels_min = axis.get_minor_formatter().format_ticks(minor)
     loc = axis.get_major_locator()
     a, b = rnd.choice([(lo, hi), (lo, lo), (0, hi), (-1, -0.5), (math.inf, 1)])
     cases.append({"axis": axis_name, "figsize": [w, hgt], "view": [h(v) for v in axis.get_view_interval()],
                   "tick_space": int(axis.get_tick_space()),
                   "major": [h(v) for v in major], "minor": [h(v) for v in minor],
                   "major_labels": major_labels, "minor_labels": minor_labels,
+                  "min_exponent": min_exponent, "major_labels_min": major_labels_min, "minor_labels_min": minor_labels_min,
                   "nonsingular_in": [h(a), h(b)], "nonsingular": [h(v) for v in loc.nonsingular(a, b)],
                   "view_limits": [h(v) for v in loc.view_limits(lo, hi)]})
     plt.close(fig)

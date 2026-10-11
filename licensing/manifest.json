@@ -514,7 +514,9 @@
         "src/text/mathtext_fonts.cpp",
         "data/mathtext_data.json",
         "src/support/fontconfig_pattern.hpp",
-        "src/support/fontconfig_pattern.cpp"
+        "src/support/fontconfig_pattern.cpp",
+        "src/rc/rc_validate.hpp",
+        "src/rc/rc_validate.cpp"
       ],
       "header": [
         "Copyright (c) 2012- Matplotlib Development Team; All Rights Reserved",

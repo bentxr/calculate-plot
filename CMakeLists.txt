@@ -76,6 +76,7 @@ add_library(calculate-plot STATIC
     src/model/figure_model.cpp
     src/png/png.cpp
     src/rc/rc_params.cpp
+    src/rc/rc_validate.cpp
     src/render/replay.cpp
     src/render/svg_replay.cpp
     src/support/base64.cpp
@@ -90,6 +91,7 @@ add_library(calculate-plot STATIC
     src/support/fontconfig_pattern.cpp
     src/support/glob.cpp
     src/support/pyparse.cpp
+    src/support/pyliteral.cpp
     src/support/json.cpp
     src/support/json_writer.cpp
     src/support/pyformat.cpp

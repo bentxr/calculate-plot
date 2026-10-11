@@ -100,6 +100,54 @@ TEST(Ticker, LabelsAndOffsetMatchMatplotlib) {
     EXPECT_EQ(mismatches, 0);
 }
 
+// The rcParams that shape the labels: axes.formatter.useoffset, .offset_threshold, .limits and
+// .use_mathtext, and axes.unicode_minus (tests/oracle/scalar_formatter.json, written by
+// tools/oracle/make_scalar_formatter_oracle.py).
+TEST(Ticker, LabelsAndOffsetFollowTheFormattersSettings) {
+    std::ifstream in(std::string(CALCULATE_PLOT_SOURCE_DIR) + "/tests/oracle/scalar_formatter.json", std::ios::binary);
+    std::ostringstream text;
+    text << in.rdbuf();
+    const auto cases = calculate_plot::support::parseJson(text.str(), nullptr);
+    ASSERT_TRUE(cases.has_value());
+    int checked = 0, mismatches = 0, mathtext = 0, offsets = 0;
+    for (const auto& c : cases->items()) {
+        ax::ScalarFormatter::Settings settings;
+        std::string rc;
+        for (const auto& [key, value] : c.find("rc")->members()) {
+            rc += key + " ";
+            if (key == "axes.formatter.useoffset") settings.useOffset = value.asBool();
+            else if (key == "axes.formatter.offset_threshold") settings.offsetThreshold = int(value.asInteger());
+            else if (key == "axes.formatter.limits") settings.powerLimits = {int(value[0].asInteger()), int(value[1].asInteger())};
+            else if (key == "axes.formatter.use_mathtext") settings.useMathText = value.asBool();
+            else if (key == "axes.unicode_minus") settings.unicodeMinus = value.asBool();
+            else FAIL() << key;
+        }
+        std::vector<double> ticks;
+        for (const auto& t : c.find("ticks")->items()) ticks.push_back(hex(t));
+        ax::ScalarFormatter f(settings);
+        f.setViewInterval(hex(*c.find("vmin")), hex(*c.find("vmax")));
+        f.setLocs(ticks);
+        const auto& labels = c.find("labels")->items();
+        std::string got, want;
+        for (std::size_t i = 0; i < ticks.size(); ++i) {
+            got += f(ticks[i]) + " | ";
+            want += labels[i].asString() + " | ";
+        }
+        got += "offset " + f.offsetText();
+        want += "offset " + c.find("offset")->asString();
+        if (got != want && ++mismatches <= 10)
+            ADD_FAILURE() << rc << "[" << c.find("vmin")->asString() << ", " << c.find("vmax")->asString() << "]\n  ours:       "
+                          << got << "\n  matplotlib: " << want;
+        ++checked;
+        mathtext += settings.useMathText;
+        offsets += !c.find("offset")->asString().empty();
+    }
+    EXPECT_EQ(checked, 2584);
+    EXPECT_EQ(offsets, 1838);
+    EXPECT_GT(mathtext, 100);
+    EXPECT_EQ(mismatches, 0);
+}
+
 TEST(PythonNumbers, FloorDivisionAndDivmod) {
     EXPECT_EQ(pn::floorDivide(7.0, 2.0), 3.0);
     EXPECT_EQ(pn::floorDivide(-7.0, 2.0), -4.0);

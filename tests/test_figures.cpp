@@ -4,6 +4,7 @@
 #include "engine/engine.hpp"
 #include "model/figure_model.hpp"
 #include "png/png.hpp"
+#include "rc/rc_params.hpp"
 #include "render/replay.hpp"
 #include "render/svg_replay.hpp"
 #include "support/json.hpp"
@@ -15,6 +16,7 @@
 #include <cmath>
 #include <filesystem>
 #include <fstream>
+#include <set>
 #include <sstream>
 
 namespace fs = std::filesystem;
@@ -145,3 +147,35 @@ TEST(FigureComparison, NamesTheFirstDifferingField) {
 }
 
 }  // namespace
+
+// No rcParam is taken and then ignored: each is read by the engine when it draws the figures of
+// tests/figures, or is listed as changing nothing in what calculate-plot draws (Params::inertKeys),
+// or as not supported yet (Params::unsupportedKeys, which take their default value only).
+TEST(RcParamsCoverage, EveryKeyIsReadOrListed) {
+    using calculate_plot::rc::Params;
+    std::set<std::string> read;
+    Params::logReads(&read);
+    for (const std::string& name : cases()) {
+        std::string error;
+        const auto figure = calculate_plot::model::parseFigure(readFile(figures() / name / "fig.json"), &error);
+        ASSERT_TRUE(figure.has_value()) << name << ": " << error;
+        calculate_plot::engine::drawAgg(*figure, drawOptions());
+        calculate_plot::engine::drawSvg(*figure, drawOptions());
+    }
+    Params::logReads(nullptr);
+    const auto& inert = Params::inertKeys();
+    const auto& unsupported = Params::unsupportedKeys();
+    EXPECT_TRUE(std::is_sorted(inert.begin(), inert.end()));
+    EXPECT_TRUE(std::is_sorted(unsupported.begin(), unsupported.end()));
+    int honoured = 0;
+    for (const std::string& key : Params::defaults().keys()) {
+        const bool isRead = read.count(key) != 0;
+        const bool isInert = std::binary_search(inert.begin(), inert.end(), key);
+        const bool isUnsupported = std::binary_search(unsupported.begin(), unsupported.end(), key);
+        EXPECT_TRUE(isRead || isInert || isUnsupported) << key << " is taken and never read";
+        EXPECT_FALSE(isRead && isInert) << key << " is read: it is not inert";
+        EXPECT_FALSE(isInert && isUnsupported) << key;
+        honoured += isRead && !isUnsupported;
+    }
+    EXPECT_EQ(honoured, 185);  // with the 136 that change nothing and the 18 not supported yet: 339
+}

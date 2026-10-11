@@ -8,6 +8,7 @@ namespace calculate_plot::support {
 
 namespace {
 
+// The blanks float() and int() take around a number
 bool isBlank(char c) { return c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\f' || c == '\v'; }
 bool isDigit(char c) { return c >= '0' && c <= '9'; }
 char lower(char c) { return c >= 'A' && c <= 'Z' ? char(c - 'A' + 'a') : c; }
@@ -76,6 +77,43 @@ std::optional<long long> pythonInt(const std::string& text) {
     if (i < s.size() && (s[i] == '+' || s[i] == '-')) number += s[i++];
     if (!digitPart(s, &i, &number) || i != s.size()) return std::nullopt;
     return std::strtoll(number.c_str(), nullptr, 10);  // (the ends of the range for what does not fit)
+}
+
+bool isAscii(const std::string& text) {
+    for (unsigned char c : text)
+        if (c >= 0x80) return false;
+    return true;
+}
+
+namespace {
+
+// The length in bytes of the white space character that starts at s[i] (0 if there is none there).
+std::size_t spaceAt(const std::string& s, std::size_t i) {
+    const auto byte = [&](std::size_t k) { return k < s.size() ? static_cast<unsigned char>(s[k]) : 0u; };
+    // (str.isspace within ASCII: the blanks, and the separators 0x1c to 0x1f, which float() does not take)
+    if (byte(i) < 0x80) return isBlank(s[i]) || (byte(i) >= 0x1c && byte(i) <= 0x1f) ? 1 : 0;
+    if (byte(i) == 0xc2) return byte(i + 1) == 0x85 || byte(i + 1) == 0xa0 ? 2 : 0;  // U+0085, U+00A0
+    unsigned cp = 0;
+    if ((byte(i) & 0xf0) == 0xe0) cp = ((byte(i) & 0x0fu) << 12) | ((byte(i + 1) & 0x3fu) << 6) | (byte(i + 2) & 0x3fu);
+    const bool space = cp == 0x1680 || (cp >= 0x2000 && cp <= 0x200a) || cp == 0x2028 || cp == 0x2029 || cp == 0x202f ||
+                       cp == 0x205f || cp == 0x3000;
+    return space ? 3 : 0;
+}
+
+}  // namespace
+
+std::string pythonStrip(const std::string& text) {
+    std::size_t a = 0, b = text.size();
+    for (std::size_t n; a < b && (n = spaceAt(text, a)) != 0;) a += n;
+    for (;;) {
+        // the character that ends at b: one, two or three bytes long
+        std::size_t n = 0;
+        for (std::size_t length = 1; length <= 3 && n == 0; ++length)
+            if (b >= a + length && spaceAt(text, b - length) == length) n = length;
+        if (n == 0) break;
+        b -= n;
+    }
+    return text.substr(a, b - a);
 }
 
 }  // namespace calculate_plot::support

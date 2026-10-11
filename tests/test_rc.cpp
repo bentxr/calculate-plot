@@ -2,6 +2,10 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
+#include <iterator>
+#include <utility>
+
 using calculate_plot::rc::Params;
 using calculate_plot::support::Json;
 
@@ -59,7 +63,7 @@ TEST(RcParams, StringsThatMayBeNone) {
         EXPECT_EQ(p.text(key), "");
         for (const char* bad : {"5", "true", "[\"es\"]", "1.5"}) {
             EXPECT_FALSE(p.set(key, json(bad), &error)) << key << " " << bad;
-            EXPECT_EQ(error, std::string("the value given for ") + key + " is not of the right kind");
+            EXPECT_EQ(error, std::string("the value given for ") + key + " is not valid: could not convert the value to str");
             EXPECT_EQ(p.text(key), "") << key << " " << bad;
         }
     }
@@ -124,8 +128,11 @@ TEST(RcParams, FontListsTakeAStringOfNames) {
     EXPECT_FALSE(p.set("font.family", json("3"), &error));
     EXPECT_FALSE(p.set("font.family", json("null"), &error));
     EXPECT_EQ(p.strings("font.family"), (Names{"cursive", " sans "}));
-    // another list does not take a string
-    EXPECT_FALSE(p.set("figure.figsize", json("\"6, 4\""), &error));
+    // the other lists take a string as well
+    ASSERT_TRUE(p.set("figure.figsize", json("\"6, 4.5\""), &error)) << error;
+    EXPECT_EQ(p.numbers("figure.figsize"), (std::vector<double>{6.0, 4.5}));
+    EXPECT_FALSE(p.set("figure.figsize", json("\"6, 4, 3\""), &error));
+    EXPECT_EQ(error, "the value given for figure.figsize is not valid: expected 2 values, but there are 3");
 }
 
 TEST(RcParams, IntegersAreAcceptedWhereFloatsAre) {
@@ -133,4 +140,169 @@ TEST(RcParams, IntegersAreAcceptedWhereFloatsAre) {
     std::string error;
     EXPECT_TRUE(p.set("font.size", json("12"), &error)) << error;
     EXPECT_EQ(p.number("font.size"), 12.0);
+}
+
+// A value is stored as matplotlib's validator of the key stores it.
+TEST(RcParams, ValuesAreStoredAsMatplotlibStoresThem) {
+    Params p = Params::defaults();
+    std::string error;
+    ASSERT_TRUE(p.set("axes.grid", json("\"Yes\""), &error)) << error;
+    EXPECT_TRUE(p.value("axes.grid").isBool());
+    EXPECT_TRUE(p.boolean("axes.grid"));
+    ASSERT_TRUE(p.set("axes.grid", json("0"), &error)) << error;
+    EXPECT_TRUE(p.value("axes.grid").isBool());
+    EXPECT_FALSE(p.boolean("axes.grid"));
+    ASSERT_TRUE(p.set("lines.linewidth", json("\" 2.5 \""), &error)) << error;
+    EXPECT_EQ(p.number("lines.linewidth"), 2.5);
+    ASSERT_TRUE(p.set("lines.linewidth", json("true"), &error)) << error;
+    EXPECT_TRUE(p.value("lines.linewidth").isNumber());
+    EXPECT_EQ(p.number("lines.linewidth"), 1.0);
+    ASSERT_TRUE(p.set("lines.linestyle", json("\"DASHED\""), &error)) << error;
+    EXPECT_EQ(p.text("lines.linestyle"), "dashed");
+    ASSERT_TRUE(p.set("axes.titlesize", json("\"X-Large\""), &error)) << error;
+    EXPECT_EQ(p.text("axes.titlesize"), "x-large");
+    ASSERT_TRUE(p.set("axes.titlesize", json("\"14\""), &error)) << error;
+    EXPECT_EQ(p.number("axes.titlesize"), 14.0);
+    ASSERT_TRUE(p.set("axes.facecolor", json("\"ff000080\""), &error)) << error;
+    EXPECT_EQ(p.text("axes.facecolor"), "#ff000080");
+    ASSERT_TRUE(p.set("axes.facecolor", json("\"NONE\""), &error)) << error;
+    EXPECT_EQ(p.text("axes.facecolor"), "none");
+    ASSERT_TRUE(p.set("savefig.bbox", json("\"Tight\""), &error)) << error;
+    EXPECT_EQ(p.text("savefig.bbox"), "tight");
+    ASSERT_TRUE(p.set("savefig.bbox", json("\"standard\""), &error)) << error;
+    EXPECT_TRUE(p.value("savefig.bbox").isNull());
+    ASSERT_TRUE(p.set("font.weight", json("700.9"), &error)) << error;
+    EXPECT_TRUE(p.value("font.weight").isInteger());
+    EXPECT_EQ(p.number("font.weight"), 700.0);
+    // what matplotlib refuses is refused, with the key in the message
+    EXPECT_FALSE(p.set("axes.grid", json("2"), &error));
+    EXPECT_EQ(error, "the value given for axes.grid is not valid: cannot convert the value to bool");
+    EXPECT_FALSE(p.set("axes.facecolor", json("\"nocolor\""), &error));
+    EXPECT_EQ(error, "the value given for axes.facecolor is not valid: the value does not look like a color arg");
+    EXPECT_FALSE(p.set("xtick.direction", json("\"IN\""), &error));
+    EXPECT_EQ(error, "the value given for xtick.direction is not valid: 'IN' is not a valid value for xtick.direction; "
+                     "supported values are out in inout");
+    EXPECT_FALSE(p.set("axes.xmargin", json("-0.5"), &error));
+    EXPECT_EQ(error, "the value given for axes.xmargin is not valid: the value must be >-0.5");
+    EXPECT_EQ(p.number("axes.xmargin"), 0.05);
+}
+
+// What matplotlib takes and the engine does not read yet is refused as such, never taken and ignored.
+TEST(RcParams, ValuesTheEngineDoesNotReadYetAreRefused) {
+    Params p = Params::defaults();
+    std::string error;
+    const std::pair<const char*, const char*> cases[] = {
+        {"lines.linestyle", "[0, [1, 2]]"},           // an on-off sequence
+        {"lines.linestyle", "\"(0, (1, 2))\""},
+        {"lines.color", "[0.1, 0.2, 0.3]"},            // a colour as a tuple
+        {"lines.color", "\"(0.1, 0.2, 0.3)\""},
+        {"lines.color", "{\"$tuple\": [\"red\", 0.5]}"},
+        {"lines.marker", "5"},                         // a marker by its number
+        {"legend.loc", "3"},
+        {"legend.loc", "{\"$tuple\": [0.5, 0.5]}"},
+        {"lines.linewidth", "{\"$float\": \"nan\"}"},  // numbers that are not finite
+        {"lines.linewidth", "\"inf\""},
+        {"axes.titley", "{\"$float\": \"inf\"}"},
+        {"figure.figsize", "[6.4, {\"$float\": \"nan\"}]"},
+        {"axes.formatter.offset_threshold", "24"},     // 10 ** 23 is not a double
+        {"axes.formatter.offset_threshold", "3000000000"},  // integers beyond 32 bits
+        {"axes.formatter.min_exponent", "-3000000000"},
+        {"axes.formatter.limits", "[-5, 2147483648]"},
+        {"legend.numpoints", "1e10"},
+    };
+    EXPECT_TRUE(p.set("axes.formatter.offset_threshold", json("23"), &error)) << error;
+    EXPECT_TRUE(p.set("axes.formatter.limits", json("\"-2147483647, 2147483647\""), &error)) << error;
+    EXPECT_TRUE(p.set("axes.formatter.limits", json("[-5, 6]"), &error)) << error;
+    EXPECT_TRUE(p.set("lines.linewidth", json("1e10"), &error)) << error;  // (a float may be large)
+    EXPECT_TRUE(p.set("lines.linewidth", json("1.5"), &error)) << error;
+    EXPECT_TRUE(p.set("axes.formatter.offset_threshold", json("4"), &error)) << error;
+    for (const auto& [key, value] : cases) {
+        const auto before = p.value(key);
+        EXPECT_FALSE(p.set(key, json(value), &error)) << key << " " << value;
+        EXPECT_EQ(error, std::string("this value of ") + key + " is not supported yet") << value;
+    }
+    // text that only Python reads
+    EXPECT_FALSE(p.set("axes.prop_cycle", json("\"cycler('color', ['r', 'g'])\""), &error));
+    EXPECT_EQ(error, "a cycler written as text is not supported yet");
+    EXPECT_FALSE(p.set("lines.linewidth", json("\"\u0665\""), &error));
+    EXPECT_EQ(error, "a number in the digits of another script is not supported yet");
+    EXPECT_EQ(p.text("lines.linestyle"), "-");
+    EXPECT_EQ(p.number("lines.linewidth"), 1.5);
+}
+
+// The keys of what the engine does not do yet take their default value and no other.
+TEST(RcParams, KeysThatAreNotHonouredYetTakeOnlyTheirDefault) {
+    const std::pair<const char*, const char*> other[] = {
+        {"_internal.classic_mode", "true"},
+        {"agg.path.chunksize", "100"},
+        {"axes.axisbelow", "true"},
+        {"axes.formatter.use_locale", "true"},
+        {"figure.autolayout", "true"},
+        {"figure.constrained_layout.use", "true"},
+        {"figure.hooks", "[\"os:getcwd\"]"},
+        {"font.enable_last_resort", "false"},
+        {"legend.labelcolor", "\"red\""},
+        {"path.effects", "[1]"},
+        {"path.sketch", "[1, 100, 2]"},
+        {"path.snap", "false"},
+        {"text.hinting_factor", "8"},
+        {"text.kerning_factor", "6"},
+        {"text.usetex", "true"},
+        {"xtick.minor.ndivs", "4"},
+        {"ytick.minor.ndivs", "4"},
+    };
+    const auto& listed = Params::unsupportedKeys();
+    EXPECT_EQ(listed.size(), std::size(other) + 1);  // and the backend, which takes nothing
+    const Params defaults = Params::defaults();
+    for (const auto& [key, value] : other) {
+        EXPECT_NE(std::find(listed.begin(), listed.end(), key), listed.end()) << key;
+        Params p = Params::defaults();
+        std::string error;
+        EXPECT_FALSE(p.set(key, json(value), &error)) << key;
+        EXPECT_EQ(error, std::string("rcParams[\"") + key + "\"] is not supported yet");
+        // its default, also in another spelling, is taken
+        EXPECT_TRUE(p.set(key, defaults.value(key), &error)) << key << ": " << error;
+    }
+    Params p = Params::defaults();
+    std::string error;
+    EXPECT_TRUE(p.set("figure.autolayout", json("\"no\""), &error)) << error;
+    EXPECT_TRUE(p.set("path.sketch", json("\"None\""), &error)) << error;
+    EXPECT_FALSE(p.set("figure.autolayout", json("\"maybe\""), &error));
+    EXPECT_EQ(error, "the value given for figure.autolayout is not valid: cannot convert the value to bool");
+    // a value of another kind than the default is not the default
+    EXPECT_FALSE(p.set("axes.axisbelow", json("false"), &error));
+    EXPECT_EQ(error, "rcParams[\"axes.axisbelow\"] is not supported yet");
+    EXPECT_FALSE(p.set("xtick.minor.ndivs", json("0"), &error));
+    EXPECT_FALSE(p.set("agg.path.chunksize", json("\"7\""), &error));
+    EXPECT_TRUE(p.set("agg.path.chunksize", json("\"0\""), &error)) << error;
+    EXPECT_TRUE(p.set("xtick.minor.ndivs", json("\"auto\""), &error)) << error;
+    EXPECT_FALSE(p.set("text.kerning_factor", json("0"), &error));
+    EXPECT_FALSE(p.set("backend", json("\"agg\""), &error));
+    EXPECT_EQ(error, "the choice of a backend is not supported yet");
+}
+
+// The keys of what is not drawn at all (animations, box plots, images, PDF output, the windows of
+// the interactive backends...) take whatever matplotlib takes: they change nothing.
+TEST(RcParams, KeysOfWhatIsNotDrawnTakeWhatMatplotlibTakes) {
+    Params p = Params::defaults();
+    std::string error;
+    EXPECT_EQ(Params::inertKeys().size(), 136u);
+    EXPECT_TRUE(p.set("boxplot.whiskers", json("[5, 95]"), &error)) << error;
+    EXPECT_TRUE(p.set("boxplot.whiskers", json("2.5"), &error)) << error;
+    EXPECT_TRUE(p.set("boxplot.flierprops.marker", json("5"), &error)) << error;
+    EXPECT_TRUE(p.set("boxplot.boxprops.linestyle", json("[0, [1, 2]]"), &error)) << error;
+    EXPECT_TRUE(p.set("axes3d.xaxis.panecolor", json("[0.1, 0.2, 0.3]"), &error)) << error;
+    EXPECT_TRUE(p.set("hist.bins", json("\"auto\""), &error)) << error;
+    EXPECT_TRUE(p.set("pdf.fonttype", json("\"truetype\""), &error)) << error;
+    EXPECT_EQ(p.number("pdf.fonttype"), 42.0);
+    EXPECT_TRUE(p.set("keymap.save", json("\"s, ctrl+s\""), &error)) << error;
+    EXPECT_EQ(p.strings("keymap.save"), (std::vector<std::string>{"s", "ctrl+s"}));
+    EXPECT_TRUE(p.set("contour.linewidth", json("{\"$float\": \"inf\"}"), &error)) << error;
+    EXPECT_FALSE(p.set("pdf.fonttype", json("5"), &error));
+    EXPECT_EQ(error, "the value given for pdf.fonttype is not valid: supported Postscript/PDF font types are 3, 42");
+    for (const std::string& key : Params::inertKeys()) {
+        EXPECT_TRUE(p.has(key)) << key;
+        const auto& refused = Params::unsupportedKeys();
+        EXPECT_EQ(std::find(refused.begin(), refused.end(), key), refused.end()) << key;
+    }
 }

@@ -34,6 +34,7 @@ public:
     double base = 10.0;
     bool labelOnlyBase = false;
     std::pair<double, double> minorThresholds{1, 0.4};
+    int minExponent = 0;  // rcParams["axes.formatter.min_exponent"]: below it a power is written out
 
     void setLocs(double viewMin, double viewMax);  // set_locs: which multiples get labels
     std::string operator()(double x) const;

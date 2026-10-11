@@ -1,0 +1,11 @@
+{"version": 1,
+ "rc": {"font.fantasy": "DejaVu Serif, fantasy", "font.cursive": ["DejaVu Sans Mono"], "font.monospace": "no such font,  DejaVu Sans Mono ,"},
+ "calls": [
+  {"call": "subplots", "args": [], "kwargs": {"figsize": {"$tuple": [5.0, 3.0]}}, "as": ["fig", "ax"]},
+  {"on": "ax", "call": "text", "args": [0.1, 0.85, "fantasy: efficient"], "kwargs": {"family": "fantasy"}},
+  {"on": "ax", "call": "text", "args": [0.1, 0.7, "cursive: efficient"], "kwargs": {"family": "cursive"}},
+  {"on": "ax", "call": "text", "args": [0.1, 0.55, "monospace: efficient"], "kwargs": {"family": "monospace"}},
+  {"on": "ax", "call": "text", "args": [0.1, 0.4, "serif: efficient"], "kwargs": {"family": "serif"}},
+  {"on": "ax", "call": "text", "args": [0.1, 0.25, "sans-serif: efficient"], "kwargs": {"family": "sans-serif"}},
+  {"on": "ax", "call": "text", "args": [0.1, 0.1, "sans: efficient"], "kwargs": {"family": ["sans", "fantasy"]}}
+]}

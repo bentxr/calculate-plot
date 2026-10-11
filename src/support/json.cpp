@@ -31,6 +31,50 @@ void appendUtf8(std::string& out, unsigned long cp) {
 
 }  // namespace
 
+Json Json::boolean(bool value) {
+    Json j;
+    j.type_ = Type::Bool;
+    j.bool_ = value;
+    return j;
+}
+
+Json Json::integer(long long value) {
+    Json j;
+    j.type_ = Type::Number;
+    j.number_ = double(value);
+    j.text_ = std::to_string(value);
+    return j;
+}
+
+Json Json::real(double value) {
+    Json j;
+    j.type_ = Type::Number;
+    j.number_ = value;
+    j.text_ = pythonRepr(value);
+    return j;
+}
+
+Json Json::string(std::string value) {
+    Json j;
+    j.type_ = Type::String;
+    j.text_ = std::move(value);
+    return j;
+}
+
+Json Json::array(std::vector<Json> items) {
+    Json j;
+    j.type_ = Type::Array;
+    j.items_ = std::move(items);
+    return j;
+}
+
+Json Json::object(std::vector<std::pair<std::string, Json>> members) {
+    Json j;
+    j.type_ = Type::Object;
+    j.members_ = std::move(members);
+    return j;
+}
+
 long long Json::asInteger() const {
     long long value = 0;
     std::from_chars(text_.data(), text_.data() + text_.size(), value);

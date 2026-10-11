@@ -338,7 +338,7 @@ Axis::Axis(const rc::Params& rc, Axes& axes, bool isX)
     zorder = 1.5;  // set_axisbelow('line')
     labelpad = rc.number("axes.labelpad");
     labelPosition = isX ? "bottom" : "left";
-    locator.roundNumbers = rc.text("axes.autolimit_mode") == "round_numbers";
+    setScale("linear");
 }
 
 void Axis::setViewInterval(double vmin, double vmax) {
@@ -390,11 +390,20 @@ void Axis::setScale(const std::string& name) {
         logMinorLocator.subs.clear();
         logMinorLocator.autoSubs = true;
         logFormatter = axes::LogFormatterSciNotation();
-        logMinorFormatter = axes::LogFormatterSciNotation();
+        logFormatter.minExponent = int(rc_.number("axes.formatter.min_exponent"));
+        logMinorFormatter = logFormatter;
     } else {
         locator = axes::MaxNLocator::autoLocator();
         locator.roundNumbers = rc_.text("axes.autolimit_mode") == "round_numbers";
-        formatter = axes::ScalarFormatter();
+        // ScalarFormatter()
+        axes::ScalarFormatter::Settings settings;
+        settings.useOffset = rc_.boolean("axes.formatter.useoffset");
+        settings.offsetThreshold = int(rc_.number("axes.formatter.offset_threshold"));
+        const auto limits = rc_.numbers("axes.formatter.limits");
+        settings.powerLimits = {int(limits[0]), int(limits[1])};
+        settings.useMathText = rc_.boolean("axes.formatter.use_mathtext");
+        settings.unicodeMinus = rc_.boolean("axes.unicode_minus");
+        formatter = axes::ScalarFormatter(settings);
     }
 }
 
@@ -744,7 +753,10 @@ Axes::Axes(const rc::Params& rc, Figure& fig, const SubplotSpec& spec)
             s.label1On = rc.boolean("ytick.labelleft") && rc.boolean("ytick.major.left");
             s.label2On = rc.boolean("ytick.labelright") && rc.boolean("ytick.major.right");
         }
-        s.gridOn = rc.boolean("axes.grid") && (rc.text("axes.grid.which") == "both" || rc.text("axes.grid.which") == "major");
+        // grid(False), then grid(rcParams["axes.grid"], which=rcParams["axes.grid.which"], axis=rcParams["axes.grid.axis"])
+        const std::string gridAxis = rc.text("axes.grid.axis");
+        s.gridOn = rc.boolean("axes.grid") && (rc.text("axes.grid.which") == "both" || rc.text("axes.grid.which") == "major") &&
+                   (gridAxis == "both" || gridAxis == (isX ? "x" : "y"));
         return s;
     };
     xaxis->setTickSwitches(sw(true));
@@ -762,6 +774,8 @@ Axes::Axes(const rc::Params& rc, Figure& fig, const SubplotSpec& spec)
             s.label1On = rc.boolean("ytick.labelleft") && rc.boolean("ytick.minor.left");
             s.label2On = rc.boolean("ytick.labelright") && rc.boolean("ytick.minor.right");
         }
+        // (grid(False) is for the major grid only: the minor one of an axis that rcParams["axes.grid.axis"]
+        // leaves out stays as Axis.clear set it, on)
         s.gridOn = rc.boolean("axes.grid") && (rc.text("axes.grid.which") == "both" || rc.text("axes.grid.which") == "minor");
         return s;
     };

@@ -64,3 +64,14 @@ TEST(Colors, TuplesAreCheckedAndTakeTheAlpha) {
     EXPECT_FALSE(c::toRgba(std::vector<double>{0.1, 1.2, 0.3}, std::nullopt, &error).has_value());
     EXPECT_FALSE(c::toRgba(std::vector<double>{0.1, 0.2, 0.3}, 1.5, &error).has_value());
 }
+
+// "C" and digits is a colour of the cycle however many the digits (Python's integers have no end).
+TEST(Colors, TheNthColourOfTheCycleTakesAnyNumberOfDigits) {
+    const auto rc = calculate_plot::rc::Params::defaults();
+    const auto c = [&](const std::string& spec) { return calculate_plot::colors::toRgba(spec, std::nullopt, rc, nullptr); };
+    ASSERT_TRUE(c("C12345678901234567890").has_value());
+    EXPECT_EQ(*c("C12345678901234567890"), *c("C0"));  // 12345678901234567890 % 10
+    EXPECT_EQ(*c("C12345678901234567897"), *c("C7"));
+    EXPECT_EQ(*c("C340282366920938463463374607431768211457"), *c("C7"));
+    EXPECT_EQ(*c("C0017"), *c("C7"));
+}

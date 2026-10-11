@@ -38,12 +38,27 @@ struct MaxNLocator {
 // no mathtext, no locale, Unicode minus).
 class ScalarFormatter {
 public:
+    // What ScalarFormatter() takes from the rcParams when it is made.
+    struct Settings {
+        bool useOffset = true;                 // axes.formatter.useoffset
+        int offsetThreshold = 4;               // axes.formatter.offset_threshold
+        std::pair<int, int> powerLimits = {-5, 6};  // axes.formatter.limits
+        bool useMathText = false;              // axes.formatter.use_mathtext
+        bool unicodeMinus = true;              // axes.unicode_minus (read when a label is written)
+    };
+    ScalarFormatter() = default;
+    explicit ScalarFormatter(const Settings& settings) : settings_(settings) {}
+
     void setViewInterval(double vmin, double vmax);
     void setLocs(const std::vector<double>& locs);
     std::string operator()(double x) const;
     std::string offsetText() const;
 
 private:
+    std::string fixMinus(const std::string& s) const;
+    std::string formatData(double value) const;
+
+    Settings settings_;
     std::vector<double> locs_;
     double vmin_ = 0, vmax_ = 0;
     double offset_ = 0;

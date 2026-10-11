@@ -92,8 +92,10 @@ std::optional<Rgba> toRgba(const std::string& spec, std::optional<double> alpha,
         std::all_of(spec.begin() + 1, spec.end(), [](char ch) { return ch >= '0' && ch <= '9'; })) {
         const auto cycle = rc.colorCycle();
         if (cycle.empty()) return toRgba(std::string("k"), alpha, rc, error);
-        const unsigned long n = std::stoul(spec.substr(1));
-        return toRgba(cycle[n % cycle.size()], alpha, error);
+        // int(c[1:]) % len(colors), digit by digit: the number may have any length
+        std::size_t n = 0;
+        for (std::size_t i = 1; i < spec.size(); ++i) n = (n * 10 + std::size_t(spec[i] - '0')) % cycle.size();
+        return toRgba(cycle[n], alpha, error);
     }
     if (alpha && !(0 <= *alpha && *alpha <= 1)) return fail(error, "'alpha' must be between 0 and 1, inclusive"), std::nullopt;
     if (lower(spec) == "none") return Rgba{0.0, 0.0, 0.0, 0.0};

@@ -29,7 +29,7 @@ TEST(LogTicker, TicksAndLabelsAsMatplotlib) {
     std::ostringstream text;
     text << in.rdbuf();
     const Json cases = *calculate_plot::support::parseJson(text.str(), nullptr);
-    int index = 0;
+    int index = 0, writtenOut = 0;
     for (const Json& c : cases.items()) {
         SCOPED_TRACE("case " + std::to_string(index++));
         const auto view = hexes(*c.find("view"));
@@ -54,6 +54,17 @@ TEST(LogTicker, TicksAndLabelsAsMatplotlib) {
         for (double v : minorLocs) labels.push_back(fmt(v));
         for (const Json& l : c.find("minor_labels")->items()) want.push_back(l.asString());
         EXPECT_EQ(labels, want);
+        // with rcParams["axes.formatter.min_exponent"], small powers are written out
+        LogFormatterSciNotation plain;
+        plain.minExponent = int(c.find("min_exponent")->asInteger());
+        for (const char* which : {"major", "minor"}) {
+            labels.clear(), want.clear();
+            plain.setLocs(view[0], view[1]);
+            for (double v : std::string(which) == "major" ? majorLocs : minorLocs) labels.push_back(plain(v));
+            for (const Json& l : c.find(std::string(which) + "_labels_min")->items()) want.push_back(l.asString());
+            EXPECT_EQ(labels, want) << which << " with min_exponent " << plain.minExponent;
+            for (std::size_t k = 0; k < labels.size(); ++k) writtenOut += labels[k].find('^') == std::string::npos && !labels[k].empty();
+        }
         const auto in2 = hexes(*c.find("nonsingular_in"));
         const auto ns = major.nonsingular(in2[0], in2[1]);
         EXPECT_EQ(ns.first, hex((*c.find("nonsingular"))[0]));
@@ -65,6 +76,25 @@ TEST(LogTicker, TicksAndLabelsAsMatplotlib) {
         EXPECT_EQ(vl.second, wantVl[1]);
     }
     EXPECT_EQ(index, 600);
+    EXPECT_GT(writtenOut, 1000);
 }
 
 }  // namespace
+
+// The labels of negative values and of zero (a symmetric log axis has them), as matplotlib 3.11.2
+// writes them: LogFormatterSciNotation()(x), with rcParams["axes.formatter.min_exponent"] 0 and 3.
+TEST(LogTicker, LabelsOfNegativeValuesAndZero) {
+    using calculate_plot::axes::LogFormatterSciNotation;
+    const double xs[] = {-100.0, -0.001, -2000.0, -5.0, -1e5, 0.0, 100.0};
+    const char* const standard[] = {"$\\mathdefault{-10^{2}}$", "$\\mathdefault{-10^{-3}}$", "$\\mathdefault{-2\\times10^{3}}$",
+                                    "$\\mathdefault{-5\\times10^{0}}$", "$\\mathdefault{-10^{5}}$", "$\\mathdefault{0}$",
+                                    "$\\mathdefault{10^{2}}$"};
+    const char* const writtenOut[] = {"$\\mathdefault{-100}$", "$\\mathdefault{-10^{-3}}$", "$\\mathdefault{-2\\times10^{3}}$",
+                                      "$\\mathdefault{-5}$", "$\\mathdefault{-10^{5}}$", "$\\mathdefault{0}$", "$\\mathdefault{100}$"};
+    LogFormatterSciNotation f, g;
+    g.minExponent = 3;
+    for (std::size_t i = 0; i < std::size(xs); ++i) {
+        EXPECT_EQ(f(xs[i]), standard[i]);
+        EXPECT_EQ(g(xs[i]), writtenOut[i]);
+    }
+}

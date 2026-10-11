@@ -19,17 +19,6 @@ using support::floorDivide;
 
 namespace {
 
-const char* const kMinus = "\xe2\x88\x92";  // U+2212 MINUS SIGN (rcParams["axes.unicode_minus"])
-
-std::string fixMinus(const std::string& s) {
-    std::string out;
-    for (char c : s) {
-        if (c == '-') out += kMinus;
-        else out.push_back(c);
-    }
-    return out;
-}
-
 std::pair<double, double> scaleRange(double vmin, double vmax, double n = 1, double threshold = 100) {
     const double dv = std::abs(vmax - vmin);  // > 0 as nonsingular is called before.
     const double meanv = (vmax + vmin) / 2;
@@ -205,6 +194,17 @@ std::vector<double> MaxNLocator::rawTicks(double vmin, double vmax) const {
     return ticks;
 }
 
+// Formatter.fix_minus: U+2212 MINUS SIGN for the hyphens, if rcParams["axes.unicode_minus"]
+std::string ScalarFormatter::fixMinus(const std::string& s) const {
+    if (!settings_.unicodeMinus) return s;
+    std::string out;
+    for (char c : s) {
+        if (c == '-') out += "\xe2\x88\x92";
+        else out.push_back(c);
+    }
+    return out;
+}
+
 void ScalarFormatter::setViewInterval(double vmin, double vmax) {
     vmin_ = vmin;
     vmax_ = vmax;
@@ -227,10 +227,10 @@ void ScalarFormatter::setLocs(const std::vector<double>& locs) {
     locs_ = locs;
     if (locs_.empty()) return;
 
-    // _compute_offset (useOffset is on by default)
+    // _compute_offset, if useOffset
     offset_ = 0;
     const auto vis = visible(locs_, vmin_, vmax_);
-    if (!vis.empty()) {
+    if (settings_.useOffset && !vis.empty()) {
         const double lmin = *std::min_element(vis.begin(), vis.end());
         const double lmax = *std::max_element(vis.begin(), vis.end());
         // Only use offset if there are at least two ticks and every tick has the same sign.
@@ -257,17 +257,22 @@ void ScalarFormatter::setLocs(const std::vector<double>& locs) {
                     oom -= 1;
                 oom = 1 + oom;
             }
-            // Only use offset if it saves at least offset_threshold (4) digits.
+            // Only use offset if it saves at least _offset_threshold digits. (10**n is an integer in
+            // Python for n >= 0, exact here up to 10**22, and a float below 1 otherwise.)
             const double q = floorDivide(absMax, std::pow(10.0, oom));
-            offset_ = q >= std::pow(10.0, 3) ? sign * q * std::pow(10.0, oom) : 0;
+            offset_ = q >= std::pow(10.0, settings_.offsetThreshold - 1) ? sign * q * std::pow(10.0, oom) : 0;
         }
     }
 
-    // _set_order_of_magnitude (scientific, power limits -5 and 6)
+    // _set_order_of_magnitude (scientific)
     orderOfMagnitude_ = 0;
     std::vector<double> absVis = visible(locs_, vmin_, vmax_);
     for (double& v : absVis) v = std::abs(v);
-    if (!absVis.empty()) {
+    const auto [lowPower, highPower] = settings_.powerLimits;
+    if (lowPower == highPower && lowPower != 0) {
+        // fixed scaling
+        orderOfMagnitude_ = lowPower;
+    } else if (!absVis.empty()) {
         int oom;
         if (offset_ != 0) {
             const double vmin = std::min(vmin_, vmax_), vmax = std::max(vmin_, vmax_);
@@ -276,7 +281,7 @@ void ScalarFormatter::setLocs(const std::vector<double>& locs) {
             const double val = *std::max_element(absVis.begin(), absVis.end());
             oom = val == 0 ? 0 : int(std::floor(support::log10(val)));
         }
-        if (oom <= -5 || oom >= 6) orderOfMagnitude_ = oom;
+        if (oom <= lowPower || oom >= highPower) orderOfMagnitude_ = oom;
     }
 
     // _set_format
@@ -310,23 +315,25 @@ std::string ScalarFormatter::operator()(double x) const {
     if (locs_.empty()) return "";
     double xp = (x - offset_) / std::pow(10.0, orderOfMagnitude_);
     if (std::abs(xp) < 1e-8) xp = 0;  // an int 0 in Python: never "-0.0"
-    return fixMinus(support::percentF(xp, sigfigs_));
+    const std::string number = support::percentF(xp, sigfigs_);
+    // _format is '$\mathdefault{%1.nf}$' with mathtext
+    return fixMinus(settings_.useMathText ? "$\\mathdefault{" + number + "}$" : number);
 }
 
-namespace {
-
-// ScalarFormatter.format_data for the offset: "1e6", "1.5e-3", "12345".
-std::string formatData(double value) {
+// ScalarFormatter.format_data, for the offset: "1e6", "1.5e-3", "12345"; with mathtext
+// "1.5 \times 10^{-3}", and "10^{6}" for 1e6.
+std::string ScalarFormatter::formatData(double value) const {
     const int e = int(std::floor(support::log10(std::abs(value))));
     const double s = support::pythonRound(value / std::pow(10.0, e), 10);
     const bool integral = support::divmod(s, 1.0).second == 0;
-    const std::string significand =
-        integral ? support::percentF(std::trunc(s), 0) : support::percentG(s, 10);
-    if (e == 0) return fixMinus(significand);
-    return fixMinus(significand) + "e" + fixMinus(std::to_string(e));
+    // (matplotlib fixes the minus of each part here; get_offset, its one user, does it for the whole)
+    const std::string significand = integral ? support::percentF(std::trunc(s), 0) : support::percentG(s, 10);
+    if (e == 0) return significand;
+    const std::string exponent = std::to_string(e);
+    if (!settings_.useMathText) return significand + "e" + exponent;
+    const std::string power = "10^{" + exponent + "}";
+    return s == 1 ? power : significand + " \\times " + power;  // reformat 1x10^y as 10^y
 }
-
-}  // namespace
 
 std::string ScalarFormatter::offsetText() const {
     if (locs_.empty()) return "";
@@ -336,8 +343,13 @@ std::string ScalarFormatter::offsetText() const {
         offsetStr = formatData(offset_);
         if (offset_ > 0) offsetStr = "+" + offsetStr;
     }
-    if (orderOfMagnitude_ != 0) sciNotStr = "1e" + std::to_string(orderOfMagnitude_);
-    return fixMinus(sciNotStr + offsetStr);
+    if (!settings_.useMathText) {
+        if (orderOfMagnitude_ != 0) sciNotStr = "1e" + std::to_string(orderOfMagnitude_);
+        return fixMinus(sciNotStr + offsetStr);
+    }
+    // 10 ** orderOfMagnitude: an integer in Python, and a float for a negative power
+    if (orderOfMagnitude_ != 0) sciNotStr = "\\times\\mathdefault{" + formatData(std::pow(10.0, orderOfMagnitude_)) + "}";
+    return fixMinus("$" + sciNotStr + "\\mathdefault{" + offsetStr + "}$");
 }
 
 }  // namespace calculate_plot::axes

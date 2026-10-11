@@ -1,4 +1,4 @@
-// float(text) and int(text) as Python reads them, for 1400 strings (tests/oracle/pyparse.json, written
+// float(text), int(text) and text.strip() as Python reads them, for 1439 strings (tests/oracle/pyparse.json, written
 // by tools/oracle/make_pyparse_oracle.py). Strings of ASCII characters are read exactly as Python
 // reads them; the digits and blanks of other scripts, which Python also takes, are refused.
 #include "support/json.hpp"
@@ -30,6 +30,8 @@ TEST(PythonParse, ReadsNumbersAsPythonDoes) {
         bool ascii = true;
         for (unsigned char ch : s) ascii = ascii && ch < 0x80;
         notAscii += !ascii;
+        EXPECT_EQ(calculate_plot::support::pythonStrip(s), c.find("strip")->asString());
+        EXPECT_EQ(calculate_plot::support::isAscii(s), ascii);
         const auto f = pythonFloat(s);
         const auto i = pythonInt(s);
         const Json& wantFloat = *c.find("float");
@@ -60,8 +62,8 @@ TEST(PythonParse, ReadsNumbersAsPythonDoes) {
             ++integers;
         }
     }
-    EXPECT_EQ(cases.size(), 1400u);
-    EXPECT_EQ(notAscii, 9);
+    EXPECT_EQ(cases.size(), 1439u);
+    EXPECT_EQ(notAscii, 37);
     EXPECT_EQ(floats, 477);
     EXPECT_EQ(integers, 352);
 }
