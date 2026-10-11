@@ -76,12 +76,13 @@ std::vector<Glyph> layoutText(FontCache& fonts, const std::vector<std::string>& 
                               const std::optional<std::string>& language, std::string& error,
                               const std::string& defaultLanguage = kReferenceLocale);
 
-// RendererAgg.get_text_width_height_descent for plain text, in pixels.
+// RendererAgg.get_text_width_height_descent for plain text, in pixels. matplotlib measures without
+// the text's own language: always with the default one.
 struct TextExtent {
     double width = 0, height = 0, descent = 0;
 };
 TextExtent textExtent(FontCache& fonts, const std::vector<std::string>& names, const std::string& text, double size,
-                      double dpi, FT_Int32 flags, const std::optional<std::string>& language, std::string& error,
+                      double dpi, FT_Int32 flags, std::string& error,
                       const std::string& defaultLanguage = kReferenceLocale);
 
 // A glyph bitmap as _draw_text_glyphs_and_boxes hands it to draw_text_image: x is its left side,

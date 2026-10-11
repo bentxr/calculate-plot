@@ -157,7 +157,16 @@ std::optional<Figure> parseFigure(std::string_view json, std::string* error) {
 std::string exportPython(const Figure& figure, std::string_view version) {
     std::string out = "# Written by calculate-plot " + std::string(version) +
                       ": this script draws the same figure with Matplotlib 3.11.2.\n"
-                      "import matplotlib.pyplot as plt\n\n";
+                      "import locale\n\n"
+                      "import matplotlib.pyplot as plt\n\n"
+                      // HarfBuzz takes the language of a text that sets none from LC_CTYPE, the first
+                      // time it shapes one; the measuring of a text never uses the text's own language,
+                      // so rcParams["text.language"] alone would not do.
+                      "# Text is shaped for the language of the locale: this is the one the figure was made with.\n"
+                      "try:\n"
+                      "    locale.setlocale(locale.LC_CTYPE, \"C.UTF-8\")\n"
+                      "except locale.Error:\n"
+                      "    locale.setlocale(locale.LC_CTYPE, \"C\")\n\n";
     if (!figure.rc.empty()) {
         out += "plt.rcParams.update({\n";
         for (const auto& [key, value] : figure.rc) out += "    " + svg::pythonStrRepr(key) + ": " + python(value) + ",\n";

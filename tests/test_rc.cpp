@@ -40,6 +40,31 @@ TEST(RcParams, SettingAValueChecksItsKind) {
     EXPECT_FALSE(p.set("axes.unicode_minus", json("3"), &error));
 }
 
+// validate_string_or_None: a string, or None; "none" in any case of letters is None as well.
+TEST(RcParams, StringsThatMayBeNone) {
+    for (const char* key : {"text.language", "svg.hashsalt", "svg.id"}) {
+        Params p = Params::defaults();
+        std::string error;
+        EXPECT_TRUE(p.value(key).isNull()) << key;
+        ASSERT_TRUE(p.set(key, json("\"es\""), &error)) << error;
+        EXPECT_EQ(p.text(key), "es");
+        for (const char* none : {"null", "\"None\"", "\"none\"", "\"NONE\"", "\"nOnE\""}) {
+            ASSERT_TRUE(p.set(key, json("\"es\""), &error)) << error;
+            ASSERT_TRUE(p.set(key, json(none), &error)) << none << ": " << error;
+            EXPECT_TRUE(p.value(key).isNull()) << key << " " << none;
+        }
+        ASSERT_TRUE(p.set(key, json("\"nones\""), &error)) << error;
+        EXPECT_EQ(p.text(key), "nones");
+        ASSERT_TRUE(p.set(key, json("\"\""), &error)) << error;
+        EXPECT_EQ(p.text(key), "");
+        for (const char* bad : {"5", "true", "[\"es\"]", "1.5"}) {
+            EXPECT_FALSE(p.set(key, json(bad), &error)) << key << " " << bad;
+            EXPECT_EQ(error, std::string("the value given for ") + key + " is not of the right kind");
+            EXPECT_EQ(p.text(key), "") << key << " " << bad;
+        }
+    }
+}
+
 // The mathtext settings that are a choice take only matplotlib's names (ValidateInStrings and
 // _validate_mathtext_fallback): the fallback also None, in any case of letters.
 TEST(RcParams, MathtextChoicesAreChecked) {

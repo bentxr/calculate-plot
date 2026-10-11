@@ -360,7 +360,7 @@ TextMetrics AggTraceRenderer::textWidthHeightDescent(const std::string& s, const
         return {};
     }
     std::string error;
-    const auto e = text::textExtent(fonts_, font.files, s, font.size, dpi_, *flags, std::nullopt, error, locale_);
+    const auto e = text::textExtent(fonts_, font.files, s, font.size, dpi_, *flags, error, locale_);
     if (!error.empty()) error_ = error;
     return {e.width, e.height, e.descent};
 }
@@ -556,7 +556,7 @@ TextMetrics SvgTraceRenderer::textWidthHeightDescent(const std::string& s, const
         return {parse->width * scale, parse->height * scale, parse->depth * scale};
     }
     std::string error;
-    const auto e = text::textExtent(fonts_, font.files, s, kFontScale, 72.0, FT_LOAD_NO_HINTING, std::nullopt, error,
+    const auto e = text::textExtent(fonts_, font.files, s, kFontScale, 72.0, FT_LOAD_NO_HINTING, error,
                                     locale_);
     if (!error.empty()) error_ = error;
     return {e.width * scale, e.height * scale, e.descent * scale};

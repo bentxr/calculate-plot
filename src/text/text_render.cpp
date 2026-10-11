@@ -154,9 +154,11 @@ std::vector<Glyph> layoutText(FontCache& fonts, const std::vector<std::string>& 
     font->clear();
     font->set_size(size, dpi);
     const std::u32string cps = codepoints(text);
-    // Never HarfBuzz's process-wide default (the user's locale): always an explicit language.
+    // Never HarfBuzz's process-wide default (the user's locale): always an explicit language. An
+    // empty one (to C: one that starts with a NUL) is none to HarfBuzz, which then takes its default.
+    const bool given = language && language->c_str()[0] != '\0';
     const FT2Font::LanguageType languages =
-        std::vector<FT2Font::LanguageRange>{{language ? *language : defaultLanguage, 0, int(cps.size())}};
+        std::vector<FT2Font::LanguageRange>{{given ? *language : defaultLanguage, 0, int(cps.size())}};
     const auto items = font->layout_items(cps, flags, features, languages);
     if (!font->error.empty()) {
         error = font->error;
@@ -169,8 +171,7 @@ std::vector<Glyph> layoutText(FontCache& fonts, const std::vector<std::string>& 
 }
 
 TextExtent textExtent(FontCache& fonts, const std::vector<std::string>& names, const std::string& text, double size,
-                      double dpi, FT_Int32 flags, const std::optional<std::string>& language, std::string& error,
-                      const std::string& defaultLanguage) {
+                      double dpi, FT_Int32 flags, std::string& error, const std::string& defaultLanguage) {
     FT2Font* font = fonts.get(names);
     if (!font) {
         error = fonts.error;
@@ -179,8 +180,7 @@ TextExtent textExtent(FontCache& fonts, const std::vector<std::string>& names, c
     font->clear();
     font->set_size(size, dpi);
     const std::u32string cps = codepoints(text);
-    const FT2Font::LanguageType languages =
-        std::vector<FT2Font::LanguageRange>{{language ? *language : defaultLanguage, 0, int(cps.size())}};
+    const FT2Font::LanguageType languages = std::vector<FT2Font::LanguageRange>{{defaultLanguage, 0, int(cps.size())}};
     std::vector<double> xys;
     font->set_text(cps, 0.0, flags, std::nullopt, languages, xys);
     if (!font->error.empty()) {

@@ -1,0 +1,6 @@
+{"version": 1, "rc": {"text.language": "NONE"}, "calls": [
+  {"call": "subplots", "args": [], "kwargs": {"figsize": {"$tuple": [5.0, 3.0]}}, "as": ["fig", "ax"]},
+  {"on": "ax", "call": "set_title", "args": ["Default figure: efficient office"]},
+  {"on": "ax", "call": "text", "args": [0.5, 0.6, "affine fit: es"], "kwargs": {"ha": "center", "language": "es"}},
+  {"on": "ax", "call": "text", "args": [0.5, 0.4, "affine fit: None"], "kwargs": {"ha": "center", "language": null}}
+]}

@@ -68,6 +68,22 @@ TEST(TextLayout, MatchesMatplotlibForEveryCorpusString) {
     EXPECT_GE(glyphsChecked, 745);
 }
 
+TEST(TextLayout, AnEmptyLanguageIsTheDefaultOne) {
+    // HarfBuzz takes an empty language (and one that starts with a NUL) for none at all and falls
+    // back to the process locale: the default language is passed instead.
+    text::FontCache fonts(kFonts);
+    std::string error;
+    auto shape = [&](const std::optional<std::string>& language) {
+        return text::layoutText(fonts, {"DejaVuSans.ttf"}, "fi", 12, 100, FT_LOAD_DEFAULT, std::nullopt, language, error,
+                                "es");
+    };
+    EXPECT_EQ(shape(std::nullopt).size(), 2u);
+    EXPECT_EQ(shape(std::string()).size(), 2u);
+    EXPECT_EQ(shape(std::string("\0en", 3)).size(), 2u);
+    EXPECT_EQ(shape(std::string("en")).size(), 1u);
+    EXPECT_EQ(shape(std::string("en\0s", 4)).size(), 1u);
+}
+
 TEST(TextLayout, ShapingFollowsTheLanguageNotTheUsersLocale) {
     // DejaVu Sans forms the "fi" ligature (glyph 5039) in the reference locale, not for Spanish, as
     // matplotlib does in those locales; the process locale itself never matters.
@@ -161,7 +177,7 @@ TEST(TextExtent, MatchesMatplotlibsRendererAgg) {
         for (const auto& n : c.find("fonts")->items()) names.push_back(n.asString());
         std::string error;
         const auto e = text::textExtent(fonts, names, c.find("s")->asString(), c.find("size")->asNumber(),
-                                        c.find("dpi")->asNumber(), FT_LOAD_DEFAULT, std::nullopt, error);
+                                        c.find("dpi")->asNumber(), FT_LOAD_DEFAULT, error);
         ASSERT_TRUE(error.empty()) << error;
         const std::string where = "\"" + c.find("s")->asString() + "\" " + std::to_string(c.find("size")->asNumber()) +
                                   "pt " + std::to_string(c.find("dpi")->asNumber()) + "dpi";

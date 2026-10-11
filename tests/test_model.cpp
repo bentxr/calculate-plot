@@ -48,7 +48,15 @@ TEST(FigureModel, ExportsAPlainMatplotlibScript) {
         {"on":"axs[1]","call":"set_title","args":["Título"],"kwargs":{"loc":null}}]})");
     EXPECT_EQ(m::exportPython(f, "0.1.0"),
               "# Written by calculate-plot 0.1.0: this script draws the same figure with Matplotlib 3.11.2.\n"
+              "import locale\n"
+              "\n"
               "import matplotlib.pyplot as plt\n"
+              "\n"
+              "# Text is shaped for the language of the locale: this is the one the figure was made with.\n"
+              "try:\n"
+              "    locale.setlocale(locale.LC_CTYPE, \"C.UTF-8\")\n"
+              "except locale.Error:\n"
+              "    locale.setlocale(locale.LC_CTYPE, \"C\")\n"
               "\n"
               "plt.rcParams.update({\n"
               "    'lines.linewidth': 2.5,\n"

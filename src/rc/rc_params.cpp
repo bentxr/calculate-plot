@@ -159,6 +159,17 @@ bool Params::set(const std::string& key, const Json& v, std::string* error) {
         }
         return true;
     }
+    // validate_string_or_None: a string, or None ("none" in any case of letters is None too)
+    if (key == "text.language" || key == "svg.hashsalt" || key == "svg.id") {
+        if (!v.isString() && !v.isNull()) {
+            if (error) *error = "the value given for " + key + " is not of the right kind";
+            return false;
+        }
+        std::string lower = v.isString() ? v.asString() : "none";
+        for (char& c : lower) c = c >= 'A' && c <= 'Z' ? char(c - 'A' + 'a') : c;
+        it->second = lower == "none" ? Json() : v;
+        return true;
+    }
     const Kind want = kindOf(it->second), got = kindOf(v);
     // A default of None accepts anything matplotlib would validate; otherwise the kinds must agree.
     // A few defaults are names where a number is as good: savefig.dpi ('figure'), the font sizes

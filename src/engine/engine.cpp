@@ -1155,6 +1155,13 @@ private:
                 if (!v.isString() || std::find_if(std::begin(fontsets), std::end(fontsets), [&](const char* f) { return v.asString() == f; }) == std::end(fontsets))
                     return bad(name, "is not a math font family");
                 t.font.mathFontfamily = v.asString();
+            } else if (property == "language") {
+                // Text.set_language: None is the rcParams' language
+                const auto& d = rc_.value("text.language");
+                if (v.isNull()) return t.language = d.isString() ? std::optional<std::string>(d.asString()) : std::nullopt, true;
+                if (sequence(v)) return bad(name, "as a list of ranges is not supported yet");
+                if (!v.isString()) return bad(name, "must be a string or None");
+                t.language = v.asString();
             } else if ((property == "x" || property == "y") && !constructing) {
                 if (!readNumber(v, &n)) return bad(name, "must be a number");
                 (property == "x" ? t.x : t.y) = n;
