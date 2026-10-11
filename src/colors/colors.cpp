@@ -91,11 +91,10 @@ std::optional<Rgba> toRgba(const std::string& spec, std::optional<double> alpha,
     if (spec.size() >= 2 && spec[0] == 'C' &&
         std::all_of(spec.begin() + 1, spec.end(), [](char ch) { return ch >= '0' && ch <= '9'; })) {
         const auto cycle = rc.colorCycle();
-        if (cycle.empty()) return toRgba(std::string("k"), alpha, rc, error);
         // int(c[1:]) % len(colors), digit by digit: the number may have any length
         std::size_t n = 0;
         for (std::size_t i = 1; i < spec.size(); ++i) n = (n * 10 + std::size_t(spec[i] - '0')) % cycle.size();
-        return toRgba(cycle[n], alpha, error);
+        return toRgba(specOf(cycle[n]), alpha, rc, error);
     }
     if (alpha && !(0 <= *alpha && *alpha <= 1)) return fail(error, "'alpha' must be between 0 and 1, inclusive"), std::nullopt;
     if (lower(spec) == "none") return Rgba{0.0, 0.0, 0.0, 0.0};
@@ -132,6 +131,13 @@ std::optional<Rgba> toRgba(const std::string& spec, std::optional<double> alpha,
 std::optional<Rgba> toRgba(const Spec& spec, std::optional<double> alpha, const rc::Params& rc, std::string* error) {
     if (const auto* text = std::get_if<std::string>(&spec)) return toRgba(*text, alpha, rc, error);
     return toRgba(std::get<std::vector<double>>(spec), alpha, error);
+}
+
+Spec specOf(const support::Json& color) {
+    if (color.isString()) return color.asString();
+    std::vector<double> components;
+    for (const support::Json& c : color.items()) components.push_back(c.asNumber());
+    return components;
 }
 
 bool isNone(const Spec& spec) {

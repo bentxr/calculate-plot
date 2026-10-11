@@ -27,7 +27,59 @@ TEST(RcParams, StartsWithMatplotlibsDefaults) {
     EXPECT_EQ(p.strings("font.sans-serif").front(), "DejaVu Sans");
     const auto cycle = p.colorCycle();
     ASSERT_EQ(cycle.size(), 10u);
-    EXPECT_EQ(cycle[0], (std::vector<double>{0.12156862745098039, 0.4666666666666667, 0.7058823529411765}));
+    ASSERT_EQ(cycle[0].size(), 3u);
+    EXPECT_EQ(cycle[0][0].asNumber(), 0.12156862745098039);
+    EXPECT_EQ(cycle[0][1].asNumber(), 0.4666666666666667);
+    EXPECT_EQ(cycle[0][2].asNumber(), 0.7058823529411765);
+    const auto entries = p.propCycle();
+    ASSERT_EQ(entries.size(), 10u);
+    ASSERT_EQ(entries[9].size(), 1u);
+    EXPECT_EQ(entries[9][0].first, "color");
+    EXPECT_EQ(entries[9][0].second[0].asNumber(), 0.09019607843137255);
+}
+
+// rcParams["axes.prop_cycle"] is set as the text that makes the cycle (as a style sheet writes it).
+TEST(RcParams, APropertyCycleIsSetAsText) {
+    Params p = Params::defaults();
+    std::string error;
+    ASSERT_TRUE(p.set("axes.prop_cycle", json("\"cycler(color='rg') + cycler(lw=[1, 2.5])\""), &error)) << error;
+    const auto entries = p.propCycle();
+    ASSERT_EQ(entries.size(), 2u);
+    ASSERT_EQ(entries[0].size(), 2u);
+    EXPECT_EQ(entries[0][0].first, "color");
+    EXPECT_EQ(entries[0][0].second.asString(), "r");
+    EXPECT_EQ(entries[0][1].first, "linewidth");
+    EXPECT_EQ(entries[0][1].second.asNumber(), 1.0);
+    EXPECT_EQ(entries[1][0].second.asString(), "g");
+    EXPECT_EQ(entries[1][1].second.asNumber(), 2.5);
+    ASSERT_EQ(p.colorCycle().size(), 2u);
+    EXPECT_EQ(p.colorCycle()[1].asString(), "g");
+    // a cycle without colours: "C0" and the rest are black
+    ASSERT_TRUE(p.set("axes.prop_cycle", json("\"cycler(ls=['-', '--', ':'])\""), &error)) << error;
+    EXPECT_EQ(p.propCycle().size(), 3u);
+    ASSERT_EQ(p.colorCycle().size(), 1u);
+    EXPECT_EQ(p.colorCycle()[0].asString(), "k");
+    // every kind of value the engine goes through
+    EXPECT_TRUE(p.set("axes.prop_cycle",
+                      json("\"cycler(color=['r', (0, 0.5, 1), '#00ff0080', '0.3'], lw=[1, 2, 3, 4], ls=['-', '--', ':', 'None'], "
+                           "marker=['o', 's', 'x', 'None'], ms=[1, 2, 3, 4], mew=[1, 2, 3, 4], mec='rgbk', mfc='rgbk', alpha=[0, 0.5, 1, 1], "
+                           "fc='rgbk', ec='rgbk')\""),
+                      &error))
+        << error;
+    EXPECT_EQ(p.propCycle().size(), 4u);
+    EXPECT_EQ(p.propCycle()[0].size(), 11u);
+    // what matplotlib takes and the engine does not go through yet
+    for (const char* text : {"cycler(color=[])", "cycler(color='rg') * 0", "cycler(color=[('red', 0.5)])", "cycler(mfc=[('red', 0.5)])",
+                             "cycler(ls=[(0, (1, 2))])", "cycler(marker=[1, 2])", "cycler(lw=['inf'])", "cycler(alpha=['nan'])",
+                             "cycler(color='r', ms=[1e400])"}) {
+        EXPECT_FALSE(p.set("axes.prop_cycle", Json::string(text), &error)) << text;
+        EXPECT_EQ(error, "this value of axes.prop_cycle is not supported yet") << text;
+    }
+    EXPECT_EQ(p.propCycle().size(), 4u);
+    // what matplotlib refuses
+    EXPECT_FALSE(p.set("axes.prop_cycle", json("\"cycler(colour='rg')\""), &error));
+    EXPECT_EQ(error, "the value given for axes.prop_cycle is not valid: 'cycler(colour='rg')' is not a valid cycler construction: "
+                     "Unknown artist property: colour");
 }
 
 TEST(RcParams, SettingAValueChecksItsKind) {
@@ -229,8 +281,8 @@ TEST(RcParams, ValuesTheEngineDoesNotReadYetAreRefused) {
         EXPECT_EQ(error, std::string("this value of ") + key + " is not supported yet") << value;
     }
     // text that only Python reads
-    EXPECT_FALSE(p.set("axes.prop_cycle", json("\"cycler('color', ['r', 'g'])\""), &error));
-    EXPECT_EQ(error, "a cycler written as text is not supported yet");
+    EXPECT_FALSE(p.set("axes.prop_cycle", json("\"cycler(color=u'rg')\""), &error));
+    EXPECT_EQ(error, "this spelling of a Python literal is not supported yet");
     EXPECT_FALSE(p.set("lines.linewidth", json("\"\u0665\""), &error));
     EXPECT_EQ(error, "a number in the digits of another script is not supported yet");
     EXPECT_EQ(p.text("lines.linestyle"), "-");

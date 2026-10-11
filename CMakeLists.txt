@@ -75,6 +75,8 @@ add_library(calculate-plot STATIC
     src/agg/backend_agg.cpp
     src/model/figure_model.cpp
     src/png/png.cpp
+    src/rc/cycler.cpp
+    src/rc/cycler_text.cpp
     src/rc/rc_params.cpp
     src/rc/rc_validate.cpp
     src/render/replay.cpp

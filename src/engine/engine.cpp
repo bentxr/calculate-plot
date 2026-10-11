@@ -155,6 +155,15 @@ private:
         return true;
     }
 
+    // The parameters of Line2D itself, for which None is the default (the other keywords go to their setters).
+    static bool isLineParameter(const std::string& name) {
+        static const char* const parameters[] = {
+            "linewidth", "linestyle", "color", "gapcolor", "marker", "markersize", "markeredgewidth", "markeredgecolor",
+            "markerfacecolor", "markerfacecoloralt", "fillstyle", "antialiased", "dash_capstyle", "solid_capstyle",
+            "dash_joinstyle", "solid_joinstyle", "pickradius", "drawstyle", "markevery"};
+        return std::find_if(std::begin(parameters), std::end(parameters), [&](const char* p) { return name == p; }) != std::end(parameters);
+    }
+
     // The keywords in the order a constructor takes them: its own parameters first (set while it
     // builds), then the others in the order given (Artist._internal_update, each through its setter).
     static std::vector<std::pair<std::string, const Json*>> ownFirst(const model::Call& call, std::initializer_list<const char*> own) {
@@ -640,16 +649,23 @@ private:
                 return *error = where + ": x and y must have same first dimension", false;
 
             auto line = std::make_unique<Line2D>(rc_, x, y);
-            // kw from the format, then the keyword arguments over it
-            bool hasColor = fmtColor.has_value();
+            // kw from the format, the keyword arguments over it, and for what neither says (None says
+            // nothing) the next entry of the property cycle
+            std::vector<std::string> given;
+            if (linestyle) given.push_back("linestyle");
+            if (marker) given.push_back("marker");
+            if (fmtColor) given.push_back("color");
+            for (const auto& [name, value] : props)
+                if (!value->isNull()) given.push_back(name);
             if (linestyle && !line->setLinestyle(*linestyle, error)) return false;
             if (marker && !line->setMarker(*marker, error)) return false;
             if (fmtColor) line->color = *fmtColor;
+            for (const auto& [name, value] : ax.lineDefaults(given))
+                if (!lineProperty(*line, name, value, where, error)) return false;
             for (const auto& [name, value] : props) {
+                if (value->isNull() && isLineParameter(name)) continue;  // Line2D(..., name=None): its default
                 if (!lineProperty(*line, name, *value, where, error)) return false;
-                if (name == "color" && !value->isNull()) hasColor = true;
             }
-            if (!hasColor) line->color = ax.nextColor();  // _PropCycle.getdefaults
             ax.addLine(std::move(line));
         }
         ax.requestAutoscaleView(true, true);
@@ -1040,6 +1056,18 @@ private:
             if (!color(*c, &baseColor)) return *error = where + ": bad color", false;
             baseColorSet = true;
         }
+        // what the property cycle gives for what the format and the keywords do not say
+        std::vector<std::string> given;
+        if (linestyle) given.push_back("linestyle");
+        if (marker) given.push_back("marker");
+        if (fmtColor) given.push_back("color");
+        for (const auto& [name, value] : props) given.push_back(name);
+        const auto defaults = ax.lineDefaults(given);
+        const auto fromCycle = [&](const char* name) -> const Json* {
+            for (const auto& [n, v] : defaults)
+                if (n == name) return &v;
+            return nullptr;
+        };
         // ErrorbarContainer((data_line, caplines, barcols), has_xerr=, has_yerr=, label=label)
         ErrorbarContainer container;
         container.hasXerr = xerr != nullptr;
@@ -1050,13 +1078,11 @@ private:
             if (linestyle && !line->setLinestyle(*linestyle, error)) return false;
             if (marker && !line->setMarker(*marker, error)) return false;
             if (fmtColor) line->color = *fmtColor;
+            for (const auto& [name, value] : defaults)
+                if (!lineProperty(*line, name, value, where, error)) return false;
             for (const auto& [name, value] : props)
                 if (!lineProperty(*line, name, *value, where, error)) return false;
-            if (!baseColorSet) {  // _PropCycle.getdefaults
-                baseColor = ax.nextColor();
-                baseColorSet = true;
-            }
-            line->color = baseColor;
+            if (fromCycle("color")) baseColor = line->color, baseColorSet = true;
             line->label = "_nolegend_";
             line->zorder = barsabove ? zorder - .1 : zorder + .1;
             container.dataLine = &ax.addLine(std::move(line));
@@ -1064,6 +1090,8 @@ private:
             // no data line; base_style keeps the kwargs' colour only. (The keywords still go to the
             // lines of the bars and caps, which refuse what a line refuses.)
             Line2D probe(rc_, {}, {});
+            for (const auto& [name, value] : defaults)
+                if (!lineProperty(probe, name, value, where, error)) return false;
             for (const auto& [name, value] : props)
                 if (!lineProperty(probe, name, *value, where, error)) return false;
             if (!prop("color")) baseColorSet = false;
@@ -1073,8 +1101,10 @@ private:
         // base_style keeps what is not about markers or line styles
         std::optional<double> linewidth, alpha;
         double n = 0;
-        if (const Json* v = prop("linewidth"); v && readNumber(*v, &n)) linewidth = n;
-        if (const Json* v = prop("alpha"); v && readNumber(*v, &n)) alpha = n;
+        for (const Json* v : {fromCycle("linewidth"), prop("linewidth")})
+            if (v && readNumber(*v, &n)) linewidth = n;
+        for (const Json* v : {fromCycle("alpha"), prop("alpha")})
+            if (v && readNumber(*v, &n)) alpha = n;
         if (!elinewidth && !rc_.value("errorbar.elinewidth").isNull()) elinewidth = rc_.number("errorbar.elinewidth");
         const double caps = capsize ? *capsize : rc_.number("errorbar.capsize");
         if (!capthick && !rc_.value("errorbar.capthick").isNull()) capthick = rc_.number("errorbar.capthick");
@@ -1514,7 +1544,7 @@ private:
             if (columns < 1) return *error = where + ": " + name + " must be 1 or more", false;
             if (columns > std::numeric_limits<int>::max()) return *error = where + ": more than 2147483647 columns are not supported yet", false;
         }
-        o.ncols = int(std::min(columns, double(std::max<std::size_t>(handles.size(), 1))));
+        o.ncols = int(std::min(columns, double(handles.size())));
         std::string problem;
         auto made = std::make_unique<Legend>(rc_, ax, handles, containers, labels, o, &problem);
         if (!problem.empty()) return *error = where + ": " + problem, false;

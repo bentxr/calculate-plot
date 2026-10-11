@@ -516,7 +516,9 @@
         "src/support/fontconfig_pattern.hpp",
         "src/support/fontconfig_pattern.cpp",
         "src/rc/rc_validate.hpp",
-        "src/rc/rc_validate.cpp"
+        "src/rc/rc_validate.cpp",
+        "src/rc/cycler_text.hpp",
+        "src/rc/cycler_text.cpp"
       ],
       "header": [
         "Copyright (c) 2012- Matplotlib Development Team; All Rights Reserved",
@@ -558,6 +560,36 @@
       ],
       "changes": "licensing/changes/numpy.md",
       "remarks": "A few numeric routines translated to C++ so that results match NumPy's bit for bit."
+    },
+    {
+      "id": "cycler",
+      "name": "cycler",
+      "version": "0.12.1",
+      "homepage": "https://matplotlib.org/cycler/",
+      "use": "runtime",
+      "licence": "BSD-3-Clause",
+      "licenceFiles": [
+        {
+          "path": "LICENSES/cycler.txt",
+          "upstream": "https://raw.githubusercontent.com/matplotlib/cycler/v0.12.1/LICENSE",
+          "sha256": "f1218143d766da3fea66f13396b7f15df46a83303f29bf96ba6e98eb4d42f408"
+        }
+      ],
+      "fetch": [],
+      "vendored": [],
+      "derived": [
+        "src/rc/cycler.hpp",
+        "src/rc/cycler.cpp"
+      ],
+      "header": [
+        "Copyright (c) 2015, matplotlib project",
+        "LICENSES/cycler.txt"
+      ],
+      "notices": [
+        "Copyright (c) 2015, matplotlib project"
+      ],
+      "changes": "licensing/changes/cycler.md",
+      "remarks": "The algebra of property cycles (sum, product, slices, concat) translated to C++, so that a cycle written as text in a style sheet is the cycle Matplotlib makes of it."
     },
     {
       "id": "fdlibm",

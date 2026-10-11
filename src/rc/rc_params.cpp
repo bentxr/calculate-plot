@@ -53,6 +53,24 @@ bool fitsInt(const Json& v) {
     return true;
 }
 
+// Whether the engine goes through a property cycle: one with entries, its colours texts or RGB(A)
+// numbers (not a colour with an alpha apart), its line styles and markers names, its numbers finite.
+bool cycleIsRead(const Json& value) {
+    for (const auto& [property, values] : value.find("$cycler")->members()) {
+        if (values.size() == 0) return false;
+        const bool isColor = property.size() >= 5 && property.compare(property.size() - 5, 5, "color") == 0;
+        const bool isName = property == "linestyle" || property == "marker";
+        for (const Json& v : values.items()) {
+            if (isColor) {
+                if (!v.isString() && !(v.isArray() && v[0].isNumber())) return false;
+            } else if (isName ? !v.isString() : !std::isfinite(v.asNumber())) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 // Whether the engine reads a value of kind `got` for a key whose default is of kind `want`: the
 // same kind as the default, anything where the default is None, and for a few keys whose default is
 // a name a number as well (savefig.dpi: 'figure'; the font sizes: 'medium', 'large'; the font
@@ -118,17 +136,18 @@ std::vector<std::string> Params::strings(const std::string& key) const {
     return out;
 }
 
-std::vector<std::vector<double>> Params::colorCycle() const {
-    std::vector<std::vector<double>> out;
-    const Json* cycler = value("axes.prop_cycle").find("$cycler");
-    const Json* colors = cycler ? cycler->find("color") : nullptr;
-    if (!colors) return out;
-    for (const Json& c : colors->items()) {
-        std::vector<double> rgb;
-        for (const Json& x : c.items()) rgb.push_back(x.asNumber());
-        out.push_back(rgb);
+std::vector<std::vector<std::pair<std::string, Json>>> Params::propCycle() const {
+    std::vector<std::vector<std::pair<std::string, Json>>> out;
+    for (const auto& [property, values] : value("axes.prop_cycle").find("$cycler")->members()) {
+        out.resize(values.size());
+        for (std::size_t i = 0; i < values.size(); ++i) out[i].emplace_back(property, values[i]);
     }
     return out;
+}
+
+std::vector<Json> Params::colorCycle() const {
+    const Json* colors = value("axes.prop_cycle").find("$cycler")->find("color");
+    return colors ? colors->items() : std::vector<Json>{Json::string("k")};
 }
 
 const std::vector<std::string>& Params::inertKeys() {
@@ -219,7 +238,8 @@ bool Params::set(const std::string& key, const Json& v, std::string* error) {
                     checked.value.asString() != "auto") ||
                    ((key == "grid.major.linestyle" || key == "grid.minor.linestyle" || key == "grid.major.color" ||
                      key == "grid.minor.color") &&
-                    checked.value.isArray())) {
+                    checked.value.isArray()) ||
+                   (key == "axes.prop_cycle" && !cycleIsRead(checked.value))) {
             // (10 ** (offset_threshold - 1) is an integer of any size in Python, and a double here, exact up to
             // 1e22. 'auto' in capitals is taken by the validator and breaks AutoMinorLocator, which looks for 'auto'.
             // An on-off sequence as the line style of the grid, or a tuple as its colour, is not read yet.)

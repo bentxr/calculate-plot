@@ -186,8 +186,9 @@ public:
     Patch& addPatch(std::unique_ptr<Rectangle> patch);  // Axes.add_patch
     Text& addText(std::unique_ptr<Text> text);          // Axes._add_text, as Axes.text does it
     const std::string& unsupportedFeature() const { return unsupported_; }
-    // The next colour of the property cycle when a line has none (_PropCycle.getdefaults).
-    colors::Spec nextColor();
+    // What a new line takes from the property cycle (_get_lines' _PropCycle.getdefaults): the properties
+    // of the next entry that are not among those given. With all of them given the cycle stays.
+    std::vector<std::pair<std::string, support::Json>> lineDefaults(const std::vector<std::string>& given);
     // The patches' own cycle (_get_patches_for_fill.get_next_color), used by scatter and fills.
     colors::Spec nextPatchColor();
     // Axes.add_collection(autolim=True): a pending autoscale runs first, then the data limits grow

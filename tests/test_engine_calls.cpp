@@ -557,6 +557,9 @@ TEST(LegendCalls, TheColumnCountIsReadAsMatplotlibReadsIt) {
     EXPECT_EQ(legend(1, R"({"ncol": null})").error, "axs[0].legend: ncol must be a number");
     EXPECT_EQ(legend(1, R"({"ncols": 3, "ncol": 0.5})").error, "axs[0].legend: ncol must be 1 or more");
     EXPECT_EQ(legend(1, R"({"ncol": false})").error, "axs[0].legend: ncol must be 1 or more");
+    // no entry at all
+    EXPECT_EQ(trace(0, R"({"ncols": 3})"), trace(0, "{}"));
+    EXPECT_EQ(trace(0, R"({"ncol": 3})"), trace(0, "{}"));
     // three entries
     const std::string plain = trace(3, "{}"), two = trace(3, R"({"ncols": 2})"), three = trace(3, R"({"ncols": 3})");
     EXPECT_NE(two, plain);
@@ -726,6 +729,31 @@ TEST(RcCalls, SettingsThatBreakWhenUsed) {
 // An Axes of no width has a transform that cannot be inverted, and matplotlib stops with numpy's
 // "Singular matrix" where the inverse is first needed: not for an axhline on fresh limits (its
 // transform then equals the Axes' own and no inverse is taken), but after a plot has changed them.
+// A property cycle gives a new line every property it has: one that a line does not have, or a
+// value a line does not take, breaks plot and errorbar. The fills and scatter take its colour only.
+TEST(RcCalls, APropertyCycleWithWhatALineDoesNotTakeStopsPlot) {
+    const auto error = [](const std::string& cycle, const std::string& call) {
+        std::string parseError;
+        const auto figure = calculate_plot::model::parseFigure(
+            R"({"version": 1, "rc": {"axes.prop_cycle": ")" + cycle + R"("}, "calls": [{"call": "subplots", "as": ["fig", "ax"]}, {"on": "ax", "call": ")" +
+                call + R"(", "args": [[1, 2], [1, 2]]}]})",
+            &parseError);
+        EXPECT_TRUE(figure.has_value()) << parseError;
+        if (!figure) return std::string("?");
+        calculate_plot::engine::DrawOptions options;
+        options.fontDirectory = std::string(CALCULATE_PLOT_SOURCE_DIR) + "/fonts/ttf";
+        return calculate_plot::engine::drawAgg(*figure, options).error;
+    };
+    EXPECT_EQ(error("cycler(fc='rg')", "plot"), "ax.plot: unsupported keyword facecolor");
+    EXPECT_EQ(error("cycler(ec='rg')", "errorbar"), "ax.errorbar: unsupported keyword edgecolor");
+    EXPECT_EQ(error("cycler(fc='rg')", "scatter"), "");
+    EXPECT_EQ(error("cycler(fc='rg')", "fill_between"), "");
+    EXPECT_EQ(error("cycler(alpha=[2])", "plot"), "ax.plot: alpha must be a number from 0 to 1");
+    EXPECT_EQ(error("cycler(alpha=[2])", "errorbar"), "ax.errorbar: alpha must be a number from 0 to 1");
+    EXPECT_EQ(error("cycler(alpha=[2])", "scatter"), "");
+    EXPECT_EQ(error("cycler(color='rg', lw=[1, 2])", "plot"), "");
+}
+
 TEST(RcCalls, ATransformThatCannotBeInvertedStopsTheDrawing) {
     const auto error = [](const std::string& calls) {
         std::string parseError;
@@ -1039,6 +1067,27 @@ TEST(ArgumentForms, APropertyGivenByTwoOfItsNamesIsRefused) {
         }
     EXPECT_EQ(error("scatter", "[1, 2], [1, 2]", "ec", "edgecolors"),
               "axs[0].scatter: edgecolors is given twice (it is an alias of edgecolor)");
+}
+
+// plot gives its keywords to Line2D: None for one of Line2D's own parameters is its default.
+TEST(ArgumentForms, NoneForAParameterOfALineIsItsDefault) {
+    const auto plot = [](const std::string& kwargs) {
+        return draw(kSubplots + R"({"on": "axs[0]", "call": "plot", "args": [[1, 2], [1, 2]], "kwargs": )" + kwargs + "}");
+    };
+    const auto plain = plot("{}");
+    ASSERT_EQ(plain.error, "");
+    for (const char* name : {"linewidth", "linestyle", "color", "gapcolor", "marker", "markersize", "markeredgewidth", "markeredgecolor",
+                             "markerfacecolor", "markerfacecoloralt", "fillstyle", "antialiased", "dash_capstyle", "solid_capstyle",
+                             "dash_joinstyle", "solid_joinstyle", "pickradius", "drawstyle", "markevery", "lw", "ls", "c", "ms", "mew", "mec",
+                             "mfc", "mfcalt", "aa", "ds"}) {
+        const auto none = plot(std::string(R"({")") + name + R"(": null})");
+        EXPECT_EQ(none.error, "") << name;
+        EXPECT_EQ(none.trace, plain.trace) << name;
+    }
+    // (the keywords that are no parameter of Line2D go to their setters, None or not)
+    EXPECT_EQ(plot(R"({"zorder": null})").error, "axs[0].plot: zorder must be a finite number");
+    EXPECT_EQ(plot(R"({"drawstyle": "steps"})").error, "axs[0].plot: unsupported keyword drawstyle");
+    EXPECT_EQ(plot(R"({"bogus": null})").error, "axs[0].plot: unsupported keyword bogus");
 }
 
 // fill_between draws straight between the points: no interpolation of crossings, no steps.

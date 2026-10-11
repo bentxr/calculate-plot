@@ -1,0 +1,16 @@
+{"version": 1,
+ "rc": {"axes.prop_cycle": "cycler(color='rgb') + cycler(lw=[1, 2.5, 4]) + cycler(ls=['-', '--', ':']) + cycler(marker=['o', 's', '^'], ms=[4, 7, 10], mew=[0.5, 1.5, 2.5], mec='kkb', mfc=['w', 'y', 'none'], alpha=[1, 0.6, 0.3])"},
+ "calls": [
+  {"call": "subplots", "args": [1, 2], "kwargs": {"figsize": {"$tuple": [6.0, 3.0]}}, "as": ["fig", "axs"]},
+  {"on": "axs[0]", "call": "plot", "args": [[0, 1, 2], [0, 1, 0]]},
+  {"on": "axs[0]", "call": "plot", "args": [[0, 1, 2], [1, 2, 1]], "kwargs": {"color": "k", "linewidth": 1, "linestyle": "-", "marker": "x", "markersize": 3, "markeredgewidth": 1, "markeredgecolor": "k", "markerfacecolor": "k", "alpha": 1}},
+  {"on": "axs[0]", "call": "plot", "args": [[0, 1, 2], [2, 3, 2]]},
+  {"on": "axs[0]", "call": "plot", "args": [[0, 1, 2], [3, 4, 3]], "kwargs": {"lw": 6, "marker": null}},
+  {"on": "axs[0]", "call": "plot", "args": [[0, 1, 2], [4, 5, 4], "k+-."]},
+  {"on": "axs[0]", "call": "plot", "args": [[0, 1, 2], [5, 6, 5]]},
+  {"on": "axs[1]", "call": "errorbar", "args": [[1, 2, 3], [1, 1, 1]], "kwargs": {"yerr": 0.3, "capsize": 3}},
+  {"on": "axs[1]", "call": "errorbar", "args": [[1, 2, 3], [2, 2, 2]], "kwargs": {"yerr": 0.3, "xerr": 0.2, "capsize": 4, "fmt": "none"}},
+  {"on": "axs[1]", "call": "errorbar", "args": [[1, 2, 3], [3, 3, 3]], "kwargs": {"yerr": 0.3, "fmt": "D", "color": "m", "alpha": 0.9}},
+  {"on": "axs[1]", "call": "scatter", "args": [[1, 2, 3], [4, 4, 4]]},
+  {"on": "axs[1]", "call": "fill_between", "args": [[1, 2, 3], [4.5, 5, 4.5], [5, 5.5, 5]]}
+]}

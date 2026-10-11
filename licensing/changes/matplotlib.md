@@ -159,6 +159,14 @@ it comes from in its first lines. The changes, as a whole:
   its names; the order in which Line2D.__init__, Patch.__init__ (a color in place of edgecolor and facecolor)
   and Axes.vlines / hlines take their own parameters before the other keywords; Legend.__init__'s choice
   between ncols and ncol and numpy.array_split's reading of the count, translated to C++ in the executor.
+  Property cycles: rcsetup.py's _parse_cycler_string and _eval_cycler_expr (a cycle written as text: calls of
+  cycler() and concat(), +, *, slices, literals), cycler() with its three forms, validate_cycler, the
+  validators of the properties of a cycle (_prop_validators, validate_color_for_prop_cycle,
+  _single_string_color_list), translated to C++ (src/rc/cycler_text.cpp, src/rc/rc_validate.cpp). The text is
+  read by a tokeniser and a parser of that grammar written here instead of by Python's ast module: what
+  Python would read and they do not (string prefixes and escapes, sets, bytes, arithmetic between numbers,
+  characters outside ASCII) is reported as not supported rather than refused. validate_cycler's second
+  validation of the values is left out (they were validated when the cycle was made).
 - File names drop the leading underscore (e.g. src/_backend_agg.h is src/agg/backend_agg.h); includes follow.
 - RendererAgg's rasterizer takes Matplotlib's 32 768 blocks of cells on 64-bit targets and 4 096 on 32-bit ones
   (WebAssembly), which have no memory for more: a path that needs more is refused there with the same

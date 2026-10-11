@@ -64,7 +64,15 @@ bool same(const Json& got, const Json& want) {
         for (std::size_t i = 0; i < got.size(); ++i)
             if (!same(got[i], want[i])) return false;
         return true;
-    case Json::Type::Object: return false;
+    case Json::Type::Object: {
+        // a cycler: its properties, whatever their order (Cycler.by_key() has none)
+        if (got.members().size() != want.members().size()) return false;
+        for (const auto& [key, value] : got.members()) {
+            const Json* other = want.find(key);
+            if (!other || !same(value, *other)) return false;
+        }
+        return true;
+    }
     }
     return false;
 }
@@ -107,10 +115,10 @@ TEST(RcValidate, EveryKeyTakesAndStoresWhatMatplotlibDoes) {
     // What is not known here is counted, key by key, so that it cannot grow unseen.
     std::string keys;
     for (const auto& [key, n] : unsupportedKeys) keys += key + " " + std::to_string(n) + "\n";
-    EXPECT_EQ(taken, 45409) << keys;
-    EXPECT_EQ(refused, 165263);
-    EXPECT_EQ(unsupported, 3237);  // 631 each for the backend, date.epoch (505 for the cycler); text outside ASCII
-    EXPECT_EQ(unsupportedTaken, 608);
+    EXPECT_EQ(taken, 45414) << keys;
+    EXPECT_EQ(refused, 165753);
+    EXPECT_EQ(unsupported, 2742);  // 631 each for the backend and date.epoch; text outside ASCII; 10 cyclers
+    EXPECT_EQ(unsupportedTaken, 603);
     EXPECT_EQ(taken + refused + unsupported, 631 * 339);
 }
 

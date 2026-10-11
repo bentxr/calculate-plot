@@ -170,8 +170,8 @@ Tick::Tick(const rc::Params& rc, Axes& axes, bool isX, bool major, const TickSwi
     const double labelsize = fontSizeOf(rc, (name + ".labelsize").c_str());
     zorder = major ? 2 + 0.01 : 2;  // Line2D.zorder (+ 0.01)
 
-    // Tick.__init__ with the rcParams: a colour with an alpha channel is RGB and that alpha, else
-    // the alpha is grid.alpha. What Axis.grid was given comes over it.
+    // Tick.__init__ with the rcParams: the alpha of a colour that has an alpha channel, else
+    // grid.alpha. What Axis.grid was given comes over it.
     const std::string rcGridColor = mm == "major" ? rcText(rc, {"grid.major.color", "grid.color"})
                                                   : rcText(rc, {"grid.minor.color", "grid.color"});
     const std::string gridLinestyle = sw.gridLinestyle ? *sw.gridLinestyle
@@ -183,9 +183,7 @@ Tick::Tick(const rc::Params& rc, Axes& axes, bool isX, bool major, const TickSwi
     colors::Spec gridColor = rcGridColor;
     double gridAlpha = 0;
     if (colors::hasAlphaChannel(rcGridColor)) {
-        const auto rgba = *colors::toRgba(rcGridColor, std::nullopt, rc, nullptr);
-        gridColor = std::vector<double>{rgba[0], rgba[1], rgba[2]};
-        gridAlpha = rgba[3];
+        gridAlpha = (*colors::toRgba(rcGridColor, std::nullopt, rc, nullptr))[3];
     } else {
         gridAlpha = mm == "major" ? rcNumber(rc, {"grid.major.alpha", "grid.alpha"}) : rcNumber(rc, {"grid.minor.alpha", "grid.alpha"});
     }
@@ -981,20 +979,29 @@ Patch& Axes::addPatch(std::unique_ptr<Rectangle> p) {
     return static_cast<Patch&>(*children.back());
 }
 
-colors::Spec Axes::nextColor() {
-    const auto cycle = rc_.colorCycle();
-    if (cycle.empty()) return std::string("k");
-    colors::Spec c = cycle[cycleIndex_];
+std::vector<std::pair<std::string, support::Json>> Axes::lineDefaults(const std::vector<std::string>& given) {
+    // _PropCycle.getdefaults(kw): the next entry, when the keywords leave some property of it unset
+    const auto cycle = rc_.propCycle();
+    const auto& entry = cycle[cycleIndex_];
+    const auto isGiven = [&](const std::string& property) { return std::find(given.begin(), given.end(), property) != given.end(); };
+    if (std::all_of(entry.begin(), entry.end(), [&](const auto& p) { return isGiven(p.first); })) return {};
     cycleIndex_ = (cycleIndex_ + 1) % cycle.size();
-    return c;
+    // _setdefaults: only what the keywords do not say
+    std::vector<std::pair<std::string, support::Json>> out;
+    for (const auto& p : entry)
+        if (!isGiven(p.first)) out.push_back(p);
+    return out;
 }
 
 colors::Spec Axes::nextPatchColor() {
-    const auto cycle = rc_.colorCycle();
-    if (cycle.empty()) return std::string("k");
-    colors::Spec c = cycle[patchCycleIndex_];
-    patchCycleIndex_ = (patchCycleIndex_ + 1) % cycle.size();
-    return c;
+    // _PropCycle.get_next_color(): the colour of the next entry; black, and the cycle stays, without one
+    const auto cycle = rc_.propCycle();
+    for (const auto& [property, value] : cycle[patchCycleIndex_]) {
+        if (property != "color") continue;
+        patchCycleIndex_ = (patchCycleIndex_ + 1) % cycle.size();
+        return colors::specOf(value);
+    }
+    return std::string("k");
 }
 
 void Axes::updateDatalim(const std::vector<std::array<double, 2>>& xys, bool updatex, bool updatey) {

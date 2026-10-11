@@ -1,5 +1,7 @@
 #pragma once
 
+#include "support/json.hpp"
+
 #include <array>
 #include <optional>
 #include <string>
@@ -23,6 +25,8 @@ std::optional<Rgba> toRgba(const std::vector<double>& tuple, std::optional<doubl
 // A colour as a figure file gives it: a specification string, or an RGB(A) tuple.
 using Spec = std::variant<std::string, std::vector<double>>;
 std::optional<Rgba> toRgba(const Spec& spec, std::optional<double> alpha, const rc::Params& rc, std::string* error);
+// A colour held as JSON (a text, or RGB(A) numbers) as a specification.
+Spec specOf(const support::Json& color);
 // cbook._str_lower_equal(spec, "none"), false for tuples.
 bool isNone(const Spec& spec);
 // _has_alpha_channel: '#rgba' and '#rrggbbaa' strings, and tuples of four (for a valid colour).

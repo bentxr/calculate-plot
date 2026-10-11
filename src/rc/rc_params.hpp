@@ -25,7 +25,11 @@ public:
     std::string text(const std::string& key) const;
     std::vector<double> numbers(const std::string& key) const;
     std::vector<std::string> strings(const std::string& key) const;
-    std::vector<std::vector<double>> colorCycle() const;  // axes.prop_cycle's colours, RGB
+    // rcParams["axes.prop_cycle"] entry by entry (list(cycler)): the properties each one sets, in
+    // alphabetical order, with their values (a colour is a text or RGB(A) numbers).
+    std::vector<std::vector<std::pair<std::string, support::Json>>> propCycle() const;
+    // Its colours, by_key().get("color", ["k"]): what "C0", "C1" ... stand for.
+    std::vector<support::Json> colorCycle() const;
 
     // rcParams[key] = value: the value is checked by matplotlib's validator of the key and stored in
     // the form matplotlib stores it (rc_validate.hpp). What matplotlib takes and calculate-plot does

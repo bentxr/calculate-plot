@@ -4,6 +4,8 @@
 // Licence: LICENSES/Matplotlib.txt. Changes: licensing/changes/matplotlib.md
 #include "rc/rc_validate.hpp"
 
+#include "rc/cycler_text.hpp"
+
 #include <charconv>
 #include <cmath>
 #include <functional>
@@ -563,6 +565,47 @@ Validated validateHistBins(const Json& s) {
     return list;
 }
 
+// validate_color_for_prop_cycle: the Nth colour of the cycle cannot be in the cycle
+Validated validateColorForCycle(const Json& s) {
+    if (s.isString() && s.asString().size() == 2 && s.asString()[0] == 'C' && s.asString()[1] >= '0' && s.asString()[1] <= '9')
+        return refused("Cannot put cycle reference ('" + s.asString() + "') in prop_cycler");
+    return validateColor(s);
+}
+
+// _listify_validator(..., allow_stringlist=True): a text that is no list of colours between commas
+// may be the name of a colour sequence, or one-letter colours side by side ("rgb").
+Validated colorList(const Json& s, const Validator& scalar) {
+    Validated list = listify(s, scalar, std::nullopt);
+    if (!s.isString() || list.state != State::Refused) return list;
+    static const char* const sequences[] = {"Accent", "Dark2",     "Paired",   "Pastel1",  "Pastel2", "Set1",  "Set2",   "Set3",
+                                            "okabe_ito", "petroff10", "petroff6", "petroff8", "tab10",   "tab20", "tab20b", "tab20c"};
+    const std::string& text = s.asString();
+    for (const char* name : sequences)
+        if (text == name) return unsupported("a named colour sequence in a cycle");
+    std::vector<Json> out;
+    for (const char c : text) {
+        if (support::pythonStrip(std::string(1, c)).empty()) continue;
+        Validated v = scalar(Json::string(std::string(1, c)));
+        if (v.state == State::Unsupported) return v;
+        if (v.state == State::Refused) return refused("'" + text + "' is neither a color sequence name nor can it be interpreted as a list of colors");
+        out.push_back(std::move(v.value));
+    }
+    return taken(Json::array(std::move(out)));
+}
+
+// rcsetup._prop_validators: the values of one property of a cycle.
+Validated cycleValues(const std::string& property, const Json& values) {
+    if (property == "color") return colorList(values, validateColorForCycle);
+    if (property == "facecolor" || property == "edgecolor" || property == "markerfacecolor" || property == "markeredgecolor")
+        return colorList(values, validateColor);
+    if (property == "linewidth" || property == "markersize" || property == "markeredgewidth" || property == "alpha")
+        return listify(values, validateFloat, std::nullopt);
+    if (property == "linestyle") return listify(values, validateLinestyle, std::nullopt);
+    if (property == "marker") return listify(values, validateMarker, std::nullopt);
+    // joinstyle, capstyle, fillstyle, markevery, hatch, dashes
+    return unsupported("the " + property + " of a cycle");
+}
+
 Validated validateEnum(const std::string& key, const std::vector<std::string>& names, const Json& s) {
     // JoinStyle(s), CapStyle(s): the name as it is
     return inStrings(key, names, false, s);
@@ -621,8 +664,8 @@ Validated apply(const std::string& key, const std::string& name, const Json& s) 
         {"whiskers", validateWhiskers},
         {"hist_bins", validateHistBins},
         {"ps_distiller", validatePsDistiller},
-        // a cycler is made by Python code; text that makes one is read by Python's parser
-        {"cycler", [](const Json& v) { return v.isString() ? unsupported("a cycler written as text") : refused("the value is not a cycler"); }},
+        // validate_cycler: a Cycler object, which a figure file cannot hold, or the text that makes one
+        {"cycler", [](const Json& v) { return v.isString() ? cyclerFromText(v.asString(), cycleValues) : refused("the value is not a cycler"); }},
         // numpy reads the date; the names of the backends are those of the Python modules there are
         {"date", [](const Json&) { return unsupported("a date"); }},
         {"backend", [](const Json&) { return unsupported("the choice of a backend"); }},

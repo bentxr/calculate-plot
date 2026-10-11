@@ -98,6 +98,13 @@ All rights reserved. Used under the BSD 3-Clause licence (LICENSES/NumPy.txt; ch
 licensing/changes/numpy.md).
 
 
+cycler 0.12.1
+-------------
+The algebra of property cycles is translated from cycler: Copyright (c) 2015, matplotlib project.
+All rights reserved. Used under the BSD 3-Clause licence (LICENSES/cycler.txt; changes:
+licensing/changes/cycler.md).
+
+
 FDLIBM 5.3
 ----------
 The base-10 logarithm is derived from FDLIBM's e_log10.c:
