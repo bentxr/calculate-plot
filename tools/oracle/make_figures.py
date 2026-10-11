@@ -44,6 +44,8 @@ def run_script(path):
     Path._unit_rectangle = Path._unit_circle = Path._unit_circle_righthalf = None
     Path._unit_regular_polygons.clear()
     Path._unit_regular_stars.clear()
+    # to_rgba keeps what it has converted by (colour, alpha), and -0.0 finds what 0.0 left there
+    matplotlib.colors._colors_full_map.cache.clear()
     namespace = runpy.run_path(str(path), run_name="calculate_plot_oracle")
     fig = namespace.get("fig") or plt.gcf()
     return fig

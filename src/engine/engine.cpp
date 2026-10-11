@@ -39,6 +39,18 @@ bool readNumber(const Json& v, double* out) {
     return true;
 }
 
+// A width, a size or a zorder: a finite number. (matplotlib takes nan and infinity there; what it
+// then draws, or breaks on, is not ported.)
+bool readFinite(const Json& v, double* out) { return readNumber(v, out) && std::isfinite(*out); }
+
+// Artist.set_alpha: a number from 0 to 1.
+bool readAlpha(const Json& v, double* out) { return readNumber(v, out) && 0 <= *out && *out <= 1; }
+
+// The line widths of a collection: at least one (matplotlib breaks on an empty list), all finite.
+bool finiteWidths(const std::vector<double>& widths) {
+    return !widths.empty() && std::all_of(widths.begin(), widths.end(), [](double w) { return std::isfinite(w); });
+}
+
 // The figure file's calls, run against the objects they make.
 class Executor {
 public:
@@ -420,15 +432,22 @@ private:
         return true;
     }
 
-    bool color(const Json& v, colors::Spec* out) {
+    // A colour of a figure file: a string, or a list or tuple of three or four numbers, that
+    // matplotlib's to_rgba takes; or one of `words` where the property has names of its own ('auto',
+    // 'inherit'). (to_rgba also takes a nan among the numbers, and the drawing breaks on it later.)
+    bool color(const Json& v, colors::Spec* out, std::initializer_list<const char*> words = {}, std::string* why = nullptr) {
         if (v.isString()) {
             *out = v.asString();
-            return true;
+            for (const char* word : words)
+                if (v.asString() == word) return true;
+        } else {
+            std::vector<double> t;
+            if (!numbers(v, &t) || (t.size() != 3 && t.size() != 4)) return false;
+            for (double x : t)
+                if (!std::isfinite(x)) return false;
+            *out = t;
         }
-        std::vector<double> t;
-        if (!numbers(v, &t) || (t.size() != 3 && t.size() != 4)) return false;
-        *out = t;
-        return true;
+        return colors::toRgba(*out, std::nullopt, rc_, why).has_value();
     }
 
     // axes._base._process_plot_format: (linestyle, marker, color) of a format string; false if invalid.
@@ -621,17 +640,18 @@ private:
             } else if (name == "alpha") {
                 double a = 0;
                 if (!value.isNull()) {
-                    if (!readNumber(value, &a)) return *error = where + ": alpha must be a number", false;
+                    if (!readAlpha(value, &a)) return *error = where + ": alpha must be a number from 0 to 1", false;
                     alpha = a;
                 }
             } else if (name == "linewidths" || name == "linewidth" || name == "lw") {
                 double one = 0;
                 if (readNumber(value, &one)) linewidths = {one};
                 else if (!numbers(value, &linewidths)) return *error = where + ": bad linewidths", false;
+                if (!finiteWidths(linewidths)) return *error = where + ": bad linewidths", false;
                 linewidthsGiven = true;
             } else if (name == "zorder") {
                 double z = 0;
-                if (!readNumber(value, &z)) return *error = where + ": zorder must be a number", false;
+                if (!readFinite(value, &z)) return *error = where + ": zorder must be a finite number", false;
                 zorder = z;
             } else if (name == "label") {
                 if (!value.isString()) return *error = where + ": label must be a string", false;
@@ -780,16 +800,16 @@ private:
             } else if (name == "alpha") {
                 double a = 0;
                 if (!value.isNull()) {
-                    if (!readNumber(value, &a)) return *error = where + ": alpha must be a number", false;
+                    if (!readAlpha(value, &a)) return *error = where + ": alpha must be a number from 0 to 1", false;
                     alpha = a;
                 }
             } else if (name == "linewidth" || name == "linewidths" || name == "lw") {
                 double w = 0;
-                if (!readNumber(value, &w)) return *error = where + ": linewidth must be a number", false;
+                if (!readFinite(value, &w)) return *error = where + ": linewidth must be a finite number", false;
                 linewidths = {w};
             } else if (name == "zorder") {
                 double z = 0;
-                if (!readNumber(value, &z)) return *error = where + ": zorder must be a number", false;
+                if (!readFinite(value, &z)) return *error = where + ": zorder must be a finite number", false;
                 zorder = z;
             } else if (name == "label") {
                 if (!value.isString()) return *error = where + ": label must be a string", false;
@@ -846,7 +866,8 @@ private:
         if (yerr && yerr->isNull()) yerr = nullptr;
         if (xerr && xerr->isNull()) xerr = nullptr;
         std::string fmt;
-        if (fmtJson && !fmtJson->isNull()) {
+        // (fmt=None is not the default '': "third arg must be a format string")
+        if (fmtJson) {
             if (!fmtJson->isString()) return *error = where + ": fmt must be a string", false;
             fmt = fmtJson->asString();
         }
@@ -870,7 +891,7 @@ private:
             } else if (name == "elinewidth" || name == "capsize" || name == "capthick") {
                 if (value.isNull()) continue;
                 double n = 0;
-                if (!readNumber(value, &n)) return *error = where + ": " + name + " must be a number", false;
+                if (!readFinite(value, &n)) return *error = where + ": " + name + " must be a finite number", false;
                 (name == "elinewidth" ? elinewidth : name == "capsize" ? capsize : capthick) = n;
             } else if (name == "barsabove") {
                 if (!value.isBool()) return *error = where + ": barsabove must be True or False", false;
@@ -885,7 +906,7 @@ private:
                     if (name == a) full = f;
                 if (full == "zorder") {
                     double z = 0;
-                    if (!readNumber(value, &z)) return *error = where + ": zorder must be a number", false;
+                    if (!readFinite(value, &z)) return *error = where + ": zorder must be a finite number", false;
                     zorderArg = z;
                     continue;
                 }
@@ -933,7 +954,11 @@ private:
             line->zorder = barsabove ? zorder - .1 : zorder + .1;
             container.dataLine = &ax.addLine(std::move(line));
         } else {
-            // no data line; base_style keeps the kwargs' colour only
+            // no data line; base_style keeps the kwargs' colour only. (The keywords still go to the
+            // lines of the bars and caps, which refuse what a line refuses.)
+            Line2D probe(rc_, {}, {});
+            for (const auto& [name, value] : props)
+                if (!lineProperty(probe, name, *value, where, error)) return false;
             if (!prop("color")) baseColorSet = false;
         }
         if (!baseColorSet) baseColor = std::string("C0");
@@ -1047,9 +1072,8 @@ private:
                 if (v.isNull() && isParameter) return t.setColor(rc_.text("text.color")), true;
                 colors::Spec spec;
                 std::string why;
-                if (!color(v, &spec)) return bad(name, "is not a colour");
-                const auto rgba = colors::toRgba(spec, std::nullopt, rc_, &why);
-                if (!rgba) return bad(name, "is not a colour: " + why);
+                if (!color(v, &spec, {}, &why)) return bad(name, "is not a colour" + (why.empty() ? "" : ": " + why));
+                const auto rgba = colors::toRgba(spec, std::nullopt, rc_, nullptr);
                 t.color = *rgba;
             } else if (property == "horizontalalignment" || property == "verticalalignment" || property == "multialignment") {
                 // (Text.__init__ stores a multialignment unchecked, and the layout of several lines
@@ -1290,6 +1314,8 @@ private:
         LegendOptions o;
         for (const auto& [name, value] : call.kwargs) {
             double n = 0;
+            // (markerfirst is used as it comes: None puts the markers last)
+            if (name == "markerfirst" && value.isNull()) o.markerfirst = false;
             if (value.isNull()) continue;
             if (name == "loc") {
                 if (!value.isString()) return *error = where + ": loc must be a location name", false;
@@ -1393,16 +1419,20 @@ private:
                 if (!value.isString()) return *error = where + ": " + name + " must be a string", false;
                 (name == "which" ? which : axisName) = value.asString();
             } else if (name == "color" || name == "c") {
+                colors::Spec checked;
                 if (!value.isString()) return *error = where + ": grid colours must be strings so far", false;
+                if (!color(value, &checked)) return *error = where + ": bad " + name, false;
                 style.gridColor = value.asString(), styled = true;
             } else if (name == "linestyle" || name == "ls") {
-                if (!value.isString()) return *error = where + ": bad linestyle", false;
+                // Line2D.set_linestyle, when the grid lines take it
+                Line2D probe(rc_, {}, {});
+                if (!value.isString() || !probe.setLinestyle(value.asString(), error)) return *error = where + ": bad linestyle", false;
                 style.gridLinestyle = value.asString(), styled = true;
             } else if (name == "linewidth" || name == "lw") {
-                if (!readNumber(value, &n)) return *error = where + ": linewidth must be a number", false;
+                if (!readFinite(value, &n)) return *error = where + ": linewidth must be a finite number", false;
                 style.gridLinewidth = n, styled = true;
             } else if (name == "alpha") {
-                if (!readNumber(value, &n)) return *error = where + ": alpha must be a number", false;
+                if (!readAlpha(value, &n)) return *error = where + ": alpha must be a number from 0 to 1", false;
                 style.gridAlpha = n, styled = true;
             } else {
                 return *error = where + ": unsupported keyword " + name, false;
@@ -1461,19 +1491,22 @@ private:
             // set_color / set_facecolor / set_edgecolor: a colour that to_rgba takes
             colors::Spec spec;
             std::string why;
-            if (!color(v, &spec) || !colors::toRgba(spec, std::nullopt, rc_, &why))
+            if (!color(v, &spec, {}, &why))
                 return *error = where + ": " + name + " is not a colour" + (why.empty() ? "" : ": " + why), false;
             if (name == "color") p.setColor(spec);
             else if (name[0] == 'f') p.setFacecolor(spec);
             else p.setEdgecolor(spec);
         } else if (name == "alpha") {
-            if (!readNumber(v, &n)) return *error = where + ": alpha must be a number", false;
+            if (!readAlpha(v, &n)) return *error = where + ": alpha must be a number from 0 to 1", false;
             p.setAlpha(n);
         } else if (name == "linewidth" || name == "lw") {
-            if (!readNumber(v, &n)) return *error = where + ": linewidth must be a number", false;
+            if (!readFinite(v, &n)) return *error = where + ": linewidth must be a finite number", false;
             p.setLinewidth(n);
         } else if (name == "linestyle" || name == "ls") {
-            if (!text(&str)) return *error = where + ": bad linestyle", false;
+            // Patch.set_linestyle: a name of mlines._get_dash_pattern ('None', ' ' and '' draw no edge)
+            static const char* const styles[] = {"-", "--", "-.", ":", "solid", "dashed", "dashdot", "dotted", "None", "none", " ", ""};
+            if (!text(&str) || std::find_if(std::begin(styles), std::end(styles), [&](const char* s) { return str == s; }) == std::end(styles))
+                return *error = where + ": bad linestyle", false;
             p.setLinestyle(str == "-" ? "solid" : str == "--" ? "dashed" : str == "-." ? "dashdot" : str == ":" ? "dotted" : str);
         } else if (name == "fill") {
             if (!v.isBool()) return *error = where + ": fill must be True or False", false;
@@ -1481,7 +1514,7 @@ private:
         } else if (name == "hatch") {
             if (!v.isNull()) return *error = where + ": hatches are not supported yet", false;
         } else if (name == "zorder") {
-            if (!readNumber(v, &n)) return *error = where + ": zorder must be a number", false;
+            if (!readFinite(v, &n)) return *error = where + ": zorder must be a finite number", false;
             p.zorder = n;
         } else if (name == "label") {
             if (!text(&str)) return *error = where + ": label must be a string", false;
@@ -1574,12 +1607,13 @@ private:
                 std::vector<double> w;
                 if (readNumber(value, &num)) w = {num};
                 else if (!numbers(value, &w)) return *error = where + ": bad linewidths", false;
+                if (!finiteWidths(w)) return *error = where + ": bad linewidths", false;
                 lc->setLinewidths(w);
             } else if (name == "alpha") {
-                if (!readNumber(value, &num)) return *error = where + ": alpha must be a number", false;
+                if (!readAlpha(value, &num)) return *error = where + ": alpha must be a number from 0 to 1", false;
                 lc->setAlpha(num);
             } else if (name == "zorder") {
-                if (!readNumber(value, &num)) return *error = where + ": zorder must be a number", false;
+                if (!readFinite(value, &num)) return *error = where + ": zorder must be a finite number", false;
                 lc->zorder = num;
             } else if (name == "label") {
                 if (!value.isString()) return *error = where + ": label must be a string", false;
@@ -1600,7 +1634,7 @@ private:
         } else if (name == "linestyle") {
             if (!v.isString() || !line.setLinestyle(v.asString(), error)) return *error = where + ": bad linestyle", false;
         } else if (name == "linewidth") {
-            if (!readNumber(v, &n)) return *error = where + ": linewidth must be a number", false;
+            if (!readFinite(v, &n)) return *error = where + ": linewidth must be a finite number", false;
             line.setLinewidth(n);
         } else if (name == "marker") {
             if (!v.isString()) return *error = where + ": marker must be a string", false;
@@ -1613,11 +1647,11 @@ private:
             line.markeredgewidth = n;
         } else if (name == "markerfacecolor" || name == "markeredgecolor" || name == "markerfacecoloralt") {
             colors::Spec c;
-            if (!color(v, &c)) return *error = where + ": bad " + name, false;
+            if (!color(v, &c, {"auto"})) return *error = where + ": bad " + name, false;
             (name == "markerfacecolor" ? line.markerfacecolor : name == "markeredgecolor" ? line.markeredgecolor : line.markerfacecoloralt) = c;
         } else if (name == "alpha") {
             if (v.isNull()) line.alpha.reset();
-            else if (!readNumber(v, &n)) return *error = where + ": alpha must be a number", false;
+            else if (!readAlpha(v, &n)) return *error = where + ": alpha must be a number from 0 to 1", false;
             else line.alpha = n;
         } else if (name == "solid_capstyle" || name == "dash_capstyle" || name == "solid_joinstyle" || name == "dash_joinstyle") {
             if (!v.isString()) return *error = where + ": " + name + " must be a string", false;
@@ -1631,7 +1665,7 @@ private:
             if (!v.isBool()) return *error = where + ": antialiased must be True or False", false;
             line.antialiased = v.asBool();
         } else if (name == "zorder") {
-            if (!readNumber(v, &n)) return *error = where + ": zorder must be a number", false;
+            if (!readFinite(v, &n)) return *error = where + ": zorder must be a finite number", false;
             line.zorder = n;
         } else if (name == "label") {
             if (!v.isString()) return *error = where + ": label must be a string", false;

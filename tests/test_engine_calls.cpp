@@ -510,7 +510,7 @@ TEST(LegendCalls, NoneKeywordsAreTheDefaults) {
     const auto plain = draw(kSubplots + plot + R"({"on": "axs[0]", "call": "legend"})");
     const auto none = draw(kSubplots + plot + R"({"on": "axs[0]", "call": "legend", "kwargs": {"loc": null, "title": null,
         "fontsize": null, "title_fontsize": null, "frameon": null, "fancybox": null, "ncols": null, "borderpad": null,
-        "facecolor": null, "markerfirst": null, "framealpha": null}})");
+        "facecolor": null, "framealpha": null}})");
     ASSERT_EQ(plain.error, "");
     ASSERT_EQ(none.error, "");
     EXPECT_EQ(plain.trace, none.trace);
@@ -663,6 +663,128 @@ TEST(RcCalls, ATransformThatCannotBeInvertedStopsTheDrawing) {
     EXPECT_EQ(error(plot + line + plot), "axs[0, 0].axhline: Singular matrix");
     // and the next figure starts clean
     EXPECT_EQ(error(plot), "");
+}
+
+// One round marker with a size that is negative, nan or infinite: matplotlib takes the extents of
+// the marker's curves, finds none and breaks ("need at least one array to concatenate").
+TEST(CollectionCalls, OneCurvedMarkerOfNoFiniteSizeIsRefused) {
+    for (const char* size : {"-1", R"({"$float": "nan"})", R"({"$float": "inf"})", R"({"$float": "-inf"})"}) {
+        const auto drawing = draw(kSubplots + R"({"on": "axs[0]", "call": "scatter", "args": [[1, 2, 3], [1, 3, 2]], "kwargs": {"s": )" +
+                                  size + "}}");
+        EXPECT_EQ(drawing.error, "need at least one array to concatenate") << size;
+    }
+    for (const char* size : {"0", "[-1, 4, 9]", "4"})
+        EXPECT_EQ(draw(kSubplots + R"({"on": "axs[0]", "call": "scatter", "args": [[1, 2, 3], [1, 3, 2]], "kwargs": {"s": )" + size + "}}").error, "")
+            << size;
+}
+
+class KeywordRefusals : public testing::TestWithParam<Refusal> {};
+
+// Keyword values that matplotlib refuses (or breaks on when it draws) are refused by the call, never
+// drawn as something else: colours that are none, alphas outside 0-1, widths and orders that are
+// not finite, line styles that are none.
+TEST_P(KeywordRefusals, NameTheCallAndTheReason) {
+    const auto drawing = draw(kSubplots + GetParam().call);
+    EXPECT_EQ(drawing.error, GetParam().error);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    Engine, KeywordRefusals,
+    testing::Values(
+        Refusal{R"({"on": "axs[0]", "call": "plot", "args": [[1, 2], [1, 2]], "kwargs": {"color": "t"}})", "axs[0].plot: bad color"},
+        Refusal{R"({"on": "axs[0]", "call": "plot", "args": [[1, 2], [1, 2]], "kwargs": {"color": [0.1, 0.2, {"$float": "nan"}]}})",
+                "axs[0].plot: bad color"},
+        Refusal{R"({"on": "axs[0]", "call": "plot", "args": [[1, 2], [1, 2]], "kwargs": {"color": "\u0660.\u0665"}})", "axs[0].plot: bad color"},
+        Refusal{R"({"on": "axs[0]", "call": "plot", "args": [[1, 2], [1, 2]], "kwargs": {"markerfacecolor": "nocolor"}})",
+                "axs[0].plot: bad markerfacecolor"},
+        Refusal{R"({"on": "axs[0]", "call": "plot", "args": [[1, 2], [1, 2]], "kwargs": {"markeredgecolor": [2, 0, 0]}})",
+                "axs[0].plot: bad markeredgecolor"},
+        Refusal{R"({"on": "axs[0]", "call": "plot", "args": [[1, 2], [1, 2]], "kwargs": {"alpha": 2}})",
+                "axs[0].plot: alpha must be a number from 0 to 1"},
+        Refusal{R"({"on": "axs[0]", "call": "plot", "args": [[1, 2], [1, 2]], "kwargs": {"alpha": -0.1}})",
+                "axs[0].plot: alpha must be a number from 0 to 1"},
+        Refusal{R"({"on": "axs[0]", "call": "plot", "args": [[1, 2], [1, 2]], "kwargs": {"alpha": {"$float": "nan"}}})",
+                "axs[0].plot: alpha must be a number from 0 to 1"},
+        Refusal{R"({"on": "axs[0]", "call": "plot", "args": [[1, 2], [1, 2]], "kwargs": {"linewidth": {"$float": "inf"}}})",
+                "axs[0].plot: linewidth must be a finite number"},
+        Refusal{R"({"on": "axs[0]", "call": "plot", "args": [[1, 2], [1, 2]], "kwargs": {"zorder": {"$float": "nan"}}})",
+                "axs[0].plot: zorder must be a finite number"},
+        Refusal{R"({"on": "axs[0]", "call": "axhline", "args": [1], "kwargs": {"color": "T"}})", "axs[0].axhline: bad color"},
+        Refusal{R"({"on": "axs[0]", "call": "axvline", "args": [1], "kwargs": {"alpha": 3}})",
+                "axs[0].axvline: alpha must be a number from 0 to 1"},
+        Refusal{R"({"on": "axs[0]", "call": "axhspan", "args": [1, 2], "kwargs": {"alpha": 1.5}})",
+                "axs[0].axhspan: alpha must be a number from 0 to 1"},
+        Refusal{R"({"on": "axs[0]", "call": "axvspan", "args": [1, 2], "kwargs": {"linestyle": "t"}})", "axs[0].axvspan: bad linestyle"},
+        Refusal{R"({"on": "axs[0]", "call": "axvspan", "args": [1, 2], "kwargs": {"ls": "Dashed"}})", "axs[0].axvspan: bad linestyle"},
+        Refusal{R"({"on": "axs[0]", "call": "axvspan", "args": [1, 2], "kwargs": {"linewidth": {"$float": "-inf"}}})",
+                "axs[0].axvspan: linewidth must be a finite number"},
+        Refusal{R"({"on": "axs[0]", "call": "axhspan", "args": [1, 2], "kwargs": {"zorder": {"$float": "inf"}}})",
+                "axs[0].axhspan: zorder must be a finite number"},
+        Refusal{R"({"on": "axs[0]", "call": "axhspan", "args": [1, 2], "kwargs": {"color": [0.1, 0.2, {"$float": "nan"}]}})",
+                "axs[0].axhspan: color is not a colour"},
+        Refusal{R"({"on": "axs[0]", "call": "scatter", "args": [[1, 2], [1, 2]], "kwargs": {"edgecolor": "t"}})",
+                "axs[0].scatter: bad edgecolors"},
+        Refusal{R"({"on": "axs[0]", "call": "scatter", "args": [[1, 2], [1, 2]], "kwargs": {"c": ["red", "nocolor"]}})",
+                "axs[0].scatter: 'c' must be a color or a sequence of colors"},
+        Refusal{R"({"on": "axs[0]", "call": "scatter", "args": [[1, 2], [1, 2]], "kwargs": {"alpha": 2}})",
+                "axs[0].scatter: alpha must be a number from 0 to 1"},
+        Refusal{R"({"on": "axs[0]", "call": "scatter", "args": [[1, 2], [1, 2]], "kwargs": {"linewidths": []}})",
+                "axs[0].scatter: bad linewidths"},
+        Refusal{R"({"on": "axs[0]", "call": "scatter", "args": [[1, 2], [1, 2]], "kwargs": {"linewidths": [1, {"$float": "nan"}]}})",
+                "axs[0].scatter: bad linewidths"},
+        Refusal{R"({"on": "axs[0]", "call": "scatter", "args": [[1, 2], [1, 2]], "kwargs": {"zorder": {"$float": "nan"}}})",
+                "axs[0].scatter: zorder must be a finite number"},
+        Refusal{R"({"on": "axs[0]", "call": "fill_between", "args": [[1, 2], [1, 2]], "kwargs": {"facecolors": "t"}})",
+                "axs[0].fill_between: bad facecolors"},
+        Refusal{R"({"on": "axs[0]", "call": "fill_between", "args": [[1, 2], [1, 2]], "kwargs": {"ec": "nocolor"}})",
+                "axs[0].fill_between: bad ec"},
+        Refusal{R"({"on": "axs[0]", "call": "fill_between", "args": [[1, 2], [1, 2]], "kwargs": {"alpha": 2}})",
+                "axs[0].fill_between: alpha must be a number from 0 to 1"},
+        Refusal{R"({"on": "axs[0]", "call": "fill_between", "args": [[1, 2], [1, 2]], "kwargs": {"linewidth": {"$float": "nan"}}})",
+                "axs[0].fill_between: linewidth must be a finite number"},
+        Refusal{R"({"on": "axs[0]", "call": "hlines", "args": [[1, 2], 0, 1], "kwargs": {"colors": "t"}})", "axs[0].hlines: bad colors"},
+        Refusal{R"({"on": "axs[0]", "call": "vlines", "args": [[1, 2], 0, 1], "kwargs": {"alpha": 2}})",
+                "axs[0].vlines: alpha must be a number from 0 to 1"},
+        Refusal{R"({"on": "axs[0]", "call": "hlines", "args": [[1, 2], 0, 1], "kwargs": {"linewidth": []}})", "axs[0].hlines: bad linewidths"},
+        Refusal{R"({"on": "axs[0]", "call": "vlines", "args": [[1, 2], 0, 1], "kwargs": {"zorder": {"$float": "nan"}}})",
+                "axs[0].vlines: zorder must be a finite number"},
+        Refusal{R"({"on": "axs[0]", "call": "errorbar", "args": [[1, 2], [1, 2]], "kwargs": {"yerr": 0.1, "color": "t"}})",
+                "axs[0].errorbar: bad color"},
+        Refusal{R"({"on": "axs[0]", "call": "errorbar", "args": [[1, 2], [1, 2]], "kwargs": {"yerr": 0.1, "ecolor": "t"}})",
+                "axs[0].errorbar: bad ecolor"},
+        Refusal{R"({"on": "axs[0]", "call": "errorbar", "args": [[1, 2], [1, 2]], "kwargs": {"yerr": 0.1, "alpha": 2}})",
+                "axs[0].errorbar: alpha must be a number from 0 to 1"},
+        Refusal{R"({"on": "axs[0]", "call": "errorbar", "args": [[1, 2], [1, 2]], "kwargs": {"yerr": 0.1, "fmt": "none", "alpha": 2}})",
+                "axs[0].errorbar: alpha must be a number from 0 to 1"},
+        Refusal{R"({"on": "axs[0]", "call": "errorbar", "args": [[1, 2], [1, 2]], "kwargs": {"yerr": 0.1, "fmt": "none", "linewidth": "wide"}})",
+                "axs[0].errorbar: linewidth must be a finite number"},
+        Refusal{R"({"on": "axs[0]", "call": "errorbar", "args": [[1, 2], [1, 2]], "kwargs": {"yerr": 0.1, "fmt": null}})",
+                "axs[0].errorbar: fmt must be a string"},
+        Refusal{R"({"on": "axs[0]", "call": "errorbar", "args": [[1, 2], [1, 2]], "kwargs": {"yerr": 0.1, "capsize": {"$float": "inf"}}})",
+                "axs[0].errorbar: capsize must be a finite number"},
+        Refusal{R"({"on": "axs[0]", "call": "errorbar", "args": [[1, 2], [1, 2]], "kwargs": {"yerr": 0.1, "zorder": {"$float": "nan"}}})",
+                "axs[0].errorbar: zorder must be a finite number"},
+        Refusal{R"({"on": "axs[0]", "call": "grid", "args": [true], "kwargs": {"linestyle": "t"}})", "axs[0].grid: bad linestyle"},
+        Refusal{R"({"on": "axs[0]", "call": "grid", "args": [true], "kwargs": {"color": "nocolor"}})", "axs[0].grid: bad color"},
+        Refusal{R"({"on": "axs[0]", "call": "grid", "args": [true], "kwargs": {"c": "t"}})", "axs[0].grid: bad c"},
+        Refusal{R"({"on": "axs[0]", "call": "grid", "args": [true], "kwargs": {"alpha": 2}})",
+                "axs[0].grid: alpha must be a number from 0 to 1"},
+        Refusal{R"({"on": "axs[0]", "call": "grid", "args": [true], "kwargs": {"linewidth": {"$float": "inf"}}})",
+                "axs[0].grid: linewidth must be a finite number"},
+        Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"edgecolor": [0.1, 0.2, {"$float": "nan"}]}})",
+                "axs[0].legend: bad edgecolor"}));
+
+// markerfirst=None is not the default: it is false, and the markers come last.
+TEST(LegendCalls, MarkerFirstNoneIsFalse) {
+    const std::string plot = R"({"on": "axs[0]", "call": "plot", "args": [[0, 1], [0, 1]], "kwargs": {"label": "a"}},)";
+    const auto legend = [&](const std::string& kwargs) {
+        const auto drawing = draw(kSubplots + plot + R"({"on": "axs[0]", "call": "legend", "kwargs": )" + kwargs + "}");
+        EXPECT_EQ(drawing.error, "") << kwargs;
+        return drawing.trace;
+    };
+    EXPECT_EQ(legend(R"({"markerfirst": null})"), legend(R"({"markerfirst": false})"));
+    EXPECT_NE(legend(R"({"markerfirst": null})"), legend("{}"));
+    EXPECT_EQ(legend(R"({"markerfirst": true})"), legend("{}"));
 }
 
 // None for the optional keywords is the same as leaving them out.

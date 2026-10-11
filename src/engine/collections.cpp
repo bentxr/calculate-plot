@@ -177,13 +177,24 @@ void Collection::draw(Renderer& renderer) {
         if (codes)
             for (unsigned char c : *codes) curved = curved || c == CURVE3 || c == CURVE4;
         double x0 = std::numeric_limits<double>::infinity(), x1 = -x0, y0 = x0, y1 = -x0;
+        bool finite = false, notFinite = false;
         for (std::size_t i = 0; i + 1 < v.size(); i += 2) {
             if (codes && !curved && (*codes)[i / 2] != MOVETO && (*codes)[i / 2] != LINETO) continue;
             const auto p = transforms::apply(combined, v[i], v[i + 1]);
+            if (!std::isfinite(p[0]) || !std::isfinite(p[1])) {
+                notFinite = true;
+                continue;
+            }
+            finite = true;
             x0 = std::min(x0, p[0]), x1 = std::max(x1, p[0]), y0 = std::min(y0, p[1]), y1 = std::max(y1, p[1]);
         }
         const auto fb = figure->bbox->points();
-        if (x1 - x0 < fb[2] - fb[0] && y1 - y0 < fb[3] - fb[1]) single = true;
+        // A transform that is not finite (a size that is negative, nan or infinite): the extents of
+        // straight lines are then nan, and no comparison holds; of a path with curves nothing is left
+        // to take them from, and matplotlib breaks.
+        if (curved && !finite) renderer.unsupported("need at least one array to concatenate");
+        else if (!curved && notFinite) single = false;
+        else if (x1 - x0 < fb[2] - fb[0] && y1 - y0 < fb[3] - fb[1]) single = true;
         else if (curved) renderer.unsupported("collections of one curved path larger than the figure are not supported yet");
     }
     if (single) {
