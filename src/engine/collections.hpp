@@ -38,6 +38,7 @@ public:
 
     void setFacecolor(const ColorArg& c);
     void setEdgecolor(const ColorArg& c);
+    void setHatchcolor(const ColorArg& c);  // (Default: rc hatch.color; update_from does not copy it yet)
     void setLinewidths(std::vector<double> lw);  // empty: the default (patch.linewidth)
     // set_linestyle: named styles ('solid', 'dashed', 'dashdot', 'dotted' or their symbols)
     bool setLinestyles(const std::vector<std::string>& styles);
@@ -81,7 +82,7 @@ private:
     std::vector<colors::Rgba> toRgbaArray(const ColorArg& c) const;
 
     CollectionDefaults defaults_;
-    ColorArg originalFacecolor_, originalEdgecolor_;
+    ColorArg originalFacecolor_, originalEdgecolor_, originalHatchcolor_;
     std::vector<colors::Rgba> facecolors_, edgecolors_;
     bool edgeIsFace_ = false;
     std::vector<double> linewidths_, unscaledLinewidths_;

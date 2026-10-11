@@ -769,7 +769,7 @@ private:
         if (!y1a || !values(y1a, &f1, 0.0)) return *error = where + ": y1 must be a number or a list as long as x", false;
         if (!values(y2a, &f2, 0.0)) return *error = where + ": y2 must be a number or a list as long as x", false;
         std::vector<bool> mask(t.size(), true);
-        ColorArg face, edge;
+        ColorArg face, edge, hatch;
         bool faceGiven = false;
         std::optional<double> alpha, zorder;
         std::vector<double> linewidths;
@@ -792,7 +792,7 @@ private:
                 if (!color(value, &c)) return *error = where + ": bad " + name, false;
                 face = ColorArg::of(c);
                 faceGiven = true;
-                if (name == "color") edge = ColorArg::of(c);  // set_color: face and edge
+                if (name == "color") edge = hatch = ColorArg::of(c);  // set_color: face, edge and hatch
             } else if (name == "edgecolor" || name == "edgecolors" || name == "ec") {
                 colors::Spec c;
                 if (!color(value, &c)) return *error = where + ": bad " + name, false;
@@ -823,6 +823,7 @@ private:
         // the keyword arguments are set after the defaults (_internal_update)
         collection->setFacecolor(face);
         if (edge.kind != ColorArg::Default) collection->setEdgecolor(edge);
+        collection->setHatchcolor(hatch);
         if (!linewidths.empty()) collection->setLinewidths(linewidths);
         if (alpha) collection->setAlpha(alpha);
         if (zorder) collection->zorder = *zorder;
