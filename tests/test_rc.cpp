@@ -289,12 +289,46 @@ TEST(RcParams, ValuesTheEngineDoesNotReadYetAreRefused) {
     EXPECT_EQ(p.number("lines.linewidth"), 1.5);
 }
 
+// legend.framealpha may be None: the frame keeps the alpha of its colours.
+TEST(RcParams, TheLegendsFrameAlphaMayBeNone) {
+    Params p = Params::defaults();
+    std::string error;
+    EXPECT_EQ(p.number("legend.framealpha"), 0.8);
+    EXPECT_TRUE(p.set("legend.framealpha", json("null"), &error)) << error;
+    EXPECT_TRUE(p.value("legend.framealpha").isNull());
+    EXPECT_TRUE(p.set("legend.framealpha", json("\"None\""), &error)) << error;
+    EXPECT_TRUE(p.value("legend.framealpha").isNull());
+    EXPECT_TRUE(p.set("legend.framealpha", json("0.25"), &error)) << error;
+    EXPECT_EQ(p.number("legend.framealpha"), 0.25);
+    // (a key whose None is not read yet)
+    EXPECT_FALSE(p.set("legend.fontsize", json("null"), &error));
+}
+
+// axes.axisbelow is 'line' by default, and True or False in any spelling of a bool.
+TEST(RcParams, AxisbelowIsABoolOrLine) {
+    Params p = Params::defaults();
+    std::string error;
+    EXPECT_EQ(p.value("axes.axisbelow").asString(), "line");
+    for (const char* value : {"true", "\"True\"", "\"yes\"", "1"}) {
+        EXPECT_TRUE(p.set("axes.axisbelow", json(value), &error)) << value << error;
+        EXPECT_TRUE(p.value("axes.axisbelow").isBool() && p.value("axes.axisbelow").asBool()) << value;
+    }
+    for (const char* value : {"false", "\"off\"", "0"}) {
+        EXPECT_TRUE(p.set("axes.axisbelow", json(value), &error)) << value << error;
+        EXPECT_TRUE(p.value("axes.axisbelow").isBool() && !p.value("axes.axisbelow").asBool()) << value;
+    }
+    EXPECT_TRUE(p.set("axes.axisbelow", json("\"line\""), &error)) << error;
+    EXPECT_EQ(p.value("axes.axisbelow").asString(), "line");
+    EXPECT_FALSE(p.set("axes.axisbelow", json("\"lines\""), &error));
+    EXPECT_FALSE(p.set("axes.axisbelow", json("2"), &error));
+    EXPECT_EQ(p.value("axes.axisbelow").asString(), "line");
+}
+
 // The keys of what the engine does not do yet take their default value and no other.
 TEST(RcParams, KeysThatAreNotHonouredYetTakeOnlyTheirDefault) {
     const std::pair<const char*, const char*> other[] = {
         {"_internal.classic_mode", "true"},
         {"agg.path.chunksize", "100"},
-        {"axes.axisbelow", "true"},
         {"axes.formatter.use_locale", "true"},
         {"figure.autolayout", "true"},
         {"figure.constrained_layout.use", "true"},
@@ -326,8 +360,8 @@ TEST(RcParams, KeysThatAreNotHonouredYetTakeOnlyTheirDefault) {
     EXPECT_FALSE(p.set("figure.autolayout", json("\"maybe\""), &error));
     EXPECT_EQ(error, "the value given for figure.autolayout is not valid: cannot convert the value to bool");
     // a value of another kind than the default is not the default
-    EXPECT_FALSE(p.set("axes.axisbelow", json("false"), &error));
-    EXPECT_EQ(error, "rcParams[\"axes.axisbelow\"] is not supported yet");
+    EXPECT_FALSE(p.set("text.kerning_factor", json("0"), &error));
+    EXPECT_EQ(error, "rcParams[\"text.kerning_factor\"] is not supported yet");
     EXPECT_FALSE(p.set("agg.path.chunksize", json("\"7\""), &error));
     EXPECT_TRUE(p.set("agg.path.chunksize", json("\"0\""), &error)) << error;
     EXPECT_FALSE(p.set("text.kerning_factor", json("0"), &error));

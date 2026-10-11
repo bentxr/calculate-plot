@@ -374,8 +374,10 @@ Legend::Legend(const rc::Params& rc, Axes& parent, const std::vector<Artist*>& h
     patch_->setEdgecolor(edge);
     patch_->setFacecolor(face);
     if (!rc.value("legend.linewidth").isNull()) patch_->setLinewidth(rc.number("legend.linewidth"));
-    const double framealpha = o.framealpha ? *o.framealpha : rc.number("legend.framealpha");
-    if (!(0 <= framealpha && framealpha <= 1)) {  // Artist.set_alpha
+    // alpha=framealpha, else rcParams["legend.framealpha"]: None there leaves the colours their own alpha
+    std::optional<double> framealpha = o.framealpha;
+    if (!framealpha && !rc.value("legend.framealpha").isNull()) framealpha = rc.number("legend.framealpha");
+    if (framealpha && !(0 <= *framealpha && *framealpha <= 1)) {  // Artist.set_alpha
         *error = "framealpha is outside the 0-1 range";
         return;
     }

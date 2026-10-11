@@ -74,15 +74,16 @@ bool cycleIsRead(const Json& value) {
 // Whether the engine reads a value of kind `got` for a key whose default is of kind `want`: the
 // same kind as the default, anything where the default is None, and for a few keys whose default is
 // a name a number as well (savefig.dpi: 'figure'; the font sizes: 'medium', 'large'; the font
-// weights and the stretch: 'normal') or None (mathtext.fallback).
+// weights and the stretch: 'normal') or None (mathtext.fallback, legend.framealpha).
 bool readable(const std::string& key, Kind want, Kind got) {
     static const char* const kNumberOrName[] = {
         "savefig.dpi",     "axes.labelsize",   "axes.titlesize",  "figure.titlesize",   "legend.fontsize",
         "xtick.labelsize", "ytick.labelsize",  "axes.labelweight", "axes.titleweight",  "figure.titleweight",
         "font.weight",     "font.stretch"};
     if (want == Kind::Null || got == want) return true;
-    if (got == Kind::Null) return key == "mathtext.fallback";
+    if (got == Kind::Null) return key == "mathtext.fallback" || key == "legend.framealpha";
     if (key == "xtick.minor.ndivs" || key == "ytick.minor.ndivs") return true;  // 'auto' or a number
+    if (key == "axes.axisbelow") return true;                                    // 'line', True or False
     // (their validators give a name or a number, nothing else)
     for (const char* k : kNumberOrName)
         if (key == k) return true;
@@ -194,7 +195,7 @@ const std::vector<std::string>& Params::inertKeys() {
 
 const std::vector<std::string>& Params::unsupportedKeys() {
     static const std::vector<std::string> keys = {
-        "_internal.classic_mode", "agg.path.chunksize", "axes.axisbelow", "axes.formatter.use_locale", "backend",
+        "_internal.classic_mode", "agg.path.chunksize", "axes.formatter.use_locale", "backend",
         "figure.autolayout", "figure.constrained_layout.use", "figure.hooks", "font.enable_last_resort",
         "path.effects", "path.sketch", "path.snap", "text.hinting_factor", "text.kerning_factor", "text.usetex"};
     return keys;

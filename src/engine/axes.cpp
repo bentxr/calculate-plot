@@ -329,7 +329,10 @@ Axis::Axis(const rc::Params& rc, Axes& axes, bool isX)
     offsetText.setColor(tickColor);
     majorTickKw_.gridOn = rc.boolean("axes.grid") &&
                           (rc.text("axes.grid.which") == "both" || rc.text("axes.grid.which") == "major");
-    zorder = 1.5;  // set_axisbelow('line')
+    // Axes.set_axisbelow(rcParams["axes.axisbelow"]): under the patches (True), between them and the
+    // lines ('line'), or over the lines (False)
+    const support::Json& below = rc.value("axes.axisbelow");
+    zorder = below.isString() ? 1.5 : below.asBool() ? 0.5 : 2.5;
     labelpad = rc.number("axes.labelpad");
     labelPosition = isX ? "bottom" : "left";
     setScale("linear");

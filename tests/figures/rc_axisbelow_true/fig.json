@@ -1,0 +1,13 @@
+{"version": 1,
+ "rc": {"axes.axisbelow": true, "xtick.direction": "in", "ytick.direction": "inout", "xtick.major.size": 12, "ytick.major.size": 12, "xtick.major.width": 3, "ytick.major.width": 3},
+ "calls": [
+  {"call": "subplots", "args": [], "kwargs": {"figsize": {"$tuple": [4.0, 3.0]}}, "as": ["fig", "ax"]},
+  {"on": "ax", "call": "plot", "args": [[0, 1, 2, 3], [0, 3, 1, 2]], "kwargs": {"linewidth": 8.0}},
+  {"on": "ax", "call": "axhspan", "args": [0.5, 1.5], "kwargs": {"color": "orange"}},
+  {"on": "ax", "call": "fill_between", "args": [[0, 1, 2, 3], [2, 2.5, 2, 2.5], [3, 3, 3, 3]], "kwargs": {"color": "0.3"}},
+  {"on": "ax", "call": "scatter", "args": [[0, 1, 2, 3], [1, 1, 2, 2]], "kwargs": {"s": 900}},
+  {"on": "ax", "call": "vlines", "args": [[1.0, 2.0], 0, 3], "kwargs": {"linewidth": 6.0, "colors": "k"}},
+  {"on": "ax", "call": "text", "args": [1.0, 2.0, "over the grid"], "kwargs": {"fontsize": 16}},
+  {"on": "ax", "call": "grid", "args": [true], "kwargs": {"color": "red", "linewidth": 3.0}},
+  {"on": "ax", "call": "legend", "args": [], "kwargs": {"loc": "center"}}
+]}

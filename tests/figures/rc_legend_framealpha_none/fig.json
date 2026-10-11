@@ -1,0 +1,9 @@
+{"version": 1,
+ "rc": {"legend.framealpha": null, "legend.facecolor": "#ffff0080", "legend.edgecolor": "#0000ff40"},
+ "calls": [
+  {"call": "subplots", "args": [1, 2], "kwargs": {"figsize": {"$tuple": [6.0, 2.5]}}, "as": ["fig", "axs"]},
+  {"on": "axs[0]", "call": "plot", "args": [[0, 1, 2], [0, 2, 1]], "kwargs": {"label": "a line", "linewidth": 6.0}},
+  {"on": "axs[0]", "call": "legend", "args": [], "kwargs": {"loc": "center"}},
+  {"on": "axs[1]", "call": "plot", "args": [[0, 1, 2], [0, 2, 1]], "kwargs": {"label": "a line", "linewidth": 6.0}},
+  {"on": "axs[1]", "call": "legend", "args": [], "kwargs": {"loc": "center", "framealpha": 0.3}}
+]}
