@@ -227,6 +227,120 @@ std::vector<double> linspace(double start, double stop, int num) {
 
 }  // namespace
 
+namespace {
+
+// A colour of a figure file: a string, or a list or tuple of three or four numbers.
+std::optional<colors::Rgba> oneColor(const support::Json& c, const rc::Params& rc) {
+    if (c.isString()) return colors::toRgba(c.asString(), std::nullopt, rc, nullptr);
+    const support::Json* list = c.isArray() ? &c : c.isObject() ? c.find("$tuple") : nullptr;
+    if (!list) return std::nullopt;
+    std::vector<double> rgb;
+    for (const support::Json& x : list->items()) {
+        if (x.isBool()) rgb.push_back(x.asBool() ? 1.0 : 0.0);
+        else if (x.isNumber()) rgb.push_back(x.asNumber());
+        else return std::nullopt;
+    }
+    return colors::toRgba(rgb, std::nullopt, nullptr);
+}
+
+// colors.to_rgba_array(c): one colour, or a list of them; 'none' (in any case) is no colour at all.
+// nullopt where matplotlib raises.
+std::optional<std::vector<colors::Rgba>> colorArray(const support::Json& c, const rc::Params& rc) {
+    if (c.isString() && colors::isNone(colors::Spec(c.asString()))) return std::vector<colors::Rgba>{};
+    if (const auto one = oneColor(c, rc)) return std::vector<colors::Rgba>{*one};
+    const support::Json* list = c.isArray() ? &c : c.isObject() ? c.find("$tuple") : nullptr;
+    if (!list) return std::nullopt;
+    std::vector<colors::Rgba> rows;
+    for (const support::Json& item : list->items()) {
+        const auto one = oneColor(item, rc);
+        if (!one) return std::nullopt;
+        rows.push_back(*one);
+    }
+    return rows;
+}
+
+// What a legend handle answers to get_markerfacecolor, get_facecolor, get_markeredgecolor,
+// get_edgecolor and get_color: nothing where it has no such method, a colour, or the rows of a
+// collection's colours.
+struct HandleColors {
+    // (a line made for a LineCollection has the first row of its colours as its colour: an array of
+    // four numbers, which matplotlib then reads as four rows of one number)
+    struct Row {
+        colors::Rgba rgba;
+    };
+    using Value = std::variant<colors::Spec, std::vector<colors::Rgba>, Row>;
+    bool mapped = false;  // get_array() is not None
+    std::optional<Value> markerfacecolor, facecolor, markeredgecolor, edgecolor, color;
+};
+
+HandleColors colorsOf(const Line2D& line) {
+    HandleColors c;
+    // (_str_lower_equal(fc, 'auto') for the face, _str_equal(mec, 'auto') for the edge)
+    std::string face = std::holds_alternative<std::string>(line.markerfacecolor) ? std::get<std::string>(line.markerfacecolor) : std::string();
+    for (char& ch : face) ch = ch >= 'A' && ch <= 'Z' ? char(ch - 'A' + 'a') : ch;
+    const bool autoFace = face == "auto";
+    c.markerfacecolor = line.markerStyle.fillstyle() == "none" ? colors::Spec(std::string("none")) : autoFace ? line.color : line.markerfacecolor;
+    const bool autoEdge = std::holds_alternative<std::string>(line.markeredgecolor) && std::get<std::string>(line.markeredgecolor) == "auto";
+    c.markeredgecolor = autoEdge ? line.color : line.markeredgecolor;
+    c.color = line.color;
+    return c;
+}
+
+HandleColors colorsOf(const Collection& collection) {
+    HandleColors c;
+    c.mapped = collection.array.has_value();
+    c.facecolor = collection.facecolors();
+    c.edgecolor = collection.edgecolors();
+    return c;
+}
+
+HandleColors colorsOf(const Patch& patch) {
+    HandleColors c;
+    const auto state = patch.colorState();
+    c.facecolor = colors::Spec(std::vector<double>(state.face.begin(), state.face.end()));
+    c.edgecolor = colors::Spec(std::vector<double>(state.edge.begin(), state.edge.end()));
+    return c;
+}
+
+// The text colour a handle gives for a way of asking ('linecolor', 'markerfacecolor', 'markeredgecolor'):
+// the first of its colours that is one and is not transparent.
+std::optional<colors::Rgba> labelColorFrom(const HandleColors& handle, const std::string& way, const rc::Params& rc,
+                                           std::string* error) {
+    const auto close = [](double a, double b) { return std::abs(a - b) <= 1e-8 + 1e-5 * std::abs(b); };  // np.isclose
+    if (handle.mapped) return std::nullopt;
+    using Getter = const std::optional<HandleColors::Value>*;
+    const std::array<Getter, 5> getters =
+        way == "linecolor" ? std::array<Getter, 5>{&handle.markerfacecolor, &handle.facecolor, &handle.markeredgecolor, &handle.edgecolor, &handle.color}
+        : way == "markerfacecolor" ? std::array<Getter, 5>{&handle.markerfacecolor, &handle.facecolor, nullptr, nullptr, nullptr}
+                                   : std::array<Getter, 5>{&handle.markeredgecolor, &handle.edgecolor, nullptr, nullptr, nullptr};
+    for (const Getter getter : getters) {
+        if (!getter || !*getter) continue;  // (no such way to ask this handle: AttributeError)
+        if (const auto* rows = std::get_if<std::vector<colors::Rgba>>(&**getter)) {
+            if (rows->empty()) continue;
+            // one row, or all of them close to the first (np.isclose)
+            bool same = true;
+            for (const colors::Rgba& row : *rows)
+                for (std::size_t k = 0; k < 4; ++k) same = same && close(row[k], (*rows)[0][k]);
+            return same ? std::optional<colors::Rgba>((*rows)[0]) : std::nullopt;
+        }
+        if (const auto* row = std::get_if<HandleColors::Row>(&**getter)) {
+            // four "rows": no colour unless the four numbers are the same, and then the first number
+            // is given to Text.set_color, which refuses a number
+            bool same = true;
+            for (double v : row->rgba) same = same && close(v, row->rgba[0]);
+            if (same) *error = "labelcolor: the colour of the lines of this entry cannot be read (matplotlib breaks on it)";
+            return std::nullopt;
+        }
+        // ('none' and whatever else is fully transparent is passed over)
+        const colors::Rgba rgba = *colors::toRgba(std::get<colors::Spec>(**getter), std::nullopt, rc, nullptr);
+        if (rgba[3] == 0) continue;
+        return rgba;
+    }
+    return std::nullopt;
+}
+
+}  // namespace
+
 Legend::Legend(const rc::Params& rc, Axes& parent, const std::vector<Artist*>& handles,
                const std::vector<const ErrorbarContainer*>& containers, const std::vector<std::string>& labels,
                const LegendOptions& o, std::string* error)
@@ -277,6 +391,8 @@ Legend::Legend(const rc::Params& rc, Axes& parent, const std::vector<Artist*>& h
     text::FontProperties prop = text::FontProperties::defaults(rc);
     prop.size = fontsize_;
     std::vector<std::pair<OffsetBox*, OffsetBox*>> items;
+    std::vector<HandleColors> handleColors;  // of the first artist of each entry (the legend handle)
+    std::vector<Text*> texts;
     for (std::size_t i = 0; i < handles.size(); ++i) {
         auto textbox = std::make_unique<TextArea>(rc, parent.figure, labels[i], true);
         textbox->text.verticalAlignment = "baseline";
@@ -318,6 +434,7 @@ Legend::Legend(const rc::Params& rc, Axes& parent, const std::vector<Artist*>& h
                 bar->clipBox.reset();
                 bar->clipPath.reset();
                 bar->transform = trans;
+                if (handleColors.size() == i) handleColors.push_back(colorsOf(*bar));
                 handlebox->addArtist(std::move(bar));
                 if (bars->caplines.empty()) return;
                 for (const double sign : {-1.0, 1.0}) {
@@ -347,6 +464,23 @@ Legend::Legend(const rc::Params& rc, Axes& parent, const std::vector<Artist*>& h
             legline->clipBox.reset();
             legline->clipPath.reset();
             legline->transform = trans;
+            handleColors.push_back(colorsOf(*legline));
+            handlebox->addArtist(std::move(legline));
+        } else if (auto* lines = dynamic_cast<LineCollection*>(handles[i])) {  // HandlerLineCollection, one point
+            auto legline = std::make_unique<Line2D>(rc, std::vector<double>{-xd, -xd + w}, std::vector<double>(2, (h - yd) / 2));
+            // _default_update_prop: the colour, the dashes and the width of the first line
+            const auto edges = lines->edgecolors();
+            if (edges.empty()) {
+                *error = "a legend entry for lines without a colour cannot be made";  // (matplotlib: IndexError)
+            } else {
+                legline->color = colors::Spec(std::vector<double>(edges[0].begin(), edges[0].end()));
+                legline->setDashPattern(lines->unscaledLinestyles()[0].first, lines->unscaledLinestyles()[0].second);
+                legline->setLinewidth(lines->linewidths()[0]);
+            }
+            legline->transform = trans;
+            HandleColors own;
+            if (!edges.empty()) own.markerfacecolor = own.markeredgecolor = own.color = HandleColors::Row{edges[0]};
+            handleColors.push_back(own);
             handlebox->addArtist(std::move(legline));
         } else if (auto* pc = dynamic_cast<PathCollection*>(handles[i])) {  // HandlerPathCollection
             const auto sizesOf = pc->sizes();
@@ -361,6 +495,7 @@ Legend::Legend(const rc::Params& rc, Axes& parent, const std::vector<Artist*>& h
             handle->clipBox.reset();
             handle->clipPath.reset();
             handle->offsetTransform = trans;
+            handleColors.push_back(colorsOf(*handle));
             handlebox->addArtist(std::move(handle));
         } else if (auto* poly = dynamic_cast<PolyCollection*>(handles[i])) {  // HandlerPolyCollection
             auto rect = std::make_unique<Rectangle>(rc, -xd, -yd, w, h);
@@ -368,18 +503,38 @@ Legend::Legend(const rc::Params& rc, Axes& parent, const std::vector<Artist*>& h
             rect->setResolvedColors(first(poly->facecolors()), first(poly->edgecolors()));
             rect->setLinewidth(poly->linewidths().empty() ? std::optional<double>() : poly->linewidths()[0]);
             rect->transform = trans;
+            handleColors.push_back(colorsOf(*rect));
             handlebox->addArtist(std::move(rect));
         } else if (auto* patch = dynamic_cast<Rectangle*>(handles[i])) {  // HandlerPatch
             auto rect = std::make_unique<Rectangle>(rc, -xd, -yd, w, h);
             rect->updateFrom(*patch);
             rect->transform = trans;
+            handleColors.push_back(colorsOf(*rect));
             handlebox->addArtist(std::move(rect));
         } else {
             *error = "legend entries for this kind of artist are not supported yet";
         }
+        if (handleColors.size() == i) handleColors.emplace_back();
+        texts.push_back(&textbox->text);
         items.push_back({handlebox.get(), textbox.get()});
         boxes_.push_back(std::move(handlebox));
         boxes_.push_back(std::move(textbox));
+    }
+    // The text colour: labelcolor, else rcParams["legend.labelcolor"], else rcParams["text.color"]
+    const support::Json& labelcolor = o.labelcolor ? *o.labelcolor
+                                      : !rc.value("legend.labelcolor").isNull() ? rc.value("legend.labelcolor") : rc.value("text.color");
+    const std::string way = labelcolor.isString() ? labelcolor.asString() : std::string();
+    if (way == "linecolor" || way == "markerfacecolor" || way == "mfc" || way == "markeredgecolor" || way == "mec") {
+        const std::string getter = way == "mfc" ? "markerfacecolor" : way == "mec" ? "markeredgecolor" : way;
+        for (std::size_t i = 0; i < texts.size(); ++i)
+            if (const auto color = labelColorFrom(handleColors[i], getter, rc, error)) texts[i]->color = *color;
+    } else if (way == "none") {
+        for (Text* text : texts) text->color = colors::Rgba{0.0, 0.0, 0.0, 0.0};
+    } else if (const auto rows = colorArray(labelcolor, rc)) {
+        // zip(self.texts, itertools.cycle(colors)): with no colours, no text takes one
+        for (std::size_t i = 0; i < texts.size() && !rows->empty(); ++i) texts[i]->color = (*rows)[i % rows->size()];
+    } else {
+        *error = "Invalid labelcolor";
     }
     // np.array_split(handles_and_labels, ncols), empty columns dropped
     const int ncols = handles.size() < 2 ? 1 : std::max(1, o.ncols);

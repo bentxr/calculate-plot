@@ -248,7 +248,6 @@ TEST(RcParams, KeysThatAreNotHonouredYetTakeOnlyTheirDefault) {
         {"figure.constrained_layout.use", "true"},
         {"figure.hooks", "[\"os:getcwd\"]"},
         {"font.enable_last_resort", "false"},
-        {"legend.labelcolor", "\"red\""},
         {"path.effects", "[1]"},
         {"path.sketch", "[1, 100, 2]"},
         {"path.snap", "false"},

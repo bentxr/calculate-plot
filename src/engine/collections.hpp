@@ -52,6 +52,8 @@ public:
     // Collection.update_from: colours (originals, resolved, mapped), widths, styles and the Artist part
     void updateFrom(const Collection& other);
     const std::vector<double>& linewidths() const { return linewidths_; }
+    // _us_linestyles: (offset, on-off sequence) of each line style, before the widths scale them
+    const std::vector<std::pair<double, std::optional<std::vector<double>>>>& unscaledLinestyles() const { return unscaledLinestyles_; }
 
 
     std::vector<Path> paths;

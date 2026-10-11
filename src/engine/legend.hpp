@@ -5,6 +5,7 @@
 // Licence: LICENSES/Matplotlib.txt. Changes: licensing/changes/matplotlib.md
 #pragma once
 
+#include "support/json.hpp"
 #include "engine/artist.hpp"
 #include "engine/collections.hpp"
 #include "engine/lines.hpp"
@@ -88,6 +89,7 @@ struct LegendOptions {
     std::optional<bool> frameon, fancybox;
     std::optional<double> framealpha;
     std::optional<colors::Spec> facecolor, edgecolor;
+    std::optional<support::Json> labelcolor;  // as given: a way to take it from the handle, a colour or a list of them
     int ncols = 1;
     bool markerfirst = true;
     std::optional<double> borderpad, labelspacing, handlelength, handletextpad, borderaxespad, columnspacing;

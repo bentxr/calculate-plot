@@ -449,7 +449,60 @@ INSTANTIATE_TEST_SUITE_P(
         Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"borderpad": "1"}})", "axs[0].legend: borderpad must be a number"},
         Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"columnspacing": [1]}})",
                 "axs[0].legend: columnspacing must be a number"},
+        Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"labelcolor": 5}})", "axs[0].legend: Invalid labelcolor"},
+        Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"labelcolor": true}})", "axs[0].legend: Invalid labelcolor"},
+        Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"labelcolor": "nocolor"}})", "axs[0].legend: Invalid labelcolor"},
+        Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"labelcolor": ["red", "nocolor"]}})",
+                "axs[0].legend: Invalid labelcolor"},
+        Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"labelcolor": [0.1, 0.2]}})", "axs[0].legend: Invalid labelcolor"},
+        Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"labelcolor": [0.1, 0.2, 7]}})", "axs[0].legend: Invalid labelcolor"},
+        Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"labelcolor": ["red", ["green"]]}})",
+                "axs[0].legend: Invalid labelcolor"},
         Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"shadow": true}})", "axs[0].legend: unsupported keyword shadow"}));
+
+// What matplotlib breaks on in a legend entry for vlines or hlines: lines with no colour (the entry
+// takes the first one), and white lines with labelcolor='linecolor' (their four equal numbers are
+// read as four rows alike, and the first number is no colour for the text).
+TEST(LegendCalls, EntriesForLinesThatMatplotlibBreaksOn) {
+    const auto legend = [&](const std::string& colour, const std::string& kwargs) {
+        return draw(kSubplots + R"({"on": "axs[0]", "call": "vlines", "args": [[1, 2], 0, 1], "kwargs": {"label": "v", "colors": )" + colour +
+                    R"(}}, {"on": "axs[0]", "call": "legend", "kwargs": )" + kwargs + "}").error;
+    };
+    EXPECT_EQ(legend("\"none\"", "{}"), "axs[0].legend: a legend entry for lines without a colour cannot be made");
+    EXPECT_EQ(legend("\"w\"", R"({"labelcolor": "linecolor"})"),
+              "axs[0].legend: labelcolor: the colour of the lines of this entry cannot be read (matplotlib breaks on it)");
+    EXPECT_EQ(legend("\"w\"", R"({"labelcolor": "mec"})"),
+              "axs[0].legend: labelcolor: the colour of the lines of this entry cannot be read (matplotlib breaks on it)");
+    EXPECT_EQ(legend("[[0.5, 0.5, 0.5, 0.5]]", R"({"labelcolor": "mfc"})"),
+              "axs[0].legend: labelcolor: the colour of the lines of this entry cannot be read (matplotlib breaks on it)");
+    EXPECT_EQ(legend("\"w\"", R"({"labelcolor": "red"})"), "");
+    EXPECT_EQ(legend("\"w\"", "{}"), "");
+    EXPECT_EQ(legend("\"k\"", R"({"labelcolor": "linecolor"})"), "");
+    EXPECT_EQ(legend("[[1, 1, 1, 0.99999]]", R"({"labelcolor": "linecolor"})"),
+              "axs[0].legend: labelcolor: the colour of the lines of this entry cannot be read (matplotlib breaks on it)");
+    EXPECT_EQ(legend("[[1, 1, 1, 0.9999]]", R"({"labelcolor": "linecolor"})"), "");
+}
+
+// A label colour that leaves the texts as they are: 'none' in capitals and an empty list are no
+// colours, and None is the rcParams' (None there: the colour of text).
+TEST(LegendCalls, LabelColoursThatChangeNothing) {
+    const std::string plot = R"({"on": "axs[0]", "call": "plot", "args": [[0, 1], [0, 1]], "kwargs": {"label": "a", "color": "red"}},)";
+    const auto legend = [&](const std::string& kwargs) {
+        const auto drawing = draw(kSubplots + plot + R"({"on": "axs[0]", "call": "legend", "kwargs": )" + kwargs + "}");
+        EXPECT_EQ(drawing.error, "") << kwargs;
+        return drawing.trace;
+    };
+    const std::string plain = legend("{}");
+    EXPECT_EQ(legend(R"({"labelcolor": "NONE"})"), plain);
+    EXPECT_EQ(legend(R"({"labelcolor": []})"), plain);
+    EXPECT_EQ(legend(R"({"labelcolor": null})"), plain);
+    EXPECT_EQ(legend(R"({"labelcolor": "k"})"), plain);
+    EXPECT_NE(legend(R"({"labelcolor": "none"})"), plain);
+    EXPECT_NE(legend(R"({"labelcolor": "linecolor"})"), plain);
+    EXPECT_EQ(legend(R"({"labelcolor": "linecolor"})"), legend(R"({"labelcolor": "red"})"));
+    EXPECT_EQ(legend(R"({"labelcolor": "mfc"})"), legend(R"({"labelcolor": [1, 0, 0]})"));
+    EXPECT_EQ(legend(R"({"labelcolor": "mec"})"), legend(R"({"labelcolor": {"$tuple": [true, false, false, 1.0]}})"));
+}
 
 // A legend keyword that is None is the default.
 TEST(LegendCalls, NoneKeywordsAreTheDefaults) {

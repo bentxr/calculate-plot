@@ -1314,6 +1314,8 @@ private:
             } else if (name == "frameon" || name == "fancybox") {
                 if (!value.isBool()) return *error = where + ": " + name + " must be True or False", false;
                 (name == "frameon" ? o.frameon : o.fancybox) = value.asBool();
+            } else if (name == "labelcolor") {
+                o.labelcolor = value;
             } else if (name == "markerfirst") {
                 if (!value.isBool()) return *error = where + ": markerfirst must be True or False", false;
                 o.markerfirst = value.asBool();

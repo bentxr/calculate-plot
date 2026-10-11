@@ -46,6 +46,9 @@ public:
     bool setMarker(const std::string& marker, std::string* error);
     bool setLinestyle(const std::string& style, std::string* error);
     void setLinewidth(double w);
+    // set_linestyle((offset, on-off sequence)): the line then counts as a dashed one ('--'), also
+    // without a sequence
+    void setDashPattern(double offset, std::optional<std::vector<double>> onoff);
     void setData(std::vector<double> x, std::vector<double> y);
     void setXdata(std::vector<double> x);
     void setYdata(std::vector<double> y);

@@ -3,6 +3,7 @@
 // Copyright (c) 2012- Matplotlib Development Team; All Rights Reserved
 // Licence: LICENSES/Matplotlib.txt. Changes: licensing/changes/matplotlib.md
 
+#include "support/pynum.hpp"
 #include "engine/lines.hpp"
 
 #include "rc/rc_params.hpp"
@@ -278,6 +279,14 @@ bool Line2D::setLinestyle(const std::string& ls, std::string* error) {
     unscaledDashes_ = dashPattern(named, rc_);
     dashes_ = scaleDashes(unscaledDashes_, linewidth_, rc_);
     return true;
+}
+
+void Line2D::setDashPattern(double offset, std::optional<std::vector<double>> onoff) {
+    linestyle_ = "--";
+    // (_get_dash_pattern brings the offset within one cycle of the dashes; the patterns that come
+    // here are those of the named styles, whose offset is 0)
+    unscaledDashes_ = {offset, std::move(onoff)};
+    dashes_ = scaleDashes(unscaledDashes_, linewidth_, rc_);
 }
 
 void Line2D::setLinewidth(double w) {
