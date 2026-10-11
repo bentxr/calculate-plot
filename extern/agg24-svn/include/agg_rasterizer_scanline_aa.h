@@ -8,6 +8,8 @@
 // warranty, and with no claim as to its suitability for any purpose.
 //
 //----------------------------------------------------------------------------
+// Modified by calculate-plot: add_path() leaves its loop over the vertices when
+// AGG_CELL_BLOCK_LIMIT_REACHED() says the cells are full (see licensing/changes/agg.md).
 //
 // The author gratefully acknowleges the support of David Turner, 
 // Robert Wilhelm, and Werner Lemberg - the authors of the FreeType 
@@ -167,6 +169,10 @@ namespace agg
             while(!is_stop(cmd = vs.vertex(&x, &y)))
             {
                 add_vertex(x, y, cmd);
+#ifdef AGG_CELL_BLOCK_LIMIT_REACHED
+                // (calculate-plot) upstream has thrown out of this loop
+                if(AGG_CELL_BLOCK_LIMIT_REACHED()) break;
+#endif
             }
         }
         

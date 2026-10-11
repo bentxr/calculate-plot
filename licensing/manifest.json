@@ -421,7 +421,7 @@
         "Copyright (C) 2002-2005 Maxim Shemanarev"
       ],
       "changes": "licensing/changes/agg.md",
-      "remarks": "Copied from Matplotlib 3.11.2 (extern/agg24-svn); one marked change in include/agg_rasterizer_cells_aa.h."
+      "remarks": "Copied from Matplotlib 3.11.2 (extern/agg24-svn); marked changes in include/agg_rasterizer_cells_aa.h and include/agg_rasterizer_scanline_aa.h."
     },
     {
       "id": "matplotlib",

@@ -9,7 +9,9 @@
 //
 //----------------------------------------------------------------------------
 // Modified by calculate-plot: add_curr_cell() calls AGG_CELL_BLOCK_LIMIT_HANDLER() and returns,
-// when that macro is defined, instead of throwing (see licensing/changes/agg.md).
+// when that macro is defined, instead of throwing; line() and render_hline() then stop, and
+// sort_cells() keeps no cell, as soon as AGG_CELL_BLOCK_LIMIT_REACHED() says so (see
+// licensing/changes/agg.md).
 //
 // The author gratefully acknowleges the support of David Turner,
 // Robert Wilhelm, and Werner Lemberg - the authors of the FreeType
@@ -295,6 +297,9 @@ namespace agg
 
             while (ex1 != ex2)
             {
+#ifdef AGG_CELL_BLOCK_LIMIT_REACHED
+                if(m_num_blocks >= m_cell_block_limit && AGG_CELL_BLOCK_LIMIT_REACHED()) return;
+#endif
                 delta = lift;
                 mod  += rem;
                 if(mod >= 0)
@@ -328,6 +333,10 @@ namespace agg
     {
         enum dx_limit_e { dx_limit = 16384 << poly_subpixel_shift };
 
+#ifdef AGG_CELL_BLOCK_LIMIT_REACHED
+        // (calculate-plot) no cell can be kept any more: where upstream has thrown, stop
+        if(m_num_blocks >= m_cell_block_limit && AGG_CELL_BLOCK_LIMIT_REACHED()) return;
+#endif
         int dx = x2 - x1;
 
         if(dx >= dx_limit || dx <= -dx_limit)
@@ -402,6 +411,9 @@ namespace agg
             area = two_fx * delta;
             while(ey1 != ey2)
             {
+#ifdef AGG_CELL_BLOCK_LIMIT_REACHED
+                if(m_num_blocks >= m_cell_block_limit && AGG_CELL_BLOCK_LIMIT_REACHED()) return;
+#endif
                 //render_hline(ey1, x_from, poly_subpixel_scale - first, x_from, first);
                 m_curr_cell.cover = delta;
                 m_curr_cell.area  = area;
@@ -457,6 +469,9 @@ namespace agg
 
             while(ey1 != ey2)
             {
+#ifdef AGG_CELL_BLOCK_LIMIT_REACHED
+                if(m_num_blocks >= m_cell_block_limit && AGG_CELL_BLOCK_LIMIT_REACHED()) return;
+#endif
                 delta = lift;
                 mod  += rem;
                 if (mod >= 0)
@@ -644,6 +659,10 @@ namespace agg
         m_curr_cell.cover = 0;
         m_curr_cell.area  = 0;
 
+#ifdef AGG_CELL_BLOCK_LIMIT_REACHED
+        // (calculate-plot) the path did not fit in the cells: upstream has thrown, and none of it is drawn
+        if(AGG_CELL_BLOCK_LIMIT_REACHED()) m_num_cells = 0;
+#endif
         if(m_num_cells == 0) return;
 
 // DBG: Check to see if min/max works well.

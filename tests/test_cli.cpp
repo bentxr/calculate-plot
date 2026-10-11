@@ -8,6 +8,8 @@
 
 #include <gtest/gtest.h>
 
+#include <chrono>
+
 #include <filesystem>
 #include <fstream>
 #include <random>
@@ -217,6 +219,27 @@ TEST(Cli, DrawRefusesAPngWithoutPixels) {
         EXPECT_EQ(ok.status, 0) << ok.err;
         std::filesystem::remove(out);
     }
+    std::filesystem::remove(in);
+}
+
+// A marker far larger than the figure needs more rasterizer cells than Agg allows: matplotlib raises
+// "Exceeded cell block limit" after about a second, and so must this (and not go on for minutes
+// over cells it can no longer keep). The SVG has no such limit.
+TEST(Cli, DrawStopsAtTheRasterizersCellLimit) {
+    const std::string in = tempFile(".json");
+    std::ofstream(in) << R"({"version":1,"rc":{"lines.markersize":12345678},"calls":[{"call":"subplots","as":["fig","ax"]},
+        {"on":"ax","call":"plot","args":[[0,1],[0,1],"o"]}]})";
+    const std::string png = tempFile(".png");
+    const auto started = std::chrono::steady_clock::now();
+    const Outcome r = cplot({"draw", in, png, "--fonts", kFontDir});
+    const double seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - started).count();
+    EXPECT_EQ(r.status, 1);
+    EXPECT_NE(r.err.find("Exceeded cell block limit"), std::string::npos) << r.err;
+    EXPECT_LT(seconds, 6.0);  // (without the checks in the rasterizer: eight seconds, or for ever)
+    EXPECT_FALSE(std::filesystem::exists(png));
+    const std::string svg = tempFile(".svg");
+    EXPECT_EQ(cplot({"draw", in, svg, "--fonts", kFontDir}).status, 0);
+    std::filesystem::remove(svg);
     std::filesystem::remove(in);
 }
 

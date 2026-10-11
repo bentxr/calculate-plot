@@ -153,5 +153,8 @@ it comes from in its first lines. The changes, as a whole:
   FontProperties and Artist, each with its check), translated to C++ in the executor; backend_agg.py's
   _draw_text_glyphs_and_boxes now also records the boxes of mathtext (rules) and their filled paths.
 - File names drop the leading underscore (e.g. src/_backend_agg.h is src/agg/backend_agg.h); includes follow.
+- RendererAgg's rasterizer takes Matplotlib's 32 768 blocks of cells on 64-bit targets and 4 096 on 32-bit ones
+  (WebAssembly), which have no memory for more: a path that needs more is refused there with the same
+  "Exceeded cell block limit".
 - The drawing algorithms themselves (src/_backend_agg.h, src/_backend_agg.cpp, src/path_converters.h,
   src/agg_workaround.h, src/array.h, src/mplutils.h) are otherwise unchanged.

@@ -4,7 +4,19 @@
 
 /* -*- mode: c++; c-basic-offset: 4 -*- */
 
+#include <cstdint>
 #include "backend_agg.h"
+
+// The most blocks of cells (4096 cells each) the rasterizer takes for one path before it gives up
+// with "Exceeded cell block limit": matplotlib's 32768, some 2 GB of cells. A 32-bit target
+// (WebAssembly) has no room for that and would die of a failed allocation: there the limit is 4096
+// blocks (256 MB), so a path of more than 16.7 million cells is refused where matplotlib still draws
+// it (up to 134 million).
+#if UINTPTR_MAX > 0xffffffffu
+static const unsigned kCellBlockLimit = 32768;
+#else
+static const unsigned kCellBlockLimit = 4096;
+#endif
 
 RendererAgg::RendererAgg(unsigned int width, unsigned int height, double dpi)
     : width(width),
@@ -26,7 +38,7 @@ RendererAgg::RendererAgg(unsigned int width, unsigned int height, double dpi)
       rendererBase(),
       rendererAA(),
       rendererBin(),
-      theRasterizer(32768),
+      theRasterizer(kCellBlockLimit),
       lastclippath(nullptr),
       _fill_color(agg::rgba(1, 1, 1, 0))
 {
