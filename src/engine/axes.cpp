@@ -779,7 +779,7 @@ void Axes::setTitleOffsetTrans(double points) {
     }
 }
 
-void Axes::setTitle(const std::string& titleText, const std::string& loc, std::optional<double> pad, std::optional<double> y) {
+Text& Axes::setTitle(const std::string& titleText, const std::string& loc, std::optional<double> pad, std::optional<double> y) {
     double ty = 1.0;
     if (y) {
         ty = *y;
@@ -800,6 +800,7 @@ void Axes::setTitle(const std::string& titleText, const std::string& loc, std::o
     const std::string color = rc_.text("axes.titlecolor");
     if (color != "auto" && color != "AUTO" && color != "Auto") t.setColor(color);
     t.y = ty;
+    return t;
 }
 
 void Axes::updateTitlePosition(Renderer& renderer) {

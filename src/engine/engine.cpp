@@ -168,43 +168,51 @@ private:
 
     bool figureCall(const model::Call& call, std::string* error) {
         const std::string where = call.on + "." + call.method;
+        if (call.method == "text") return figureText(call, error);
         if (call.method == "suptitle") {
             // FigureBase._suplabels with suptitle's info: (0.5, 0.98), centred, top, figure.titlesize/titleweight
+            if (call.args.size() > 1) return *error = where + ": too many positional arguments", false;
             const Json* t = argument(call, 0, "t");
             if (!t || !t->isString()) return *error = where + ": the title must be a string", false;
-            double x = 0.5, y = 0.98, n = 0;
-            std::string ha = "center", va = "top";
-            const auto& size = rc_.value("figure.titlesize");
-            double fontsize = size.isNumber() ? size.asNumber() : *text::fontSize(size.asString(), rc_);
-            const auto& weight = rc_.value("figure.titleweight");
-            text::FontValue fontweight = weight.isNumber() ? text::FontValue(int(weight.asNumber())) : text::FontValue(weight.asString());
-            for (const auto& [name, value] : call.kwargs) {
-                if (name == "t") continue;
-                if (name == "x" || name == "y") {
-                    if (!readNumber(value, &n)) return *error = where + ": " + name + " must be a number", false;
-                    (name == "x" ? x : y) = n;
-                } else if (name == "ha" || name == "horizontalalignment" || name == "va" || name == "verticalalignment") {
-                    if (!value.isString()) return *error = where + ": bad alignment", false;
-                    (name[0] == 'h' ? ha : va) = value.asString();
-                } else if (name == "fontsize" || name == "size") {
-                    if (value.isString() && text::fontSize(value.asString(), rc_)) fontsize = *text::fontSize(value.asString(), rc_);
-                    else if (!readNumber(value, &fontsize)) return *error = where + ": bad fontsize", false;
-                } else if (name == "fontweight" || name == "weight") {
-                    if (value.isString()) fontweight = value.asString();
-                    else if (readNumber(value, &n)) fontweight = int(n);
-                    else return *error = where + ": bad fontweight", false;
-                } else {
-                    return *error = where + ": unsupported keyword " + name, false;
-                }
+            if (call.args.size() == 1 && keyword(call, "t")) return *error = where + ": t is given twice", false;
+            double x = 0.5, y = 0.98;
+            for (const char* name : {"x", "y"})
+                if (const Json* v = keyword(call, name); v && !v->isNull() && !readNumber(*v, name[0] == 'x' ? &x : &y))
+                    return *error = where + ": " + name + " must be a number", false;
+            // normalize_kwargs: every alias as its property (the two together are an error); then the
+            // defaults for what is not given, and Figure.text
+            static const std::pair<const char*, const char*> aliases[] = {
+                {"c", "color"},           {"family", "fontfamily"},   {"name", "fontname"},
+                {"size", "fontsize"},     {"stretch", "fontstretch"}, {"style", "fontstyle"},
+                {"variant", "fontvariant"}, {"weight", "fontweight"}, {"ha", "horizontalalignment"},
+                {"va", "verticalalignment"}, {"ma", "multialignment"}};
+            std::vector<std::pair<std::string, const Json*>> given, normal;
+            if (!otherKeywords(call, {"t", "x", "y"}, &given, error)) return false;
+            const auto has = [&](const std::string& name) {
+                return std::find_if(normal.begin(), normal.end(), [&](const auto& g) { return g.first == name; }) != normal.end();
+            };
+            for (const auto& [name, value] : given) {
+                std::string property = name;
+                for (const auto& [alias, canonical] : aliases)
+                    if (name == alias) property = canonical;
+                if (has(property)) return *error = where + ": " + name + " is given twice (it is an alias of " + property + ")", false;
+                normal.emplace_back(property, value);
             }
+            const Json center = *support::parseJson("\"center\"", nullptr), top = *support::parseJson("\"top\"", nullptr),
+                       horizontal = *support::parseJson("\"horizontal\"", nullptr);
+            const Json& size = rc_.value("figure.titlesize");
+            const Json& weight = rc_.value("figure.titleweight");
+            const std::pair<const char*, const Json*> defaults[] = {{"horizontalalignment", &center},
+                                                                    {"verticalalignment", &top},
+                                                                    {"rotation", &horizontal},
+                                                                    {"fontsize", &size},
+                                                                    {"fontweight", &weight}};
+            for (const auto& [name, value] : defaults)
+                if (!has(name)) normal.emplace_back(name, value);
             if (figure_->suptitle) return *error = where + ": setting the suptitle again is not supported yet", false;
             auto label = std::make_unique<Text>(rc_, x, y, t->asString());
+            if (!textProperties(*label, normal, TextKeywords::Construct, where, error)) return false;
             label->transform = figure_->transSubfigure;
-            label->horizontalAlignment = ha;
-            label->verticalAlignment = va;
-            label->setRotation(0.0);
-            label->font.size = fontsize;
-            label->font.weight = fontweight;
             label->figure = figure_.get();
             figure_->suptitle = label.get();
             figure_->texts.push_back(std::move(label));
@@ -284,7 +292,8 @@ private:
     bool axesCall(Axes& ax, const model::Call& call, std::string* error) {
         const std::string where = call.on + "." + call.method;
         if (call.method == "set_title") {
-            if (!keywords(call, {"label", "loc", "pad", "y"}, error)) return false;
+            std::vector<std::pair<std::string, const Json*>> given;
+            if (!otherKeywords(call, {"label", "loc", "pad", "y"}, &given, error)) return false;
             std::string label, loc = rc_.text("axes.titlelocation");
             if (!(call.args.size() == 1 ? text(&call.args[0], &label) : text(keyword(call, "label"), &label))) {
                 *error = where + ": the title must be a string";
@@ -309,29 +318,44 @@ private:
                 if (!readNumber(*v, &n)) return *error = where + ": y must be a number", false;
                 y = n;
             }
-            ax.setTitle(label, loc, pad, y);
-            return true;
+            // title.update(default), then title._internal_update(kwargs)
+            return textProperties(ax.setTitle(label, loc, pad, y), given, TextKeywords::Internal, where, error);
         }
         if (call.method == "set_xlabel" || call.method == "set_ylabel") {
             const bool isX = call.method == "set_xlabel";
-            if (!keywords(call, {isX ? "xlabel" : "ylabel", "labelpad", "loc"}, error)) return false;
-            std::string label, loc = rc_.text(isX ? "xaxis.labellocation" : "yaxis.labellocation");
+            std::vector<std::pair<std::string, const Json*>> given;
+            if (!otherKeywords(call, {isX ? "xlabel" : "ylabel", "labelpad", "loc"}, &given, error)) return false;
+            std::string label;
             if (!(call.args.size() == 1 ? text(&call.args[0], &label) : text(keyword(call, isX ? "xlabel" : "ylabel"), &label))) {
                 *error = where + ": the label must be a string";
                 return false;
             }
             Axis& axis = isX ? *ax.xaxis : *ax.yaxis;
-            if (const Json* v = keyword(call, "labelpad")) {
+            if (const Json* v = keyword(call, "labelpad"); v && !v->isNull()) {
                 double n = 0;
                 if (!readNumber(*v, &n)) return *error = where + ": labelpad must be a number", false;
                 axis.labelpad = n;
             }
-            if (const Json* l = keyword(call, "loc"); l && !text(l, &loc)) return *error = where + ": bad loc", false;
-            const bool okLoc = isX ? (loc == "left" || loc == "center" || loc == "right")
-                                   : (loc == "bottom" || loc == "center" || loc == "top");
-            if (!okLoc) return *error = where + ": bad loc " + loc, false;
-            axis.setLabelText(label, loc);
-            return true;
+            // The place along the axis and the alignment are the loc's, unless the keywords say them
+            // (x or y, horizontalalignment, ha): then there must be no loc, and what the label has stays
+            const Json* l = keyword(call, "loc");
+            const bool placed = std::find_if(given.begin(), given.end(), [&](const auto& g) {
+                                    return g.first == (isX ? "x" : "y") || g.first == "horizontalalignment" || g.first == "ha";
+                                }) != given.end();
+            if (placed) {
+                if (l && !l->isNull())
+                    return *error = where + ": loc cannot be given together with " + (isX ? "x" : "y") + ", horizontalalignment or ha", false;
+                axis.label.text = label;
+            } else {
+                std::string loc = rc_.text(isX ? "xaxis.labellocation" : "yaxis.labellocation");
+                if (l && !l->isNull() && !text(l, &loc)) return *error = where + ": bad loc", false;
+                const bool okLoc = isX ? (loc == "left" || loc == "center" || loc == "right")
+                                       : (loc == "bottom" || loc == "center" || loc == "top");
+                if (!okLoc) return *error = where + ": bad loc " + loc, false;
+                axis.setLabelText(label, loc);
+            }
+            // Axis.set_label_text: label.update(kwargs)
+            return textProperties(axis.label, given, TextKeywords::Update, where, error);
         }
         if (call.method == "set_xlim" || call.method == "set_ylim") {
             const bool isX = call.method == "set_xlim";
@@ -973,12 +997,17 @@ private:
         return true;
     }
 
-    // The properties of a Text given as keywords. With `constructing`, as Text(x, y, text, **kwargs)
-    // takes them: its own parameters first (some unchecked), then the others through their
-    // setters; without, as Text.update does (every one through its setter). An alias together with
-    // its property is an error among those that go through update.
-    bool textProperties(Text& t, const std::vector<std::pair<std::string, const Json*>>& given, bool constructing,
+    // How the keywords of a text reach it: as Text(x, y, text, **kwargs) takes them (its own
+    // parameters first, where None is the default, then the others through Text.update); as
+    // Text.update takes them (every one through its setter; an alias together with its property is
+    // an error); or as Artist._internal_update does (every one through its setter, in order, an
+    // alias and its property both: the later wins).
+    enum class TextKeywords { Construct, Update, Internal };
+
+    // The properties of a Text given as keywords, each checked as its setter checks it.
+    bool textProperties(Text& t, const std::vector<std::pair<std::string, const Json*>>& given, TextKeywords mode,
                         const std::string& where, std::string* error) {
+        const bool constructing = mode == TextKeywords::Construct;
         static const std::pair<const char*, const char*> aliases[] = {
             {"c", "color"},           {"family", "fontfamily"},   {"name", "fontname"},
             {"size", "fontsize"},     {"stretch", "fontstretch"}, {"style", "fontstyle"},
@@ -1044,8 +1073,9 @@ private:
                 if (!v.isNull() && !(v.isBool() && !v.asBool())) return bad(name, "is not supported yet");
             } else if (property == "parse_math" || property == "antialiased") {
                 const char* key = property == "parse_math" ? "text.parse_math" : "text.antialiased";
-                if (!v.isBool() && !(v.isNull() && isParameter)) return bad(name, "must be True or False");
-                (property == "parse_math" ? t.parseMath : t.antialiased) = v.isNull() ? rc_.boolean(key) : v.asBool();
+                if (!v.isBool() && !v.isNull()) return bad(name, "must be True or False");
+                // None is the rcParams' value as a parameter of Text, and False to the setters
+                (property == "parse_math" ? t.parseMath : t.antialiased) = v.isNull() ? isParameter && rc_.boolean(key) : v.asBool();
             } else if (property == "alpha") {
                 if (v.isNull()) return t.alpha.reset(), true;
                 if (!readNumber(v, &n)) return bad(name, "must be a number or None");
@@ -1121,6 +1151,9 @@ private:
                 if (!v.isString() || std::find_if(std::begin(fontsets), std::end(fontsets), [&](const char* f) { return v.asString() == f; }) == std::end(fontsets))
                     return bad(name, "is not a math font family");
                 t.font.mathFontfamily = v.asString();
+            } else if ((property == "x" || property == "y") && !constructing) {
+                if (!readNumber(v, &n)) return bad(name, "must be a number");
+                (property == "x" ? t.x : t.y) = n;
             } else if (property == "zorder") {
                 if (v.isNull()) return t.zorder = 3, true;
                 if (!readNumber(v, &n)) return bad(name, "must be a number");
@@ -1146,7 +1179,7 @@ private:
         for (const auto& [name, value] : given) {
             if (isOwn(name)) continue;
             const std::string property = canonical(name);
-            if (std::find(seen.begin(), seen.end(), property) != seen.end()) {
+            if (mode != TextKeywords::Internal && std::find(seen.begin(), seen.end(), property) != seen.end()) {
                 *error = where + ": " + name + " is given twice (it is an alias of " + property + ")";
                 return false;
             }
@@ -1186,8 +1219,49 @@ private:
         for (const auto& [name, value] : call.kwargs)
             if (name != "x" && name != "y" && name != "s" && name != "fontdict") put(name, value);
         auto t = std::make_unique<Text>(rc_, x, y, values[2]->asString());
-        if (!textProperties(*t, given, true, where, error)) return false;
+        if (!textProperties(*t, given, TextKeywords::Construct, where, error)) return false;
         ax.addText(std::move(t));
+        return true;
+    }
+
+    // The keywords of a call but those the call takes itself; fontdict only as None
+    bool otherKeywords(const model::Call& call, std::initializer_list<const char*> own,
+                       std::vector<std::pair<std::string, const Json*>>* given, std::string* error) {
+        for (const auto& keyword : call.kwargs) {
+            const std::string& name = keyword.first;
+            if (name == "fontdict") {
+                // (a figure file has no dictionaries yet: the keywords say the same)
+                if (!keyword.second.isNull()) return *error = call.on + "." + call.method + ": fontdict is not supported yet", false;
+                continue;
+            }
+            if (std::find_if(own.begin(), own.end(), [&](const char* o) { return name == o; }) == own.end())
+                given->emplace_back(name, &keyword.second);
+        }
+        return true;
+    }
+
+    // Figure.text(x, y, s, fontdict=None, **kwargs): a text in figure coordinates
+    bool figureText(const model::Call& call, std::string* error) {
+        const std::string where = call.on + ".text";
+        if (call.args.size() > 4) return *error = where + ": too many positional arguments", false;
+        const char* names[4] = {"x", "y", "s", "fontdict"};
+        const Json* values[4] = {nullptr, nullptr, nullptr, nullptr};
+        for (std::size_t i = 0; i < 4; ++i) {
+            values[i] = argument(call, i, names[i]);
+            if (i < call.args.size() && keyword(call, names[i])) return *error = where + ": " + names[i] + " is given twice", false;
+        }
+        double x = 0, y = 0;
+        if (!values[0] || !readNumber(*values[0], &x) || !values[1] || !readNumber(*values[1], &y))
+            return *error = where + ": x and y must be numbers", false;
+        if (!values[2] || !values[2]->isString()) return *error = where + ": the text must be a string", false;
+        if (values[3] && !values[3]->isNull()) return *error = where + ": fontdict is not supported yet", false;
+        std::vector<std::pair<std::string, const Json*>> given;
+        if (!otherKeywords(call, {"x", "y", "s"}, &given, error)) return false;
+        auto t = std::make_unique<Text>(rc_, x, y, values[2]->asString());
+        if (!textProperties(*t, given, TextKeywords::Construct, where, error)) return false;
+        t->transform = figure_->transSubfigure;
+        t->figure = figure_.get();
+        figure_->texts.push_back(std::move(t));
         return true;
     }
 

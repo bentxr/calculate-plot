@@ -213,7 +213,7 @@ public:
     void setPosition(const transforms::BboxBase& pos);  // _set_position(pos, which='both')
 
     // Axes.set_title(label, loc=, pad=, y=)
-    void setTitle(const std::string& label, const std::string& loc, std::optional<double> pad, std::optional<double> y);
+    Text& setTitle(const std::string& label, const std::string& loc, std::optional<double> pad, std::optional<double> y);
 
 private:
     void setLimAndTransforms();

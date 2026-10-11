@@ -267,6 +267,117 @@ INSTANTIATE_TEST_SUITE_P(
         Refusal{R"({"on": "axs[0]", "call": "text", "args": [1, 2, "t"], "kwargs": {"stretch": 500, "fontstretch": 500}})",
                 "axs[0].text: fontstretch is given twice (it is an alias of fontstretch)"}));
 
+class TextKeywordRefusals : public testing::TestWithParam<Refusal> {};
+
+// Titles, axis labels, the suptitle and figure texts take the keywords of a text, each in its own way.
+TEST_P(TextKeywordRefusals, NameTheCallAndTheReason) {
+    const auto drawing = draw(kSubplots + GetParam().call);
+    EXPECT_EQ(drawing.error, GetParam().error);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    Engine, TextKeywordRefusals,
+    testing::Values(
+        Refusal{R"({"on": "axs[0]", "call": "set_title", "args": ["t"], "kwargs": {"fontdict": 3}})",
+                "axs[0].set_title: fontdict is not supported yet"},
+        Refusal{R"({"on": "axs[0]", "call": "set_title", "args": ["t"], "kwargs": {"colour": "red"}})",
+                "axs[0].set_title: unsupported keyword colour"},
+        Refusal{R"({"on": "axs[0]", "call": "set_title", "args": ["t"], "kwargs": {"fontsize": "huge"}})",
+                "axs[0].set_title: fontsize is not a font size: huge"},
+        Refusal{R"({"on": "axs[0]", "call": "set_title", "args": ["t"], "kwargs": {"x": "left"}})",
+                "axs[0].set_title: x must be a number"},
+        Refusal{R"({"on": "axs[0]", "call": "set_title", "args": ["t"], "kwargs": {"color": null}})",
+                "axs[0].set_title: color is not a colour"},
+        Refusal{R"({"on": "axs[0]", "call": "set_title", "args": ["t"], "kwargs": {"multialignment": "bogus"}})",
+                "axs[0].set_title: multialignment is not an alignment: bogus"},
+        Refusal{R"({"on": "axs[0]", "call": "set_title", "args": ["t"], "kwargs": {"linespacing": null}})",
+                "axs[0].set_title: linespacing must be 'normal' or a number"},
+        Refusal{R"({"on": "axs[0]", "call": "set_xlabel", "args": ["t"], "kwargs": {"loc": "left", "x": 0.2}})",
+                "axs[0].set_xlabel: loc cannot be given together with x, horizontalalignment or ha"},
+        Refusal{R"({"on": "axs[0]", "call": "set_xlabel", "args": ["t"], "kwargs": {"loc": "left", "ha": "right"}})",
+                "axs[0].set_xlabel: loc cannot be given together with x, horizontalalignment or ha"},
+        Refusal{R"({"on": "axs[0]", "call": "set_ylabel", "args": ["t"], "kwargs": {"loc": "top", "y": 0.2}})",
+                "axs[0].set_ylabel: loc cannot be given together with y, horizontalalignment or ha"},
+        Refusal{R"({"on": "axs[0]", "call": "set_ylabel", "args": ["t"], "kwargs": {"loc": "top", "horizontalalignment": "left"}})",
+                "axs[0].set_ylabel: loc cannot be given together with y, horizontalalignment or ha"},
+        Refusal{R"({"on": "axs[0]", "call": "set_xlabel", "args": ["t"], "kwargs": {"size": 8, "fontsize": 9}})",
+                "axs[0].set_xlabel: fontsize is given twice (it is an alias of fontsize)"},
+        Refusal{R"({"on": "axs[0]", "call": "set_xlabel", "args": ["t"], "kwargs": {"color": "red", "c": "blue"}})",
+                "axs[0].set_xlabel: c is given twice (it is an alias of color)"},
+        Refusal{R"({"on": "axs[0]", "call": "set_ylabel", "args": ["t"], "kwargs": {"ha": "left", "horizontalalignment": "left"}})",
+                "axs[0].set_ylabel: horizontalalignment is given twice (it is an alias of horizontalalignment)"},
+        Refusal{R"({"on": "axs[0]", "call": "set_xlabel", "args": ["t"], "kwargs": {"loc": "top"}})",
+                "axs[0].set_xlabel: bad loc top"},
+        Refusal{R"({"on": "axs[0]", "call": "set_ylabel", "args": ["t"], "kwargs": {"loc": "left"}})",
+                "axs[0].set_ylabel: bad loc left"},
+        Refusal{R"({"on": "axs[0]", "call": "set_xlabel", "args": ["t"], "kwargs": {"loc": 3}})",
+                "axs[0].set_xlabel: bad loc"},
+        Refusal{R"({"on": "axs[0]", "call": "set_xlabel", "args": ["t"], "kwargs": {"labelpad": "big"}})",
+                "axs[0].set_xlabel: labelpad must be a number"},
+        Refusal{R"({"on": "axs[0]", "call": "set_xlabel", "args": ["t"], "kwargs": {"fontdict": {"$tuple": [1]}}})",
+                "axs[0].set_xlabel: fontdict is not supported yet"},
+        Refusal{R"({"on": "axs[0]", "call": "set_xlabel", "args": ["t"], "kwargs": {"y": "low"}})",
+                "axs[0].set_xlabel: y must be a number"},
+        Refusal{R"({"on": "axs[0]", "call": "set_xlabel", "args": ["t"], "kwargs": {"color": null}})",
+                "axs[0].set_xlabel: color is not a colour"},
+        Refusal{R"({"on": "axs[0]", "call": "set_ylabel", "args": ["t"], "kwargs": {"rotation": "diagonal"}})",
+                "axs[0].set_ylabel: rotation must be 'vertical', 'horizontal' or a number"},
+        Refusal{R"({"on": "axs[0]", "call": "set_ylabel", "args": [3], "kwargs": {}})",
+                "axs[0].set_ylabel: the label must be a string"},
+        Refusal{R"({"on": "fig", "call": "suptitle", "args": ["t"], "kwargs": {"size": 8, "fontsize": 9}})",
+                "fig.suptitle: fontsize is given twice (it is an alias of fontsize)"},
+        Refusal{R"({"on": "fig", "call": "suptitle", "args": ["t"], "kwargs": {"ha": "left", "horizontalalignment": "left"}})",
+                "fig.suptitle: horizontalalignment is given twice (it is an alias of horizontalalignment)"},
+        Refusal{R"({"on": "fig", "call": "suptitle", "args": ["t"], "kwargs": {"x": "a"}})",
+                "fig.suptitle: x must be a number"},
+        Refusal{R"({"on": "fig", "call": "suptitle", "args": ["t"], "kwargs": {"y": [1]}})",
+                "fig.suptitle: y must be a number"},
+        Refusal{R"({"on": "fig", "call": "suptitle", "args": ["t"], "kwargs": {"t": "u"}})",
+                "fig.suptitle: t is given twice"},
+        Refusal{R"({"on": "fig", "call": "suptitle", "args": ["t", "u"], "kwargs": {}})",
+                "fig.suptitle: too many positional arguments"},
+        Refusal{R"({"on": "fig", "call": "suptitle", "args": [3], "kwargs": {}})",
+                "fig.suptitle: the title must be a string"},
+        Refusal{R"({"on": "fig", "call": "suptitle", "args": ["t"], "kwargs": {"colour": "red"}})",
+                "fig.suptitle: unsupported keyword colour"},
+        Refusal{R"({"on": "fig", "call": "suptitle", "args": ["t"], "kwargs": {"fontdict": 1}})",
+                "fig.suptitle: fontdict is not supported yet"},
+        Refusal{R"({"on": "fig", "call": "suptitle", "args": ["t"], "kwargs": {"fontweight": "heavyish"}})",
+                "fig.suptitle: fontweight is invalid: heavyish"},
+        Refusal{R"({"on": "fig", "call": "suptitle", "args": ["t"], "kwargs": {"rotation": "diagonal"}})",
+                "fig.suptitle: rotation must be 'vertical', 'horizontal' or a number"},
+        Refusal{R"({"on": "fig", "call": "text", "args": ["a", 2, "t"], "kwargs": {}})",
+                "fig.text: x and y must be numbers"},
+        Refusal{R"({"on": "fig", "call": "text", "args": [1, null, "t"], "kwargs": {}})",
+                "fig.text: x and y must be numbers"},
+        Refusal{R"({"on": "fig", "call": "text", "args": [1, 2], "kwargs": {}})",
+                "fig.text: the text must be a string"},
+        Refusal{R"({"on": "fig", "call": "text", "args": [1, 2, "t", 3], "kwargs": {}})",
+                "fig.text: fontdict is not supported yet"},
+        Refusal{R"({"on": "fig", "call": "text", "args": [1, 2, "t"], "kwargs": {"fontdict": 3}})",
+                "fig.text: fontdict is not supported yet"},
+        Refusal{R"({"on": "fig", "call": "text", "args": [1, 2, "t", null, 5], "kwargs": {}})",
+                "fig.text: too many positional arguments"},
+        Refusal{R"({"on": "fig", "call": "text", "args": [1, 2, "t"], "kwargs": {"s": "u"}})",
+                "fig.text: s is given twice"},
+        Refusal{R"({"on": "fig", "call": "text", "args": [1, 2, "t"], "kwargs": {"x": 3}})",
+                "fig.text: x is given twice"},
+        Refusal{R"({"on": "fig", "call": "text", "args": [1, 2, "t"], "kwargs": {"transform": null}})",
+                "fig.text: unsupported keyword transform"},
+        Refusal{R"({"on": "fig", "call": "text", "args": [1, 2, "t"], "kwargs": {"ha": "middle"}})",
+                "fig.text: ha is not an alignment: middle"},
+        Refusal{R"({"on": "fig", "call": "text", "args": [1, 2, "t"], "kwargs": {"size": 8, "fontsize": 9}})",
+                "fig.text: fontsize is given twice (it is an alias of fontsize)"}));
+
+// None is no value: the defaults stay.
+TEST(TextKeywordCalls, NoneKeywordsAreTheDefaults) {
+    const auto drawing = draw(kSubplots + R"({"on": "axs[0]", "call": "set_xlabel", "args": ["t"], "kwargs": {"labelpad": null, "loc": null, "fontdict": null}},
+        {"on": "axs[0]", "call": "set_title", "args": ["t"], "kwargs": {"fontdict": null, "rotation": null, "alpha": null}},
+        {"on": "fig", "call": "suptitle", "args": ["t"], "kwargs": {"x": null, "y": null, "fontdict": null, "color": null}},
+        {"on": "fig", "call": "text", "args": [0.5, 0.5, "t", null], "kwargs": {"color": null, "rotation": null}})");
+    EXPECT_EQ(drawing.error, "");
+}
+
 TEST(LayoutCalls, WhatCannotBeMeasuredStopsTheLayout) {
     std::string error;
     const auto figure = calculate_plot::model::parseFigure(
