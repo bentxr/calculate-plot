@@ -95,9 +95,11 @@ struct LegendOptions {
 
 class Legend : public Artist {
 public:
-    // Legend(axes, handles, labels, **options); `handles` are the Axes' children that get entries.
+    // Legend(axes, handles, labels, **options); `handles` are the Axes' children that get entries,
+    // or null where the entry is the errorbar container at the same place in `containers`.
     Legend(const rc::Params& rc, Axes& parent, const std::vector<Artist*>& handles,
-           const std::vector<std::string>& labels, const LegendOptions& options, std::string* error);
+           const std::vector<const ErrorbarContainer*>& containers, const std::vector<std::string>& labels,
+           const LegendOptions& options, std::string* error);
     void draw(Renderer& renderer) override;
     transforms::Bbox tightbbox(Renderer& renderer);  // get_tightbbox: the legend box's window extent
 

@@ -905,8 +905,11 @@ private:
             if (!color(*c, &baseColor)) return *error = where + ": bad color", false;
             baseColorSet = true;
         }
-        if (const Json* l = keyword(call, "label"); l && l->isString() && !l->asString().empty() && l->asString()[0] != '_')
-            ax.labelledContainers = true;
+        // ErrorbarContainer((data_line, caplines, barcols), has_xerr=, has_yerr=, label=label)
+        ErrorbarContainer container;
+        container.hasXerr = xerr != nullptr;
+        container.hasYerr = yerr != nullptr;
+        if (const Json* l = keyword(call, "label"); l && l->isString()) container.label = l->asString();
         if (lowerFmt != "none") {
             auto line = std::make_unique<Line2D>(rc_, x, y);
             if (linestyle && !line->setLinestyle(*linestyle, error)) return false;
@@ -921,7 +924,7 @@ private:
             line->color = baseColor;
             line->label = "_nolegend_";
             line->zorder = barsabove ? zorder - .1 : zorder + .1;
-            ax.addLine(std::move(line));
+            container.dataLine = &ax.addLine(std::move(line));
         } else {
             // no data line; base_style keeps the kwargs' colour only
             if (!prop("color")) baseColorSet = false;
@@ -984,7 +987,7 @@ private:
             }
             auto bars = std::make_unique<LineCollection>(rc_, segments);
             styleBars(*bars);
-            ax.addLinesCollection(std::move(bars));
+            container.barlinecols.push_back(&ax.addLinesCollection(std::move(bars)));
             if (caps > 0) {
                 for (const std::vector<double>* lh : {&low, &high}) {
                     if (axisIndex == 0) capLines.push_back(capLine(*lh, indep, "|"));
@@ -992,7 +995,8 @@ private:
                 }
             }
         }
-        for (auto& l : capLines) ax.addLine(std::move(l));
+        for (auto& l : capLines) container.caplines.push_back(&ax.addLine(std::move(l)));
+        ax.containers.push_back(container);
         ax.requestAutoscaleView(true, true);
         return true;
     }
@@ -1269,7 +1273,6 @@ private:
     bool legend(Axes& ax, const model::Call& call, std::string* error) {
         const std::string where = call.on + ".legend";
         if (!call.args.empty()) return *error = where + ": handles and labels as arguments are not supported yet", false;
-        if (ax.labelledContainers) return *error = where + ": legend entries for error bars are not supported yet", false;
         LegendOptions o;
         for (const auto& [name, value] : call.kwargs) {
             double n = 0;
@@ -1330,8 +1333,16 @@ private:
             handles.push_back(child.get());
             labels.push_back(l);
         }
+        // _get_legend_handles: the containers come after the children
+        std::vector<const ErrorbarContainer*> containers(handles.size(), nullptr);
+        for (const auto& c : ax.containers) {
+            if (c.label.empty() || c.label[0] == '_') continue;
+            handles.push_back(nullptr);
+            containers.push_back(&c);
+            labels.push_back(c.label);
+        }
         std::string problem;
-        auto made = std::make_unique<Legend>(rc_, ax, handles, labels, o, &problem);
+        auto made = std::make_unique<Legend>(rc_, ax, handles, containers, labels, o, &problem);
         if (!problem.empty()) return *error = where + ": " + problem, false;
         ax.legend = std::move(made);
         return true;

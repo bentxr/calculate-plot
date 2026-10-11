@@ -1,6 +1,6 @@
 // Derived from Matplotlib 3.11.2: lib/matplotlib/legend.py (Legend), lib/matplotlib/offsetbox.py
 // (TextArea, DrawingArea, HPacker, VPacker and their helpers) and lib/matplotlib/legend_handler.py
-// (HandlerLine2D, HandlerPathCollection, HandlerPolyCollection, HandlerPatch).
+// (HandlerLine2D, HandlerPathCollection, HandlerPolyCollection, HandlerPatch, HandlerErrorbar).
 // Copyright (c) 2012- Matplotlib Development Team; All Rights Reserved
 // Licence: LICENSES/Matplotlib.txt. Changes: licensing/changes/matplotlib.md
 
@@ -228,7 +228,8 @@ std::vector<double> linspace(double start, double stop, int num) {
 }  // namespace
 
 Legend::Legend(const rc::Params& rc, Axes& parent, const std::vector<Artist*>& handles,
-               const std::vector<std::string>& labels, const LegendOptions& o, std::string* error)
+               const std::vector<const ErrorbarContainer*>& containers, const std::vector<std::string>& labels,
+               const LegendOptions& o, std::string* error)
     : Artist(rc), parent_(parent) {
     zorder = 5;
     const auto& sizeValue = rc.value("legend.fontsize");
@@ -280,7 +281,59 @@ Legend::Legend(const rc::Params& rc, Axes& parent, const std::vector<Artist*>& h
         auto handlebox = std::make_unique<DrawingArea>(handlelength_ * fontsize, height, 0., descent);
         const double xd = handlebox->xdescent, yd = handlebox->ydescent, w = handlebox->width, h = handlebox->height;
         const transforms::TransformPtr trans = handlebox->transform();
-        if (auto* line = dynamic_cast<Line2D*>(handles[i])) {  // HandlerLine2D, one point
+        if (const ErrorbarContainer* bars = containers[i]) {  // HandlerErrorbar, one point
+            // get_xdata: the line from end to end, the marker in the middle
+            const std::vector<double> xdata{-xd, -xd + w}, ydata(2, (h - yd) / 2);
+            const double x = -xd + 0.5 * w, y = ydata[0];
+            const double errSize = 0.5 * fontsize;  // xerr_size, and yerr_size with it
+            std::string ignored;
+            auto legline = std::make_unique<Line2D>(rc, xdata, ydata);
+            auto marker = std::make_unique<Line2D>(rc, std::vector<double>{x}, std::vector<double>{y});
+            if (!bars->dataLine) {
+                legline->visible = false;
+                marker->visible = false;
+            } else {
+                for (Line2D* l : {legline.get(), marker.get()}) {
+                    l->updateFrom(*bars->dataLine);
+                    l->clipBox.reset();
+                    l->clipPath.reset();
+                }
+                // (and set_drawstyle('default'): no line has another draw style yet)
+                legline->setMarker("none", &ignored);
+                marker->setLinestyle("None", &ignored);
+            }
+            std::vector<std::unique_ptr<Artist>> made;
+            const auto side = [&](bool horizontal) {
+                // the bar of the first collection, and two caps like the first cap line
+                const double dx = horizontal ? errSize : 0, dy = horizontal ? 0 : errSize;
+                auto bar = std::make_unique<LineCollection>(
+                    rc, std::vector<std::vector<std::array<double, 2>>>{{{x - dx, y - dy}, {x + dx, y + dy}}});
+                bar->updateFrom(*bars->barlinecols[0]);
+                bar->figure = &parent.figure;  // (_set_artist_props; a bar this short never asks for it)
+                bar->clipBox.reset();
+                bar->clipPath.reset();
+                bar->transform = trans;
+                handlebox->addArtist(std::move(bar));
+                if (bars->caplines.empty()) return;
+                for (const double sign : {-1.0, 1.0}) {
+                    auto cap = std::make_unique<Line2D>(rc, std::vector<double>{x + sign * dx}, std::vector<double>{y + sign * dy});
+                    cap->updateFrom(*bars->caplines[0]);
+                    cap->clipBox.reset();
+                    cap->clipPath.reset();
+                    cap->setMarker(horizontal ? "|" : "_", &ignored);
+                    cap->transform = trans;
+                    made.push_back(std::move(cap));
+                }
+            };
+            if (bars->hasXerr) side(true);
+            if (bars->hasYerr) side(false);
+            // the bars first, then the caps, the line and its marker
+            for (auto& cap : made) handlebox->addArtist(std::move(cap));
+            legline->transform = trans;
+            marker->transform = trans;
+            handlebox->addArtist(std::move(legline));
+            handlebox->addArtist(std::move(marker));
+        } else if (auto* line = dynamic_cast<Line2D*>(handles[i])) {  // HandlerLine2D, one point
             auto xdata = linspace(-xd, -xd + w, 3);
             std::vector<double> ydata(xdata.size(), (h - yd) / 2);
             auto legline = std::make_unique<Line2D>(rc, xdata, ydata);

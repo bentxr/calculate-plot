@@ -205,7 +205,8 @@ public:
     std::array<double, 2> minpos{std::numeric_limits<double>::infinity(), std::numeric_limits<double>::infinity()};
     std::vector<std::unique_ptr<Artist>> children;  // _children: lines, ...
     std::unique_ptr<Artist> legend;                  // legend_
-    bool labelledContainers = false;                 // errorbar labels (containers are not supported yet)
+    // The errorbar calls' containers, which a legend lists under their labels
+    std::vector<ErrorbarContainer> containers;
 
     // get_tightbbox(renderer, for_layout_only=): the box of the Axes with its decorations; nullopt
     // when the Axes is invisible.

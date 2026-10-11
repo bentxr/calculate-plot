@@ -131,4 +131,16 @@ private:
     std::vector<double> sizes_;
 };
 
+class Line2D;
+
+// ErrorbarContainer: what an errorbar call made (its data line if any, the cap lines, the
+// collections of bars), which a legend lists under the call's label
+struct ErrorbarContainer {
+    Line2D* dataLine = nullptr;
+    std::vector<Line2D*> caplines;
+    std::vector<Collection*> barlinecols;
+    bool hasXerr = false, hasYerr = false;
+    std::string label;
+};
+
 }  // namespace calculate_plot::engine
