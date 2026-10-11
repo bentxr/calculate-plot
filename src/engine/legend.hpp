@@ -90,7 +90,7 @@ struct LegendOptions {
     std::optional<double> framealpha;
     std::optional<colors::Spec> facecolor, edgecolor;
     std::optional<support::Json> labelcolor;  // as given: a way to take it from the handle, a colour or a list of them
-    int ncols = 1;
+    int ncols = 1;  // the columns to split the entries into (no more than there are entries)
     bool markerfirst = true;
     std::optional<double> borderpad, labelspacing, handlelength, handletextpad, borderaxespad, columnspacing;
 };

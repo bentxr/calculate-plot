@@ -152,6 +152,13 @@ it comes from in its first lines. The changes, as a whole:
   Texts: axes/_axes.py's Axes.text with text.py's Text.__init__ and Text.update (the property setters of Text,
   FontProperties and Artist, each with its check), translated to C++ in the executor; backend_agg.py's
   _draw_text_glyphs_and_boxes now also records the boxes of mathtext (rules) and their filled paths.
+  Arguments: collections.py's Collection.set_color (the hatch colour with the faces and the edges) and
+  get_hatchcolor's fallback on the kind's default edge colour; colors.py's _has_alpha_channel; axis.py's
+  Tick.__init__ and Tick._apply_params for the grid lines (Axis.grid's keywords applied call after call, a colour
+  with an alpha channel split into RGB and alpha); cbook.normalize_kwargs' refusal of a property given by two of
+  its names; the order in which Line2D.__init__, Patch.__init__ (a color in place of edgecolor and facecolor)
+  and Axes.vlines / hlines take their own parameters before the other keywords; Legend.__init__'s choice
+  between ncols and ncol and numpy.array_split's reading of the count, translated to C++ in the executor.
 - File names drop the leading underscore (e.g. src/_backend_agg.h is src/agg/backend_agg.h); includes follow.
 - RendererAgg's rasterizer takes Matplotlib's 32 768 blocks of cells on 64-bit targets and 4 096 on 32-bit ones
   (WebAssembly), which have no memory for more: a path that needs more is refused there with the same

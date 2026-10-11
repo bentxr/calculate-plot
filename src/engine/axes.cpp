@@ -170,23 +170,27 @@ Tick::Tick(const rc::Params& rc, Axes& axes, bool isX, bool major, const TickSwi
     const double labelsize = fontSizeOf(rc, (name + ".labelsize").c_str());
     zorder = major ? 2 + 0.01 : 2;  // Line2D.zorder (+ 0.01)
 
-    std::string gridColor = sw.gridColor ? *sw.gridColor
-                            : mm == "major" ? rcText(rc, {"grid.major.color", "grid.color"})
-                                            : rcText(rc, {"grid.minor.color", "grid.color"});
+    // Tick.__init__ with the rcParams: a colour with an alpha channel is RGB and that alpha, else
+    // the alpha is grid.alpha. What Axis.grid was given comes over it.
+    const std::string rcGridColor = mm == "major" ? rcText(rc, {"grid.major.color", "grid.color"})
+                                                  : rcText(rc, {"grid.minor.color", "grid.color"});
     const std::string gridLinestyle = sw.gridLinestyle ? *sw.gridLinestyle
                                       : mm == "major" ? rcText(rc, {"grid.major.linestyle", "grid.linestyle"})
                                                       : rcText(rc, {"grid.minor.linestyle", "grid.linestyle"});
     const double gridLinewidth = sw.gridLinewidth ? *sw.gridLinewidth
                                  : mm == "major" ? rcNumber(rc, {"grid.major.linewidth", "grid.linewidth"})
                                                  : rcNumber(rc, {"grid.minor.linewidth", "grid.linewidth"});
-    std::optional<double> gridAlpha = sw.gridAlpha;
-    if (gridAlpha) {
-    } else if (gridColor[0] == '#' && (gridColor.size() == 5 || gridColor.size() == 9)) {  // _has_alpha_channel
-        const auto rgba = *colors::toRgba(gridColor, std::nullopt, rc, nullptr);
+    colors::Spec gridColor = rcGridColor;
+    double gridAlpha = 0;
+    if (colors::hasAlphaChannel(rcGridColor)) {
+        const auto rgba = *colors::toRgba(rcGridColor, std::nullopt, rc, nullptr);
+        gridColor = std::vector<double>{rgba[0], rgba[1], rgba[2]};
         gridAlpha = rgba[3];
     } else {
         gridAlpha = mm == "major" ? rcNumber(rc, {"grid.major.alpha", "grid.alpha"}) : rcNumber(rc, {"grid.minor.alpha", "grid.alpha"});
     }
+    if (sw.gridColor) gridColor = *sw.gridColor;
+    if (sw.gridAlpha) gridAlpha = *sw.gridAlpha;
     std::string error;
     for (Line2D* line : {&tick1line, &tick2line}) {
         line->color = color;
@@ -199,10 +203,6 @@ Tick::Tick(const rc::Params& rc, Axes& axes, bool isX, bool major, const TickSwi
     tick1line.visible = sw.tick1On;
     tick2line.visible = sw.tick2On;
     gridline.color = gridColor;
-    if (!sw.gridAlpha && gridColor[0] == '#' && (gridColor.size() == 5 || gridColor.size() == 9)) {
-        const auto rgba = *colors::toRgba(gridColor, std::nullopt, rc, nullptr);  // RGB only, alpha apart
-        gridline.color = std::vector<double>{rgba[0], rgba[1], rgba[2]};
-    }
     gridline.alpha = gridAlpha;
     // Axis.set_clip_path(axes.patch) reaches the grid lines (copied to every tick): a clip box
     gridline.clipBox = std::make_shared<transforms::TransformedBbox>(

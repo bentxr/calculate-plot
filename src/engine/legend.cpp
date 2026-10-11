@@ -537,7 +537,7 @@ Legend::Legend(const rc::Params& rc, Axes& parent, const std::vector<Artist*>& h
         *error = "Invalid labelcolor";
     }
     // np.array_split(handles_and_labels, ncols), empty columns dropped
-    const int ncols = handles.size() < 2 ? 1 : std::max(1, o.ncols);
+    const int ncols = o.ncols;
     std::vector<OffsetBox*> columns;
     const std::size_t n = items.size();
     std::size_t at = 0;

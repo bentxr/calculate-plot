@@ -19,7 +19,7 @@ namespace calculate_plot::engine {
 struct FigureOptions {
     std::optional<std::array<double, 2>> figsize;
     std::optional<double> dpi;
-    std::optional<std::string> facecolor, edgecolor;
+    std::optional<colors::Spec> facecolor, edgecolor;
     double linewidth = 0.0;
     std::optional<bool> frameon;
 };

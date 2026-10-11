@@ -66,6 +66,23 @@ TEST(Colors, TuplesAreCheckedAndTakeTheAlpha) {
 }
 
 // "C" and digits is a colour of the cycle however many the digits (Python's integers have no end).
+// _has_alpha_channel, for valid colours: the hex strings with a fourth pair or digit, and RGBA tuples.
+TEST(Colors, AnAlphaChannelIsAFourthComponent) {
+    using calculate_plot::colors::hasAlphaChannel;
+    using calculate_plot::colors::Spec;
+    EXPECT_TRUE(hasAlphaChannel(Spec(std::string("#fff8"))));
+    EXPECT_TRUE(hasAlphaChannel(Spec(std::string("#0f0f0f80"))));
+    EXPECT_FALSE(hasAlphaChannel(Spec(std::string("#fff"))));
+    EXPECT_FALSE(hasAlphaChannel(Spec(std::string("#0f0f0f"))));
+    EXPECT_FALSE(hasAlphaChannel(Spec(std::string("red"))));
+    EXPECT_FALSE(hasAlphaChannel(Spec(std::string("none"))));
+    EXPECT_FALSE(hasAlphaChannel(Spec(std::string("0.75"))));
+    EXPECT_FALSE(hasAlphaChannel(Spec(std::string("tab:blue_"))));
+    EXPECT_FALSE(hasAlphaChannel(Spec(std::string(""))));
+    EXPECT_TRUE(hasAlphaChannel(Spec(std::vector<double>{1, 0, 0, 0.5})));
+    EXPECT_FALSE(hasAlphaChannel(Spec(std::vector<double>{1, 0, 0})));
+}
+
 TEST(Colors, TheNthColourOfTheCycleTakesAnyNumberOfDigits) {
     const auto rc = calculate_plot::rc::Params::defaults();
     const auto c = [&](const std::string& spec) { return calculate_plot::colors::toRgba(spec, std::nullopt, rc, nullptr); };

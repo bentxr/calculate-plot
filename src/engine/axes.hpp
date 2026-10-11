@@ -49,8 +49,10 @@ private:
 struct TickSwitches {
     bool tick1On = true, tick2On = true, label1On = true, label2On = false;
     bool gridOn = false;
-    // grid_color, grid_linestyle, grid_linewidth, grid_alpha (Axis.grid's keywords)
-    std::optional<std::string> gridColor, gridLinestyle;
+    // What Axis.grid's keywords have set on the grid lines so far (each call goes to the lines there
+    // are, Tick._apply_params, and the new ticks copy the first): unset is what a tick starts with
+    std::optional<colors::Spec> gridColor;
+    std::optional<std::string> gridLinestyle;
     std::optional<double> gridLinewidth, gridAlpha;
 };
 

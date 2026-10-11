@@ -25,5 +25,7 @@ using Spec = std::variant<std::string, std::vector<double>>;
 std::optional<Rgba> toRgba(const Spec& spec, std::optional<double> alpha, const rc::Params& rc, std::string* error);
 // cbook._str_lower_equal(spec, "none"), false for tuples.
 bool isNone(const Spec& spec);
+// _has_alpha_channel: '#rgba' and '#rrggbbaa' strings, and tuples of four (for a valid colour).
+bool hasAlphaChannel(const Spec& spec);
 
 }  // namespace calculate_plot::colors

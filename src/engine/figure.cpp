@@ -24,8 +24,8 @@ Figure::Figure(const rc::Params& rc, const FigureOptions& o) : Artist(rc), subpl
         figsize = {v[0], v[1]};
     }
     dpi = o.dpi ? *o.dpi : rc.number("figure.dpi");
-    const std::string facecolor = o.facecolor ? *o.facecolor : rc.text("figure.facecolor");
-    const std::string edgecolor = o.edgecolor ? *o.edgecolor : rc.text("figure.edgecolor");
+    const colors::Spec facecolor = o.facecolor ? *o.facecolor : colors::Spec(rc.text("figure.facecolor"));
+    const colors::Spec edgecolor = o.edgecolor ? *o.edgecolor : colors::Spec(rc.text("figure.edgecolor"));
     // (pyplot.figure passes frameon=True unless told otherwise: rcParams["figure.frameon"] is for Figure() alone)
     const bool frameon = o.frameon ? *o.frameon : true;
 

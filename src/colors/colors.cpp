@@ -142,4 +142,10 @@ bool isNone(const Spec& spec) {
     return lower == "none";
 }
 
+bool hasAlphaChannel(const Spec& spec) {
+    if (const auto* text = std::get_if<std::string>(&spec))
+        return !text->empty() && (*text)[0] == '#' && (text->size() == 5 || text->size() == 9);
+    return std::get<std::vector<double>>(spec).size() == 4;
+}
+
 }  // namespace calculate_plot::colors

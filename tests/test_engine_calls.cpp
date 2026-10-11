@@ -57,6 +57,19 @@ INSTANTIATE_TEST_SUITE_P(
                 "fig.subplots_adjust: too many positional arguments"},
         Refusal{R"({"on": "fig", "call": "subplots_adjust", "kwargs": {"middle": 0.5}})",
                 "fig.subplots_adjust: unsupported keyword middle"},
+        Refusal{R"({"on": "fig", "call": "subplots_adjust", "kwargs": {"left": {"$float": "nan"}}})",
+                "fig.subplots_adjust: left must be finite"},
+        Refusal{R"({"on": "fig", "call": "subplots_adjust", "args": [0.1, 0.1, {"$float": "inf"}]})",
+                "fig.subplots_adjust: right must be finite"},
+        Refusal{R"({"on": "fig", "call": "subplots_adjust", "kwargs": {"wspace": {"$float": "-inf"}}})",
+                "fig.subplots_adjust: wspace must be finite"},
+        Refusal{R"({"on": "fig", "call": "tight_layout", "kwargs": {"pad": {"$float": "nan"}}})", "fig.tight_layout: pad must be finite"},
+        Refusal{R"({"on": "fig", "call": "tight_layout", "kwargs": {"h_pad": {"$float": "inf"}}})",
+                "fig.tight_layout: h_pad must be finite"},
+        Refusal{R"({"on": "fig", "call": "tight_layout", "kwargs": {"w_pad": {"$float": "-inf"}}})",
+                "fig.tight_layout: w_pad must be finite"},
+        Refusal{R"({"on": "fig", "call": "tight_layout", "kwargs": {"rect": [0, 0, {"$float": "nan"}, 1]}})",
+                "fig.tight_layout: rect must be (left, bottom, right, top)"},
         Refusal{R"({"on": "fig", "call": "subplots_adjust", "kwargs": {"left": "wide"}})",
                 "fig.subplots_adjust: left must be a number"},
         Refusal{R"({"on": "fig", "call": "subplots_adjust", "args": [0.1, 0.1, 0.9, 0.9, 0.2, "tall"]})",
@@ -98,13 +111,13 @@ INSTANTIATE_TEST_SUITE_P(
         Refusal{R"({"on": "axs[0]", "call": "text", "args": [1, 2, "t", null, 5], "kwargs": {}})",
                 "axs[0].text: too many positional arguments"},
         Refusal{R"({"on": "axs[0]", "call": "text", "args": [1, 2, "t"], "kwargs": {"x": 3}})",
-                "axs[0].text: x is given twice"},
+                "axs[0].text: got multiple values for argument 'x'"},
         Refusal{R"({"on": "axs[0]", "call": "text", "args": [1, 2, "t"], "kwargs": {"y": 3}})",
-                "axs[0].text: y is given twice"},
+                "axs[0].text: got multiple values for argument 'y'"},
         Refusal{R"({"on": "axs[0]", "call": "text", "args": [1, 2, "t"], "kwargs": {"s": "u"}})",
-                "axs[0].text: s is given twice"},
+                "axs[0].text: got multiple values for argument 's'"},
         Refusal{R"({"on": "axs[0]", "call": "text", "args": [1, 2, "t", null], "kwargs": {"fontdict": null}})",
-                "axs[0].text: fontdict is given twice"},
+                "axs[0].text: got multiple values for argument 'fontdict'"},
         Refusal{R"({"on": "axs[0]", "call": "text", "args": [1, 2, "t"], "kwargs": {"fontdict": 3}})",
                 "axs[0].text: fontdict is not supported yet"},
         Refusal{R"({"on": "axs[0]", "call": "text", "args": [1, 2, "t", "bold"], "kwargs": {}})",
@@ -342,7 +355,7 @@ INSTANTIATE_TEST_SUITE_P(
         Refusal{R"({"on": "fig", "call": "suptitle", "args": ["t"], "kwargs": {"y": [1]}})",
                 "fig.suptitle: y must be a number"},
         Refusal{R"({"on": "fig", "call": "suptitle", "args": ["t"], "kwargs": {"t": "u"}})",
-                "fig.suptitle: t is given twice"},
+                "fig.suptitle: got multiple values for argument 't'"},
         Refusal{R"({"on": "fig", "call": "suptitle", "args": ["t", "u"], "kwargs": {}})",
                 "fig.suptitle: too many positional arguments"},
         Refusal{R"({"on": "fig", "call": "suptitle", "args": [3], "kwargs": {}})",
@@ -368,9 +381,9 @@ INSTANTIATE_TEST_SUITE_P(
         Refusal{R"({"on": "fig", "call": "text", "args": [1, 2, "t", null, 5], "kwargs": {}})",
                 "fig.text: too many positional arguments"},
         Refusal{R"({"on": "fig", "call": "text", "args": [1, 2, "t"], "kwargs": {"s": "u"}})",
-                "fig.text: s is given twice"},
+                "fig.text: got multiple values for argument 's'"},
         Refusal{R"({"on": "fig", "call": "text", "args": [1, 2, "t"], "kwargs": {"x": 3}})",
-                "fig.text: x is given twice"},
+                "fig.text: got multiple values for argument 'x'"},
         Refusal{R"({"on": "fig", "call": "text", "args": [1, 2, "t"], "kwargs": {"transform": null}})",
                 "fig.text: unsupported keyword transform"},
         Refusal{R"({"on": "fig", "call": "text", "args": [1, 2, "t"], "kwargs": {"ha": "middle"}})",
@@ -444,8 +457,10 @@ INSTANTIATE_TEST_SUITE_P(
                 "axs[0].legend: fancybox must be True or False"},
         Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"markerfirst": 0}})",
                 "axs[0].legend: markerfirst must be True or False"},
-        Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"ncols": 0}})", "axs[0].legend: ncols must be a positive integer"},
-        Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"ncol": "2"}})", "axs[0].legend: ncols must be a positive integer"},
+        Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"ncol": 0}})", "axs[0].legend: ncol must be 1 or more"},
+        Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"ncol": "2"}})", "axs[0].legend: ncol must be a number"},
+        Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"alignment": null}})", "axs[0].legend: unsupported keyword alignment"},
+        Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"bogus": null}})", "axs[0].legend: unsupported keyword bogus"},
         Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"borderpad": "1"}})", "axs[0].legend: borderpad must be a number"},
         Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"columnspacing": [1]}})",
                 "axs[0].legend: columnspacing must be a number"},
@@ -510,10 +525,81 @@ TEST(LegendCalls, NoneKeywordsAreTheDefaults) {
     const auto plain = draw(kSubplots + plot + R"({"on": "axs[0]", "call": "legend"})");
     const auto none = draw(kSubplots + plot + R"({"on": "axs[0]", "call": "legend", "kwargs": {"loc": null, "title": null,
         "fontsize": null, "title_fontsize": null, "frameon": null, "fancybox": null, "ncols": null, "borderpad": null,
-        "facecolor": null, "framealpha": null}})");
+        "facecolor": null, "framealpha": null, "edgecolor": null, "labelcolor": null, "labelspacing": null, "handlelength": null,
+        "handletextpad": null, "borderaxespad": null, "columnspacing": null}})");
     ASSERT_EQ(plain.error, "");
     ASSERT_EQ(none.error, "");
     EXPECT_EQ(plain.trace, none.trace);
+}
+
+// The number of columns is ncols, or ncol when ncols is 1 (as it is, whatever was given, with fewer
+// than two entries). numpy.array_split reads it: truncated to an integer that must be 1 or more;
+// more columns than entries leave the rest empty.
+TEST(LegendCalls, TheColumnCountIsReadAsMatplotlibReadsIt) {
+    const auto legend = [](int lines, const std::string& kwargs) {
+        std::string calls = kSubplots;
+        for (int i = 0; i < lines; ++i)
+            calls += R"({"on": "axs[0]", "call": "plot", "args": [[0, 1], [0, )" + std::to_string(i + 1) +
+                     R"(]], "kwargs": {"label": "line )" + std::to_string(i) + R"("}},)";
+        return draw(calls + R"({"on": "axs[0]", "call": "legend", "kwargs": )" + kwargs + "}");
+    };
+    const auto trace = [&](int lines, const std::string& kwargs) {
+        const auto drawing = legend(lines, kwargs);
+        EXPECT_EQ(drawing.error, "") << lines << " " << kwargs;
+        return drawing.trace;
+    };
+    // one entry: ncols is not read
+    const std::string one = trace(1, "{}");
+    for (const char* ncols : {"0", "null", "\"2\"", "7", "false", R"({"$float": "nan"})", "1180591620717411303424"})
+        EXPECT_EQ(trace(1, std::string(R"({"ncols": )") + ncols + "}"), one) << ncols;
+    EXPECT_EQ(trace(1, R"({"ncol": 5})"), one);
+    EXPECT_EQ(trace(1, R"({"ncols": 3, "ncol": true})"), one);
+    EXPECT_EQ(legend(1, R"({"ncol": null})").error, "axs[0].legend: ncol must be a number");
+    EXPECT_EQ(legend(1, R"({"ncols": 3, "ncol": 0.5})").error, "axs[0].legend: ncol must be 1 or more");
+    EXPECT_EQ(legend(1, R"({"ncol": false})").error, "axs[0].legend: ncol must be 1 or more");
+    // three entries
+    const std::string plain = trace(3, "{}"), two = trace(3, R"({"ncols": 2})"), three = trace(3, R"({"ncols": 3})");
+    EXPECT_NE(two, plain);
+    EXPECT_NE(three, two);
+    EXPECT_NE(three, plain);
+    EXPECT_EQ(trace(3, R"({"ncols": 2.9})"), two);
+    EXPECT_EQ(trace(3, R"({"ncols": 1, "ncol": 2})"), two);
+    EXPECT_EQ(trace(3, R"({"ncol": 2, "ncols": 1.0})"), two);
+    EXPECT_EQ(trace(3, R"({"ncols": true, "ncol": 3})"), three);
+    EXPECT_EQ(trace(3, R"({"ncols": 2, "ncol": 0})"), two);
+    EXPECT_EQ(trace(3, R"({"ncols": 2, "ncol": "x"})"), two);
+    EXPECT_EQ(trace(3, R"({"ncol": true})"), plain);
+    EXPECT_EQ(trace(3, R"({"ncols": 7})"), three);
+    EXPECT_EQ(trace(3, R"({"ncols": 2147483647})"), three);
+    EXPECT_EQ(trace(3, R"({"ncols": 2147483647.9})"), three);
+    for (const char* ncols : {"0", "-3", "0.5", "false", "0.999"})
+        EXPECT_EQ(legend(3, std::string(R"({"ncols": )") + ncols + "}").error, "axs[0].legend: ncols must be 1 or more") << ncols;
+    for (const char* ncols : {"null", "\"2\"", "[2]"})
+        EXPECT_EQ(legend(3, std::string(R"({"ncols": )") + ncols + "}").error, "axs[0].legend: ncols must be a number") << ncols;
+    for (const char* ncols : {R"({"$float": "nan"})", R"({"$float": "inf"})", R"({"$float": "-inf"})"})
+        EXPECT_EQ(legend(3, std::string(R"({"ncols": )") + ncols + "}").error, "axs[0].legend: ncols must be finite") << ncols;
+    for (const char* ncols : {"2147483648", "1e300", "1180591620717411303424"})
+        EXPECT_EQ(legend(3, std::string(R"({"ncols": )") + ncols + "}").error,
+                  "axs[0].legend: more than 2147483647 columns are not supported yet")
+            << ncols;
+    EXPECT_EQ(legend(3, R"({"ncols": 1, "ncol": 0})").error, "axs[0].legend: ncol must be 1 or more");
+    EXPECT_EQ(legend(3, R"({"ncols": 1, "ncol": null})").error, "axs[0].legend: ncol must be a number");
+}
+
+// None is the default of the legend's keywords that this engine does not take yet, too.
+TEST(LegendCalls, NoneForAKeywordNotTakenYetIsItsDefault) {
+    const std::string plot = R"({"on": "axs[0]", "call": "plot", "args": [[0, 1], [0, 1]], "kwargs": {"label": "a"}},)";
+    const auto plain = draw(kSubplots + plot + R"({"on": "axs[0]", "call": "legend"})");
+    ASSERT_EQ(plain.error, "");
+    for (const char* name : {"handles", "labels", "numpoints", "markerscale", "reverse", "scatterpoints", "scatteryoffsets", "prop",
+                             "handleheight", "mode", "shadow", "linewidth", "bbox_to_anchor", "bbox_transform", "handler_map",
+                             "title_fontproperties", "draggable"}) {
+        const auto none = draw(kSubplots + plot + R"({"on": "axs[0]", "call": "legend", "kwargs": {")" + name + R"(": null}})");
+        EXPECT_EQ(none.error, "") << name;
+        EXPECT_EQ(none.trace, plain.trace) << name;
+        EXPECT_EQ(draw(kSubplots + plot + R"({"on": "axs[0]", "call": "legend", "kwargs": {")" + name + R"(": 1}})").error,
+                  std::string("axs[0].legend: unsupported keyword ") + name);
+    }
 }
 
 // The legend's font sizes are read as FontProperties.set_size reads them: a number also as text.
@@ -772,7 +858,218 @@ INSTANTIATE_TEST_SUITE_P(
         Refusal{R"({"on": "axs[0]", "call": "grid", "args": [true], "kwargs": {"linewidth": {"$float": "inf"}}})",
                 "axs[0].grid: linewidth must be a finite number"},
         Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"edgecolor": [0.1, 0.2, {"$float": "nan"}]}})",
-                "axs[0].legend: bad edgecolor"}));
+                "axs[0].legend: bad edgecolor"},
+        Refusal{R"({"on": "axs[0]", "call": "grid", "args": [true], "kwargs": {"color": "red", "c": "blue"}})",
+                "axs[0].grid: c is given twice (it is an alias of color)"},
+        Refusal{R"({"on": "axs[0]", "call": "grid", "args": [true], "kwargs": {"ls": ":", "linestyle": "--"}})",
+                "axs[0].grid: linestyle is given twice (it is an alias of linestyle)"},
+        Refusal{R"({"on": "axs[0]", "call": "grid", "args": [true], "kwargs": {"lw": 1, "linewidth": 2}})",
+                "axs[0].grid: linewidth is given twice (it is an alias of linewidth)"},
+        Refusal{R"({"on": "axs[0]", "call": "axhline", "args": [1], "kwargs": {"c": null}})", "axs[0].axhline: bad color"},
+        Refusal{R"({"on": "axs[0]", "call": "axvspan", "args": [1, 2], "kwargs": {"color": "red", "facecolor": "nocolor"}})",
+                "axs[0].axvspan: facecolor is not a colour"},
+        Refusal{R"({"on": "axs[0]", "call": "axhspan", "args": [1, 2], "kwargs": {"edgecolor": [1, 2], "color": "red"}})",
+                "axs[0].axhspan: edgecolor is not a colour"},
+        Refusal{R"({"on": "axs[0]", "call": "axvline", "args": [1], "kwargs": {"c": null}})", "axs[0].axvline: bad color"},
+        Refusal{R"({"on": "axs[0]", "call": "fill_between", "args": [[1, 2], [1, 2]], "kwargs": {"step": false}})",
+                "axs[0].fill_between: step is not supported yet"},
+        Refusal{R"({"on": "axs[0]", "call": "set_xlim", "kwargs": {"left": {"$float": "nan"}}})",
+                "axs[0].set_xlim: limits cannot be NaN or Inf"},
+        Refusal{R"({"on": "axs[0]", "call": "set_xlim", "args": [0, {"$float": "inf"}]})", "axs[0].set_xlim: limits cannot be NaN or Inf"},
+        Refusal{R"({"on": "axs[0]", "call": "set_ylim", "args": [[{"$float": "-inf"}, 1]]})", "axs[0].set_ylim: limits cannot be NaN or Inf"},
+        Refusal{R"({"on": "axs[0]", "call": "set_ylim", "kwargs": {"top": {"$float": "nan"}}})",
+                "axs[0].set_ylim: limits cannot be NaN or Inf"},
+        Refusal{R"({"on": "axs[0]", "call": "set_xlim", "kwargs": {"left": 18446744073709551616}})",
+                "axs[0].set_xlim: an integer limit must fit in 64 bits"},
+        Refusal{R"({"on": "axs[0]", "call": "set_ylim", "args": [-9223372036854775809, 1]})",
+                "axs[0].set_ylim: an integer limit must fit in 64 bits"},
+        Refusal{R"({"on": "axs[0]", "call": "plot", "args": [[1, 2], [1, 2], "\u0663"]})",
+                "'\u0663' is not a valid format string (unrecognized character '\u0663')"}));
+
+// The integers numpy holds (64 bits, signed or not) are limits like any other number.
+TEST(LimitCalls, TheLargestIntegersAreTaken) {
+    EXPECT_EQ(draw(kSubplots + R"({"on": "axs[0]", "call": "set_xlim", "args": [0, 18446744073709551615]})").error, "");
+    EXPECT_EQ(draw(kSubplots + R"({"on": "axs[0]", "call": "set_xlim", "args": [-9223372036854775808, 1]})").error, "");
+    EXPECT_EQ(draw(kSubplots + R"({"on": "axs[0]", "call": "set_ylim", "args": [0, 1.8446744073709552e+30]})").error, "");
+    EXPECT_EQ(draw(kSubplots + R"({"on": "axs[0]", "call": "set_ylim", "args": [0, 28446744073709551615]})").error,
+              "axs[0].set_ylim: an integer limit must fit in 64 bits");
+    EXPECT_EQ(draw(kSubplots + R"({"on": "axs[0]", "call": "set_ylim", "args": [-19223372036854775808, 0]})").error,
+              "axs[0].set_ylim: an integer limit must fit in 64 bits");
+    EXPECT_EQ(draw(kSubplots + R"({"on": "axs[0]", "call": "set_ylim", "args": [0, 100000000000000000000]})").error,
+              "axs[0].set_ylim: an integer limit must fit in 64 bits");
+}
+
+// A keyword that names an argument already given by position is refused, as Python refuses it.
+TEST(ArgumentForms, AKeywordCannotRepeatAPositionalArgument) {
+    struct Row {
+        const char* on;
+        const char* call;
+        std::vector<const char*> names;
+        std::vector<const char*> values;
+    };
+    const std::vector<Row> rows = {
+        {"axs[0]", "scatter", {"x", "y", "s", "c"}, {"[1, 2]", "[1, 2]", "30", "\"red\""}},
+        {"axs[0]", "errorbar", {"x", "y", "yerr", "xerr", "fmt"}, {"[1, 2]", "[1, 2]", "0.2", "0.1", "\"o\""}},
+        {"axs[0]", "fill_between", {"x", "y1", "y2"}, {"[1, 2]", "[1, 2]", "[0, 0]"}},
+        {"axs[0]", "axhline", {"y", "xmin", "xmax"}, {"1", "0.1", "0.9"}},
+        {"axs[0]", "axvline", {"x", "ymin", "ymax"}, {"1", "0.1", "0.9"}},
+        {"axs[0]", "axhspan", {"ymin", "ymax", "xmin", "xmax"}, {"1", "2", "0.1", "0.9"}},
+        {"axs[0]", "axvspan", {"xmin", "xmax", "ymin", "ymax"}, {"1", "2", "0.1", "0.9"}},
+        {"axs[0]", "vlines", {"x", "ymin", "ymax", "colors", "linestyles", "label"}, {"[1, 2]", "0", "1", "\"red\"", "\"dashed\"", "\"l\""}},
+        {"axs[0]", "hlines", {"y", "xmin", "xmax", "colors", "linestyles", "label"}, {"[1, 2]", "0", "1", "\"red\"", "\"dashed\"", "\"l\""}},
+        {"axs[0]", "grid", {"visible"}, {"true"}},
+        {"axs[0]", "text", {"x", "y", "s", "fontdict"}, {"1", "2", "\"t\"", "null"}},
+        {"fig", "text", {"x", "y", "s", "fontdict"}, {"0.5", "0.5", "\"t\"", "null"}},
+        {"axs[0]", "set_title", {"label"}, {"\"t\""}},
+        {"axs[0]", "set_xlabel", {"xlabel"}, {"\"t\""}},
+        {"axs[0]", "set_ylabel", {"ylabel"}, {"\"t\""}},
+        {"axs[0]", "set_xlim", {"left", "right"}, {"0", "5"}},
+        {"axs[0]", "set_ylim", {"bottom", "top"}, {"0", "5"}},
+        {"fig", "suptitle", {"t"}, {"\"t\""}},
+        {"fig", "subplots_adjust", {"left", "bottom", "right", "top", "wspace", "hspace"}, {"0.1", "0.1", "0.9", "0.9", "0.2", "0.2"}},
+    };
+    for (const Row& row : rows)
+        for (std::size_t i = 0; i < row.names.size(); ++i) {
+            std::string args;
+            for (std::size_t k = 0; k <= i; ++k) args += std::string(k ? ", " : "") + row.values[k];
+            const std::string call = std::string(R"({"on": ")") + row.on + R"(", "call": ")" + row.call + R"(", "args": [)" + args +
+                                     R"(], "kwargs": {")" + row.names[i] + R"(": )" + row.values[i] + "}}";
+            EXPECT_EQ(draw(kSubplots + call).error,
+                      std::string(row.on) + "." + row.call + ": got multiple values for argument '" + row.names[i] + "'")
+                << call;
+        }
+    EXPECT_EQ(draw(R"({"call": "subplots", "args": [1], "kwargs": {"nrows": 1}})").error,
+              "plt.subplots: got multiple values for argument 'nrows'");
+    EXPECT_EQ(draw(R"({"call": "subplots", "args": [1, 2], "kwargs": {"ncols": 2}})").error,
+              "plt.subplots: got multiple values for argument 'ncols'");
+    // (a keyword of another call's argument is that call's business)
+    EXPECT_EQ(draw(kSubplots + R"({"on": "axs[0]", "call": "axhline", "args": [1], "kwargs": {"xmin": 0.2}})").error, "");
+}
+
+// More positional arguments than the call has parameters for are refused.
+TEST(ArgumentForms, TooManyPositionalArgumentsAreRefused) {
+    const auto error = [](const std::string& on, const std::string& call, const std::string& args) {
+        return draw(kSubplots + R"({"on": ")" + on + R"(", "call": ")" + call + R"(", "args": [)" + args + "]}").error;
+    };
+    EXPECT_EQ(error("axs[0]", "axhline", "1, 0.1, 0.9, 1"), "axs[0].axhline: too many positional arguments");
+    EXPECT_EQ(error("axs[0]", "axvline", "1, 0.1, 0.9, 1"), "axs[0].axvline: too many positional arguments");
+    EXPECT_EQ(error("axs[0]", "axhspan", "1, 2, 0.1, 0.9, 1"), "axs[0].axhspan: too many positional arguments");
+    EXPECT_EQ(error("axs[0]", "axvspan", "1, 2, 0.1, 0.9, 1"), "axs[0].axvspan: too many positional arguments");
+    EXPECT_EQ(error("axs[0]", "vlines", R"([1, 2], 0, 1, "red", "dashed", "l", 1)"), "axs[0].vlines: too many positional arguments");
+    EXPECT_EQ(error("axs[0]", "hlines", R"([1, 2], 0, 1, "red", "dashed", "l", 1)"), "axs[0].hlines: too many positional arguments");
+    EXPECT_EQ(error("axs[0]", "set_xlim", "0, 5, 1"), "axs[0].set_xlim: too many positional arguments");
+    EXPECT_EQ(error("axs[0]", "set_ylim", "0, 5, 1"), "axs[0].set_ylim: too many positional arguments");
+    EXPECT_EQ(error("fig", "suptitle", R"("t", 1)"), "fig.suptitle: too many positional arguments");
+    EXPECT_EQ(error("axs[0]", "text", R"(1, 2, "t", null, 1)"), "axs[0].text: too many positional arguments");
+    EXPECT_EQ(error("fig", "text", R"(0.5, 0.5, "t", null, 1)"), "fig.text: too many positional arguments");
+    EXPECT_EQ(error("fig", "subplots_adjust", "0.1, 0.1, 0.9, 0.9, 0.2, 0.2, 1"), "fig.subplots_adjust: too many positional arguments");
+    EXPECT_EQ(draw(R"({"call": "subplots", "args": [1, 2, 3]})").error, "plt.subplots: too many positional arguments");
+    // as many as there are parameters
+    EXPECT_EQ(error("axs[0]", "axhline", "1, 0.1, 0.9"), "");
+    EXPECT_EQ(error("axs[0]", "axvspan", "1, 2, 0.1, 0.9"), "");
+    EXPECT_EQ(error("axs[0]", "set_xlim", "0, 5"), "");
+}
+
+// vlines and hlines take their colours, line styles and label by position too.
+TEST(ArgumentForms, VlinesTakesColoursStylesAndLabelByPosition) {
+    const auto lines = [](const std::string& call, const std::string& args, const std::string& kwargs) {
+        const auto drawing = draw(kSubplots + R"({"on": "axs[0]", "call": ")" + call + R"(", "args": [[1, 2], 0, 1)" + args +
+                                  R"(], "kwargs": )" + kwargs + R"(}, {"on": "axs[0]", "call": "legend"})");
+        EXPECT_EQ(drawing.error, "") << call << args << kwargs;
+        return drawing.trace;
+    };
+    for (const std::string call : {"vlines", "hlines"}) {
+        const std::string plain = lines(call, "", R"({"label": "l"})");
+        const std::string all = lines(call, "", R"({"colors": "red", "linestyles": "dashed", "label": "l"})");
+        EXPECT_NE(lines(call, "", R"({"colors": "red", "label": "l"})"), plain);
+        EXPECT_NE(all, lines(call, "", R"({"colors": "red", "label": "l"})"));
+        EXPECT_EQ(lines(call, R"(, "red")", R"({"label": "l"})"), lines(call, "", R"({"colors": "red", "label": "l"})"));
+        EXPECT_EQ(lines(call, R"(, "red", "dashed")", R"({"label": "l"})"), all);
+        EXPECT_EQ(lines(call, R"(, "red", "dashed", "l")", "{}"), all);
+        EXPECT_NE(lines(call, R"(, "red", "dashed", "another")", "{}"), all);
+    }
+}
+
+// colors=None is vlines' default; color=None comes after it as a keyword and sets the default colour again.
+TEST(ArgumentForms, VlinesColorNoneSetsTheDefaultColourAgain) {
+    const auto lines = [](const std::string& call, const std::string& kwargs) {
+        const auto drawing = draw(kSubplots + R"({"on": "axs[0]", "call": ")" + call + R"(", "args": [[1, 2], 0, 1], "kwargs": )" + kwargs + "}");
+        EXPECT_EQ(drawing.error, "") << call << kwargs;
+        return drawing.trace;
+    };
+    for (const std::string call : {"vlines", "hlines"}) {
+        const std::string plain = lines(call, "{}"), blue = lines(call, R"({"colors": "blue"})");
+        EXPECT_NE(blue, plain);
+        EXPECT_EQ(lines(call, R"({"colors": "blue", "color": null})"), plain);
+        EXPECT_EQ(lines(call, R"({"color": null, "colors": "blue"})"), plain);
+        EXPECT_EQ(lines(call, R"({"colors": null, "color": "blue"})"), blue);
+        EXPECT_EQ(lines(call, R"({"colors": null})"), plain);
+    }
+}
+
+// Where matplotlib normalises the keywords of a call (cbook.normalize_kwargs), a property given by
+// two of its names is refused.
+TEST(ArgumentForms, APropertyGivenByTwoOfItsNamesIsRefused) {
+    const auto error = [](const std::string& call, const std::string& args, const std::string& first, const std::string& second) {
+        return draw(kSubplots + R"({"on": "axs[0]", "call": ")" + call + R"(", "args": [)" + args + R"(], "kwargs": {")" + first +
+                    R"(": 1, ")" + second + R"(": 1}})")
+            .error;
+    };
+    const std::vector<std::pair<const char*, const char*>> line = {
+        {"aa", "antialiased"}, {"c", "color"}, {"ds", "drawstyle"}, {"ls", "linestyle"}, {"lw", "linewidth"},
+        {"mec", "markeredgecolor"}, {"mew", "markeredgewidth"}, {"mfc", "markerfacecolor"},
+        {"mfcalt", "markerfacecoloralt"}, {"ms", "markersize"}};
+    for (const std::string call : {"plot", "errorbar"})
+        for (const auto& [alias, name] : line) {
+            EXPECT_EQ(error(call, "[1, 2], [1, 2]", name, alias),
+                      "axs[0]." + call + ": " + alias + " is given twice (it is an alias of " + name + ")");
+            EXPECT_EQ(error(call, "[1, 2], [1, 2]", alias, name),
+                      "axs[0]." + call + ": " + name + " is given twice (it is an alias of " + name + ")");
+        }
+    const std::vector<std::pair<const char*, const char*>> collection = {
+        {"aa", "antialiased"}, {"antialiaseds", "antialiased"}, {"ec", "edgecolor"}, {"edgecolors", "edgecolor"},
+        {"fc", "facecolor"}, {"facecolors", "facecolor"}, {"dashes", "linestyle"}, {"linestyles", "linestyle"},
+        {"ls", "linestyle"}, {"linewidths", "linewidth"}, {"lw", "linewidth"}};
+    for (const std::string call : {"scatter", "fill_between"})
+        for (const auto& [alias, name] : collection) {
+            EXPECT_EQ(error(call, "[1, 2], [1, 2]", name, alias),
+                      "axs[0]." + call + ": " + alias + " is given twice (it is an alias of " + name + ")");
+            EXPECT_EQ(error(call, "[1, 2], [1, 2]", alias, name),
+                      "axs[0]." + call + ": " + name + " is given twice (it is an alias of " + name + ")");
+        }
+    EXPECT_EQ(error("scatter", "[1, 2], [1, 2]", "ec", "edgecolors"),
+              "axs[0].scatter: edgecolors is given twice (it is an alias of edgecolor)");
+}
+
+// fill_between draws straight between the points: no interpolation of crossings, no steps.
+TEST(ArgumentForms, FillBetweenTakesNoInterpolationOrSteps) {
+    const auto fill = [](const std::string& kwargs) {
+        return draw(kSubplots + R"({"on": "axs[0]", "call": "fill_between", "args": [[1, 2], [1, 2]], "kwargs": )" + kwargs + "}");
+    };
+    const auto plain = fill("{}");
+    ASSERT_EQ(plain.error, "");
+    for (const char* kwargs : {R"({"interpolate": false})", R"({"interpolate": null})", R"({"step": null})"}) {
+        EXPECT_EQ(fill(kwargs).error, "") << kwargs;
+        EXPECT_EQ(fill(kwargs).trace, plain.trace) << kwargs;
+    }
+    EXPECT_EQ(fill(R"({"interpolate": true})").error, "axs[0].fill_between: interpolate is not supported yet");
+    EXPECT_EQ(fill(R"({"interpolate": 0})").error, "axs[0].fill_between: interpolate is not supported yet");
+    EXPECT_EQ(fill(R"({"step": "pre"})").error, "axs[0].fill_between: step is not supported yet");
+}
+
+// scatter's own edgecolors and linewidths join the keywords only when they are not None.
+TEST(ArgumentForms, ScattersOwnParametersThatAreNoneAreNotKeywords) {
+    const auto scatter = [](const std::string& kwargs) {
+        const auto drawing = draw(kSubplots + R"({"on": "axs[0]", "call": "scatter", "args": [[1, 2], [1, 2]], "kwargs": )" + kwargs + "}");
+        EXPECT_EQ(drawing.error, "") << kwargs;
+        return drawing.trace;
+    };
+    EXPECT_EQ(scatter(R"({"edgecolors": null, "ec": "red"})"), scatter(R"({"ec": "red"})"));
+    EXPECT_EQ(scatter(R"({"lw": 3, "linewidths": null})"), scatter(R"({"lw": 3})"));
+    EXPECT_NE(scatter(R"({"lw": 3})"), scatter("{}"));
+    EXPECT_EQ(draw(kSubplots + R"({"on": "axs[0]", "call": "scatter", "args": [[1, 2], [1, 2]], "kwargs": {"ec": null, "edgecolor": "red"}})").error,
+              "axs[0].scatter: edgecolor is given twice (it is an alias of edgecolor)");
+}
 
 // markerfirst=None is not the default: it is false, and the markers come last.
 TEST(LegendCalls, MarkerFirstNoneIsFalse) {
@@ -809,6 +1106,46 @@ TEST(SubplotsCalls, RefuseUnknownSharing) {
               "plt.subplots: sharey must be True, False, 'all', 'row', 'col' or 'none'");
     EXPECT_EQ(draw(R"({"call": "subplots", "args": [2, 2], "kwargs": {"sharey": null}})").error,
               "plt.subplots: sharey must be True, False, 'all', 'row', 'col' or 'none'");
+}
+
+// What plt.subplots and plt.figure refuse of the figure's keywords, or cannot draw with.
+TEST(SubplotsCalls, RefuseFigureKeywordsThatMatplotlibRefuses) {
+    const auto error = [](const std::string& kwargs) { return draw(R"({"call": "subplots", "kwargs": )" + kwargs + "}").error; };
+    for (const char* dpi : {"0", "-1", R"({"$float": "nan"})", R"({"$float": "inf"})", R"({"$float": "-inf"})"})
+        EXPECT_EQ(error(std::string(R"({"dpi": )") + dpi + "}"), "plt.subplots: dpi must be positive and finite") << dpi;
+    EXPECT_EQ(error(R"({"dpi": 50.5})"), "");
+    for (const char* figsize : {"[-7, 7]", "[4, -0.001]", R"([{"$float": "nan"}, 1])", R"([1, {"$float": "inf"}])"})
+        EXPECT_EQ(error(std::string(R"({"figsize": )") + figsize + "}"), "plt.subplots: figsize must be finite and not negative") << figsize;
+    EXPECT_EQ(error(R"({"figsize": [0, 3]})"), "");  // (no pixels to save, but a figure)
+    EXPECT_EQ(error(R"({"figsize": [4, 0]})"), "");
+    for (const char* count : {"1.0", "1.5", "true", "null", "\"1\""}) {
+        EXPECT_EQ(error(std::string(R"({"nrows": )") + count + "}"), "plt.subplots: nrows must be an integer") << count;
+        EXPECT_EQ(error(std::string(R"({"ncols": )") + count + "}"), "plt.subplots: ncols must be an integer") << count;
+    }
+    EXPECT_EQ(error(R"({"nrows": 2, "ncols": 2})"), "");
+    for (const char* color : {"\"t\"", "\"2\"", "[0.1, 0.2]", "true", "0.5", "\"auto\""}) {
+        EXPECT_EQ(error(std::string(R"({"facecolor": )") + color + "}"), "plt.subplots: bad facecolor") << color;
+        EXPECT_EQ(error(std::string(R"({"edgecolor": )") + color + "}"), "plt.subplots: bad edgecolor") << color;
+    }
+    EXPECT_EQ(draw(R"({"call": "figure", "kwargs": {"facecolor": "t"}})").error, "plt.figure: bad facecolor");
+    EXPECT_EQ(draw(R"({"call": "figure", "kwargs": {"dpi": 0}})").error, "plt.figure: dpi must be positive and finite");
+}
+
+// The figure's colours are any colour: a name, a tuple, 'none'; None is the rcParams'.
+TEST(SubplotsCalls, TheFiguresColoursAreAnyColour) {
+    const auto trace = [](const std::string& kwargs) {
+        const auto drawing = draw(R"({"call": "subplots", "kwargs": )" + kwargs + "}");
+        EXPECT_EQ(drawing.error, "") << kwargs;
+        return drawing.trace;
+    };
+    const std::string plain = trace("{}");
+    EXPECT_EQ(trace(R"({"facecolor": null, "edgecolor": null})"), plain);
+    EXPECT_NE(trace(R"({"facecolor": "red"})"), plain);
+    EXPECT_EQ(trace(R"({"facecolor": [1, 0, 0]})"), trace(R"({"facecolor": "red"})"));
+    EXPECT_EQ(trace(R"({"facecolor": {"$tuple": [1.0, 0.0, 0.0, 0.2]}})"), trace(R"({"facecolor": "#ff000033"})"));
+    EXPECT_NE(trace(R"({"facecolor": "#ff000033"})"), trace(R"({"facecolor": "red"})"));
+    EXPECT_EQ(trace(R"({"edgecolor": [0, 0, 1]})"), trace(R"({"edgecolor": "blue"})"));
+    EXPECT_NE(trace(R"({"facecolor": "none"})"), plain);
 }
 
 TEST(SubplotsCalls, FalseAndNoneShareNothing) {

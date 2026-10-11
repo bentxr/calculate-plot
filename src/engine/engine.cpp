@@ -10,6 +10,7 @@
 #include <cctype>
 #include <cmath>
 #include <cstring>
+#include <functional>
 #include <limits>
 #include <map>
 #include <memory>
@@ -39,6 +40,14 @@ bool readNumber(const Json& v, double* out) {
     return true;
 }
 
+// Whether an integer written in decimal is one numpy holds as such: from -2**63 to 2**64 - 1.
+bool fitsIn64Bits(const std::string& text) {
+    const bool negative = !text.empty() && text[0] == '-';
+    const std::string digits = text.substr(text.find_first_not_of("+-") == std::string::npos ? text.size() : text.find_first_not_of("+-"));
+    const std::string most = negative ? "9223372036854775808" : "18446744073709551615";
+    return digits.size() < most.size() || (digits.size() == most.size() && digits <= most);
+}
+
 // A width, a size or a zorder: a finite number. (matplotlib takes nan and infinity there; what it
 // then draws, or breaks on, is not ported.)
 bool readFinite(const Json& v, double* out) { return readNumber(v, out) && std::isfinite(*out); }
@@ -57,6 +66,7 @@ public:
     Executor(rc::Params rc, DrawOptions options) : rc_(std::move(rc)), options_(std::move(options)) {}
 
     bool run(const model::Call& call, std::string* error) {
+        if (!positionalArguments(call, error)) return false;
         if (call.on.empty() && call.method == "figure") return figure(call, error);
         if (call.on.empty() && call.method == "subplots") return subplots(call, error);
         const auto ax = axes_.find(call.on);
@@ -69,6 +79,95 @@ public:
     Figure* currentFigure() { return figure_.get(); }
 
 private:
+    // Python's rules for the arguments given by position: a keyword cannot name one of them again,
+    // and there cannot be more than the call has parameters for. (The parameters are listed as far
+    // as the calls here take them by position; most < 0: the call counts them itself.)
+    bool positionalArguments(const model::Call& call, std::string* error) {
+        struct Signature {
+            const char* method;
+            std::vector<const char*> names;
+            int most;
+        };
+        static const Signature signatures[] = {
+            {"subplots", {"nrows", "ncols"}, 2},
+            {"suptitle", {"t"}, 1},
+            {"text", {"x", "y", "s", "fontdict"}, 4},
+            {"subplots_adjust", {"left", "bottom", "right", "top", "wspace", "hspace"}, 6},
+            {"scatter", {"x", "y", "s", "c"}, -1},
+            {"errorbar", {"x", "y", "yerr", "xerr", "fmt"}, -1},
+            {"fill_between", {"x", "y1", "y2"}, -1},
+            {"axhline", {"y", "xmin", "xmax"}, 3},
+            {"axvline", {"x", "ymin", "ymax"}, 3},
+            {"axhspan", {"ymin", "ymax", "xmin", "xmax"}, 4},
+            {"axvspan", {"xmin", "xmax", "ymin", "ymax"}, 4},
+            {"vlines", {"x", "ymin", "ymax", "colors", "linestyles", "label"}, 6},
+            {"hlines", {"y", "xmin", "xmax", "colors", "linestyles", "label"}, 6},
+            {"grid", {"visible"}, -1},
+            {"set_title", {"label"}, -1},
+            {"set_xlabel", {"xlabel"}, -1},
+            {"set_ylabel", {"ylabel"}, -1},
+            {"set_xlim", {"left", "right"}, 2},
+            {"set_ylim", {"bottom", "top"}, 2},
+        };
+        const std::string where = (call.on.empty() ? "plt" : call.on) + "." + call.method;
+        for (const Signature& signature : signatures) {
+            if (call.method != signature.method) continue;
+            if (signature.most >= 0 && call.args.size() > std::size_t(signature.most))
+                return *error = where + ": too many positional arguments", false;
+            for (std::size_t i = 0; i < call.args.size() && i < signature.names.size(); ++i)
+                if (keyword(call, signature.names[i]))
+                    return *error = where + ": got multiple values for argument '" + signature.names[i] + "'", false;
+        }
+        return true;
+    }
+
+    // cbook.normalize_kwargs: a property given by two of its names (one an alias of the other) is refused.
+    using Aliases = std::vector<std::pair<const char*, const char*>>;
+    static const Aliases& lineAliases() {
+        static const Aliases aliases = {
+            {"aa", "antialiased"}, {"c", "color"}, {"ds", "drawstyle"}, {"ls", "linestyle"}, {"lw", "linewidth"},
+            {"mec", "markeredgecolor"}, {"mew", "markeredgewidth"}, {"mfc", "markerfacecolor"},
+            {"mfcalt", "markerfacecoloralt"}, {"ms", "markersize"}};
+        return aliases;
+    }
+    static const Aliases& collectionAliases() {
+        static const Aliases aliases = {
+            {"aa", "antialiased"}, {"antialiaseds", "antialiased"}, {"ec", "edgecolor"}, {"edgecolors", "edgecolor"},
+            {"fc", "facecolor"}, {"facecolors", "facecolor"}, {"dashes", "linestyle"}, {"linestyles", "linestyle"},
+            {"ls", "linestyle"}, {"linewidths", "linewidth"}, {"lw", "linewidth"}};
+        return aliases;
+    }
+    static std::string fullName(const std::string& name, const Aliases& aliases) {
+        for (const auto& [alias, property] : aliases)
+            if (name == alias) return property;
+        return name;
+    }
+    bool givenOnce(const model::Call& call, const Aliases& aliases, const std::string& where, std::string* error,
+                   const std::function<bool(const std::string&, const Json&)>& skipped = nullptr) {
+        std::vector<std::string> seen;
+        for (const auto& [name, value] : call.kwargs) {
+            if (skipped && skipped(name, value)) continue;
+            const std::string property = fullName(name, aliases);
+            if (std::find(seen.begin(), seen.end(), property) != seen.end())
+                return *error = where + ": " + name + " is given twice (it is an alias of " + property + ")", false;
+            seen.push_back(property);
+        }
+        return true;
+    }
+
+    // The keywords in the order a constructor takes them: its own parameters first (set while it
+    // builds), then the others in the order given (Artist._internal_update, each through its setter).
+    static std::vector<std::pair<std::string, const Json*>> ownFirst(const model::Call& call, std::initializer_list<const char*> own) {
+        std::vector<std::pair<std::string, const Json*>> first, rest;
+        for (const auto& [name, value] : call.kwargs) {
+            bool isOwn = false;
+            for (const char* o : own) isOwn = isOwn || name == o;
+            (isOwn ? first : rest).emplace_back(name, &value);
+        }
+        first.insert(first.end(), rest.begin(), rest.end());
+        return first;
+    }
+
     // A keyword of plt.figure (also taken by plt.subplots); false with *error if it is not one or is invalid.
     bool figureKeyword(const std::string& name, const Json& value, FigureOptions& options, const std::string& where,
                        std::string* error) {
@@ -79,6 +178,9 @@ private:
                 *error = where + ": figsize must be (width, height) in inches";
                 return false;
             }
+            // "figure size must be positive finite" (zero is taken: such a figure has no pixels)
+            if (!std::isfinite(size[0]) || !std::isfinite(size[1]) || size[0] < 0 || size[1] < 0)
+                return *error = where + ": figsize must be finite and not negative", false;
             options.figsize = size;
         } else if (name == "dpi") {
             double dpi = 0;
@@ -86,13 +188,14 @@ private:
                 *error = where + ": dpi must be a number";
                 return false;
             }
+            // "dpi must be positive"; and what is not finite breaks when it is drawn
+            if (!(dpi > 0) || !std::isfinite(dpi)) return *error = where + ": dpi must be positive and finite", false;
             options.dpi = dpi;
         } else if (name == "facecolor" || name == "edgecolor") {
-            if (!value.isString()) {
-                *error = where + ": " + name + " must be a colour string";
-                return false;
-            }
-            (name == "facecolor" ? options.facecolor : options.edgecolor) = value.asString();
+            if (value.isNull()) return true;  // the rcParams'
+            colors::Spec spec;
+            if (!color(value, &spec)) return *error = where + ": bad " + name, false;
+            (name == "facecolor" ? options.facecolor : options.edgecolor) = spec;
         } else if (name == "frameon") {
             if (!value.isBool()) {
                 *error = where + ": frameon must be True or False";
@@ -125,10 +228,6 @@ private:
     // plt.subplots(nrows=1, ncols=1, **fig_kw) -> fig, ax (one Axes; grids of Axes come later)
     bool subplots(const model::Call& call, std::string* error) {
         double grid[2] = {1, 1};
-        if (call.args.size() > 2) {
-            *error = "plt.subplots: too many positional arguments";
-            return false;
-        }
         for (std::size_t i = 0; i < call.args.size(); ++i)
             if (!readNumber(call.args[i], &grid[i]) || call.args[i].numberText().find_first_of(".eE") != std::string::npos) {
                 *error = "plt.subplots: nrows and ncols must be integers";
@@ -139,7 +238,8 @@ private:
         std::string sharex = "none", sharey = "none";
         for (const auto& [name, value] : call.kwargs) {
             if (name == "nrows" || name == "ncols") {
-                if (!readNumber(value, &grid[name == "nrows" ? 0 : 1])) {
+                // "Number of rows must be a positive integer": an int, not a float that is whole
+                if (!value.isNumber() || !value.isInteger() || !readNumber(value, &grid[name == "nrows" ? 0 : 1])) {
                     *error = "plt.subplots: " + name + " must be an integer";
                     return false;
                 }
@@ -185,10 +285,8 @@ private:
         if (call.method == "text") return figureText(call, error);
         if (call.method == "suptitle") {
             // FigureBase._suplabels with suptitle's info: (0.5, 0.98), centred, top, figure.titlesize/titleweight
-            if (call.args.size() > 1) return *error = where + ": too many positional arguments", false;
             const Json* t = argument(call, 0, "t");
             if (!t || !t->isString()) return *error = where + ": the title must be a string", false;
-            if (call.args.size() == 1 && keyword(call, "t")) return *error = where + ": t is given twice", false;
             double x = 0.5, y = 0.98;
             for (const char* name : {"x", "y"})
                 if (const Json* v = keyword(call, name); v && !v->isNull() && !readNumber(*v, name[0] == 'x' ? &x : &y))
@@ -234,7 +332,6 @@ private:
         }
         if (call.method == "subplots_adjust") {
             // subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=None, hspace=None)
-            if (call.args.size() > 6) return *error = where + ": too many positional arguments", false;
             const char* names[6] = {"left", "bottom", "right", "top", "wspace", "hspace"};
             if (!keywords(call, {"left", "bottom", "right", "top", "wspace", "hspace"}, error)) return false;
             std::optional<double> v[6];
@@ -243,6 +340,8 @@ private:
                 if (!a || a->isNull()) continue;
                 double n = 0;
                 if (!readNumber(*a, &n)) return *error = where + ": " + names[i] + " must be a number", false;
+                // (matplotlib takes some of them: what it then draws, or breaks on, is not ported)
+                if (!std::isfinite(n)) return *error = where + ": " + names[i] + " must be finite", false;
                 v[i] = n;
             }
             if (!subplotsAdjust(*figure_, {v[0], v[1], v[2], v[3], v[4], v[5]}, error)) return *error = where + ": " + *error, false;
@@ -256,11 +355,13 @@ private:
             double n = 0;
             if (const Json* v = keyword(call, "pad")) {
                 if (!readNumber(*v, &n)) return *error = where + ": pad must be a number", false;
+                if (!std::isfinite(n)) return *error = where + ": pad must be finite", false;
                 o.pad = n;
             }
             for (const char* name : {"h_pad", "w_pad"})
                 if (const Json* v = keyword(call, name); v && !v->isNull()) {
                     if (!readNumber(*v, &n)) return *error = where + ": " + name + " must be a number", false;
+                    if (!std::isfinite(n)) return *error = where + ": " + name + " must be finite", false;
                     (name[0] == 'h' ? o.hPad : o.wPad) = n;
                 }
             if (const Json* v = keyword(call, "rect"); v && !v->isNull()) {
@@ -268,7 +369,7 @@ private:
                 std::array<double, 4> rect{};
                 if (!r || r->size() != 4) return *error = where + ": rect must be (left, bottom, right, top)", false;
                 for (std::size_t i = 0; i < 4; ++i)
-                    if (!readNumber((*r)[i], &rect[i])) return *error = where + ": rect must be (left, bottom, right, top)", false;
+                    if (!readFinite((*r)[i], &rect[i])) return *error = where + ": rect must be (left, bottom, right, top)", false;
                 o.rect = rect;
             }
             if (!tightLayout(*figure_, o, options_.locale, options_.fontDirectory, error)) return *error = where + ": " + *error, false;
@@ -386,8 +487,15 @@ private:
             double v[2] = {0, 0};
             bool missing = false;
             for (int i = 0; i < 2; ++i) {
-                if (!given[i] || given[i]->isNull()) missing = true;
-                else if (!readNumber(*given[i], &v[i])) return *error = where + ": limits must be numbers", false;
+                if (!given[i] || given[i]->isNull()) {
+                    missing = true;
+                    continue;
+                }
+                if (!readNumber(*given[i], &v[i])) return *error = where + ": limits must be numbers", false;
+                if (!std::isfinite(v[i])) return *error = where + ": limits cannot be NaN or Inf", false;
+                // (numpy holds a larger integer as an object, which isfinite does not take)
+                if (given[i]->isNumber() && given[i]->isInteger() && !fitsIn64Bits(given[i]->numberText()))
+                    return *error = where + ": an integer limit must fit in 64 bits", false;
             }
             if (missing) {  // the old limits fill in, read through viewLim (a pending autoscale runs first)
                 const auto view = axis.viewInterval();
@@ -485,7 +593,10 @@ private:
                 *colorOut = colors::Spec(fmt.substr(i, j - i));
                 i = j;
             } else {
-                return *error = "'" + fmt + "' is not a valid format string (unrecognized character '" + std::string(1, c) + "')", false;
+                // (the whole character, of several bytes in UTF-8)
+                std::size_t end = i + 1;
+                while (end < fmt.size() && (static_cast<unsigned char>(fmt[end]) & 0xC0) == 0x80) ++end;
+                return *error = "'" + fmt + "' is not a valid format string (unrecognized character '" + fmt.substr(i, end - i) + "')", false;
             }
         }
         if (!*linestyle && !*marker) *linestyle = rc_.text("lines.linestyle");
@@ -498,17 +609,9 @@ private:
     bool plot(Axes& ax, const model::Call& call, std::string* error) {
         const std::string where = call.on + ".plot";
         // Line2D properties by their full names (aliases normalised)
+        if (!givenOnce(call, lineAliases(), where, error)) return false;
         std::vector<std::pair<std::string, const Json*>> props;
-        for (const auto& [name, value] : call.kwargs) {
-            static const std::pair<const char*, const char*> aliases[] = {
-                {"aa", "antialiased"}, {"c", "color"}, {"ds", "drawstyle"}, {"ls", "linestyle"}, {"lw", "linewidth"},
-                {"mec", "markeredgecolor"}, {"mew", "markeredgewidth"}, {"mfc", "markerfacecolor"},
-                {"mfcalt", "markerfacecoloralt"}, {"ms", "markersize"}};
-            std::string full = name;
-            for (const auto& [a, f] : aliases)
-                if (name == a) full = f;
-            props.emplace_back(full, &value);
-        }
+        for (const auto& [name, value] : call.kwargs) props.emplace_back(fullName(name, lineAliases()), &value);
         std::vector<const Json*> args;
         for (const Json& a : call.args) args.push_back(&a);
         std::size_t i = 0;
@@ -604,8 +707,13 @@ private:
         bool linewidthsGiven = false;
         std::optional<double> zorder, vmin, vmax;
         std::string label, cmapName = rc_.text("image.cmap");
+        // (edgecolors and linewidths, scatter's own, join the keywords to normalise unless they are None)
+        const auto ownNone = [](const std::string& name, const Json& value) {
+            return (name == "edgecolors" || name == "linewidths") && value.isNull();
+        };
+        if (!givenOnce(call, collectionAliases(), where, error, ownNone)) return false;
         for (const auto& [name, value] : call.kwargs) {
-            if (name == "x" || name == "y" || name == "s" || name == "c") continue;
+            if (name == "x" || name == "y" || name == "s" || name == "c" || ownNone(name, value)) continue;
             if (name == "cmap") {
                 if (!value.isNull() && !value.isString()) return *error = where + ": cmap must be a colormap name", false;
                 if (value.isString()) cmapName = value.asString();
@@ -774,6 +882,7 @@ private:
         std::optional<double> alpha, zorder;
         std::vector<double> linewidths;
         std::string label;
+        if (!givenOnce(call, collectionAliases(), where, error)) return false;
         for (const auto& [name, value] : call.kwargs) {
             if (name == "x" || name == "y1" || name == "y2") continue;
             if (name == "where") {
@@ -784,9 +893,11 @@ private:
                     if (!(*seq)[i].isBool()) return *error = where + ": where must be booleans", false;
                     mask[i] = (*seq)[i].asBool();
                 }
-            } else if (name == "interpolate" || name == "step") {
-                if (!value.isNull() && !(value.isBool() && !value.asBool()))
-                    return *error = where + ": " + name + " is not supported yet", false;
+            } else if (name == "interpolate") {
+                if (!value.isNull() && !(value.isBool() && !value.asBool())) return *error = where + ": interpolate is not supported yet", false;
+            } else if (name == "step") {
+                // (None is no steps; False is not: matplotlib breaks on it)
+                if (!value.isNull()) return *error = where + ": step is not supported yet", false;
             } else if (name == "color" || name == "facecolor" || name == "facecolors" || name == "fc") {
                 colors::Spec c;
                 if (!color(value, &c)) return *error = where + ": bad " + name, false;
@@ -876,11 +987,8 @@ private:
         std::optional<double> elinewidth, capsize, capthick;
         bool barsabove = false;
         // the Line2D keyword arguments (aliases normalised, None dropped)
+        if (!givenOnce(call, lineAliases(), where, error)) return false;
         std::vector<std::pair<std::string, const Json*>> props;
-        static const std::pair<const char*, const char*> aliases[] = {
-            {"aa", "antialiased"}, {"c", "color"}, {"ds", "drawstyle"}, {"ls", "linestyle"}, {"lw", "linewidth"},
-            {"mec", "markeredgecolor"}, {"mew", "markeredgewidth"}, {"mfc", "markerfacecolor"},
-            {"mfcalt", "markerfacecoloralt"}, {"ms", "markersize"}};
         std::optional<double> zorderArg;
         for (const auto& [name, value] : call.kwargs) {
             if (name == "x" || name == "y" || name == "yerr" || name == "xerr" || name == "fmt") continue;
@@ -902,9 +1010,7 @@ private:
                 return *error = where + ": " + name + " is not supported yet", false;
             } else {
                 if (value.isNull()) continue;
-                std::string full = name;
-                for (const auto& [a, f] : aliases)
-                    if (name == a) full = f;
+                const std::string full = fullName(name, lineAliases());
                 if (full == "zorder") {
                     double z = 0;
                     if (!readFinite(value, &z)) return *error = where + ": zorder must be a finite number", false;
@@ -1235,13 +1341,9 @@ private:
     // Axes.text(x, y, s, fontdict=None, **kwargs)
     bool axesText(Axes& ax, const model::Call& call, std::string* error) {
         const std::string where = call.on + ".text";
-        if (call.args.size() > 4) return *error = where + ": too many positional arguments", false;
         const char* names[4] = {"x", "y", "s", "fontdict"};
         const Json* values[4] = {nullptr, nullptr, nullptr, nullptr};
-        for (std::size_t i = 0; i < 4; ++i) {
-            values[i] = argument(call, i, names[i]);
-            if (i < call.args.size() && keyword(call, names[i])) return *error = where + ": " + names[i] + " is given twice", false;
-        }
+        for (std::size_t i = 0; i < 4; ++i) values[i] = argument(call, i, names[i]);
         double x = 0, y = 0;
         if (!values[0] || !readNumber(*values[0], &x) || !values[1] || !readNumber(*values[1], &y))
             return *error = where + ": x and y must be numbers", false;
@@ -1286,13 +1388,9 @@ private:
     // Figure.text(x, y, s, fontdict=None, **kwargs): a text in figure coordinates
     bool figureText(const model::Call& call, std::string* error) {
         const std::string where = call.on + ".text";
-        if (call.args.size() > 4) return *error = where + ": too many positional arguments", false;
         const char* names[4] = {"x", "y", "s", "fontdict"};
         const Json* values[4] = {nullptr, nullptr, nullptr, nullptr};
-        for (std::size_t i = 0; i < 4; ++i) {
-            values[i] = argument(call, i, names[i]);
-            if (i < call.args.size() && keyword(call, names[i])) return *error = where + ": " + names[i] + " is given twice", false;
-        }
+        for (std::size_t i = 0; i < 4; ++i) values[i] = argument(call, i, names[i]);
         double x = 0, y = 0;
         if (!values[0] || !readNumber(*values[0], &x) || !values[1] || !readNumber(*values[1], &y))
             return *error = where + ": x and y must be numbers", false;
@@ -1313,11 +1411,27 @@ private:
         const std::string where = call.on + ".legend";
         if (!call.args.empty()) return *error = where + ": handles and labels as arguments are not supported yet", false;
         LegendOptions o;
+        const Json* ncols = nullptr;
+        const Json* ncol = nullptr;
+        // Legend.__init__'s parameters whose None is the default (alignment's is not one; the column
+        // counts are read when the entries are known)
+        static const char* const noneIsDefault[] = {
+            "handles", "labels", "loc", "numpoints", "markerscale", "markerfirst", "reverse", "scatterpoints", "scatteryoffsets",
+            "prop", "fontsize", "labelcolor", "borderpad", "labelspacing", "handlelength", "handleheight", "handletextpad",
+            "borderaxespad", "columnspacing", "mode", "fancybox", "shadow", "title", "title_fontsize", "framealpha", "edgecolor",
+            "facecolor", "linewidth", "bbox_to_anchor", "bbox_transform", "frameon", "handler_map", "title_fontproperties",
+            "draggable"};
         for (const auto& [name, value] : call.kwargs) {
             double n = 0;
+            if (name == "ncols" || name == "ncol") {
+                (name == "ncols" ? ncols : ncol) = &value;
+                continue;
+            }
             // (markerfirst is used as it comes: None puts the markers last)
             if (name == "markerfirst" && value.isNull()) o.markerfirst = false;
-            if (value.isNull()) continue;
+            bool known = false;
+            for (const char* k : noneIsDefault) known = known || name == k;
+            if (value.isNull() && known) continue;
             if (name == "loc") {
                 if (!value.isString()) return *error = where + ": loc must be a location name", false;
                 o.loc = value.asString();
@@ -1346,9 +1460,6 @@ private:
             } else if (name == "markerfirst") {
                 if (!value.isBool()) return *error = where + ": markerfirst must be True or False", false;
                 o.markerfirst = value.asBool();
-            } else if (name == "ncols" || name == "ncol") {
-                if (!readNumber(value, &n) || n < 1) return *error = where + ": ncols must be a positive integer", false;
-                o.ncols = int(n);
             } else if (name == "facecolor" || name == "edgecolor") {
                 // a colour that to_rgba takes, or 'inherit' (the Axes' own)
                 colors::Spec c;
@@ -1388,6 +1499,22 @@ private:
             containers.push_back(&c);
             labels.push_back(c.label);
         }
+        // ncols is 1 with fewer than two entries, whatever was given; and ncol counts when ncols is 1.
+        // np.array_split reads the count: int() of it, 1 or more; the columns past the entries are empty.
+        double columns = 1;
+        const bool one = handles.size() < 2 || !ncols || (readNumber(*ncols, &columns) && columns == 1) ||
+                         (ncols->isBool() && ncols->asBool());
+        const Json* counted = one ? ncol : ncols;
+        const std::string name = one ? "ncol" : "ncols";
+        if (counted) {
+            if (counted->isBool()) columns = counted->asBool() ? 1 : 0;
+            else if (!readNumber(*counted, &columns)) return *error = where + ": " + name + " must be a number", false;
+            if (!std::isfinite(columns)) return *error = where + ": " + name + " must be finite", false;
+            columns = std::trunc(columns);
+            if (columns < 1) return *error = where + ": " + name + " must be 1 or more", false;
+            if (columns > std::numeric_limits<int>::max()) return *error = where + ": more than 2147483647 columns are not supported yet", false;
+        }
+        o.ncols = int(std::min(columns, double(std::max<std::size_t>(handles.size(), 1))));
         std::string problem;
         auto made = std::make_unique<Legend>(rc_, ax, handles, containers, labels, o, &problem);
         if (!problem.empty()) return *error = where + ": " + problem, false;
@@ -1407,12 +1534,14 @@ private:
         std::optional<bool> on;
         std::string which = "major", axisName = "both";
         TickSwitches style;
-        bool styled = false;
+        bool styled = false, colorByItsName = false;
         if (const Json* v = argument(call, 0, "visible"); v && !v->isNull()) {
             if (!v->isBool()) return *error = where + ": visible must be True, False or None", false;
             on = v->asBool();
         }
         if (call.args.size() > 1) return *error = where + ": which and axis are keyword arguments here", false;
+        // (the grid lines of the ticks take the properties with Artist.set, which normalises them)
+        if (!givenOnce(call, lineAliases(), where, error)) return false;
         for (const auto& [name, value] : call.kwargs) {
             double n = 0;
             if (name == "visible") continue;
@@ -1423,7 +1552,8 @@ private:
                 colors::Spec checked;
                 if (!value.isString()) return *error = where + ": grid colours must be strings so far", false;
                 if (!color(value, &checked)) return *error = where + ": bad " + name, false;
-                style.gridColor = value.asString(), styled = true;
+                style.gridColor = colors::Spec(value.asString()), styled = true;
+                colorByItsName = name == "color";
             } else if (name == "linestyle" || name == "ls") {
                 // Line2D.set_linestyle, when the grid lines take it
                 Line2D probe(rc_, {}, {});
@@ -1438,6 +1568,13 @@ private:
             } else {
                 return *error = where + ": unsupported keyword " + name, false;
             }
+        }
+        // Tick._apply_params: a color (by that name) with an alpha channel, when no alpha comes with
+        // it, is given to the grid lines as its RGB and its alpha
+        if (colorByItsName && !style.gridAlpha && colors::hasAlphaChannel(*style.gridColor)) {
+            const auto rgba = *colors::toRgba(*style.gridColor, std::nullopt, rc_, nullptr);
+            style.gridColor = std::vector<double>{rgba[0], rgba[1], rgba[2]};
+            style.gridAlpha = rgba[3];
         }
         for (char& ch : which) ch = char(std::tolower(static_cast<unsigned char>(ch)));
         if (which != "major" && which != "minor" && which != "both") return *error = where + ": bad which", false;
@@ -1465,15 +1602,15 @@ private:
         auto line = horizontal ? std::make_unique<Line2D>(rc_, std::vector<double>{lo, hi}, std::vector<double>{at, at})
                                : std::make_unique<Line2D>(rc_, std::vector<double>{at, at}, std::vector<double>{lo, hi});
         line->transform = horizontal ? ax.yaxisTransform : ax.xaxisTransform;
-        for (const auto& [name, value] : call.kwargs) {
+        // Line2D(..., **kwargs): its own parameters (those with an alias matter here), then the rest
+        // through their setters, the aliases among them: an alias wins over its property, and None is
+        // no default for it
+        for (const auto& [name, value] :
+             ownFirst(call, {"linewidth", "linestyle", "color", "markersize", "markeredgewidth", "markeredgecolor", "markerfacecolor",
+                             "antialiased"})) {
             if (name == names[0] || name == names[1] || name == names[2]) continue;
-            std::string full = name;
-            static const std::pair<const char*, const char*> aliases[] = {
-                {"aa", "antialiased"}, {"c", "color"}, {"ls", "linestyle"}, {"lw", "linewidth"}, {"mec", "markeredgecolor"},
-                {"mew", "markeredgewidth"}, {"mfc", "markerfacecolor"}, {"ms", "markersize"}};
-            for (const auto& [a, f] : aliases)
-                if (name == a) full = f;
-            if (!lineProperty(*line, full, value, where, error)) return false;
+            if (name == "c" && value->isNull()) return *error = where + ": bad color", false;
+            if (!lineProperty(*line, fullName(name, lineAliases()), *value, where, error)) return false;
         }
         ax.addLine(std::move(line), true);
         if (rescale) ax.requestAutoscaleView(!horizontal, horizontal);
@@ -1545,11 +1682,20 @@ private:
         const double x0 = horizontal ? v[2] : v[0], x1 = horizontal ? v[3] : v[1];
         const double y0 = horizontal ? v[0] : v[2], y1 = horizontal ? v[1] : v[3];
         auto rect = std::make_unique<Rectangle>(rc_, x0, y0, x1 - x0, y1 - y0);
-        for (const auto& [name, value] : call.kwargs) {
+        // Rectangle(..., **kwargs): Patch's own parameters, then the rest through their setters, the
+        // aliases among them. A color among the parameters takes the place of edgecolor and facecolor.
+        const Json* ownColor = keyword(call, "color");
+        for (const auto& [name, value] :
+             ownFirst(call, {"edgecolor", "facecolor", "color", "linewidth", "linestyle"})) {
             bool positional = false;
             for (const char* n : names) positional = positional || name == n;
             if (positional) continue;
-            if (!patchProperty(*rect, name, value, where, error)) return false;
+            if (ownColor && (name == "edgecolor" || name == "facecolor")) {
+                colors::Spec unused;  // (not used, but it has to be a colour for the call to be taken)
+                if (!color(*value, &unused)) return *error = where + ": " + name + " is not a colour", false;
+                continue;
+            }
+            if (!patchProperty(*rect, name, *value, where, error)) return false;
         }
         rect->transform = horizontal ? ax.yaxisTransform : ax.xaxisTransform;
         rect->transformSet = true;
@@ -1585,11 +1731,27 @@ private:
             else segments.push_back({{v[1][k], v[0][k]}, {v[2][k], v[0][k]}});
         }
         auto lc = std::make_unique<LineCollection>(rc_, segments);
+        // LineCollection(verts, colors=colors, linestyles=linestyles, label=label), then the keywords
+        // through their setters in the order given (_internal_update)
+        std::vector<std::pair<std::string, const Json*>> props;
+        const char* const own[3] = {"colors", "linestyles", "label"};
+        for (std::size_t i = 0; i < 3; ++i)
+            if (const Json* a = argument(call, 3 + i, own[i])) props.emplace_back(own[i], a);
         for (const auto& [name, value] : call.kwargs) {
-            if (name == names[0] || name == names[1] || name == names[2]) continue;
+            bool taken = false;
+            for (const char* o : own) taken = taken || name == o;
+            for (const char* o : names) taken = taken || name == o;
+            if (!taken) props.emplace_back(name, &value);
+        }
+        for (const auto& [name, valuePointer] : props) {
+            const Json& value = *valuePointer;
             double num = 0;
             if (name == "colors" || name == "color") {
-                if (value.isNull()) continue;
+                // (colors=None is the default; color=None, a keyword set after it, is the default colour again)
+                if (value.isNull()) {
+                    if (name == "color") lc->setEdgecolor(ColorArg{});
+                    continue;
+                }
                 std::vector<colors::Spec> l;
                 if (!colorList(value, &l)) return *error = where + ": bad colors", false;
                 ColorArg a;
