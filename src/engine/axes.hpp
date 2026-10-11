@@ -181,6 +181,7 @@ public:
     // Axes.add_line; the line keeps its transform when it was set (axhline, axvline)
     Line2D& addLine(std::unique_ptr<Line2D> line, bool keepTransform = false);
     Patch& addPatch(std::unique_ptr<Rectangle> patch);  // Axes.add_patch
+    Text& addText(std::unique_ptr<Text> text);          // Axes._add_text, as Axes.text does it
     const std::string& unsupportedFeature() const { return unsupported_; }
     // The next colour of the property cycle when a line has none (_PropCycle.getdefaults).
     colors::Spec nextColor();

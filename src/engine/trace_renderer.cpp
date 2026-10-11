@@ -257,10 +257,6 @@ void AggTraceRenderer::drawText(const GC& gc, double x, double y, const std::str
         }
         for (const auto& g : parse->glyphs) glyphs.push_back(text::Glyph{g.font, g.fontsize, g.index, 0.0, 1.0, g.ox, g.oy});
         boxes = parse->rects;
-        if (!boxes.empty()) {
-            error_ = "mathtext rules (fraction bars, roots) are not supported yet";
-            return;
-        }
     } else {
         // RendererAgg.draw_text: the layout, then _draw_text_glyphs_and_boxes.
         glyphs = text::layoutText(fonts_, font.files, s, font.size, dpi_, *flags, mtext.features, mtext.language, error,
@@ -290,7 +286,9 @@ void AggTraceRenderer::drawText(const GC& gc, double x, double y, const std::str
         events_.endObject();
     }
     events_.endArray();
-    events_.key("boxes").beginArray().endArray();
+    events_.key("boxes").beginArray();
+    for (const auto& b : boxes) writeNumbers({b[0], b[1], b[2], b[3]});
+    events_.endArray();
     events_.key("hinting").value(hinting);
     events_.key("gc");
     writeGc(gc);
@@ -319,6 +317,30 @@ void AggTraceRenderer::drawText(const GC& gc, double x, double y, const std::str
         events_.key("gc");
         writeGc(gc);
         events_.endObject();
+    }
+
+    // The boxes (the rules of mathtext): filled paths with a new context that keeps the snap.
+    std::vector<double> rgba = gc.rgb;
+    if (gc.forcedAlpha) rgba[3] = gc.alpha;  // (a colour here always has its four parts)
+    GC gc1(rc_);
+    gc1.linewidth = 0;
+    gc1.snap = gc.snap;
+    for (auto b : boxes) {  // dx, dy (upwards), width, height
+        if (!gc1.snap || *gc1.snap) {
+            // Prevent thin bars from disappearing by growing symmetrically.
+            if (b[2] < 1) {
+                b[0] -= (1 - b[2]) / 2;
+                b[2] = 1;
+            }
+            if (b[3] < 1) {
+                b[1] -= (1 - b[3]) / 2;
+                b[3] = 1;
+            }
+        }
+        // Path._create_closed: the first corner again, closing
+        const Path path = Path::make(
+            {b[0], b[1], b[0] + b[2], b[1], b[0] + b[2], b[1] + b[3], b[0], b[1] + b[3], b[0], b[1]}, {}, rc_, true);
+        drawPath(gc1, path, transforms::Affine2D().rotateDeg(angle).translate(x, height_ - y).matrix(), rgba);
     }
 }
 

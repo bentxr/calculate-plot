@@ -1,5 +1,5 @@
-// Derived from Matplotlib 3.11.2: lib/matplotlib/font_manager.py (FontProperties' defaults, the
-// font scoring and FontManager._find_fonts_by_props / _findfont_cached).
+// Derived from Matplotlib 3.11.2: lib/matplotlib/font_manager.py (FontProperties' defaults and
+// setters, the font scoring and FontManager._find_fonts_by_props / _findfont_cached).
 // Copyright (c) 2012- Matplotlib Development Team; All Rights Reserved
 // Licence: LICENSES/Matplotlib.txt. Changes: licensing/changes/matplotlib.md
 #pragma once
@@ -24,10 +24,18 @@ struct FontProperties {
     FontValue weight = std::string("normal");
     FontValue stretch = std::string("normal");
     double size = 10.0;  // points
+    std::string mathFontfamily = "dejavusans";  // the fontset of the text's mathtext (rcParams["mathtext.fontset"])
 
     // FontProperties() with every property from the rcParams (font.family, font.style, ...).
     static FontProperties defaults(const rc::Params& rc);
 };
+
+// FontProperties(pattern): the properties a fontconfig pattern asks for, over the rcParams' defaults
+// (set_fontconfig_pattern: the first value of each property, through its setter). False with *error
+// for what is not a pattern, for a property FontProperties does not have and for a value its setter
+// refuses. *file is the pattern's file=, which names a font file outright.
+bool fontPropertiesFromPattern(const std::string& pattern, const rc::Params& rc, FontProperties* out,
+                               std::optional<std::string>* file, std::string* error);
 
 // One entry of the font manager's list (FontEntry), for a bundled font file.
 struct FontEntry {
@@ -39,6 +47,10 @@ struct FontEntry {
 
 // matplotlib's bundled fonts as its font manager lists them (data/fonts.json).
 const std::vector<FontEntry>& bundledFonts();
+
+// Whether a name is one of weight_dict (ultralight ... black) or of stretch_dict (ultra-condensed ...).
+bool isFontWeightName(const std::string& name);
+bool isFontStretchName(const std::string& name);
 
 // A named font size (xx-small ... xx-large, larger, smaller) in points: font_scalings times
 // rcParams["font.size"]; nullopt for an unknown name.

@@ -1,0 +1,10 @@
+{"version": 1, "calls": [
+  {"call": "subplots", "args": [], "kwargs": {"figsize": {"$tuple": [5.0, 3.5]}}, "as": ["fig", "ax"]},
+  {"on": "ax", "call": "plot", "args": [[1, 10, 100], [1, 100, 10000]]},
+  {"on": "ax", "call": "set_xscale", "args": ["log"]},
+  {"on": "ax", "call": "set_yscale", "args": ["log"]},
+  {"on": "ax", "call": "text", "args": [3.0, 300.0, "$y=x^2$ on log axes"], "kwargs": {"rotation": 35}},
+  {"on": "ax", "call": "text", "args": [0.0, 10.0, "at x = 0: nowhere"]},
+  {"on": "ax", "call": "text", "args": [10.0, -5.0, "at y < 0: nowhere"]},
+  {"on": "ax", "call": "text", "args": [200.0, 2.0, "outside, to the right"]}
+]}

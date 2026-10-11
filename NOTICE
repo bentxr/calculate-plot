@@ -105,3 +105,10 @@ Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
 Developed at SunSoft, a Sun Microsystems, Inc. business. Permission to use, copy, modify, and
 distribute this software is freely granted, provided that this notice is preserved.
 (LICENSES/fdlibm.txt; changes: licensing/changes/fdlibm.md)
+
+
+Unicode Character Database 16.0.0
+---------------------------------
+data/unicode_letters.json lists code point ranges (letters, Greek capitals, digits) derived from
+the Unicode Character Database: Copyright (C) Unicode, Inc. All rights reserved. Used under the
+Unicode License V3 (LICENSES/Unicode-3.0.txt; changes: licensing/changes/unicode-data.md).

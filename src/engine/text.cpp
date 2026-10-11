@@ -234,10 +234,9 @@ void Text::draw(Renderer& renderer) {
     renderer.openGroup("text", gid);
     const Layout l = layout(renderer);
     const auto [posx, posy] = transform->transform(x, y);
-    if (std::isnan(posx) || std::isnan(posy) || !std::isfinite(posx) || !std::isfinite(posy)) {
-        renderer.closeGroup("text");
-        return;
-    }
+    // (matplotlib returns here with the group it has opened left open: in an SVG it closes with
+    // the enclosing one)
+    if (!std::isfinite(posx) || !std::isfinite(posy)) return;
     const double canvash = renderer.height();
     GC gc = renderer.newGc();
     gc.setForeground(std::vector<double>(color.begin(), color.end()));

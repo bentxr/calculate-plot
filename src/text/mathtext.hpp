@@ -1,5 +1,5 @@
-// Derived from Matplotlib 3.11.2: lib/matplotlib/_mathtext.py (the box model, the DejaVu Sans
-// fontset, the parser's handlers) and lib/matplotlib/mathtext.py (MathTextParser).
+// Derived from Matplotlib 3.11.2: lib/matplotlib/_mathtext.py (the box model, the parser's
+// handlers, ship) and lib/matplotlib/mathtext.py (MathTextParser).
 // Copyright (c) 2012- Matplotlib Development Team; All Rights Reserved
 // Licence: LICENSES/Matplotlib.txt. Changes: licensing/changes/matplotlib.md
 #pragma once
@@ -36,9 +36,9 @@ struct MathParse {
 };
 
 // Lays out a string with mathtext ($...$ parts), as matplotlib's vector output does: glyphs loaded
-// unhinted. The fontset is rcParams["mathtext.fontset"] (only 'dejavusans' so far) and the
-// supported TeX is a subset (symbols, groups, \mathdefault and the other font groups, sub- and
-// superscripts); anything else gives nullopt with *error.
+// unhinted. The fontset is the font properties' math font family ('dejavusans', 'dejavuserif', 'cm',
+// 'stix', 'stixsans' or 'custom'; rcParams["mathtext.fontset"] unless the text asks for another). What matplotlib refuses gives nullopt with *error; the messages of the
+// grammar are ours, those of the handlers ("Double superscript", "Unknown symbol: ...") matplotlib's.
 std::optional<MathParse> parseMath(FontCache& fonts, const std::string& s, double dpi, const FontProperties& prop,
                                    const rc::Params& rc, std::string* error);
 

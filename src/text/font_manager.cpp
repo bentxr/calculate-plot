@@ -5,6 +5,9 @@
 
 #include "text/font_manager.hpp"
 
+#include "support/fontconfig_pattern.hpp"
+#include "support/pyparse.hpp"
+
 #include "rc/rc_params.hpp"
 #include "support/embedded.hpp"
 #include "support/json.hpp"
@@ -86,6 +89,60 @@ double scoreVariant(const std::string& variant1, const std::string& variant2) {
     return variant1 == variant2 ? 0.0 : 1.0;
 }
 
+}  // namespace
+
+bool fontPropertiesFromPattern(const std::string& pattern, const rc::Params& rc, FontProperties* out,
+                               std::optional<std::string>* file, std::string* error) {
+    const auto parsed = support::parseFontconfigPattern(pattern);
+    if (!parsed) {
+        *error = "'" + pattern + "' is not a fontconfig pattern";
+        return false;
+    }
+    FontProperties p = FontProperties::defaults(rc);
+    file->reset();
+    // set_weight / set_stretch: a name of the table, or an integer from 0 to 1000
+    const auto number = [&](const std::string& name, const std::string& value, bool known, FontValue* target) {
+        if (known) return *target = value, true;
+        const auto n = support::pythonInt(value);
+        if (!n || *n < 0 || *n > 1000) return *error = name + "='" + value + "' is invalid", false;
+        return *target = int(*n), true;
+    };
+    const auto choice = [&](const std::string& name, const std::string& value, std::initializer_list<const char*> valid,
+                            std::string* target) {
+        for (const char* v : valid)
+            if (value == v) return *target = value, true;
+        return *error = "'" + value + "' is not a valid value for " + name, false;
+    };
+    // set_size: float(size), else the name of a size; below one point it is one point
+    const auto size = [&](const std::string& value) {
+        auto points = support::pythonFloat(value);
+        if (!points) points = fontSize(value, rc);
+        if (!points) return *error = "Size is invalid: '" + value + "'", false;
+        p.size = *points < 1.0 ? 1.0 : *points;
+        return true;
+    };
+    for (const auto& [name, values] : parsed->properties) {
+        const std::string& value = values[0];
+        bool ok = true;
+        if (name == "weight") ok = number(name, value, kWeight.count(value) != 0, &p.weight);
+        else if (name == "stretch") ok = number(name, value, kStretch.count(value) != 0, &p.stretch);
+        else if (name == "slant" || name == "style") ok = choice("style", value, {"normal", "italic", "oblique"}, &p.style);
+        else if (name == "variant") ok = choice(name, value, {"normal", "small-caps"}, &p.variant);
+        else if (name == "size") ok = size(value);
+        else if (name == "family" || name == "name") p.family = {value};
+        else if (name == "file") *file = value;
+        else ok = (*error = "'" + name + "' is not a font property", false);
+        if (!ok) return false;
+    }
+    *out = p;
+    return true;
+}
+
+bool isFontWeightName(const std::string& name) { return kWeight.count(name) != 0; }
+bool isFontStretchName(const std::string& name) { return kStretch.count(name) != 0; }
+
+namespace {
+
 // int(stretch), else stretch_dict.get(stretch, 500)
 int stretchValue(const FontValue& v) {
     if (const int* i = std::get_if<int>(&v)) return *i;
@@ -164,6 +221,7 @@ FontProperties FontProperties::defaults(const rc::Params& rc) {
     p.weight = fontValue(rc.value("font.weight"));
     p.stretch = fontValue(rc.value("font.stretch"));
     p.size = rc.number("font.size");
+    p.mathFontfamily = rc.text("mathtext.fontset");
     return p;
 }
 

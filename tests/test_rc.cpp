@@ -40,6 +40,42 @@ TEST(RcParams, SettingAValueChecksItsKind) {
     EXPECT_FALSE(p.set("axes.unicode_minus", json("3"), &error));
 }
 
+// The mathtext settings that are a choice take only matplotlib's names (ValidateInStrings and
+// _validate_mathtext_fallback): the fallback also None, in any case of letters.
+TEST(RcParams, MathtextChoicesAreChecked) {
+    Params p = Params::defaults();
+    std::string error;
+    for (const char* name : {"dejavusans", "dejavuserif", "cm", "stix", "stixsans", "custom"})
+        EXPECT_TRUE(p.set("mathtext.fontset", json(std::string("\"") + name + "\""), &error)) << name << error;
+    EXPECT_EQ(p.text("mathtext.fontset"), "custom");
+    EXPECT_FALSE(p.set("mathtext.fontset", json("\"nosuchset\""), &error));
+    EXPECT_NE(error.find("'nosuchset' is not a valid value for mathtext.fontset"), std::string::npos) << error;
+    EXPECT_FALSE(p.set("mathtext.fontset", json("\"STIX\""), &error));
+    EXPECT_FALSE(p.set("mathtext.fontset", json("null"), &error));
+    EXPECT_EQ(p.text("mathtext.fontset"), "custom");
+
+    for (const char* name : {"rm", "cal", "bfit", "it", "tt", "sf", "bf", "default", "bb", "frak", "scr", "regular", "normal"})
+        EXPECT_TRUE(p.set("mathtext.default", json(std::string("\"") + name + "\""), &error)) << name << error;
+    EXPECT_FALSE(p.set("mathtext.default", json("\"bold\""), &error));
+    EXPECT_NE(error.find("'bold' is not a valid value for mathtext.default"), std::string::npos) << error;
+    EXPECT_EQ(p.text("mathtext.default"), "normal");
+
+    EXPECT_TRUE(p.set("mathtext.fallback", json("\"STIX\""), &error)) << error;
+    EXPECT_EQ(p.text("mathtext.fallback"), "stix");
+    EXPECT_TRUE(p.set("mathtext.fallback", json("\"stixsans\""), &error)) << error;
+    EXPECT_EQ(p.text("mathtext.fallback"), "stixsans");
+    EXPECT_TRUE(p.set("mathtext.fallback", json("\"cm\""), &error)) << error;
+    EXPECT_TRUE(p.set("mathtext.fallback", json("null"), &error)) << error;
+    EXPECT_TRUE(p.value("mathtext.fallback").isNull());
+    EXPECT_TRUE(p.set("mathtext.fallback", json("\"cm\""), &error)) << error;
+    EXPECT_TRUE(p.set("mathtext.fallback", json("\"None\""), &error)) << error;
+    EXPECT_TRUE(p.value("mathtext.fallback").isNull());
+    EXPECT_FALSE(p.set("mathtext.fallback", json("\"arial\""), &error));
+    EXPECT_NE(error.find("arial is not a valid fallback font name"), std::string::npos) << error;
+    EXPECT_FALSE(p.set("mathtext.fallback", json("3"), &error));
+    EXPECT_TRUE(p.value("mathtext.fallback").isNull());
+}
+
 TEST(RcParams, IntegersAreAcceptedWhereFloatsAre) {
     Params p = Params::defaults();
     std::string error;

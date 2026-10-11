@@ -912,6 +912,17 @@ Line2D& Axes::addLine(std::unique_ptr<Line2D> line, bool keepTransform) {
     return static_cast<Line2D&>(*children.back());
 }
 
+Text& Axes::addText(std::unique_ptr<Text> t) {
+    // Axes.text: the patch clips it (a Rectangle clips by its box) when clipping is on, which it is
+    // not unless asked for; _set_artist_props: the figure and transData
+    t->clipBox = std::make_shared<transforms::TransformedBbox>(
+        std::make_shared<transforms::Bbox>(std::array<double, 4>{0, 0, 1, 1}), patch->fullTransform());
+    t->figure = &figure;
+    t->transform = transData;
+    children.push_back(std::move(t));
+    return static_cast<Text&>(*children.back());
+}
+
 Patch& Axes::addPatch(std::unique_ptr<Rectangle> p) {
     if (!p->transformSet) p->transform = transData;  // _set_artist_props
     p->clipBox = std::make_shared<transforms::TransformedBbox>(
@@ -1188,6 +1199,10 @@ std::optional<transforms::Bbox> Axes::tightbbox(Renderer& renderer, bool forLayo
         // clip box. That lies inside the clip box, which is the patch's window extent, added below:
         // the union is the same either way.
         if (c->clipOn && c->clipBox && !c->clipPath && patch->visible) continue;
+        if (const Text* t = dynamic_cast<const Text*>(c.get()); t && !c->clipOn) {
+            extra(t->windowExtent(renderer));  // Artist.get_tightbbox of an artist that is not clipped
+            continue;
+        }
         renderer.unsupported("tight boxes of artists not clipped to the Axes are not supported yet");
     }
     if (axisOn && frameOn)

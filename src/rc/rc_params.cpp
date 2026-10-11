@@ -1,6 +1,9 @@
 #include "rc/rc_params.hpp"
 
+#include <algorithm>
+
 #include "support/embedded.hpp"
+#include "support/fontconfig_pattern.hpp"
 
 namespace calculate_plot::rc {
 
@@ -76,6 +79,47 @@ bool Params::set(const std::string& key, const Json& v, std::string* error) {
     if (it == values_.end()) {
         if (error) *error = key + " is not a valid rc parameter";
         return false;
+    }
+    // The mathtext settings that are a choice (ValidateInStrings, _validate_mathtext_fallback)
+    static const std::vector<std::string> kFontsets = {"dejavusans", "dejavuserif", "cm", "stix", "stixsans", "custom"};
+    static const std::vector<std::string> kMathDefaults = {"rm", "cal", "bfit", "it", "tt", "sf", "bf", "default", "bb",
+                                                           "frak", "scr", "regular", "normal"};
+    if (key == "mathtext.fontset" || key == "mathtext.default") {
+        const auto& valid = key == "mathtext.fontset" ? kFontsets : kMathDefaults;
+        if (v.isString() && std::find(valid.begin(), valid.end(), v.asString()) == valid.end()) {
+            if (error) {
+                *error = "'" + v.asString() + "' is not a valid value for " + key + "; supported values are";
+                for (const auto& name : valid) *error += " " + name;
+            }
+            return false;
+        }
+    }
+    // validate_font_properties: the fonts of the custom math fontset are fontconfig patterns
+    static const char* const kPatterns[] = {"mathtext.rm", "mathtext.it", "mathtext.bf", "mathtext.bfit",
+                                            "mathtext.cal", "mathtext.sf", "mathtext.tt"};
+    if (std::find_if(std::begin(kPatterns), std::end(kPatterns), [&](const char* k) { return key == k; }) != std::end(kPatterns) &&
+        v.isString() && !support::parseFontconfigPattern(v.asString())) {
+        if (error) *error = "'" + v.asString() + "' is not a fontconfig pattern";
+        return false;
+    }
+    if (key == "mathtext.fallback") {
+        if (!v.isString() && !v.isNull()) {
+            if (error) *error = "the value given for " + key + " is not of the right kind";
+            return false;
+        }
+        std::string name = v.isString() ? v.asString() : "none";
+        for (char& c : name) c = c >= 'A' && c <= 'Z' ? char(c - 'A' + 'a') : c;
+        if (name == "none") {
+            it->second = Json();
+        } else if (name == "cm" || name == "stix" || name == "stixsans") {
+            it->second = *support::parseJson("\"" + name + "\"", nullptr);
+        } else {
+            if (error)
+                *error = name + " is not a valid fallback font name. Valid fallback font names are cm,stix,stixsans. "
+                                "Passing 'None' will turn fallback off.";
+            return false;
+        }
+        return true;
     }
     const Kind want = kindOf(it->second), got = kindOf(v);
     // A default of None accepts anything matplotlib would validate; otherwise the kinds must agree.

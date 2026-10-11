@@ -1,0 +1,7002 @@
+[
+{
+"text": "0",
+"float": "0x0.0p+0",
+"int": "0"
+},
+{
+"text": "1",
+"float": "0x1.0000000000000p+0",
+"int": "1"
+},
+{
+"text": "12",
+"float": "0x1.8000000000000p+3",
+"int": "12"
+},
+{
+"text": "-12",
+"float": "-0x1.8000000000000p+3",
+"int": "-12"
+},
+{
+"text": "+12",
+"float": "0x1.8000000000000p+3",
+"int": "12"
+},
+{
+"text": "12.5",
+"float": "0x1.9000000000000p+3",
+"int": null
+},
+{
+"text": "12.",
+"float": "0x1.8000000000000p+3",
+"int": null
+},
+{
+"text": ".5",
+"float": "0x1.0000000000000p-1",
+"int": null
+},
+{
+"text": "-.5",
+"float": "-0x1.0000000000000p-1",
+"int": null
+},
+{
+"text": "+.5",
+"float": "0x1.0000000000000p-1",
+"int": null
+},
+{
+"text": ".",
+"float": null,
+"int": null
+},
+{
+"text": "",
+"float": null,
+"int": null
+},
+{
+"text": " ",
+"float": null,
+"int": null
+},
+{
+"text": "1e3",
+"float": "0x1.f400000000000p+9",
+"int": null
+},
+{
+"text": "1E3",
+"float": "0x1.f400000000000p+9",
+"int": null
+},
+{
+"text": "1e+3",
+"float": "0x1.f400000000000p+9",
+"int": null
+},
+{
+"text": "1e-3",
+"float": "0x1.0624dd2f1a9fcp-10",
+"int": null
+},
+{
+"text": "1e",
+"float": null,
+"int": null
+},
+{
+"text": "e3",
+"float": null,
+"int": null
+},
+{
+"text": "1.e3",
+"float": "0x1.f400000000000p+9",
+"int": null
+},
+{
+"text": ".5e1",
+"float": "0x1.4000000000000p+2",
+"int": null
+},
+{
+"text": "1e3.5",
+"float": null,
+"int": null
+},
+{
+"text": "1_000",
+"float": "0x1.f400000000000p+9",
+"int": "1000"
+},
+{
+"text": "1__000",
+"float": null,
+"int": null
+},
+{
+"text": "_1",
+"float": null,
+"int": null
+},
+{
+"text": "1_",
+"float": null,
+"int": null
+},
+{
+"text": "1_.5",
+"float": null,
+"int": null
+},
+{
+"text": "1._5",
+"float": null,
+"int": null
+},
+{
+"text": "1.5_5",
+"float": "0x1.8cccccccccccdp+0",
+"int": null
+},
+{
+"text": "1e1_0",
+"float": "0x1.2a05f20000000p+33",
+"int": null
+},
+{
+"text": "1e_10",
+"float": null,
+"int": null
+},
+{
+"text": "1_e10",
+"float": null,
+"int": null
+},
+{
+"text": "0x10",
+"float": null,
+"int": null
+},
+{
+"text": "0b1",
+"float": null,
+"int": null
+},
+{
+"text": "0o7",
+"float": null,
+"int": null
+},
+{
+"text": "inf",
+"float": "inf",
+"int": null
+},
+{
+"text": "-inf",
+"float": "-inf",
+"int": null
+},
+{
+"text": "+inf",
+"float": "inf",
+"int": null
+},
+{
+"text": "Inf",
+"float": "inf",
+"int": null
+},
+{
+"text": "INF",
+"float": "inf",
+"int": null
+},
+{
+"text": "infinity",
+"float": "inf",
+"int": null
+},
+{
+"text": "Infinity",
+"float": "inf",
+"int": null
+},
+{
+"text": "-INFINITY",
+"float": "-inf",
+"int": null
+},
+{
+"text": "infinit",
+"float": null,
+"int": null
+},
+{
+"text": "in",
+"float": null,
+"int": null
+},
+{
+"text": "nan",
+"float": "nan",
+"int": null
+},
+{
+"text": "NaN",
+"float": "nan",
+"int": null
+},
+{
+"text": "-nan",
+"float": "nan",
+"int": null
+},
+{
+"text": "+nan",
+"float": "nan",
+"int": null
+},
+{
+"text": "nana",
+"float": null,
+"int": null
+},
+{
+"text": " 12 ",
+"float": "0x1.8000000000000p+3",
+"int": "12"
+},
+{
+"text": "\t12\n",
+"float": "0x1.8000000000000p+3",
+"int": "12"
+},
+{
+"text": "\f12\u000b",
+"float": "0x1.8000000000000p+3",
+"int": "12"
+},
+{
+"text": "12 3",
+"float": null,
+"int": null
+},
+{
+"text": "1 2",
+"float": null,
+"int": null
+},
+{
+"text": "- 12",
+"float": null,
+"int": null
+},
+{
+"text": "--12",
+"float": null,
+"int": null
+},
+{
+"text": "+-12",
+"float": null,
+"int": null
+},
+{
+"text": "12-",
+"float": null,
+"int": null
+},
+{
+"text": "12+",
+"float": null,
+"int": null
+},
+{
+"text": "1,5",
+"float": null,
+"int": null
+},
+{
+"text": "1.5.5",
+"float": null,
+"int": null
+},
+{
+"text": "1e5e5",
+"float": null,
+"int": null
+},
+{
+"text": "007",
+"float": "0x1.c000000000000p+2",
+"int": "7"
+},
+{
+"text": "-007",
+"float": "-0x1.c000000000000p+2",
+"int": "-7"
+},
+{
+"text": "0.0",
+"float": "0x0.0p+0",
+"int": null
+},
+{
+"text": "-0.0",
+"float": "-0x0.0p+0",
+"int": null
+},
+{
+"text": "-0",
+"float": "-0x0.0p+0",
+"int": "0"
+},
+{
+"text": "+0",
+"float": "0x0.0p+0",
+"int": "0"
+},
+{
+"text": "1e400",
+"float": "inf",
+"int": null
+},
+{
+"text": "-1e400",
+"float": "-inf",
+"int": null
+},
+{
+"text": "1e-400",
+"float": "0x0.0p+0",
+"int": null
+},
+{
+"text": "12abc",
+"float": null,
+"int": null
+},
+{
+"text": "abc",
+"float": null,
+"int": null
+},
+{
+"text": "0.1",
+"float": "0x1.999999999999ap-4",
+"int": null
+},
+{
+"text": "123456789012345678901234567890",
+"float": "0x1.8ee90ff6c373ep+96",
+"int": "123456789012345678901234567890"
+},
+{
+"text": "1.7976931348623157e308",
+"float": "0x1.fffffffffffffp+1023",
+"int": null
+},
+{
+"text": "1.7976931348623159e308",
+"float": "inf",
+"int": null
+},
+{
+"text": "4.9e-324",
+"float": "0x0.0000000000001p-1022",
+"int": null
+},
+{
+"text": "2.4e-324",
+"float": "0x0.0p+0",
+"int": null
+},
+{
+"text": "0.30000000000000004",
+"float": "0x1.3333333333334p-2",
+"int": null
+},
+{
+"text": "9007199254740993",
+"float": "0x1.0000000000000p+53",
+"int": "9007199254740993"
+},
+{
+"text": "1_0.0_1e1_0",
+"float": "0x1.74e6cc9000000p+36",
+"int": null
+},
+{
+"text": "١٢",
+"float": "0x1.8000000000000p+3",
+"int": "12"
+},
+{
+"text": "１２",
+"float": "0x1.8000000000000p+3",
+"int": "12"
+},
+{
+"text": "1٫5",
+"float": null,
+"int": null
+},
+{
+"text": "²",
+"float": null,
+"int": null
+},
+{
+"text": "½",
+"float": null,
+"int": null
+},
+{
+"text": "1e١",
+"float": "0x1.4000000000000p+3",
+"int": null
+},
+{
+"text": " 12 ",
+"float": "0x1.8000000000000p+3",
+"int": "12"
+},
+{
+"text": "​12",
+"float": null,
+"int": null
+},
+{
+"text": "12　",
+"float": "0x1.8000000000000p+3",
+"int": "12"
+},
+{
+"text": "1 000",
+"float": null,
+"int": null
+},
+{
+"text": "1'000",
+"float": null,
+"int": null
+},
+{
+"text": "1e 3",
+"float": null,
+"int": null
+},
+{
+"text": "1 e3",
+"float": null,
+"int": null
+},
+{
+"text": ". 5",
+"float": null,
+"int": null
+},
+{
+"text": "5 .",
+"float": null,
+"int": null
+},
+{
+"text": "0_0",
+"float": "0x0.0p+0",
+"int": "0"
+},
+{
+"text": "0_",
+"float": null,
+"int": null
+},
+{
+"text": "00",
+"float": "0x0.0p+0",
+"int": "0"
+},
+{
+"text": "+",
+"float": null,
+"int": null
+},
+{
+"text": "-",
+"float": null,
+"int": null
+},
+{
+"text": "++1",
+"float": null,
+"int": null
+},
+{
+"text": "1.0f",
+"float": null,
+"int": null
+},
+{
+"text": "1d0",
+"float": null,
+"int": null
+},
+{
+"text": "1.0e",
+"float": null,
+"int": null
+},
+{
+"text": "1.0e+",
+"float": null,
+"int": null
+},
+{
+"text": "1.0e-",
+"float": null,
+"int": null
+},
+{
+"text": "1.0E5",
+"float": "0x1.86a0000000000p+16",
+"int": null
+},
+{
+"text": "nan(1)",
+"float": null,
+"int": null
+},
+{
+"text": "infinity ",
+"float": "inf",
+"int": null
+},
+{
+"text": " -Infinity",
+"float": "-inf",
+"int": null
+},
+{
+"text": "1_2_3",
+"float": "0x1.ec00000000000p+6",
+"int": "123"
+},
+{
+"text": "1_2_",
+"float": null,
+"int": null
+},
+{
+"text": "9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999",
+"float": "inf",
+"int": "9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999"
+},
+{
+"text": "0.00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001",
+"float": "0x0.0p+0",
+"int": null
+},
+{
+"text": "66a",
+"float": null,
+"int": null
+},
+{
+"text": "+3+.1",
+"float": null,
+"int": null
+},
+{
+"text": "003i",
+"float": null,
+"int": null
+},
+{
+"text": "4944276",
+"float": "0x1.2dc6500000000p+22",
+"int": "4944276"
+},
+{
+"text": "21e-7_31",
+"float": "0x0.0p+0",
+"int": null
+},
+{
+"text": "571",
+"float": "0x1.1d80000000000p+9",
+"int": "571"
+},
+{
+"text": "0E15-91x",
+"float": null,
+"int": null
+},
+{
+"text": "423x",
+"float": null,
+"int": null
+},
+{
+"text": "7E",
+"float": null,
+"int": null
+},
+{
+"text": "E4219e68",
+"float": null,
+"int": null
+},
+{
+"text": "8.40-4",
+"float": null,
+"int": null
+},
+{
+"text": "150-0",
+"float": null,
+"int": null
+},
+{
+"text": "4En_4 n0",
+"float": null,
+"int": null
+},
+{
+"text": "1x",
+"float": null,
+"int": null
+},
+{
+"text": "a21",
+"float": null,
+"int": null
+},
+{
+"text": "n95604",
+"float": null,
+"int": null
+},
+{
+"text": "730",
+"float": "0x1.6d00000000000p+9",
+"int": "730"
+},
+{
+"text": "_",
+"float": null,
+"int": null
+},
+{
+"text": "60i0",
+"float": null,
+"int": null
+},
+{
+"text": "-.4x55",
+"float": null,
+"int": null
+},
+{
+"text": "E48",
+"float": null,
+"int": null
+},
+{
+"text": "+3836x8",
+"float": null,
+"int": null
+},
+{
+"text": "6",
+"float": "0x1.8000000000000p+2",
+"int": "6"
+},
+{
+"text": "0541",
+"float": "0x1.0e80000000000p+9",
+"int": "541"
+},
+{
+"text": "9+3",
+"float": null,
+"int": null
+},
+{
+"text": "8__+1",
+"float": null,
+"int": null
+},
+{
+"text": "393n",
+"float": null,
+"int": null
+},
+{
+"text": "-i+98ei",
+"float": null,
+"int": null
+},
+{
+"text": "80481",
+"float": "0x1.3a61000000000p+16",
+"int": "80481"
+},
+{
+"text": "i0_5i",
+"float": null,
+"int": null
+},
+{
+"text": "6588965",
+"float": "0x1.9228940000000p+22",
+"int": "6588965"
+},
+{
+"text": "11",
+"float": "0x1.6000000000000p+3",
+"int": "11"
+},
+{
+"text": "947_889e",
+"float": null,
+"int": null
+},
+{
+"text": "5-4f01",
+"float": null,
+"int": null
+},
+{
+"text": "42E",
+"float": null,
+"int": null
+},
+{
+"text": "n",
+"float": null,
+"int": null
+},
+{
+"text": "945 146",
+"float": null,
+"int": null
+},
+{
+"text": "254998",
+"float": "0x1.f20b000000000p+17",
+"int": "254998"
+},
+{
+"text": " 6en3.n0",
+"float": null,
+"int": null
+},
+{
+"text": "8f_E2",
+"float": null,
+"int": null
+},
+{
+"text": "f0",
+"float": null,
+"int": null
+},
+{
+"text": "240x",
+"float": null,
+"int": null
+},
+{
+"text": "64_4a8.",
+"float": null,
+"int": null
+},
+{
+"text": "+_.45441",
+"float": null,
+"int": null
+},
+{
+"text": "x",
+"float": null,
+"int": null
+},
+{
+"text": "257i579",
+"float": null,
+"int": null
+},
+{
+"text": "540-",
+"float": null,
+"int": null
+},
+{
+"text": "a_52",
+"float": null,
+"int": null
+},
+{
+"text": "1-3n38aa",
+"float": null,
+"int": null
+},
+{
+"text": "5+-49",
+"float": null,
+"int": null
+},
+{
+"text": "_000295",
+"float": null,
+"int": null
+},
+{
+"text": "5E1",
+"float": "0x1.9000000000000p+5",
+"int": null
+},
+{
+"text": "_9",
+"float": null,
+"int": null
+},
+{
+"text": "9607313",
+"float": "0x1.2531220000000p+23",
+"int": "9607313"
+},
+{
+"text": "6510",
+"float": "0x1.96e0000000000p+12",
+"int": "6510"
+},
+{
+"text": "9.25n",
+"float": null,
+"int": null
+},
+{
+"text": "40595",
+"float": "0x1.3d26000000000p+15",
+"int": "40595"
+},
+{
+"text": "9fx7x1x",
+"float": null,
+"int": null
+},
+{
+"text": "f762322",
+"float": null,
+"int": null
+},
+{
+"text": "14.i25",
+"float": null,
+"int": null
+},
+{
+"text": "850e9692",
+"float": "inf",
+"int": null
+},
+{
+"text": "30308 7_",
+"float": null,
+"int": null
+},
+{
+"text": "9",
+"float": "0x1.2000000000000p+3",
+"int": "9"
+},
+{
+"text": "65E5",
+"float": "0x1.8cba800000000p+22",
+"int": null
+},
+{
+"text": " i91",
+"float": null,
+"int": null
+},
+{
+"text": "57",
+"float": "0x1.c800000000000p+5",
+"int": "57"
+},
+{
+"text": "93-_",
+"float": null,
+"int": null
+},
+{
+"text": "+1979289",
+"float": "0x1.e339900000000p+20",
+"int": "1979289"
+},
+{
+"text": "4",
+"float": "0x1.0000000000000p+2",
+"int": "4"
+},
+{
+"text": "1.",
+"float": "0x1.0000000000000p+0",
+"int": null
+},
+{
+"text": "23",
+"float": "0x1.7000000000000p+4",
+"int": "23"
+},
+{
+"text": "2302i",
+"float": null,
+"int": null
+},
+{
+"text": "7_502642",
+"float": "0x1.c9ecc80000000p+22",
+"int": "7502642"
+},
+{
+"text": "622_7",
+"float": "0x1.8530000000000p+12",
+"int": "6227"
+},
+{
+"text": "04",
+"float": "0x1.0000000000000p+2",
+"int": "4"
+},
+{
+"text": ".22n",
+"float": null,
+"int": null
+},
+{
+"text": "13-",
+"float": null,
+"int": null
+},
+{
+"text": "081733_f",
+"float": null,
+"int": null
+},
+{
+"text": "94",
+"float": "0x1.7800000000000p+6",
+"int": "94"
+},
+{
+"text": "9302",
+"float": "0x1.22b0000000000p+13",
+"int": "9302"
+},
+{
+"text": "f6n",
+"float": null,
+"int": null
+},
+{
+"text": "1e.",
+"float": null,
+"int": null
+},
+{
+"text": "34.E883",
+"float": "inf",
+"int": null
+},
+{
+"text": "55",
+"float": "0x1.b800000000000p+5",
+"int": "55"
+},
+{
+"text": "2ex",
+"float": null,
+"int": null
+},
+{
+"text": " 817i1",
+"float": null,
+"int": null
+},
+{
+"text": "63e_",
+"float": null,
+"int": null
+},
+{
+"text": ".8705x",
+"float": null,
+"int": null
+},
+{
+"text": "f_9-2_3",
+"float": null,
+"int": null
+},
+{
+"text": "1744-",
+"float": null,
+"int": null
+},
+{
+"text": "62e9321i",
+"float": null,
+"int": null
+},
+{
+"text": "98404952",
+"float": "0x1.7762960000000p+26",
+"int": "98404952"
+},
+{
+"text": " 92-4",
+"float": null,
+"int": null
+},
+{
+"text": "3138-192",
+"float": null,
+"int": null
+},
+{
+"text": " a8n466",
+"float": null,
+"int": null
+},
+{
+"text": "_6972n",
+"float": null,
+"int": null
+},
+{
+"text": "495a89",
+"float": null,
+"int": null
+},
+{
+"text": "6f8_3",
+"float": null,
+"int": null
+},
+{
+"text": "8--3",
+"float": null,
+"int": null
+},
+{
+"text": "029836",
+"float": "0x1.d230000000000p+14",
+"int": "29836"
+},
+{
+"text": "37n_.14",
+"float": null,
+"int": null
+},
+{
+"text": "-.eE37a1",
+"float": null,
+"int": null
+},
+{
+"text": "9258a_",
+"float": null,
+"int": null
+},
+{
+"text": ".i4841_9",
+"float": null,
+"int": null
+},
+{
+"text": "ii52",
+"float": null,
+"int": null
+},
+{
+"text": "90070193",
+"float": "0x1.57972c4000000p+26",
+"int": "90070193"
+},
+{
+"text": "290",
+"float": "0x1.2200000000000p+8",
+"int": "290"
+},
+{
+"text": "94E",
+"float": null,
+"int": null
+},
+{
+"text": "0e",
+"float": null,
+"int": null
+},
+{
+"text": "a5",
+"float": null,
+"int": null
+},
+{
+"text": "73",
+"float": "0x1.2400000000000p+6",
+"int": "73"
+},
+{
+"text": "e155",
+"float": null,
+"int": null
+},
+{
+"text": "n 65",
+"float": null,
+"int": null
+},
+{
+"text": "7 _x",
+"float": null,
+"int": null
+},
+{
+"text": "5",
+"float": "0x1.4000000000000p+2",
+"int": "5"
+},
+{
+"text": "0262 ",
+"float": "0x1.0600000000000p+8",
+"int": "262"
+},
+{
+"text": "25i+12a5",
+"float": null,
+"int": null
+},
+{
+"text": "+6_08",
+"float": "0x1.3000000000000p+9",
+"int": "608"
+},
+{
+"text": "3x-_64",
+"float": null,
+"int": null
+},
+{
+"text": "378i5",
+"float": null,
+"int": null
+},
+{
+"text": "08999477",
+"float": "0x1.12a46a0000000p+23",
+"int": "8999477"
+},
+{
+"text": "4337.6a+",
+"float": null,
+"int": null
+},
+{
+"text": "E322",
+"float": null,
+"int": null
+},
+{
+"text": "a9n17117",
+"float": null,
+"int": null
+},
+{
+"text": "0233",
+"float": "0x1.d200000000000p+7",
+"int": "233"
+},
+{
+"text": "10x",
+"float": null,
+"int": null
+},
+{
+"text": "_852",
+"float": null,
+"int": null
+},
+{
+"text": "27n13+9",
+"float": null,
+"int": null
+},
+{
+"text": "3_9853",
+"float": "0x1.375a000000000p+15",
+"int": "39853"
+},
+{
+"text": "90E4",
+"float": "0x1.b774000000000p+19",
+"int": null
+},
+{
+"text": "51a",
+"float": null,
+"int": null
+},
+{
+"text": "73f47",
+"float": null,
+"int": null
+},
+{
+"text": "3",
+"float": "0x1.8000000000000p+1",
+"int": "3"
+},
+{
+"text": "2-_x.30",
+"float": null,
+"int": null
+},
+{
+"text": "4x88_43",
+"float": null,
+"int": null
+},
+{
+"text": "050",
+"float": "0x1.9000000000000p+5",
+"int": "50"
+},
+{
+"text": "7+34a071",
+"float": null,
+"int": null
+},
+{
+"text": "_8865",
+"float": null,
+"int": null
+},
+{
+"text": "72",
+"float": "0x1.2000000000000p+6",
+"int": "72"
+},
+{
+"text": "9a062",
+"float": null,
+"int": null
+},
+{
+"text": "_2_",
+"float": null,
+"int": null
+},
+{
+"text": "3a0570",
+"float": null,
+"int": null
+},
+{
+"text": "3.1211",
+"float": "0x1.8f80346dc5d64p+1",
+"int": null
+},
+{
+"text": " E480f",
+"float": null,
+"int": null
+},
+{
+"text": "n26",
+"float": null,
+"int": null
+},
+{
+"text": "966",
+"float": "0x1.e300000000000p+9",
+"int": "966"
+},
+{
+"text": "354825",
+"float": "0x1.5a82400000000p+18",
+"int": "354825"
+},
+{
+"text": "04972",
+"float": "0x1.36c0000000000p+12",
+"int": "4972"
+},
+{
+"text": "f9",
+"float": null,
+"int": null
+},
+{
+"text": "11f834-5",
+"float": null,
+"int": null
+},
+{
+"text": "0E7f019_",
+"float": null,
+"int": null
+},
+{
+"text": "a0a",
+"float": null,
+"int": null
+},
+{
+"text": "85",
+"float": "0x1.5400000000000p+6",
+"int": "85"
+},
+{
+"text": "3n58-61",
+"float": null,
+"int": null
+},
+{
+"text": "a4949",
+"float": null,
+"int": null
+},
+{
+"text": "6_0",
+"float": "0x1.e000000000000p+5",
+"int": "60"
+},
+{
+"text": "25e73",
+"float": "0x1.1afd6ec0e1411p+247",
+"int": null
+},
+{
+"text": "591+",
+"float": null,
+"int": null
+},
+{
+"text": ".5xE+",
+"float": null,
+"int": null
+},
+{
+"text": "2 00f",
+"float": null,
+"int": null
+},
+{
+"text": "e64a63x1",
+"float": null,
+"int": null
+},
+{
+"text": "616",
+"float": "0x1.3400000000000p+9",
+"int": "616"
+},
+{
+"text": "7ne75.65",
+"float": null,
+"int": null
+},
+{
+"text": "8 ",
+"float": "0x1.0000000000000p+3",
+"int": "8"
+},
+{
+"text": "3e",
+"float": null,
+"int": null
+},
+{
+"text": "0.E",
+"float": null,
+"int": null
+},
+{
+"text": "a765",
+"float": null,
+"int": null
+},
+{
+"text": "f1720",
+"float": null,
+"int": null
+},
+{
+"text": "462xx",
+"float": null,
+"int": null
+},
+{
+"text": "ax5-8",
+"float": null,
+"int": null
+},
+{
+"text": "3x36",
+"float": null,
+"int": null
+},
+{
+"text": "1_7.36",
+"float": "0x1.15c28f5c28f5cp+4",
+"int": null
+},
+{
+"text": "416",
+"float": "0x1.a000000000000p+8",
+"int": "416"
+},
+{
+"text": "_40i10",
+"float": null,
+"int": null
+},
+{
+"text": " n105499",
+"float": null,
+"int": null
+},
+{
+"text": "1i4",
+"float": null,
+"int": null
+},
+{
+"text": "05417x3_",
+"float": null,
+"int": null
+},
+{
+"text": "671",
+"float": "0x1.4f80000000000p+9",
+"int": "671"
+},
+{
+"text": "7",
+"float": "0x1.c000000000000p+2",
+"int": "7"
+},
+{
+"text": "_1E5+75",
+"float": null,
+"int": null
+},
+{
+"text": "3_ 692_",
+"float": null,
+"int": null
+},
+{
+"text": "506956_8",
+"float": "0x1.356c000000000p+22",
+"int": "5069568"
+},
+{
+"text": "8f365_3 ",
+"float": null,
+"int": null
+},
+{
+"text": "5+67 ",
+"float": null,
+"int": null
+},
+{
+"text": "4741203",
+"float": "0x1.21614c0000000p+22",
+"int": "4741203"
+},
+{
+"text": "881a5",
+"float": null,
+"int": null
+},
+{
+"text": "4x7-_",
+"float": null,
+"int": null
+},
+{
+"text": "07144_64",
+"float": "0x1.5cdc000000000p+19",
+"int": "714464"
+},
+{
+"text": "1e4",
+"float": "0x1.3880000000000p+13",
+"int": null
+},
+{
+"text": "3a5_",
+"float": null,
+"int": null
+},
+{
+"text": "-6_95f5",
+"float": null,
+"int": null
+},
+{
+"text": "26447310",
+"float": "0x1.938dce0000000p+24",
+"int": "26447310"
+},
+{
+"text": "31n5",
+"float": null,
+"int": null
+},
+{
+"text": " 758",
+"float": "0x1.7b00000000000p+9",
+"int": "758"
+},
+{
+"text": "i7",
+"float": null,
+"int": null
+},
+{
+"text": "47233+_7",
+"float": null,
+"int": null
+},
+{
+"text": "2-E",
+"float": null,
+"int": null
+},
+{
+"text": "095i7a3",
+"float": null,
+"int": null
+},
+{
+"text": "09128",
+"float": "0x1.1d40000000000p+13",
+"int": "9128"
+},
+{
+"text": " 26",
+"float": "0x1.a000000000000p+4",
+"int": "26"
+},
+{
+"text": "4f_",
+"float": null,
+"int": null
+},
+{
+"text": "1567",
+"float": "0x1.87c0000000000p+10",
+"int": "1567"
+},
+{
+"text": "_2",
+"float": null,
+"int": null
+},
+{
+"text": "++64-a1",
+"float": null,
+"int": null
+},
+{
+"text": "ex13",
+"float": null,
+"int": null
+},
+{
+"text": "_aa5i00_",
+"float": null,
+"int": null
+},
+{
+"text": "49162",
+"float": "0x1.8014000000000p+15",
+"int": "49162"
+},
+{
+"text": "_x ",
+"float": null,
+"int": null
+},
+{
+"text": "+aa2",
+"float": null,
+"int": null
+},
+{
+"text": "3+03",
+"float": null,
+"int": null
+},
+{
+"text": "8_2",
+"float": "0x1.4800000000000p+6",
+"int": "82"
+},
+{
+"text": "6x793",
+"float": null,
+"int": null
+},
+{
+"text": "33n11E2",
+"float": null,
+"int": null
+},
+{
+"text": "5_6ae",
+"float": null,
+"int": null
+},
+{
+"text": "4_n019E",
+"float": null,
+"int": null
+},
+{
+"text": "-79",
+"float": "-0x1.3c00000000000p+6",
+"int": "-79"
+},
+{
+"text": "_77",
+"float": null,
+"int": null
+},
+{
+"text": "9__e",
+"float": null,
+"int": null
+},
+{
+"text": "7E.70677",
+"float": null,
+"int": null
+},
+{
+"text": "1659+",
+"float": null,
+"int": null
+},
+{
+"text": "411",
+"float": "0x1.9b00000000000p+8",
+"int": "411"
+},
+{
+"text": "a28172+4",
+"float": null,
+"int": null
+},
+{
+"text": "n5f",
+"float": null,
+"int": null
+},
+{
+"text": "f5404298",
+"float": null,
+"int": null
+},
+{
+"text": "E+405",
+"float": null,
+"int": null
+},
+{
+"text": "49 f",
+"float": null,
+"int": null
+},
+{
+"text": "_303",
+"float": null,
+"int": null
+},
+{
+"text": "e0na1",
+"float": null,
+"int": null
+},
+{
+"text": "x04",
+"float": null,
+"int": null
+},
+{
+"text": "87041",
+"float": "0x1.5401000000000p+16",
+"int": "87041"
+},
+{
+"text": "574f",
+"float": null,
+"int": null
+},
+{
+"text": "0f3481 ",
+"float": null,
+"int": null
+},
+{
+"text": "-6",
+"float": "-0x1.8000000000000p+2",
+"int": "-6"
+},
+{
+"text": "8",
+"float": "0x1.0000000000000p+3",
+"int": "8"
+},
+{
+"text": "7i28_03 ",
+"float": null,
+"int": null
+},
+{
+"text": "829fa.",
+"float": null,
+"int": null
+},
+{
+"text": "91",
+"float": "0x1.6c00000000000p+6",
+"int": "91"
+},
+{
+"text": "254i6Ee",
+"float": null,
+"int": null
+},
+{
+"text": "69_27438",
+"float": "0x1.a6d1380000000p+22",
+"int": "6927438"
+},
+{
+"text": "+a948",
+"float": null,
+"int": null
+},
+{
+"text": "4ae5n2",
+"float": null,
+"int": null
+},
+{
+"text": "4+676",
+"float": null,
+"int": null
+},
+{
+"text": "091E71",
+"float": "0x1.49a0709f2168ep+242",
+"int": null
+},
+{
+"text": "927",
+"float": "0x1.cf80000000000p+9",
+"int": "927"
+},
+{
+"text": "56923291",
+"float": "0x1.b24a4d8000000p+25",
+"int": "56923291"
+},
+{
+"text": "9an",
+"float": null,
+"int": null
+},
+{
+"text": ".768  09",
+"float": null,
+"int": null
+},
+{
+"text": "75",
+"float": "0x1.2c00000000000p+6",
+"int": "75"
+},
+{
+"text": "3_743",
+"float": "0x1.d3e0000000000p+11",
+"int": "3743"
+},
+{
+"text": "4n.+01",
+"float": null,
+"int": null
+},
+{
+"text": "8491797n",
+"float": null,
+"int": null
+},
+{
+"text": "1_7E724",
+"float": "inf",
+"int": null
+},
+{
+"text": "e8_0a45",
+"float": null,
+"int": null
+},
+{
+"text": "8397 9f7",
+"float": null,
+"int": null
+},
+{
+"text": "32_64",
+"float": "0x1.9800000000000p+11",
+"int": "3264"
+},
+{
+"text": "0_f1",
+"float": null,
+"int": null
+},
+{
+"text": "E1",
+"float": null,
+"int": null
+},
+{
+"text": "39",
+"float": "0x1.3800000000000p+5",
+"int": "39"
+},
+{
+"text": "02fa9871",
+"float": null,
+"int": null
+},
+{
+"text": "._92",
+"float": null,
+"int": null
+},
+{
+"text": "87385899",
+"float": "0x1.4d59cac000000p+26",
+"int": "87385899"
+},
+{
+"text": "1 4.-1",
+"float": null,
+"int": null
+},
+{
+"text": "56",
+"float": "0x1.c000000000000p+5",
+"int": "56"
+},
+{
+"text": "86",
+"float": "0x1.5800000000000p+6",
+"int": "86"
+},
+{
+"text": "0294.i",
+"float": null,
+"int": null
+},
+{
+"text": "1732i24a",
+"float": null,
+"int": null
+},
+{
+"text": "0x1",
+"float": null,
+"int": null
+},
+{
+"text": "781ne",
+"float": null,
+"int": null
+},
+{
+"text": "5e7",
+"float": "0x1.7d78400000000p+25",
+"int": null
+},
+{
+"text": "x4_031",
+"float": null,
+"int": null
+},
+{
+"text": "936n_87",
+"float": null,
+"int": null
+},
+{
+"text": "02.998",
+"float": "0x1.7fbe76c8b4396p+1",
+"int": null
+},
+{
+"text": "4545108",
+"float": "0x1.1569500000000p+22",
+"int": "4545108"
+},
+{
+"text": "2-",
+"float": null,
+"int": null
+},
+{
+"text": "_i95657x",
+"float": null,
+"int": null
+},
+{
+"text": "9f6",
+"float": null,
+"int": null
+},
+{
+"text": "ei5f",
+"float": null,
+"int": null
+},
+{
+"text": "-254",
+"float": "-0x1.fc00000000000p+7",
+"int": "-254"
+},
+{
+"text": "24",
+"float": "0x1.8000000000000p+4",
+"int": "24"
+},
+{
+"text": "445150.",
+"float": "0x1.b2b7800000000p+18",
+"int": null
+},
+{
+"text": "89e497f",
+"float": null,
+"int": null
+},
+{
+"text": "0e96",
+"float": "0x0.0p+0",
+"int": null
+},
+{
+"text": "-8",
+"float": "-0x1.0000000000000p+3",
+"int": "-8"
+},
+{
+"text": "5n",
+"float": null,
+"int": null
+},
+{
+"text": "3807074n",
+"float": null,
+"int": null
+},
+{
+"text": "6_9",
+"float": "0x1.1400000000000p+6",
+"int": "69"
+},
+{
+"text": "x_+45",
+"float": null,
+"int": null
+},
+{
+"text": "0i",
+"float": null,
+"int": null
+},
+{
+"text": "8-n+9E3",
+"float": null,
+"int": null
+},
+{
+"text": "x17n+1",
+"float": null,
+"int": null
+},
+{
+"text": "292i1e51",
+"float": null,
+"int": null
+},
+{
+"text": "059_e",
+"float": null,
+"int": null
+},
+{
+"text": "5E",
+"float": null,
+"int": null
+},
+{
+"text": "5a8-93f",
+"float": null,
+"int": null
+},
+{
+"text": "14",
+"float": "0x1.c000000000000p+3",
+"int": "14"
+},
+{
+"text": "5a+",
+"float": null,
+"int": null
+},
+{
+"text": "n7 619",
+"float": null,
+"int": null
+},
+{
+"text": "_9554",
+"float": null,
+"int": null
+},
+{
+"text": "165313",
+"float": "0x1.42e0800000000p+17",
+"int": "165313"
+},
+{
+"text": "2",
+"float": "0x1.0000000000000p+1",
+"int": "2"
+},
+{
+"text": "f2476724",
+"float": null,
+"int": null
+},
+{
+"text": "90E",
+"float": null,
+"int": null
+},
+{
+"text": "338",
+"float": "0x1.5200000000000p+8",
+"int": "338"
+},
+{
+"text": "_3_828E6",
+"float": null,
+"int": null
+},
+{
+"text": "43-46",
+"float": null,
+"int": null
+},
+{
+"text": "024fx 20",
+"float": null,
+"int": null
+},
+{
+"text": "7134.03",
+"float": "0x1.bde07ae147ae1p+12",
+"int": null
+},
+{
+"text": "89E07f9",
+"float": null,
+"int": null
+},
+{
+"text": "_91",
+"float": null,
+"int": null
+},
+{
+"text": ".90a79",
+"float": null,
+"int": null
+},
+{
+"text": "ai673747",
+"float": null,
+"int": null
+},
+{
+"text": "f2",
+"float": null,
+"int": null
+},
+{
+"text": "3_E",
+"float": null,
+"int": null
+},
+{
+"text": "45588",
+"float": "0x1.6428000000000p+15",
+"int": "45588"
+},
+{
+"text": "0106i6",
+"float": null,
+"int": null
+},
+{
+"text": "ai3",
+"float": null,
+"int": null
+},
+{
+"text": "173",
+"float": "0x1.5a00000000000p+7",
+"int": "173"
+},
+{
+"text": "a778.6",
+"float": null,
+"int": null
+},
+{
+"text": " 1370",
+"float": "0x1.5680000000000p+10",
+"int": "1370"
+},
+{
+"text": "162",
+"float": "0x1.4400000000000p+7",
+"int": "162"
+},
+{
+"text": "13558643",
+"float": "0x1.9dc6e60000000p+23",
+"int": "13558643"
+},
+{
+"text": " 5f",
+"float": null,
+"int": null
+},
+{
+"text": "2n6",
+"float": null,
+"int": null
+},
+{
+"text": "2+i7n8",
+"float": null,
+"int": null
+},
+{
+"text": "84en24",
+"float": null,
+"int": null
+},
+{
+"text": "549+_4",
+"float": null,
+"int": null
+},
+{
+"text": "484i",
+"float": null,
+"int": null
+},
+{
+"text": "13",
+"float": "0x1.a000000000000p+3",
+"int": "13"
+},
+{
+"text": "09a36451",
+"float": null,
+"int": null
+},
+{
+"text": "24Ea61x",
+"float": null,
+"int": null
+},
+{
+"text": "67if289",
+"float": null,
+"int": null
+},
+{
+"text": "77 _018E",
+"float": null,
+"int": null
+},
+{
+"text": "4a1e 3E",
+"float": null,
+"int": null
+},
+{
+"text": "0+9 7",
+"float": null,
+"int": null
+},
+{
+"text": "7_ e",
+"float": null,
+"int": null
+},
+{
+"text": "60+-3",
+"float": null,
+"int": null
+},
+{
+"text": "359",
+"float": "0x1.6700000000000p+8",
+"int": "359"
+},
+{
+"text": "156",
+"float": "0x1.3800000000000p+7",
+"int": "156"
+},
+{
+"text": "815",
+"float": "0x1.9780000000000p+9",
+"int": "815"
+},
+{
+"text": "_85i.127",
+"float": null,
+"int": null
+},
+{
+"text": "075",
+"float": "0x1.2c00000000000p+6",
+"int": "75"
+},
+{
+"text": "2n3-81",
+"float": null,
+"int": null
+},
+{
+"text": "4i9",
+"float": null,
+"int": null
+},
+{
+"text": "5ea_f",
+"float": null,
+"int": null
+},
+{
+"text": "_090 29f",
+"float": null,
+"int": null
+},
+{
+"text": "80",
+"float": "0x1.4000000000000p+6",
+"int": "80"
+},
+{
+"text": "3196-",
+"float": null,
+"int": null
+},
+{
+"text": "797e8+7",
+"float": null,
+"int": null
+},
+{
+"text": "Ee9",
+"float": null,
+"int": null
+},
+{
+"text": "9114",
+"float": "0x1.1cd0000000000p+13",
+"int": "9114"
+},
+{
+"text": "8f4a49_2",
+"float": null,
+"int": null
+},
+{
+"text": "4.364",
+"float": "0x1.174bc6a7ef9dbp+2",
+"int": null
+},
+{
+"text": "19a568",
+"float": null,
+"int": null
+},
+{
+"text": "1n7-",
+"float": null,
+"int": null
+},
+{
+"text": "e37 ",
+"float": null,
+"int": null
+},
+{
+"text": "13_735.",
+"float": "0x1.ad38000000000p+13",
+"int": null
+},
+{
+"text": "1871",
+"float": "0x1.d3c0000000000p+10",
+"int": "1871"
+},
+{
+"text": "5x031",
+"float": null,
+"int": null
+},
+{
+"text": "f99n64",
+"float": null,
+"int": null
+},
+{
+"text": "a87",
+"float": null,
+"int": null
+},
+{
+"text": "41198+",
+"float": null,
+"int": null
+},
+{
+"text": "45",
+"float": "0x1.6800000000000p+5",
+"int": "45"
+},
+{
+"text": "a752.9a",
+"float": null,
+"int": null
+},
+{
+"text": "07",
+"float": "0x1.c000000000000p+2",
+"int": "7"
+},
+{
+"text": "32",
+"float": "0x1.0000000000000p+5",
+"int": "32"
+},
+{
+"text": "002677",
+"float": "0x1.4ea0000000000p+11",
+"int": "2677"
+},
+{
+"text": "4+",
+"float": null,
+"int": null
+},
+{
+"text": "33.e3",
+"float": "0x1.01d0000000000p+15",
+"int": null
+},
+{
+"text": "e",
+"float": null,
+"int": null
+},
+{
+"text": "4587",
+"float": "0x1.1eb0000000000p+12",
+"int": "4587"
+},
+{
+"text": "04x87387",
+"float": null,
+"int": null
+},
+{
+"text": "370_68",
+"float": "0x1.2198000000000p+15",
+"int": "37068"
+},
+{
+"text": "6381417",
+"float": "0x1.857da40000000p+22",
+"int": "6381417"
+},
+{
+"text": "x7i546 0",
+"float": null,
+"int": null
+},
+{
+"text": "8E738",
+"float": "inf",
+"int": null
+},
+{
+"text": " 3",
+"float": "0x1.8000000000000p+1",
+"int": "3"
+},
+{
+"text": "6+",
+"float": null,
+"int": null
+},
+{
+"text": "_570",
+"float": null,
+"int": null
+},
+{
+"text": "37n3",
+"float": null,
+"int": null
+},
+{
+"text": "E9n0 ",
+"float": null,
+"int": null
+},
+{
+"text": "57i6e96+",
+"float": null,
+"int": null
+},
+{
+"text": "17",
+"float": "0x1.1000000000000p+4",
+"int": "17"
+},
+{
+"text": "2619",
+"float": "0x1.4760000000000p+11",
+"int": "2619"
+},
+{
+"text": "4_06456",
+"float": "0x1.8cee000000000p+18",
+"int": "406456"
+},
+{
+"text": "68n8616",
+"float": null,
+"int": null
+},
+{
+"text": "17+64624",
+"float": null,
+"int": null
+},
+{
+"text": "ie11f684",
+"float": null,
+"int": null
+},
+{
+"text": "335n",
+"float": null,
+"int": null
+},
+{
+"text": "7n9_5",
+"float": null,
+"int": null
+},
+{
+"text": "700i_E96",
+"float": null,
+"int": null
+},
+{
+"text": " 72-+",
+"float": null,
+"int": null
+},
+{
+"text": "4E ",
+"float": null,
+"int": null
+},
+{
+"text": "945",
+"float": "0x1.d880000000000p+9",
+"int": "945"
+},
+{
+"text": "_247.E38",
+"float": null,
+"int": null
+},
+{
+"text": "x f-",
+"float": null,
+"int": null
+},
+{
+"text": "52",
+"float": "0x1.a000000000000p+5",
+"int": "52"
+},
+{
+"text": "6.9e3E",
+"float": null,
+"int": null
+},
+{
+"text": "8936efE",
+"float": null,
+"int": null
+},
+{
+"text": "27-442",
+"float": null,
+"int": null
+},
+{
+"text": "568",
+"float": "0x1.1c00000000000p+9",
+"int": "568"
+},
+{
+"text": "_988",
+"float": null,
+"int": null
+},
+{
+"text": "35",
+"float": "0x1.1800000000000p+5",
+"int": "35"
+},
+{
+"text": "4962a",
+"float": null,
+"int": null
+},
+{
+"text": "92-4",
+"float": null,
+"int": null
+},
+{
+"text": "4-114",
+"float": null,
+"int": null
+},
+{
+"text": "_2255",
+"float": null,
+"int": null
+},
+{
+"text": "8feE120",
+"float": null,
+"int": null
+},
+{
+"text": "5xaf",
+"float": null,
+"int": null
+},
+{
+"text": "529_5+",
+"float": null,
+"int": null
+},
+{
+"text": "x85E_e",
+"float": null,
+"int": null
+},
+{
+"text": "04974619",
+"float": "0x1.2fa06c0000000p+22",
+"int": "4974619"
+},
+{
+"text": "35Ee89",
+"float": null,
+"int": null
+},
+{
+"text": "2782457x",
+"float": null,
+"int": null
+},
+{
+"text": "a-1 006_",
+"float": null,
+"int": null
+},
+{
+"text": "68990_",
+"float": null,
+"int": null
+},
+{
+"text": "+9-9f+",
+"float": null,
+"int": null
+},
+{
+"text": "x_ix",
+"float": null,
+"int": null
+},
+{
+"text": "71i.",
+"float": null,
+"int": null
+},
+{
+"text": " .78-5.",
+"float": null,
+"int": null
+},
+{
+"text": "33",
+"float": "0x1.0800000000000p+5",
+"int": "33"
+},
+{
+"text": "1+",
+"float": null,
+"int": null
+},
+{
+"text": "1027240e",
+"float": null,
+"int": null
+},
+{
+"text": "36EE2x",
+"float": null,
+"int": null
+},
+{
+"text": "x83979",
+"float": null,
+"int": null
+},
+{
+"text": "2E3",
+"float": "0x1.f400000000000p+10",
+"int": null
+},
+{
+"text": "x0",
+"float": null,
+"int": null
+},
+{
+"text": "62179",
+"float": "0x1.e5c6000000000p+15",
+"int": "62179"
+},
+{
+"text": "a5i4",
+"float": null,
+"int": null
+},
+{
+"text": "984x",
+"float": null,
+"int": null
+},
+{
+"text": "58959925",
+"float": "0x1.c1d41a8000000p+25",
+"int": "58959925"
+},
+{
+"text": "37.76",
+"float": "0x1.2e147ae147ae1p+5",
+"int": null
+},
+{
+"text": "543.a6",
+"float": null,
+"int": null
+},
+{
+"text": "90+",
+"float": null,
+"int": null
+},
+{
+"text": " 7f8",
+"float": null,
+"int": null
+},
+{
+"text": "71896-4",
+"float": null,
+"int": null
+},
+{
+"text": "_73583 .",
+"float": null,
+"int": null
+},
+{
+"text": "a",
+"float": null,
+"int": null
+},
+{
+"text": "5n009_e",
+"float": null,
+"int": null
+},
+{
+"text": "1600 ",
+"float": "0x1.9000000000000p+10",
+"int": "1600"
+},
+{
+"text": "7e.2n_",
+"float": null,
+"int": null
+},
+{
+"text": "32a",
+"float": null,
+"int": null
+},
+{
+"text": "554-1",
+"float": null,
+"int": null
+},
+{
+"text": "58934+",
+"float": null,
+"int": null
+},
+{
+"text": "64.",
+"float": "0x1.0000000000000p+6",
+"int": null
+},
+{
+"text": "437.1",
+"float": "0x1.b51999999999ap+8",
+"int": null
+},
+{
+"text": "34+",
+"float": null,
+"int": null
+},
+{
+"text": "E_8nn463",
+"float": null,
+"int": null
+},
+{
+"text": "i_e_",
+"float": null,
+"int": null
+},
+{
+"text": "-13a",
+"float": null,
+"int": null
+},
+{
+"text": "e9",
+"float": null,
+"int": null
+},
+{
+"text": "26015E08",
+"float": "0x1.2edabddf80000p+41",
+"int": null
+},
+{
+"text": "5455",
+"float": "0x1.54f0000000000p+12",
+"int": "5455"
+},
+{
+"text": "0-__an",
+"float": null,
+"int": null
+},
+{
+"text": "_710E",
+"float": null,
+"int": null
+},
+{
+"text": " 90 30 ",
+"float": null,
+"int": null
+},
+{
+"text": "93721+",
+"float": null,
+"int": null
+},
+{
+"text": "70151",
+"float": "0x1.1207000000000p+16",
+"int": "70151"
+},
+{
+"text": "+863",
+"float": "0x1.af80000000000p+9",
+"int": "863"
+},
+{
+"text": "35+71ea1",
+"float": null,
+"int": null
+},
+{
+"text": "0_n_",
+"float": null,
+"int": null
+},
+{
+"text": "449 5",
+"float": null,
+"int": null
+},
+{
+"text": "f7",
+"float": null,
+"int": null
+},
+{
+"text": "4E6+941",
+"float": null,
+"int": null
+},
+{
+"text": "96_2x4+6",
+"float": null,
+"int": null
+},
+{
+"text": "a8",
+"float": null,
+"int": null
+},
+{
+"text": "9932_",
+"float": null,
+"int": null
+},
+{
+"text": "i171i8",
+"float": null,
+"int": null
+},
+{
+"text": "+0333",
+"float": "0x1.4d00000000000p+8",
+"int": "333"
+},
+{
+"text": "2i8x507",
+"float": null,
+"int": null
+},
+{
+"text": "Ena4x269",
+"float": null,
+"int": null
+},
+{
+"text": "22",
+"float": "0x1.6000000000000p+4",
+"int": "22"
+},
+{
+"text": "5128146",
+"float": "0x1.38ff480000000p+22",
+"int": "5128146"
+},
+{
+"text": "9x",
+"float": null,
+"int": null
+},
+{
+"text": "1-037a9",
+"float": null,
+"int": null
+},
+{
+"text": "36451Ex9",
+"float": null,
+"int": null
+},
+{
+"text": "1478",
+"float": "0x1.7180000000000p+10",
+"int": "1478"
+},
+{
+"text": "f14710-8",
+"float": null,
+"int": null
+},
+{
+"text": "61.594",
+"float": "0x1.ecc083126e979p+5",
+"int": null
+},
+{
+"text": "E65a30",
+"float": null,
+"int": null
+},
+{
+"text": "8.x",
+"float": null,
+"int": null
+},
+{
+"text": "32055 6",
+"float": null,
+"int": null
+},
+{
+"text": "ia7f 1+",
+"float": null,
+"int": null
+},
+{
+"text": "6113",
+"float": "0x1.7e10000000000p+12",
+"int": "6113"
+},
+{
+"text": "f30542",
+"float": null,
+"int": null
+},
+{
+"text": " 52f23",
+"float": null,
+"int": null
+},
+{
+"text": "32_8",
+"float": "0x1.4800000000000p+8",
+"int": "328"
+},
+{
+"text": "2.0+25",
+"float": null,
+"int": null
+},
+{
+"text": "3513257",
+"float": "0x1.acdd480000000p+21",
+"int": "3513257"
+},
+{
+"text": "149i2-_-",
+"float": null,
+"int": null
+},
+{
+"text": "09683549",
+"float": "0x1.2784ba0000000p+23",
+"int": "9683549"
+},
+{
+"text": "3254",
+"float": "0x1.96c0000000000p+11",
+"int": "3254"
+},
+{
+"text": "+220",
+"float": "0x1.b800000000000p+7",
+"int": "220"
+},
+{
+"text": "9E2n",
+"float": null,
+"int": null
+},
+{
+"text": "80a8700",
+"float": null,
+"int": null
+},
+{
+"text": "2x5n7771",
+"float": null,
+"int": null
+},
+{
+"text": "6764937i",
+"float": null,
+"int": null
+},
+{
+"text": "80010",
+"float": "0x1.388a000000000p+16",
+"int": "80010"
+},
+{
+"text": "2_1-a",
+"float": null,
+"int": null
+},
+{
+"text": "5673",
+"float": "0x1.6290000000000p+12",
+"int": "5673"
+},
+{
+"text": "114ni4i9",
+"float": null,
+"int": null
+},
+{
+"text": "4_",
+"float": null,
+"int": null
+},
+{
+"text": "a.eif",
+"float": null,
+"int": null
+},
+{
+"text": "157",
+"float": "0x1.3a00000000000p+7",
+"int": "157"
+},
+{
+"text": "2+1n",
+"float": null,
+"int": null
+},
+{
+"text": "0_51812",
+"float": "0x1.94c8000000000p+15",
+"int": "51812"
+},
+{
+"text": "7 ",
+"float": "0x1.c000000000000p+2",
+"int": "7"
+},
+{
+"text": "+858",
+"float": "0x1.ad00000000000p+9",
+"int": "858"
+},
+{
+"text": "68.",
+"float": "0x1.1000000000000p+6",
+"int": null
+},
+{
+"text": "286.17",
+"float": "0x1.1e2b851eb851fp+8",
+"int": null
+},
+{
+"text": "874_a",
+"float": null,
+"int": null
+},
+{
+"text": "1 x1889",
+"float": null,
+"int": null
+},
+{
+"text": "-5",
+"float": "-0x1.4000000000000p+2",
+"int": "-5"
+},
+{
+"text": "8529250",
+"float": "0x1.044ac40000000p+23",
+"int": "8529250"
+},
+{
+"text": "f6n42i",
+"float": null,
+"int": null
+},
+{
+"text": "78x0E5E3",
+"float": null,
+"int": null
+},
+{
+"text": "5-",
+"float": null,
+"int": null
+},
+{
+"text": "09",
+"float": "0x1.2000000000000p+3",
+"int": "9"
+},
+{
+"text": "0610a6",
+"float": null,
+"int": null
+},
+{
+"text": "+531",
+"float": "0x1.0980000000000p+9",
+"int": "531"
+},
+{
+"text": "+914",
+"float": "0x1.c900000000000p+9",
+"int": "914"
+},
+{
+"text": " 6a1x623",
+"float": null,
+"int": null
+},
+{
+"text": "51xE2EE8",
+"float": null,
+"int": null
+},
+{
+"text": "1860.38",
+"float": "0x1.d11851eb851ecp+10",
+"int": null
+},
+{
+"text": "5._83i._",
+"float": null,
+"int": null
+},
+{
+"text": "0n843",
+"float": null,
+"int": null
+},
+{
+"text": "5920E",
+"float": null,
+"int": null
+},
+{
+"text": "822664",
+"float": "0x1.91b1000000000p+19",
+"int": "822664"
+},
+{
+"text": "1x4n",
+"float": null,
+"int": null
+},
+{
+"text": "3f99289E",
+"float": null,
+"int": null
+},
+{
+"text": "8-409",
+"float": null,
+"int": null
+},
+{
+"text": "x93299a1",
+"float": null,
+"int": null
+},
+{
+"text": "4_8",
+"float": "0x1.8000000000000p+5",
+"int": "48"
+},
+{
+"text": "x7n3i33",
+"float": null,
+"int": null
+},
+{
+"text": "74_",
+"float": null,
+"int": null
+},
+{
+"text": "e-x7",
+"float": null,
+"int": null
+},
+{
+"text": "153807",
+"float": "0x1.2c67800000000p+17",
+"int": "153807"
+},
+{
+"text": "n738",
+"float": null,
+"int": null
+},
+{
+"text": "775n6",
+"float": null,
+"int": null
+},
+{
+"text": "E6332287",
+"float": null,
+"int": null
+},
+{
+"text": "09523x__",
+"float": null,
+"int": null
+},
+{
+"text": "716_81_",
+"float": null,
+"int": null
+},
+{
+"text": "018",
+"float": "0x1.2000000000000p+4",
+"int": "18"
+},
+{
+"text": "66f544n",
+"float": null,
+"int": null
+},
+{
+"text": "3+620",
+"float": null,
+"int": null
+},
+{
+"text": "5_5",
+"float": "0x1.b800000000000p+5",
+"int": "55"
+},
+{
+"text": "56i900E_",
+"float": null,
+"int": null
+},
+{
+"text": "E1.+",
+"float": null,
+"int": null
+},
+{
+"text": "68 _",
+"float": null,
+"int": null
+},
+{
+"text": "E",
+"float": null,
+"int": null
+},
+{
+"text": "12x2",
+"float": null,
+"int": null
+},
+{
+"text": "3f+",
+"float": null,
+"int": null
+},
+{
+"text": "E_7",
+"float": null,
+"int": null
+},
+{
+"text": "7347",
+"float": "0x1.cb30000000000p+12",
+"int": "7347"
+},
+{
+"text": "898",
+"float": "0x1.c100000000000p+9",
+"int": "898"
+},
+{
+"text": "56948e01",
+"float": "0x1.1611000000000p+19",
+"int": null
+},
+{
+"text": "34933e",
+"float": null,
+"int": null
+},
+{
+"text": "_3",
+"float": null,
+"int": null
+},
+{
+"text": "541_8",
+"float": "0x1.52a0000000000p+12",
+"int": "5418"
+},
+{
+"text": "1_472f12",
+"float": null,
+"int": null
+},
+{
+"text": "-5E67+e",
+"float": null,
+"int": null
+},
+{
+"text": "98e786a",
+"float": null,
+"int": null
+},
+{
+"text": ".16-",
+"float": null,
+"int": null
+},
+{
+"text": "i3 95315",
+"float": null,
+"int": null
+},
+{
+"text": "a97",
+"float": null,
+"int": null
+},
+{
+"text": "En1e4",
+"float": null,
+"int": null
+},
+{
+"text": "f8",
+"float": null,
+"int": null
+},
+{
+"text": "5E17",
+"float": "0x1.bc16d674ec800p+58",
+"int": null
+},
+{
+"text": "_5._3_",
+"float": null,
+"int": null
+},
+{
+"text": "264821",
+"float": "0x1.029d400000000p+18",
+"int": "264821"
+},
+{
+"text": "86038-6",
+"float": null,
+"int": null
+},
+{
+"text": "E61-395",
+"float": null,
+"int": null
+},
+{
+"text": "E60E83",
+"float": null,
+"int": null
+},
+{
+"text": "628+8",
+"float": null,
+"int": null
+},
+{
+"text": "_i02n17",
+"float": null,
+"int": null
+},
+{
+"text": " 4a4",
+"float": null,
+"int": null
+},
+{
+"text": "E388a_25",
+"float": null,
+"int": null
+},
+{
+"text": "572",
+"float": "0x1.1e00000000000p+9",
+"int": "572"
+},
+{
+"text": "16a6ef2",
+"float": null,
+"int": null
+},
+{
+"text": "836377ae",
+"float": null,
+"int": null
+},
+{
+"text": "319 6",
+"float": null,
+"int": null
+},
+{
+"text": "ae23833",
+"float": null,
+"int": null
+},
+{
+"text": "773",
+"float": "0x1.8280000000000p+9",
+"int": "773"
+},
+{
+"text": "na87f723",
+"float": null,
+"int": null
+},
+{
+"text": "1084",
+"float": "0x1.0f00000000000p+10",
+"int": "1084"
+},
+{
+"text": "_ 5306",
+"float": null,
+"int": null
+},
+{
+"text": "E755",
+"float": null,
+"int": null
+},
+{
+"text": "93-4_-26",
+"float": null,
+"int": null
+},
+{
+"text": "i445",
+"float": null,
+"int": null
+},
+{
+"text": "53a_2",
+"float": null,
+"int": null
+},
+{
+"text": "21x91",
+"float": null,
+"int": null
+},
+{
+"text": "68",
+"float": "0x1.1000000000000p+6",
+"int": "68"
+},
+{
+"text": ".6",
+"float": "0x1.3333333333333p-1",
+"int": null
+},
+{
+"text": "852x8- ",
+"float": null,
+"int": null
+},
+{
+"text": "3a 6E4",
+"float": null,
+"int": null
+},
+{
+"text": "50f6",
+"float": null,
+"int": null
+},
+{
+"text": "61_987fi",
+"float": null,
+"int": null
+},
+{
+"text": "9.0726",
+"float": "0x1.2252bd3c36113p+3",
+"int": null
+},
+{
+"text": "E2n63",
+"float": null,
+"int": null
+},
+{
+"text": "8 14364",
+"float": null,
+"int": null
+},
+{
+"text": "935ne570",
+"float": null,
+"int": null
+},
+{
+"text": "058828",
+"float": "0x1.cb98000000000p+15",
+"int": "58828"
+},
+{
+"text": "94  78",
+"float": null,
+"int": null
+},
+{
+"text": "283",
+"float": "0x1.1b00000000000p+8",
+"int": "283"
+},
+{
+"text": "833 _695",
+"float": null,
+"int": null
+},
+{
+"text": "28",
+"float": "0x1.c000000000000p+4",
+"int": "28"
+},
+{
+"text": "715 .2a",
+"float": null,
+"int": null
+},
+{
+"text": "_165x91-",
+"float": null,
+"int": null
+},
+{
+"text": "235",
+"float": "0x1.d600000000000p+7",
+"int": "235"
+},
+{
+"text": "+0955 ",
+"float": "0x1.dd80000000000p+9",
+"int": "955"
+},
+{
+"text": "a07 83",
+"float": null,
+"int": null
+},
+{
+"text": "722",
+"float": "0x1.6900000000000p+9",
+"int": "722"
+},
+{
+"text": "400+a669",
+"float": null,
+"int": null
+},
+{
+"text": "78487-_",
+"float": null,
+"int": null
+},
+{
+"text": "_179an",
+"float": null,
+"int": null
+},
+{
+"text": "959",
+"float": "0x1.df80000000000p+9",
+"int": "959"
+},
+{
+"text": "8868",
+"float": "0x1.1520000000000p+13",
+"int": "8868"
+},
+{
+"text": "_74i0",
+"float": null,
+"int": null
+},
+{
+"text": "51",
+"float": "0x1.9800000000000p+5",
+"int": "51"
+},
+{
+"text": "3 3_055",
+"float": null,
+"int": null
+},
+{
+"text": "8030",
+"float": "0x1.f5e0000000000p+12",
+"int": "8030"
+},
+{
+"text": "484-",
+"float": null,
+"int": null
+},
+{
+"text": "74i+ie8",
+"float": null,
+"int": null
+},
+{
+"text": "48",
+"float": "0x1.8000000000000p+5",
+"int": "48"
+},
+{
+"text": "-7159176",
+"float": "-0x1.b4f6200000000p+22",
+"int": "-7159176"
+},
+{
+"text": "906818",
+"float": "0x1.bac8400000000p+19",
+"int": "906818"
+},
+{
+"text": "_6e566",
+"float": null,
+"int": null
+},
+{
+"text": "109",
+"float": "0x1.b400000000000p+6",
+"int": "109"
+},
+{
+"text": "e83-a27",
+"float": null,
+"int": null
+},
+{
+"text": "+eE.195 ",
+"float": null,
+"int": null
+},
+{
+"text": "2.51x",
+"float": null,
+"int": null
+},
+{
+"text": "1-641686",
+"float": null,
+"int": null
+},
+{
+"text": "28996_",
+"float": null,
+"int": null
+},
+{
+"text": "785561E",
+"float": null,
+"int": null
+},
+{
+"text": "9.f2e7",
+"float": null,
+"int": null
+},
+{
+"text": "e__86896",
+"float": null,
+"int": null
+},
+{
+"text": "e_028",
+"float": null,
+"int": null
+},
+{
+"text": "E90a4",
+"float": null,
+"int": null
+},
+{
+"text": "6002",
+"float": "0x1.7720000000000p+12",
+"int": "6002"
+},
+{
+"text": "0a5e80",
+"float": null,
+"int": null
+},
+{
+"text": ".77353E3",
+"float": "0x1.82c3d70a3d70ap+9",
+"int": null
+},
+{
+"text": "x.7+4",
+"float": null,
+"int": null
+},
+{
+"text": "x_ea57",
+"float": null,
+"int": null
+},
+{
+"text": "8328",
+"float": "0x1.0440000000000p+13",
+"int": "8328"
+},
+{
+"text": "7.2",
+"float": "0x1.ccccccccccccdp+2",
+"int": null
+},
+{
+"text": "6323e3",
+"float": "0x1.81ece00000000p+22",
+"int": null
+},
+{
+"text": "2f",
+"float": null,
+"int": null
+},
+{
+"text": "832",
+"float": "0x1.a000000000000p+9",
+"int": "832"
+},
+{
+"text": "3_7f",
+"float": null,
+"int": null
+},
+{
+"text": "-551i4E",
+"float": null,
+"int": null
+},
+{
+"text": "32e182_",
+"float": null,
+"int": null
+},
+{
+"text": "31694",
+"float": "0x1.ef38000000000p+14",
+"int": "31694"
+},
+{
+"text": "+x1_n",
+"float": null,
+"int": null
+},
+{
+"text": "6732-005",
+"float": null,
+"int": null
+},
+{
+"text": "48.87",
+"float": "0x1.86f5c28f5c28fp+5",
+"int": null
+},
+{
+"text": "77",
+"float": "0x1.3400000000000p+6",
+"int": "77"
+},
+{
+"text": "+78f6",
+"float": null,
+"int": null
+},
+{
+"text": "8_",
+"float": null,
+"int": null
+},
+{
+"text": "14424",
+"float": "0x1.c2c0000000000p+13",
+"int": "14424"
+},
+{
+"text": "3056607",
+"float": "0x1.751ef80000000p+21",
+"int": "3056607"
+},
+{
+"text": "7480.",
+"float": "0x1.d380000000000p+12",
+"int": null
+},
+{
+"text": "2+98.2.0",
+"float": null,
+"int": null
+},
+{
+"text": " 7.x2",
+"float": null,
+"int": null
+},
+{
+"text": "56878",
+"float": "0x1.bc5c000000000p+15",
+"int": "56878"
+},
+{
+"text": "5x74671",
+"float": null,
+"int": null
+},
+{
+"text": "69513",
+"float": "0x1.0f89000000000p+16",
+"int": "69513"
+},
+{
+"text": "i 453",
+"float": null,
+"int": null
+},
+{
+"text": "8996521",
+"float": "0x1.128d520000000p+23",
+"int": "8996521"
+},
+{
+"text": "3306",
+"float": "0x1.9d40000000000p+11",
+"int": "3306"
+},
+{
+"text": "018E",
+"float": null,
+"int": null
+},
+{
+"text": "04992",
+"float": "0x1.3800000000000p+12",
+"int": "4992"
+},
+{
+"text": "3x9882",
+"float": null,
+"int": null
+},
+{
+"text": "4 ",
+"float": "0x1.0000000000000p+2",
+"int": "4"
+},
+{
+"text": "a0",
+"float": null,
+"int": null
+},
+{
+"text": "9-_2xa07",
+"float": null,
+"int": null
+},
+{
+"text": "516",
+"float": "0x1.0200000000000p+9",
+"int": "516"
+},
+{
+"text": "9a0254",
+"float": null,
+"int": null
+},
+{
+"text": "i",
+"float": null,
+"int": null
+},
+{
+"text": "505",
+"float": "0x1.f900000000000p+8",
+"int": "505"
+},
+{
+"text": "14774",
+"float": "0x1.cdb0000000000p+13",
+"int": "14774"
+},
+{
+"text": "89_7595a",
+"float": null,
+"int": null
+},
+{
+"text": "8a2654",
+"float": null,
+"int": null
+},
+{
+"text": "9357581E",
+"float": null,
+"int": null
+},
+{
+"text": "x7 ",
+"float": null,
+"int": null
+},
+{
+"text": "ia",
+"float": null,
+"int": null
+},
+{
+"text": "802_74E6",
+"float": "0x1.2b0b408800000p+36",
+"int": null
+},
+{
+"text": "__86x20",
+"float": null,
+"int": null
+},
+{
+"text": "94i74.4",
+"float": null,
+"int": null
+},
+{
+"text": "5if52e4",
+"float": null,
+"int": null
+},
+{
+"text": "721653",
+"float": "0x1.605ea00000000p+19",
+"int": "721653"
+},
+{
+"text": "i_f1639x",
+"float": null,
+"int": null
+},
+{
+"text": "5_748726",
+"float": "0x1.5edfd80000000p+22",
+"int": "5748726"
+},
+{
+"text": " xxi163",
+"float": null,
+"int": null
+},
+{
+"text": "11.+n410",
+"float": null,
+"int": null
+},
+{
+"text": "11-46++-",
+"float": null,
+"int": null
+},
+{
+"text": "863 +x8",
+"float": null,
+"int": null
+},
+{
+"text": "a5n52_22",
+"float": null,
+"int": null
+},
+{
+"text": "n357",
+"float": null,
+"int": null
+},
+{
+"text": "74x7",
+"float": null,
+"int": null
+},
+{
+"text": "844399",
+"float": "0x1.9c4de00000000p+19",
+"int": "844399"
+},
+{
+"text": "f 611091",
+"float": null,
+"int": null
+},
+{
+"text": "24576",
+"float": "0x1.8000000000000p+14",
+"int": "24576"
+},
+{
+"text": "133",
+"float": "0x1.0a00000000000p+7",
+"int": "133"
+},
+{
+"text": "536i9",
+"float": null,
+"int": null
+},
+{
+"text": "576140",
+"float": "0x1.1951800000000p+19",
+"int": "576140"
+},
+{
+"text": "425.16+5",
+"float": null,
+"int": null
+},
+{
+"text": ".n2f48",
+"float": null,
+"int": null
+},
+{
+"text": "9ix02",
+"float": null,
+"int": null
+},
+{
+"text": "-E22",
+"float": null,
+"int": null
+},
+{
+"text": "056n815",
+"float": null,
+"int": null
+},
+{
+"text": "eif72_6",
+"float": null,
+"int": null
+},
+{
+"text": "6.1",
+"float": "0x1.8666666666666p+2",
+"int": null
+},
+{
+"text": "i-122E+",
+"float": null,
+"int": null
+},
+{
+"text": "15",
+"float": "0x1.e000000000000p+3",
+"int": "15"
+},
+{
+"text": "7152228",
+"float": "0x1.b489900000000p+22",
+"int": "7152228"
+},
+{
+"text": "f3",
+"float": null,
+"int": null
+},
+{
+"text": "79715.",
+"float": "0x1.3763000000000p+16",
+"int": null
+},
+{
+"text": "47E10e",
+"float": null,
+"int": null
+},
+{
+"text": " 566075",
+"float": "0x1.1467600000000p+19",
+"int": "566075"
+},
+{
+"text": "1aE6-2",
+"float": null,
+"int": null
+},
+{
+"text": "6434",
+"float": "0x1.9220000000000p+12",
+"int": "6434"
+},
+{
+"text": "614",
+"float": "0x1.3300000000000p+9",
+"int": "614"
+},
+{
+"text": "2919",
+"float": "0x1.6ce0000000000p+11",
+"int": "2919"
+},
+{
+"text": "6f_6",
+"float": null,
+"int": null
+},
+{
+"text": "45a127",
+"float": null,
+"int": null
+},
+{
+"text": "+24",
+"float": "0x1.8000000000000p+4",
+"int": "24"
+},
+{
+"text": "533",
+"float": "0x1.0a80000000000p+9",
+"int": "533"
+},
+{
+"text": "__19-66",
+"float": null,
+"int": null
+},
+{
+"text": "+9-",
+"float": null,
+"int": null
+},
+{
+"text": "389a",
+"float": null,
+"int": null
+},
+{
+"text": "5_3860",
+"float": "0x1.a4c8000000000p+15",
+"int": "53860"
+},
+{
+"text": "456186n",
+"float": null,
+"int": null
+},
+{
+"text": "i8",
+"float": null,
+"int": null
+},
+{
+"text": "494f42",
+"float": null,
+"int": null
+},
+{
+"text": "138n3 ",
+"float": null,
+"int": null
+},
+{
+"text": "339ix",
+"float": null,
+"int": null
+},
+{
+"text": "9-1i_6",
+"float": null,
+"int": null
+},
+{
+"text": "208",
+"float": "0x1.a000000000000p+7",
+"int": "208"
+},
+{
+"text": "9i5_85",
+"float": null,
+"int": null
+},
+{
+"text": "97_390n2",
+"float": null,
+"int": null
+},
+{
+"text": "893+13",
+"float": null,
+"int": null
+},
+{
+"text": "5+156700",
+"float": null,
+"int": null
+},
+{
+"text": "136a",
+"float": null,
+"int": null
+},
+{
+"text": "0E++1",
+"float": null,
+"int": null
+},
+{
+"text": "4x",
+"float": null,
+"int": null
+},
+{
+"text": "2i8_9752",
+"float": null,
+"int": null
+},
+{
+"text": "7i",
+"float": null,
+"int": null
+},
+{
+"text": "xi",
+"float": null,
+"int": null
+},
+{
+"text": "51e_0152",
+"float": null,
+"int": null
+},
+{
+"text": "1.815587",
+"float": "0x1.d0ca4f440af1dp+0",
+"int": null
+},
+{
+"text": "a463",
+"float": null,
+"int": null
+},
+{
+"text": "737_6n",
+"float": null,
+"int": null
+},
+{
+"text": "223",
+"float": "0x1.be00000000000p+7",
+"int": "223"
+},
+{
+"text": "44",
+"float": "0x1.6000000000000p+5",
+"int": "44"
+},
+{
+"text": "27",
+"float": "0x1.b000000000000p+4",
+"int": "27"
+},
+{
+"text": "22021E5",
+"float": "0x1.0682c24000000p+31",
+"int": null
+},
+{
+"text": "_5_E3",
+"float": null,
+"int": null
+},
+{
+"text": "E958f",
+"float": null,
+"int": null
+},
+{
+"text": "-_72_9",
+"float": null,
+"int": null
+},
+{
+"text": "56E",
+"float": null,
+"int": null
+},
+{
+"text": "99i",
+"float": null,
+"int": null
+},
+{
+"text": "8i6587+",
+"float": null,
+"int": null
+},
+{
+"text": "63+_48",
+"float": null,
+"int": null
+},
+{
+"text": "ia2",
+"float": null,
+"int": null
+},
+{
+"text": "93508",
+"float": "0x1.6d44000000000p+16",
+"int": "93508"
+},
+{
+"text": "9.67",
+"float": "0x1.3570a3d70a3d7p+3",
+"int": null
+},
+{
+"text": "227",
+"float": "0x1.c600000000000p+7",
+"int": "227"
+},
+{
+"text": "4f146i8",
+"float": null,
+"int": null
+},
+{
+"text": "61",
+"float": "0x1.e800000000000p+5",
+"int": "61"
+},
+{
+"text": "0a34",
+"float": null,
+"int": null
+},
+{
+"text": "x801597",
+"float": null,
+"int": null
+},
+{
+"text": "97301",
+"float": "0x1.7c15000000000p+16",
+"int": "97301"
+},
+{
+"text": "4ix2x-74",
+"float": null,
+"int": null
+},
+{
+"text": "151",
+"float": "0x1.2e00000000000p+7",
+"int": "151"
+},
+{
+"text": "7E413",
+"float": "inf",
+"int": null
+},
+{
+"text": "74+5+4",
+"float": null,
+"int": null
+},
+{
+"text": "19118_",
+"float": null,
+"int": null
+},
+{
+"text": "x8e-i",
+"float": null,
+"int": null
+},
+{
+"text": "7f_5",
+"float": null,
+"int": null
+},
+{
+"text": "01f6",
+"float": null,
+"int": null
+},
+{
+"text": "i0+",
+"float": null,
+"int": null
+},
+{
+"text": "8-__",
+"float": null,
+"int": null
+},
+{
+"text": "3_56760i",
+"float": null,
+"int": null
+},
+{
+"text": "++4 3",
+"float": null,
+"int": null
+},
+{
+"text": "36",
+"float": "0x1.2000000000000p+5",
+"int": "36"
+},
+{
+"text": "497.9706",
+"float": "0x1.f1f8793dd97f6p+8",
+"int": null
+},
+{
+"text": "_9-.4",
+"float": null,
+"int": null
+},
+{
+"text": "_41",
+"float": null,
+"int": null
+},
+{
+"text": "218196",
+"float": "0x1.aa2a000000000p+17",
+"int": "218196"
+},
+{
+"text": "753x575",
+"float": null,
+"int": null
+},
+{
+"text": "e_239980",
+"float": null,
+"int": null
+},
+{
+"text": "f4-E40",
+"float": null,
+"int": null
+},
+{
+"text": "-2",
+"float": "-0x1.0000000000000p+1",
+"int": "-2"
+},
+{
+"text": "n++605x",
+"float": null,
+"int": null
+},
+{
+"text": "3517",
+"float": "0x1.b7a0000000000p+11",
+"int": "3517"
+},
+{
+"text": "3i3",
+"float": null,
+"int": null
+},
+{
+"text": "3319959n",
+"float": null,
+"int": null
+},
+{
+"text": ".E28fa3",
+"float": null,
+"int": null
+},
+{
+"text": "37",
+"float": "0x1.2800000000000p+5",
+"int": "37"
+},
+{
+"text": ".210f4",
+"float": null,
+"int": null
+},
+{
+"text": "_825",
+"float": null,
+"int": null
+},
+{
+"text": "8f29681",
+"float": null,
+"int": null
+},
+{
+"text": "0-1fa1",
+"float": null,
+"int": null
+},
+{
+"text": "x3033",
+"float": null,
+"int": null
+},
+{
+"text": "6n",
+"float": null,
+"int": null
+},
+{
+"text": "f",
+"float": null,
+"int": null
+},
+{
+"text": "639",
+"float": "0x1.3f80000000000p+9",
+"int": "639"
+},
+{
+"text": "90.40n42",
+"float": null,
+"int": null
+},
+{
+"text": "086",
+"float": "0x1.5800000000000p+6",
+"int": "86"
+},
+{
+"text": "7012+788",
+"float": null,
+"int": null
+},
+{
+"text": "E660",
+"float": null,
+"int": null
+},
+{
+"text": "_14",
+"float": null,
+"int": null
+},
+{
+"text": "x049",
+"float": null,
+"int": null
+},
+{
+"text": "511",
+"float": "0x1.ff00000000000p+8",
+"int": "511"
+},
+{
+"text": "n2367",
+"float": null,
+"int": null
+},
+{
+"text": "66",
+"float": "0x1.0800000000000p+6",
+"int": "66"
+},
+{
+"text": "78x",
+"float": null,
+"int": null
+},
+{
+"text": "93.7710",
+"float": "0x1.7715810624dd3p+6",
+"int": null
+},
+{
+"text": "5f261f",
+"float": null,
+"int": null
+},
+{
+"text": " 5_67",
+"float": "0x1.1b80000000000p+9",
+"int": "567"
+},
+{
+"text": " 70i928",
+"float": null,
+"int": null
+},
+{
+"text": "42x63_71",
+"float": null,
+"int": null
+},
+{
+"text": "ff7409",
+"float": null,
+"int": null
+},
+{
+"text": "__8 7",
+"float": null,
+"int": null
+},
+{
+"text": "0511_5",
+"float": "0x1.3fb0000000000p+12",
+"int": "5115"
+},
+{
+"text": "4.1788",
+"float": "0x1.0b71758e21965p+2",
+"int": null
+},
+{
+"text": "432352",
+"float": "0x1.a638000000000p+18",
+"int": "432352"
+},
+{
+"text": "_78026f",
+"float": null,
+"int": null
+},
+{
+"text": "x6",
+"float": null,
+"int": null
+},
+{
+"text": "80e27205",
+"float": "inf",
+"int": null
+},
+{
+"text": "784683 ",
+"float": "0x1.7f25600000000p+19",
+"int": "784683"
+},
+{
+"text": "1_76612",
+"float": "0x1.58f2000000000p+17",
+"int": "176612"
+},
+{
+"text": "67n1_",
+"float": null,
+"int": null
+},
+{
+"text": "2i19",
+"float": null,
+"int": null
+},
+{
+"text": "10143",
+"float": "0x1.3cf8000000000p+13",
+"int": "10143"
+},
+{
+"text": "986n9",
+"float": null,
+"int": null
+},
+{
+"text": "0f_2a",
+"float": null,
+"int": null
+},
+{
+"text": "x696_09",
+"float": null,
+"int": null
+},
+{
+"text": "i276",
+"float": null,
+"int": null
+},
+{
+"text": "2xf3+",
+"float": null,
+"int": null
+},
+{
+"text": "84",
+"float": "0x1.5000000000000p+6",
+"int": "84"
+},
+{
+"text": "94303_e",
+"float": null,
+"int": null
+},
+{
+"text": "a-",
+"float": null,
+"int": null
+},
+{
+"text": "._93-58",
+"float": null,
+"int": null
+},
+{
+"text": ".a54",
+"float": null,
+"int": null
+},
+{
+"text": "94f6",
+"float": null,
+"int": null
+},
+{
+"text": "29362580",
+"float": "0x1.c009940000000p+24",
+"int": "29362580"
+},
+{
+"text": "357E1878",
+"float": "inf",
+"int": null
+},
+{
+"text": "+3_94",
+"float": "0x1.8a00000000000p+8",
+"int": "394"
+},
+{
+"text": "43",
+"float": "0x1.5800000000000p+5",
+"int": "43"
+},
+{
+"text": "En2E7",
+"float": null,
+"int": null
+},
+{
+"text": "-193",
+"float": "-0x1.8200000000000p+7",
+"int": "-193"
+},
+{
+"text": "E_56_2",
+"float": null,
+"int": null
+},
+{
+"text": "3 78 ",
+"float": null,
+"int": null
+},
+{
+"text": "277838",
+"float": "0x1.0f53800000000p+18",
+"int": "277838"
+},
+{
+"text": "0607-34",
+"float": null,
+"int": null
+},
+{
+"text": "45n Ef49",
+"float": null,
+"int": null
+},
+{
+"text": "38n92e",
+"float": null,
+"int": null
+},
+{
+"text": "30990+12",
+"float": null,
+"int": null
+},
+{
+"text": "3e4",
+"float": "0x1.d4c0000000000p+14",
+"int": null
+},
+{
+"text": "95e",
+"float": null,
+"int": null
+},
+{
+"text": "390+",
+"float": null,
+"int": null
+},
+{
+"text": "4E-049n1",
+"float": null,
+"int": null
+},
+{
+"text": "n914_6",
+"float": null,
+"int": null
+},
+{
+"text": "44f96-+",
+"float": null,
+"int": null
+},
+{
+"text": "1857.",
+"float": "0x1.d040000000000p+10",
+"int": null
+},
+{
+"text": "5993428",
+"float": "0x1.6dcf500000000p+22",
+"int": "5993428"
+},
+{
+"text": "-963932",
+"float": "-0x1.d6ab800000000p+19",
+"int": "-963932"
+},
+{
+"text": "38 ",
+"float": "0x1.3000000000000p+5",
+"int": "38"
+},
+{
+"text": "58044",
+"float": "0x1.c578000000000p+15",
+"int": "58044"
+},
+{
+"text": "619a",
+"float": null,
+"int": null
+},
+{
+"text": "5+",
+"float": null,
+"int": null
+},
+{
+"text": "17711645",
+"float": "0x1.0e421d0000000p+24",
+"int": "17711645"
+},
+{
+"text": "65",
+"float": "0x1.0400000000000p+6",
+"int": "65"
+},
+{
+"text": "19e96",
+"float": "0x1.1ca55b2b0aa83p+323",
+"int": null
+},
+{
+"text": "8nn",
+"float": null,
+"int": null
+},
+{
+"text": "+i",
+"float": null,
+"int": null
+},
+{
+"text": "6_",
+"float": null,
+"int": null
+},
+{
+"text": "5._e8",
+"float": null,
+"int": null
+},
+{
+"text": ".7a._x",
+"float": null,
+"int": null
+},
+{
+"text": "_iE",
+"float": null,
+"int": null
+},
+{
+"text": "e2972406",
+"float": null,
+"int": null
+},
+{
+"text": "0650792",
+"float": "0x1.3dc5000000000p+19",
+"int": "650792"
+},
+{
+"text": "91.",
+"float": "0x1.6c00000000000p+6",
+"int": null
+},
+{
+"text": "4170818",
+"float": "0x1.fd22100000000p+21",
+"int": "4170818"
+},
+{
+"text": "8e-",
+"float": null,
+"int": null
+},
+{
+"text": "57 ",
+"float": "0x1.c800000000000p+5",
+"int": "57"
+},
+{
+"text": "8ix4",
+"float": null,
+"int": null
+},
+{
+"text": "84012",
+"float": "0x1.482c000000000p+16",
+"int": "84012"
+},
+{
+"text": "30i",
+"float": null,
+"int": null
+},
+{
+"text": "263100a",
+"float": null,
+"int": null
+},
+{
+"text": "3ie",
+"float": null,
+"int": null
+},
+{
+"text": "3205",
+"float": "0x1.90a0000000000p+11",
+"int": "3205"
+},
+{
+"text": "7f61",
+"float": null,
+"int": null
+},
+{
+"text": "8936",
+"float": "0x1.1740000000000p+13",
+"int": "8936"
+},
+{
+"text": "16e7.i",
+"float": null,
+"int": null
+},
+{
+"text": "_5n ",
+"float": null,
+"int": null
+},
+{
+"text": "7572",
+"float": "0x1.d940000000000p+12",
+"int": "7572"
+},
+{
+"text": "E33470",
+"float": null,
+"int": null
+},
+{
+"text": "i9",
+"float": null,
+"int": null
+},
+{
+"text": "12_",
+"float": null,
+"int": null
+},
+{
+"text": "._74",
+"float": null,
+"int": null
+},
+{
+"text": "96227_51",
+"float": "0x1.25a9be0000000p+23",
+"int": "9622751"
+},
+{
+"text": "8_+4a35",
+"float": null,
+"int": null
+},
+{
+"text": "6_7",
+"float": "0x1.0c00000000000p+6",
+"int": "67"
+},
+{
+"text": "n49i",
+"float": null,
+"int": null
+},
+{
+"text": "a9 2i",
+"float": null,
+"int": null
+},
+{
+"text": "564501-",
+"float": null,
+"int": null
+},
+{
+"text": "733f2",
+"float": null,
+"int": null
+},
+{
+"text": "798n",
+"float": null,
+"int": null
+},
+{
+"text": "8i06-7",
+"float": null,
+"int": null
+},
+{
+"text": "60i84E",
+"float": null,
+"int": null
+},
+{
+"text": "_fe.6474",
+"float": null,
+"int": null
+},
+{
+"text": "2n616",
+"float": null,
+"int": null
+},
+{
+"text": "1e1",
+"float": "0x1.4000000000000p+3",
+"int": null
+},
+{
+"text": "80a-79",
+"float": null,
+"int": null
+},
+{
+"text": ".40",
+"float": "0x1.999999999999ap-2",
+"int": null
+},
+{
+"text": "94635",
+"float": "0x1.71ab000000000p+16",
+"int": "94635"
+},
+{
+"text": "9977e",
+"float": null,
+"int": null
+},
+{
+"text": "733 47_",
+"float": null,
+"int": null
+},
+{
+"text": "-_",
+"float": null,
+"int": null
+},
+{
+"text": "Enf",
+"float": null,
+"int": null
+},
+{
+"text": "9326",
+"float": "0x1.2370000000000p+13",
+"int": "9326"
+},
+{
+"text": "378630+.",
+"float": null,
+"int": null
+},
+{
+"text": "93+2n",
+"float": null,
+"int": null
+},
+{
+"text": "9971- 91",
+"float": null,
+"int": null
+},
+{
+"text": "e86700",
+"float": null,
+"int": null
+},
+{
+"text": "8_7+9fEa",
+"float": null,
+"int": null
+},
+{
+"text": "23e88704",
+"float": "inf",
+"int": null
+},
+{
+"text": "n4.4E29e",
+"float": null,
+"int": null
+},
+{
+"text": "412",
+"float": "0x1.9c00000000000p+8",
+"int": "412"
+},
+{
+"text": "078e3",
+"float": "0x1.30b0000000000p+16",
+"int": null
+},
+{
+"text": "_8008",
+"float": null,
+"int": null
+},
+{
+"text": "x_-+44",
+"float": null,
+"int": null
+},
+{
+"text": "0+524",
+"float": null,
+"int": null
+},
+{
+"text": "ae1",
+"float": null,
+"int": null
+},
+{
+"text": "138",
+"float": "0x1.1400000000000p+7",
+"int": "138"
+},
+{
+"text": "0270",
+"float": "0x1.0e00000000000p+8",
+"int": "270"
+},
+{
+"text": "931312 ",
+"float": "0x1.c6be000000000p+19",
+"int": "931312"
+},
+{
+"text": "40i+",
+"float": null,
+"int": null
+},
+{
+"text": "4i92+",
+"float": null,
+"int": null
+},
+{
+"text": "6_ 664",
+"float": null,
+"int": null
+},
+{
+"text": "4208_",
+"float": null,
+"int": null
+},
+{
+"text": "2-9851f",
+"float": null,
+"int": null
+},
+{
+"text": "0e98 ",
+"float": "0x0.0p+0",
+"int": null
+},
+{
+"text": "702540i6",
+"float": null,
+"int": null
+},
+{
+"text": "06x",
+"float": null,
+"int": null
+},
+{
+"text": "e2f74938",
+"float": null,
+"int": null
+},
+{
+"text": "256+6",
+"float": null,
+"int": null
+},
+{
+"text": "EE9x52",
+"float": null,
+"int": null
+},
+{
+"text": "8i4 8+",
+"float": null,
+"int": null
+},
+{
+"text": "433",
+"float": "0x1.b100000000000p+8",
+"int": "433"
+},
+{
+"text": "577E",
+"float": null,
+"int": null
+},
+{
+"text": "61e11",
+"float": "0x1.6311155200000p+42",
+"int": null
+},
+{
+"text": "88.",
+"float": "0x1.6000000000000p+6",
+"int": null
+},
+{
+"text": "105",
+"float": "0x1.a400000000000p+6",
+"int": "105"
+},
+{
+"text": "+79",
+"float": "0x1.3c00000000000p+6",
+"int": "79"
+},
+{
+"text": "5994i.96",
+"float": null,
+"int": null
+},
+{
+"text": "4472",
+"float": "0x1.1780000000000p+12",
+"int": "4472"
+},
+{
+"text": "357",
+"float": "0x1.6500000000000p+8",
+"int": "357"
+},
+{
+"text": "a_ +06 ",
+"float": null,
+"int": null
+},
+{
+"text": "8af",
+"float": null,
+"int": null
+},
+{
+"text": "00f032-4",
+"float": null,
+"int": null
+},
+{
+"text": "2E94716",
+"float": "inf",
+"int": null
+},
+{
+"text": "7a08 _8",
+"float": null,
+"int": null
+},
+{
+"text": "31",
+"float": "0x1.f000000000000p+4",
+"int": "31"
+},
+{
+"text": "f48e9211",
+"float": null,
+"int": null
+},
+{
+"text": "7n910862",
+"float": null,
+"int": null
+},
+{
+"text": "x99243",
+"float": null,
+"int": null
+},
+{
+"text": "870n91",
+"float": null,
+"int": null
+},
+{
+"text": "i_25+",
+"float": null,
+"int": null
+},
+{
+"text": "7220_3e4",
+"float": "0x1.584a6d8000000p+29",
+"int": null
+},
+{
+"text": "25378_",
+"float": null,
+"int": null
+},
+{
+"text": "9en ",
+"float": null,
+"int": null
+},
+{
+"text": "9+4",
+"float": null,
+"int": null
+},
+{
+"text": "8680_705",
+"float": "0x1.08ea020000000p+23",
+"int": "8680705"
+},
+{
+"text": "41_ ",
+"float": null,
+"int": null
+},
+{
+"text": "350  3",
+"float": null,
+"int": null
+},
+{
+"text": "+_28050",
+"float": null,
+"int": null
+},
+{
+"text": "1a2nx1",
+"float": null,
+"int": null
+},
+{
+"text": "078-f",
+"float": null,
+"int": null
+},
+{
+"text": "90822a5",
+"float": null,
+"int": null
+},
+{
+"text": "5e4602E",
+"float": null,
+"int": null
+},
+{
+"text": "xi+",
+"float": null,
+"int": null
+},
+{
+"text": "__",
+"float": null,
+"int": null
+},
+{
+"text": "87x1",
+"float": null,
+"int": null
+},
+{
+"text": "9829E33",
+"float": "0x1.d93fc75983ed6p+122",
+"int": null
+},
+{
+"text": "374",
+"float": "0x1.7600000000000p+8",
+"int": "374"
+},
+{
+"text": "89600",
+"float": "0x1.5e00000000000p+16",
+"int": "89600"
+},
+{
+"text": "_4-2565",
+"float": null,
+"int": null
+},
+{
+"text": "3583288",
+"float": "0x1.b569c00000000p+21",
+"int": "3583288"
+},
+{
+"text": "01+7202",
+"float": null,
+"int": null
+},
+{
+"text": "7.",
+"float": "0x1.c000000000000p+2",
+"int": null
+},
+{
+"text": "6 +_+",
+"float": null,
+"int": null
+},
+{
+"text": "9i+53",
+"float": null,
+"int": null
+},
+{
+"text": "_E3n",
+"float": null,
+"int": null
+},
+{
+"text": "56 557",
+"float": null,
+"int": null
+},
+{
+"text": "587895e",
+"float": null,
+"int": null
+},
+{
+"text": "4aa",
+"float": null,
+"int": null
+},
+{
+"text": "18axn1f",
+"float": null,
+"int": null
+},
+{
+"text": ".9",
+"float": "0x1.ccccccccccccdp-1",
+"int": null
+},
+{
+"text": "3i",
+"float": null,
+"int": null
+},
+{
+"text": "50f8",
+"float": null,
+"int": null
+},
+{
+"text": "541n902",
+"float": null,
+"int": null
+},
+{
+"text": "036",
+"float": "0x1.2000000000000p+5",
+"int": "36"
+},
+{
+"text": "_E-.87",
+"float": null,
+"int": null
+},
+{
+"text": "36i1745",
+"float": null,
+"int": null
+},
+{
+"text": " 183",
+"float": "0x1.6e00000000000p+7",
+"int": "183"
+},
+{
+"text": "28933_26",
+"float": "0x1.6130700000000p+21",
+"int": "2893326"
+},
+{
+"text": " 214",
+"float": "0x1.ac00000000000p+7",
+"int": "214"
+},
+{
+"text": "f42869.",
+"float": null,
+"int": null
+},
+{
+"text": "6x985",
+"float": null,
+"int": null
+},
+{
+"text": "813-38x",
+"float": null,
+"int": null
+},
+{
+"text": "2 7",
+"float": null,
+"int": null
+},
+{
+"text": "7.953936",
+"float": "0x1.fd0d49949e881p+2",
+"int": null
+},
+{
+"text": "7E.",
+"float": null,
+"int": null
+},
+{
+"text": "i9223",
+"float": null,
+"int": null
+},
+{
+"text": "f.x",
+"float": null,
+"int": null
+},
+{
+"text": "457020",
+"float": "0x1.be4f000000000p+18",
+"int": "457020"
+},
+{
+"text": "662a963",
+"float": null,
+"int": null
+},
+{
+"text": "01648",
+"float": "0x1.9c00000000000p+10",
+"int": "1648"
+},
+{
+"text": "aE267",
+"float": null,
+"int": null
+},
+{
+"text": "8n",
+"float": null,
+"int": null
+},
+{
+"text": " 088",
+"float": "0x1.6000000000000p+6",
+"int": "88"
+},
+{
+"text": "9+3575-7",
+"float": null,
+"int": null
+},
+{
+"text": "700272",
+"float": "0x1.55ee000000000p+19",
+"int": "700272"
+},
+{
+"text": "30__52x",
+"float": null,
+"int": null
+},
+{
+"text": "30108_4",
+"float": "0x1.2607000000000p+18",
+"int": "301084"
+},
+{
+"text": "8__124-",
+"float": null,
+"int": null
+},
+{
+"text": "76+i638E",
+"float": null,
+"int": null
+},
+{
+"text": "_32e",
+"float": null,
+"int": null
+},
+{
+"text": "44i60+i",
+"float": null,
+"int": null
+},
+{
+"text": "3__E9Ei",
+"float": null,
+"int": null
+},
+{
+"text": "8_24708-",
+"float": null,
+"int": null
+},
+{
+"text": "9f6057",
+"float": null,
+"int": null
+},
+{
+"text": "0.46n4a ",
+"float": null,
+"int": null
+},
+{
+"text": "2_05",
+"float": "0x1.9a00000000000p+7",
+"int": "205"
+},
+{
+"text": "_50604x",
+"float": null,
+"int": null
+},
+{
+"text": "7 e4",
+"float": null,
+"int": null
+},
+{
+"text": ". ",
+"float": null,
+"int": null
+},
+{
+"text": "701_6",
+"float": "0x1.b680000000000p+12",
+"int": "7016"
+},
+{
+"text": "70f+",
+"float": null,
+"int": null
+},
+{
+"text": "57f9",
+"float": null,
+"int": null
+},
+{
+"text": "2_",
+"float": null,
+"int": null
+},
+{
+"text": "34i2 5",
+"float": null,
+"int": null
+},
+{
+"text": "2E9+08",
+"float": null,
+"int": null
+},
+{
+"text": "0+564",
+"float": null,
+"int": null
+},
+{
+"text": "f31284",
+"float": null,
+"int": null
+},
+{
+"text": "7+4_8-89",
+"float": null,
+"int": null
+},
+{
+"text": "91346",
+"float": "0x1.64d2000000000p+16",
+"int": "91346"
+},
+{
+"text": "75426",
+"float": "0x1.26a2000000000p+16",
+"int": "75426"
+},
+{
+"text": "82+",
+"float": null,
+"int": null
+},
+{
+"text": "1fi0075",
+"float": null,
+"int": null
+},
+{
+"text": "9060",
+"float": "0x1.1b20000000000p+13",
+"int": "9060"
+},
+{
+"text": "i9e25",
+"float": null,
+"int": null
+},
+{
+"text": "0-",
+"float": null,
+"int": null
+},
+{
+"text": "x8904",
+"float": null,
+"int": null
+},
+{
+"text": "3x131015",
+"float": null,
+"int": null
+},
+{
+"text": "67",
+"float": "0x1.0c00000000000p+6",
+"int": "67"
+},
+{
+"text": "1850i28+",
+"float": null,
+"int": null
+},
+{
+"text": "09_",
+"float": null,
+"int": null
+},
+{
+"text": "01fa1x",
+"float": null,
+"int": null
+},
+{
+"text": "n0_517n",
+"float": null,
+"int": null
+},
+{
+"text": "71317a9",
+"float": null,
+"int": null
+},
+{
+"text": "66na",
+"float": null,
+"int": null
+},
+{
+"text": "2e56a13",
+"float": null,
+"int": null
+},
+{
+"text": "64x8n",
+"float": null,
+"int": null
+},
+{
+"text": "7__9",
+"float": null,
+"int": null
+},
+{
+"text": "_2_5n5",
+"float": null,
+"int": null
+},
+{
+"text": "6-3",
+"float": null,
+"int": null
+},
+{
+"text": "070677nf",
+"float": null,
+"int": null
+},
+{
+"text": "-n0305",
+"float": null,
+"int": null
+},
+{
+"text": " 52a4+",
+"float": null,
+"int": null
+},
+{
+"text": "n01+34",
+"float": null,
+"int": null
+},
+{
+"text": "60+1",
+"float": null,
+"int": null
+},
+{
+"text": "9fEe3 ",
+"float": null,
+"int": null
+},
+{
+"text": "a719",
+"float": null,
+"int": null
+},
+{
+"text": "46",
+"float": "0x1.7000000000000p+5",
+"int": "46"
+},
+{
+"text": "75E3",
+"float": "0x1.24f8000000000p+16",
+"int": null
+},
+{
+"text": ".50",
+"float": "0x1.0000000000000p-1",
+"int": null
+},
+{
+"text": "764e_1.",
+"float": null,
+"int": null
+},
+{
+"text": "93",
+"float": "0x1.7400000000000p+6",
+"int": "93"
+},
+{
+"text": "0038e",
+"float": null,
+"int": null
+},
+{
+"text": "784042",
+"float": "0x1.7ed5400000000p+19",
+"int": "784042"
+},
+{
+"text": "755",
+"float": "0x1.7980000000000p+9",
+"int": "755"
+},
+{
+"text": "727f",
+"float": null,
+"int": null
+},
+{
+"text": "38 9E",
+"float": null,
+"int": null
+},
+{
+"text": "45_3f",
+"float": null,
+"int": null
+},
+{
+"text": "77753x",
+"float": null,
+"int": null
+},
+{
+"text": "6a",
+"float": null,
+"int": null
+},
+{
+"text": "9a12n35",
+"float": null,
+"int": null
+},
+{
+"text": "5836",
+"float": "0x1.6cc0000000000p+12",
+"int": "5836"
+},
+{
+"text": "f ._",
+"float": null,
+"int": null
+},
+{
+"text": "21E43",
+"float": "0x1.2d55d1180438fp+147",
+"int": null
+},
+{
+"text": "1351",
+"float": "0x1.51c0000000000p+10",
+"int": "1351"
+},
+{
+"text": "f46i9fi7",
+"float": null,
+"int": null
+},
+{
+"text": "92a989_",
+"float": null,
+"int": null
+},
+{
+"text": "0_n0544",
+"float": null,
+"int": null
+},
+{
+"text": "+59",
+"float": "0x1.d800000000000p+5",
+"int": "59"
+},
+{
+"text": "547492",
+"float": "0x1.0b54800000000p+19",
+"int": "547492"
+},
+{
+"text": "+a",
+"float": null,
+"int": null
+},
+{
+"text": "090813",
+"float": "0x1.62bd000000000p+16",
+"int": "90813"
+},
+{
+"text": "-+0520",
+"float": null,
+"int": null
+},
+{
+"text": "+71f_94f",
+"float": null,
+"int": null
+},
+{
+"text": "1981 ",
+"float": "0x1.ef40000000000p+10",
+"int": "1981"
+},
+{
+"text": "8i816",
+"float": null,
+"int": null
+},
+{
+"text": "260-",
+"float": null,
+"int": null
+},
+{
+"text": "0500",
+"float": "0x1.f400000000000p+8",
+"int": "500"
+},
+{
+"text": " 9",
+"float": "0x1.2000000000000p+3",
+"int": "9"
+},
+{
+"text": "448",
+"float": "0x1.c000000000000p+8",
+"int": "448"
+},
+{
+"text": "8n899n6",
+"float": null,
+"int": null
+},
+{
+"text": "6403-4x",
+"float": null,
+"int": null
+},
+{
+"text": "+14533",
+"float": "0x1.c628000000000p+13",
+"int": "14533"
+},
+{
+"text": "ef+181",
+"float": null,
+"int": null
+},
+{
+"text": "457",
+"float": "0x1.c900000000000p+8",
+"int": "457"
+},
+{
+"text": "3n3971",
+"float": null,
+"int": null
+},
+{
+"text": "5i62",
+"float": null,
+"int": null
+},
+{
+"text": "4690",
+"float": "0x1.2520000000000p+12",
+"int": "4690"
+},
+{
+"text": "8 63.",
+"float": null,
+"int": null
+},
+{
+"text": "5e38x15",
+"float": null,
+"int": null
+},
+{
+"text": "a907f5E8",
+"float": null,
+"int": null
+},
+{
+"text": "98 381i",
+"float": null,
+"int": null
+},
+{
+"text": "5_659",
+"float": "0x1.61b0000000000p+12",
+"int": "5659"
+},
+{
+"text": "38",
+"float": "0x1.3000000000000p+5",
+"int": "38"
+},
+{
+"text": ".2 8n 77",
+"float": null,
+"int": null
+},
+{
+"text": "4+0a1248",
+"float": null,
+"int": null
+},
+{
+"text": "E_92E6a0",
+"float": null,
+"int": null
+},
+{
+"text": "50952",
+"float": "0x1.8e10000000000p+15",
+"int": "50952"
+},
+{
+"text": "65a",
+"float": null,
+"int": null
+},
+{
+"text": "90",
+"float": "0x1.6800000000000p+6",
+"int": "90"
+},
+{
+"text": "n30",
+"float": null,
+"int": null
+},
+{
+"text": "865e877",
+"float": "inf",
+"int": null
+},
+{
+"text": "875 5",
+"float": null,
+"int": null
+},
+{
+"text": "80_ -8",
+"float": null,
+"int": null
+},
+{
+"text": "6x",
+"float": null,
+"int": null
+},
+{
+"text": "..",
+"float": null,
+"int": null
+},
+{
+"text": "029",
+"float": "0x1.d000000000000p+4",
+"int": "29"
+},
+{
+"text": "97",
+"float": "0x1.8400000000000p+6",
+"int": "97"
+},
+{
+"text": "346n1E9",
+"float": null,
+"int": null
+},
+{
+"text": "46493",
+"float": "0x1.6b3a000000000p+15",
+"int": "46493"
+},
+{
+"text": "8438+_",
+"float": null,
+"int": null
+},
+{
+"text": "7.a8",
+"float": null,
+"int": null
+},
+{
+"text": "f328030-",
+"float": null,
+"int": null
+},
+{
+"text": "09--",
+"float": null,
+"int": null
+},
+{
+"text": "1400E205",
+"float": "0x1.5cda11174db69p+691",
+"int": null
+},
+{
+"text": "22225",
+"float": "0x1.5b44000000000p+14",
+"int": "22225"
+},
+{
+"text": "65x9-",
+"float": null,
+"int": null
+},
+{
+"text": "841",
+"float": "0x1.a480000000000p+9",
+"int": "841"
+},
+{
+"text": "_7i E3",
+"float": null,
+"int": null
+},
+{
+"text": "74-917",
+"float": null,
+"int": null
+},
+{
+"text": "04x_E7",
+"float": null,
+"int": null
+},
+{
+"text": "7825",
+"float": "0x1.e910000000000p+12",
+"int": "7825"
+},
+{
+"text": "72269-00",
+"float": null,
+"int": null
+},
+{
+"text": "85_",
+"float": null,
+"int": null
+},
+{
+"text": "6011",
+"float": "0x1.77b0000000000p+12",
+"int": "6011"
+},
+{
+"text": "7841a20",
+"float": null,
+"int": null
+},
+{
+"text": "9_92746",
+"float": "0x1.e4bd400000000p+19",
+"int": "992746"
+},
+{
+"text": "325f42",
+"float": null,
+"int": null
+},
+{
+"text": "27e23",
+"float": "0x1.1ddfa58a61740p+81",
+"int": null
+},
+{
+"text": "61988ai",
+"float": null,
+"int": null
+},
+{
+"text": "76a",
+"float": null,
+"int": null
+},
+{
+"text": "x08",
+"float": null,
+"int": null
+},
+{
+"text": "_968",
+"float": null,
+"int": null
+},
+{
+"text": "49-_7154",
+"float": null,
+"int": null
+},
+{
+"text": "a7  n533",
+"float": null,
+"int": null
+},
+{
+"text": "21+2 i7",
+"float": null,
+"int": null
+},
+{
+"text": "927362x",
+"float": null,
+"int": null
+},
+{
+"text": "53+",
+"float": null,
+"int": null
+},
+{
+"text": "61901_3.",
+"float": "0x1.2e40a00000000p+19",
+"int": null
+},
+{
+"text": "E0",
+"float": null,
+"int": null
+},
+{
+"text": "a 9504f",
+"float": null,
+"int": null
+},
+{
+"text": "+22",
+"float": "0x1.6000000000000p+4",
+"int": "22"
+},
+{
+"text": "9+",
+"float": null,
+"int": null
+},
+{
+"text": "83n",
+"float": null,
+"int": null
+},
+{
+"text": "48n-9",
+"float": null,
+"int": null
+},
+{
+"text": "5 5_+8",
+"float": null,
+"int": null
+},
+{
+"text": "9 73",
+"float": null,
+"int": null
+},
+{
+"text": "4408-_59",
+"float": null,
+"int": null
+},
+{
+"text": "25f673.",
+"float": null,
+"int": null
+},
+{
+"text": "_267",
+"float": null,
+"int": null
+},
+{
+"text": "5884a",
+"float": null,
+"int": null
+},
+{
+"text": "-82",
+"float": "-0x1.4800000000000p+6",
+"int": "-82"
+},
+{
+"text": "30.15 ",
+"float": "0x1.e266666666666p+4",
+"int": null
+},
+{
+"text": "695",
+"float": "0x1.5b80000000000p+9",
+"int": "695"
+},
+{
+"text": "_01",
+"float": null,
+"int": null
+},
+{
+"text": "_504525",
+"float": null,
+"int": null
+},
+{
+"text": "+27_x",
+"float": null,
+"int": null
+},
+{
+"text": "048-0",
+"float": null,
+"int": null
+},
+{
+"text": "_09",
+"float": null,
+"int": null
+},
+{
+"text": "063",
+"float": "0x1.f800000000000p+5",
+"int": "63"
+},
+{
+"text": "7n",
+"float": null,
+"int": null
+},
+{
+"text": "2236",
+"float": "0x1.1780000000000p+11",
+"int": "2236"
+},
+{
+"text": "76e25_5",
+"float": "0x1.43f126c478f46p+853",
+"int": null
+},
+{
+"text": "7f924i31",
+"float": null,
+"int": null
+},
+{
+"text": "780",
+"float": "0x1.8600000000000p+9",
+"int": "780"
+},
+{
+"text": "n_57x055",
+"float": null,
+"int": null
+},
+{
+"text": "0fn9571",
+"float": null,
+"int": null
+},
+{
+"text": "5_",
+"float": null,
+"int": null
+},
+{
+"text": "14_002",
+"float": "0x1.b590000000000p+13",
+"int": "14002"
+},
+{
+"text": "72721448",
+"float": "0x1.15690a0000000p+26",
+"int": "72721448"
+},
+{
+"text": "716Exa95",
+"float": null,
+"int": null
+},
+{
+"text": "_i",
+"float": null,
+"int": null
+},
+{
+"text": "i-.00",
+"float": null,
+"int": null
+},
+{
+"text": "-7585948",
+"float": "-0x1.cf02700000000p+22",
+"int": "-7585948"
+},
+{
+"text": "_.",
+"float": null,
+"int": null
+},
+{
+"text": "5456198",
+"float": "0x1.4d05180000000p+22",
+"int": "5456198"
+},
+{
+"text": "1398",
+"float": "0x1.5d80000000000p+10",
+"int": "1398"
+},
+{
+"text": "5513",
+"float": "0x1.5890000000000p+12",
+"int": "5513"
+},
+{
+"text": "_08 ",
+"float": null,
+"int": null
+},
+{
+"text": "x628",
+"float": null,
+"int": null
+},
+{
+"text": "E3",
+"float": null,
+"int": null
+},
+{
+"text": "190i_4",
+"float": null,
+"int": null
+},
+{
+"text": "406",
+"float": "0x1.9600000000000p+8",
+"int": "406"
+},
+{
+"text": "E2_",
+"float": null,
+"int": null
+},
+{
+"text": "i489",
+"float": null,
+"int": null
+},
+{
+"text": "e5633-4",
+"float": null,
+"int": null
+},
+{
+"text": "2767307",
+"float": "0x1.51ce580000000p+21",
+"int": "2767307"
+},
+{
+"text": "i0984_9",
+"float": null,
+"int": null
+},
+{
+"text": "x_",
+"float": null,
+"int": null
+},
+{
+"text": "9n+4+i",
+"float": null,
+"int": null
+},
+{
+"text": "84_4.",
+"float": "0x1.a600000000000p+9",
+"int": null
+},
+{
+"text": "e2f2i07",
+"float": null,
+"int": null
+},
+{
+"text": "_784ii",
+"float": null,
+"int": null
+},
+{
+"text": "E930850",
+"float": null,
+"int": null
+},
+{
+"text": "263673",
+"float": "0x1.017e400000000p+18",
+"int": "263673"
+},
+{
+"text": "e777",
+"float": null,
+"int": null
+},
+{
+"text": "90555",
+"float": "0x1.61bb000000000p+16",
+"int": "90555"
+},
+{
+"text": "48841",
+"float": "0x1.7d92000000000p+15",
+"int": "48841"
+},
+{
+"text": "299",
+"float": "0x1.2b00000000000p+8",
+"int": "299"
+},
+{
+"text": "358n8",
+"float": null,
+"int": null
+},
+{
+"text": "3722.i85",
+"float": null,
+"int": null
+},
+{
+"text": "70-631",
+"float": null,
+"int": null
+},
+{
+"text": "2094x756",
+"float": null,
+"int": null
+},
+{
+"text": "0-04",
+"float": null,
+"int": null
+},
+{
+"text": "7n_4",
+"float": null,
+"int": null
+},
+{
+"text": "+556i3n",
+"float": null,
+"int": null
+},
+{
+"text": "3041_763",
+"float": "0x1.734f180000000p+21",
+"int": "3041763"
+},
+{
+"text": "7n9",
+"float": null,
+"int": null
+},
+{
+"text": "9n0051_-",
+"float": null,
+"int": null
+},
+{
+"text": "_37796",
+"float": null,
+"int": null
+},
+{
+"text": "785f52",
+"float": null,
+"int": null
+},
+{
+"text": "87ex",
+"float": null,
+"int": null
+},
+{
+"text": "395",
+"float": "0x1.8b00000000000p+8",
+"int": "395"
+},
+{
+"text": "124-2",
+"float": null,
+"int": null
+},
+{
+"text": "_e6",
+"float": null,
+"int": null
+},
+{
+"text": "3x5286 9",
+"float": null,
+"int": null
+},
+{
+"text": "552240",
+"float": "0x1.0da6000000000p+19",
+"int": "552240"
+},
+{
+"text": "812",
+"float": "0x1.9600000000000p+9",
+"int": "812"
+},
+{
+"text": "87",
+"float": "0x1.5c00000000000p+6",
+"int": "87"
+},
+{
+"text": "i E810x",
+"float": null,
+"int": null
+},
+{
+"text": "323610",
+"float": "0x1.3c06800000000p+18",
+"int": "323610"
+},
+{
+"text": "84_55",
+"float": "0x1.0838000000000p+13",
+"int": "8455"
+},
+{
+"text": "E8207f.",
+"float": null,
+"int": null
+},
+{
+"text": "5 000",
+"float": null,
+"int": null
+},
+{
+"text": "21",
+"float": "0x1.5000000000000p+4",
+"int": "21"
+},
+{
+"text": " -n9x69x",
+"float": null,
+"int": null
+},
+{
+"text": "58-5",
+"float": null,
+"int": null
+},
+{
+"text": "0073.9E",
+"float": null,
+"int": null
+},
+{
+"text": "131a0",
+"float": null,
+"int": null
+},
+{
+"text": "01en21_",
+"float": null,
+"int": null
+},
+{
+"text": "f3.9x 1",
+"float": null,
+"int": null
+},
+{
+"text": "824476",
+"float": "0x1.9293800000000p+19",
+"int": "824476"
+},
+{
+"text": "-80x530x",
+"float": null,
+"int": null
+},
+{
+"text": "9.2412",
+"float": "0x1.27b7e90ff9724p+3",
+"int": null
+},
+{
+"text": " 05x",
+"float": null,
+"int": null
+},
+{
+"text": "7834",
+"float": "0x1.e9a0000000000p+12",
+"int": "7834"
+},
+{
+"text": "3fn6523",
+"float": null,
+"int": null
+},
+{
+"text": "7584 9",
+"float": null,
+"int": null
+},
+{
+"text": "0ix48e",
+"float": null,
+"int": null
+},
+{
+"text": "27E068",
+"float": "0x1.909821b4170c6p+230",
+"int": null
+},
+{
+"text": "7-9",
+"float": null,
+"int": null
+},
+{
+"text": "70",
+"float": "0x1.1800000000000p+6",
+"int": "70"
+},
+{
+"text": "303438",
+"float": "0x1.2853800000000p+18",
+"int": "303438"
+},
+{
+"text": "n_7",
+"float": null,
+"int": null
+},
+{
+"text": "2E22192",
+"float": "inf",
+"int": null
+},
+{
+"text": "8an_",
+"float": null,
+"int": null
+},
+{
+"text": "0984",
+"float": "0x1.ec00000000000p+9",
+"int": "984"
+},
+{
+"text": "5392",
+"float": "0x1.5100000000000p+12",
+"int": "5392"
+},
+{
+"text": "6x 0456_",
+"float": null,
+"int": null
+},
+{
+"text": "9+7173",
+"float": null,
+"int": null
+},
+{
+"text": "99E46",
+"float": "0x1.5ad2454c9200bp+159",
+"int": null
+},
+{
+"text": "8.1",
+"float": "0x1.0333333333333p+3",
+"int": null
+},
+{
+"text": "E227",
+"float": null,
+"int": null
+},
+{
+"text": "+4+a",
+"float": null,
+"int": null
+}
+]

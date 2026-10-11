@@ -51,14 +51,25 @@ it comes from in its first lines. The changes, as a whole:
   size names, the scoring functions and _find_fonts_by_props/_findfont_cached, translated to C++, over a fixed list of
   the bundled fonts (dumped from matplotlib's FontManager, sorted by file name) instead of a scan of the system's
   fonts with a cache file; font files are named by file name.
-- **Mathtext** (src/text/mathtext, data/tex2uni.json): _mathtext.py's box model (Node, Box, Hbox, Char, Kern,
-  List, Hlist with kerning and hpack, Vlist with vpack, ship), the DejaVu Sans fontset (TruetypeFonts' glyph metrics
-  and kerning, UnicodeFonts' and DejaVuFonts' glyph lookup, DejaVuSansFontConstants), the parser handlers for symbols
-  (with the spacing of binary operators, relations and punctuation), groups and font groups, font switches and sub-
-  and superscripts, and mathtext.py's vector output, translated to C++. The pyparsing grammar is replaced by a
-  hand-written recursive-descent parser for that subset that skips whitespace where pyparsing does; anything else
-  (fractions, roots, accents, delimiters, the STIX fallback, other fontsets) is refused with an error. Letters are
-  told from other characters for the code points the subset reaches instead of with Python's unicodedata. path.py's Path (vertices, codes and the simplification settings),
+- **Mathtext** (src/text/mathtext, src/text/mathtext_fonts, data/tex2uni.json, data/mathtext_data.json):
+  _mathtext.py translated to C++: the box model (Node, Box, Vbox, Hbox, Char, Accent, List, Hlist with kerning and
+  hpack, Vlist with vpack, Rule, Hrule, Vrule, Glue, HCentered, VCentered, Kern, AutoHeightChar, AutoWidthChar, ship),
+  the fontsets (Fonts, TruetypeFonts, BakomaFonts, UnicodeFonts, DejaVuFonts, DejaVuSerifFonts, DejaVuSansFonts,
+  StixFonts, StixSansFonts and the font constants), the Parser's handlers, and mathtext.py's vector output. The
+  pyparsing grammar is replaced by a hand-written recursive-descent parser that accepts what the grammar accepts
+  and skips whitespace where pyparsing does; its error messages are not pyparsing's. The tables of
+  _mathtext_data.py (tex2uni, latex_to_bakoma, stix_virtual_fonts, stix_glyph_fixes) and the symbol sets of the
+  Parser class are data files written by tools/oracle/make_tex2uni.py and tools/oracle/make_mathtext_data.py.
+  Letters, Greek capitals and digits are told with data/unicode_letters.json instead of Python's unicodedata.
+  The raster output (Output.to_raster) and the font name cache of the fontsets are not ported. A fontset whose
+  fonts cannot be had (a file that does not open, a pattern FontProperties refuses) fails with an error. Where
+  matplotlib itself breaks on an expression (a quoted string or braces as a row of \substack, a delimiter left
+  unsized) the expression is refused.
+- **Fontconfig patterns** (src/support/fontconfig_pattern, the pattern part of src/text/font_manager):
+  _fontconfig_pattern.py's parse_fontconfig_pattern and FontProperties' set_fontconfig_pattern with its setters,
+  translated to C++; the pyparsing grammar is a hand-written parser that expands tabs and skips blanks as
+  pyparsing does. A pattern that names a font file (file=) is refused where a font is asked for with it.
+  path.py's Path (vertices, codes and the simplification settings),
   backend_bases.py's GraphicsContextBase and the RendererBase interface, artist.py's Artist (clip settings),
   patches.py's Patch and Rectangle, lines.py's dash patterns and figure.py's Figure (its boxes, transforms and
   patch) with backend_agg.py's and backend_svg.py's canvas drawing, translated to C++. Artists draw through a
@@ -131,6 +142,9 @@ it comes from in its first lines. The changes, as a whole:
   src/transforms/transforms.cpp).
   Titles: _update_title_position now clears the y axis' offset text and the x axis' top ticks and labels
   (Axis._get_ticks_position over a major and a minor tick), as matplotlib does.
+  Texts: axes/_axes.py's Axes.text with text.py's Text.__init__ and Text.update (the property setters of Text,
+  FontProperties and Artist, each with its check), translated to C++ in the executor; backend_agg.py's
+  _draw_text_glyphs_and_boxes now also records the boxes of mathtext (rules) and their filled paths.
 - File names drop the leading underscore (e.g. src/_backend_agg.h is src/agg/backend_agg.h); includes follow.
 - The drawing algorithms themselves (src/_backend_agg.h, src/_backend_agg.cpp, src/path_converters.h,
   src/agg_workaround.h, src/array.h, src/mplutils.h) are otherwise unchanged.

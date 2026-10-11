@@ -1,0 +1,2783 @@
+{
+"_provenance": [
+"Derived from Matplotlib 3.11.2: lib/matplotlib/_mathtext.py (the sets of the Parser class) and",
+"lib/matplotlib/_mathtext_data.py (latex_to_bakoma, stix_virtual_fonts, stix_glyph_fixes), written by",
+"tools/oracle/make_mathtext_data.py.",
+"Copyright (c) 2012- Matplotlib Development Team; All Rights Reserved",
+"Licence: LICENSES/Matplotlib.txt."
+],
+"binary_operators": [
+"*",
+"+",
+"-",
+"\\Cap",
+"\\Cup",
+"\\amalg",
+"\\ast",
+"\\barvee",
+"\\barwedge",
+"\\bigcirc",
+"\\bigtriangledown",
+"\\bigtriangleup",
+"\\boxbar",
+"\\boxdot",
+"\\boxminus",
+"\\boxplus",
+"\\boxtimes",
+"\\bullet",
+"\\cap",
+"\\cdot",
+"\\circ",
+"\\circledast",
+"\\circledcirc",
+"\\circleddash",
+"\\cup",
+"\\cupdot",
+"\\curlyvee",
+"\\curlywedge",
+"\\dagger",
+"\\ddagger",
+"\\diamond",
+"\\div",
+"\\divideontimes",
+"\\dotminus",
+"\\dotplus",
+"\\dotsminusdots",
+"\\doublebarwedge",
+"\\intercal",
+"\\leftthreetimes",
+"\\lhd",
+"\\merge",
+"\\minuscolon",
+"\\mp",
+"\\obar",
+"\\odot",
+"\\ominus",
+"\\oplus",
+"\\oslash",
+"\\otimes",
+"\\pm",
+"\\rhd",
+"\\rightthreetimes",
+"\\setminus",
+"\\slash",
+"\\sqcap",
+"\\sqcup",
+"\\star",
+"\\times",
+"\\triangleleft",
+"\\triangleright",
+"\\unlhd",
+"\\unrhd",
+"\\uplus",
+"\\vee",
+"\\veebar",
+"\\wedge",
+"\\wr",
+"\u2212"
+],
+"relation_symbols": [
+":",
+"<",
+"=",
+">",
+"\\Bumpeq",
+"\\Doteq",
+"\\Equiv",
+"\\Join",
+"\\Subset",
+"\\Supset",
+"\\Vdash",
+"\\Vvdash",
+"\\approx",
+"\\approxeq",
+"\\approxident",
+"\\arceq",
+"\\asymp",
+"\\backcong",
+"\\backepsilon",
+"\\backsim",
+"\\backsimeq",
+"\\bagmember",
+"\\because",
+"\\between",
+"\\blacktriangleleft",
+"\\blacktriangleright",
+"\\bot",
+"\\bowtie",
+"\\bumpeq",
+"\\circeq",
+"\\coloneq",
+"\\cong",
+"\\curlyeqprec",
+"\\curlyeqsucc",
+"\\dashv",
+"\\disin",
+"\\doteq",
+"\\doteqdot",
+"\\dots",
+"\\eqcirc",
+"\\eqcolon",
+"\\eqdef",
+"\\eqgtr",
+"\\eqless",
+"\\eqsim",
+"\\eqslantgtr",
+"\\eqslantless",
+"\\equal",
+"\\equalparallel",
+"\\equiv",
+"\\fallingdotseq",
+"\\frown",
+"\\geq",
+"\\geqq",
+"\\geqslant",
+"\\gg",
+"\\ggg",
+"\\gnapprox",
+"\\gneqq",
+"\\gnsim",
+"\\gtrapprox",
+"\\gtrdot",
+"\\gtreqless",
+"\\gtreqqless",
+"\\gtrless",
+"\\gtrsim",
+"\\in",
+"\\isinE",
+"\\isindot",
+"\\isinobar",
+"\\isins",
+"\\isinvb",
+"\\leq",
+"\\leqq",
+"\\leqslant",
+"\\lessapprox",
+"\\lessdot",
+"\\lesseqgtr",
+"\\lesseqqgtr",
+"\\lessgtr",
+"\\lesssim",
+"\\ll",
+"\\lll",
+"\\lnapprox",
+"\\lneqq",
+"\\lnsim",
+"\\ltimes",
+"\\measeq",
+"\\measuredrightangle",
+"\\mid",
+"\\models",
+"\\nVDash",
+"\\nVdash",
+"\\napprox",
+"\\ncong",
+"\\ne",
+"\\neq",
+"\\nequiv",
+"\\ngeq",
+"\\ngtr",
+"\\ngtrless",
+"\\ngtrsim",
+"\\ni",
+"\\niobar",
+"\\nis",
+"\\nisd",
+"\\nleq",
+"\\nless",
+"\\nlessgtr",
+"\\nlesssim",
+"\\nmid",
+"\\notin",
+"\\notsmallowns",
+"\\nparallel",
+"\\nprec",
+"\\npreccurlyeq",
+"\\nsim",
+"\\nsimeq",
+"\\nsqsubseteq",
+"\\nsqsupseteq",
+"\\nsubset",
+"\\nsubseteq",
+"\\nsucc",
+"\\nsucccurlyeq",
+"\\nsupset",
+"\\nsupseteq",
+"\\ntriangleleft",
+"\\ntrianglelefteq",
+"\\ntriangleright",
+"\\ntrianglerighteq",
+"\\nvDash",
+"\\nvdash",
+"\\oequal",
+"\\parallel",
+"\\perp",
+"\\pitchfork",
+"\\prec",
+"\\precapprox",
+"\\preccurlyeq",
+"\\preceq",
+"\\precnapprox",
+"\\precnsim",
+"\\precsim",
+"\\propto",
+"\\questeq",
+"\\ratio",
+"\\rightModels",
+"\\rightangle",
+"\\rightassert",
+"\\risingdotseq",
+"\\rtimes",
+"\\scurel",
+"\\sim",
+"\\simeq",
+"\\simneqq",
+"\\smallin",
+"\\smallowns",
+"\\smile",
+"\\sqsubset",
+"\\sqsubseteq",
+"\\sqsubsetneq",
+"\\sqsupset",
+"\\sqsupseteq",
+"\\sqsupsetneq",
+"\\stareq",
+"\\subset",
+"\\subseteq",
+"\\subseteqq",
+"\\subsetneq",
+"\\subsetneqq",
+"\\succ",
+"\\succapprox",
+"\\succcurlyeq",
+"\\succeq",
+"\\succnapprox",
+"\\succnsim",
+"\\succsim",
+"\\supset",
+"\\supseteq",
+"\\supseteqq",
+"\\supsetneq",
+"\\supsetneqq",
+"\\therefore",
+"\\top",
+"\\triangle",
+"\\triangleeq",
+"\\triangleleft",
+"\\trianglelefteq",
+"\\triangleq",
+"\\triangleright",
+"\\trianglerighteq",
+"\\vDash",
+"\\varisinobar",
+"\\varisins",
+"\\varlrtriangle",
+"\\varniobar",
+"\\varnis",
+"\\varpropto",
+"\\vartriangleleft",
+"\\vartriangleright",
+"\\vdash",
+"\\veeeq",
+"\\wedgeq"
+],
+"arrow_symbols": [
+"\\Downarrow",
+"\\Ldsh",
+"\\Leftarrow",
+"\\Leftrightarrow",
+"\\Lleftarrow",
+"\\Longleftarrow",
+"\\Longleftrightarrow",
+"\\Longrightarrow",
+"\\Lsh",
+"\\Nearrow",
+"\\Nwarrow",
+"\\Rdsh",
+"\\Rightarrow",
+"\\Rrightarrow",
+"\\Rsh",
+"\\Searrow",
+"\\Swarrow",
+"\\Uparrow",
+"\\Updownarrow",
+"\\barleftarrow",
+"\\circlearrowleft",
+"\\circlearrowright",
+"\\cupleftarrow",
+"\\curvearrowleft",
+"\\curvearrowright",
+"\\cwopencirclearrow",
+"\\dashleftarrow",
+"\\dashrightarrow",
+"\\downarrow",
+"\\downdownarrows",
+"\\downharpoonleft",
+"\\downharpoonright",
+"\\downzigzagarrow",
+"\\hookleftarrow",
+"\\hookrightarrow",
+"\\leadsto",
+"\\leftarrow",
+"\\leftarrowtail",
+"\\leftharpoondown",
+"\\leftharpoonup",
+"\\leftleftarrows",
+"\\leftrightarrow",
+"\\leftrightarrows",
+"\\leftrightharpoons",
+"\\leftrightsquigarrow",
+"\\leftsquigarrow",
+"\\longleftarrow",
+"\\longleftrightarrow",
+"\\longmapsto",
+"\\longrightarrow",
+"\\looparrowleft",
+"\\looparrowright",
+"\\mapsdown",
+"\\mapsfrom",
+"\\mapsto",
+"\\mapsup",
+"\\multimap",
+"\\nLeftarrow",
+"\\nLeftrightarrow",
+"\\nRightarrow",
+"\\nearrow",
+"\\nleftarrow",
+"\\nleftrightarrow",
+"\\nrightarrow",
+"\\nwarrow",
+"\\overleftarrow",
+"\\overleftrightarrow",
+"\\rightarrow",
+"\\rightarrowbar",
+"\\rightarrowtail",
+"\\rightharpoondown",
+"\\rightharpoonup",
+"\\rightleftarrows",
+"\\rightleftharpoons",
+"\\rightrightarrows",
+"\\rightsquigarrow",
+"\\rightzigzagarrow",
+"\\searrow",
+"\\swarrow",
+"\\to",
+"\\twoheaddownarrow",
+"\\twoheadleftarrow",
+"\\twoheadrightarrow",
+"\\twoheaduparrow",
+"\\uparrow",
+"\\updownarrow",
+"\\updownarrowbar",
+"\\updownarrows",
+"\\upharpoonleft",
+"\\upharpoonright",
+"\\upuparrows"
+],
+"punctuation_symbols": [
+"!",
+",",
+".",
+";",
+"\\cdotp",
+"\\ldotp"
+],
+"overunder_symbols": [
+"\\bigcap",
+"\\bigcup",
+"\\bigodot",
+"\\bigoplus",
+"\\bigotimes",
+"\\bigsqcup",
+"\\biguplus",
+"\\bigvee",
+"\\bigwedge",
+"\\coprod",
+"\\prod",
+"\\sum"
+],
+"overunder_functions": [
+"lim",
+"liminf",
+"limsup",
+"max",
+"min",
+"sup"
+],
+"dropsub_symbols": [
+"\\iiiint",
+"\\iiint",
+"\\iint",
+"\\int",
+"\\oiiint",
+"\\oiint",
+"\\oint"
+],
+"fontnames": [
+"bb",
+"bf",
+"bfit",
+"cal",
+"default",
+"frak",
+"it",
+"normal",
+"regular",
+"rm",
+"scr",
+"sf",
+"tt"
+],
+"function_names": [
+"Pr",
+"arccos",
+"arcsin",
+"arctan",
+"arg",
+"cos",
+"cosh",
+"cot",
+"coth",
+"csc",
+"deg",
+"det",
+"dim",
+"exp",
+"gcd",
+"hom",
+"inf",
+"ker",
+"lg",
+"lim",
+"liminf",
+"limsup",
+"ln",
+"log",
+"max",
+"min",
+"sec",
+"sin",
+"sinh",
+"sup",
+"tan",
+"tanh"
+],
+"ambi_delims": [
+".",
+"/",
+"\\Downarrow",
+"\\Uparrow",
+"\\Updownarrow",
+"\\Vert",
+"\\backslash",
+"\\downarrow",
+"\\uparrow",
+"\\updownarrow",
+"\\vert",
+"\\|",
+"|"
+],
+"left_delims": [
+"(",
+"<",
+"[",
+"\\langle",
+"\\lbrace",
+"\\lbrack",
+"\\lceil",
+"\\leftbrace",
+"\\leftparen",
+"\\lfloor",
+"\\lgroup",
+"\\{"
+],
+"right_delims": [
+")",
+">",
+"\\rangle",
+"\\rbrace",
+"\\rbrack",
+"\\rceil",
+"\\rfloor",
+"\\rgroup",
+"\\rightbrace",
+"\\rightparen",
+"\\}",
+"]"
+],
+"small_greek": [
+"alpha",
+"beta",
+"chi",
+"delta",
+"epsilon",
+"eta",
+"gamma",
+"iota",
+"kappa",
+"lamda",
+"mu",
+"nu",
+"omega",
+"omicron",
+"phi",
+"pi",
+"psi",
+"rho",
+"sigma",
+"tau",
+"theta",
+"upsilon",
+"xi",
+"zeta"
+],
+"space_widths": {
+"\\ ": 0.33333,
+"\\!": -0.16667,
+"\\,": 0.16667,
+"\\/": 0.16667,
+"\\:": 0.22222,
+"\\;": 0.27778,
+"\\>": 0.22222,
+"\\enspace": 0.5,
+"\\qquad": 2,
+"\\quad": 1,
+"\\thinspace": 0.16667,
+"~": 0.33333
+},
+"accent_map": {
+"\"": "\\combiningdiaeresis",
+"'": "\\combiningacuteaccent",
+".": "\\combiningdotabove",
+"^": "\\circumflexaccent",
+"`": "\\combininggraveaccent",
+"acute": "\\combiningacuteaccent",
+"bar": "\\combiningoverline",
+"breve": "\\combiningbreve",
+"ddddot": "\\combiningfourdotsabove",
+"dddot": "\\combiningthreedotsabove",
+"ddot": "\\combiningdiaeresis",
+"dot": "\\combiningdotabove",
+"grave": "\\combininggraveaccent",
+"hat": "\\circumflexaccent",
+"mathring": "\\circ",
+"overleftarrow": "\\leftarrow",
+"overrightarrow": "\\rightarrow",
+"tilde": "\\combiningtilde",
+"vec": "\\combiningrightarrowabove",
+"~": "\\combiningtilde"
+},
+"wide_accents": [
+"widebar",
+"widehat",
+"widetilde"
+],
+"latex_to_bakoma": {
+"!": [
+"cmr10",
+33
+],
+"%": [
+"cmr10",
+37
+],
+"&": [
+"cmr10",
+38
+],
+"(": [
+"cmr10",
+40
+],
+")": [
+"cmr10",
+41
+],
+"*": [
+"cmsy10",
+164
+],
+"+": [
+"cmr10",
+43
+],
+",": [
+"cmmi10",
+59
+],
+".": [
+"cmmi10",
+58
+],
+"/": [
+"cmmi10",
+61
+],
+":": [
+"cmr10",
+58
+],
+";": [
+"cmr10",
+59
+],
+"<": [
+"cmmi10",
+60
+],
+"=": [
+"cmr10",
+61
+],
+">": [
+"cmmi10",
+62
+],
+"?": [
+"cmr10",
+63
+],
+"@": [
+"cmr10",
+64
+],
+"[": [
+"cmr10",
+91
+],
+"\\#": [
+"cmr10",
+35
+],
+"\\$": [
+"cmr10",
+36
+],
+"\\%": [
+"cmr10",
+37
+],
+"\\Delta": [
+"cmr10",
+162
+],
+"\\Downarrow": [
+"cmsy10",
+43
+],
+"\\Gamma": [
+"cmr10",
+161
+],
+"\\Im": [
+"cmsy10",
+61
+],
+"\\Lambda": [
+"cmr10",
+164
+],
+"\\Leftarrow": [
+"cmsy10",
+40
+],
+"\\Leftrightarrow": [
+"cmsy10",
+44
+],
+"\\Omega": [
+"cmr10",
+173
+],
+"\\P": [
+"cmsy10",
+123
+],
+"\\Phi": [
+"cmr10",
+169
+],
+"\\Pi": [
+"cmr10",
+166
+],
+"\\Psi": [
+"cmr10",
+170
+],
+"\\Re": [
+"cmsy10",
+60
+],
+"\\Rightarrow": [
+"cmsy10",
+41
+],
+"\\S": [
+"cmsy10",
+120
+],
+"\\Sigma": [
+"cmr10",
+167
+],
+"\\Theta": [
+"cmr10",
+163
+],
+"\\Uparrow": [
+"cmsy10",
+42
+],
+"\\Updownarrow": [
+"cmsy10",
+109
+],
+"\\Upsilon": [
+"cmr10",
+168
+],
+"\\Vert": [
+"cmsy10",
+107
+],
+"\\Xi": [
+"cmr10",
+165
+],
+"\\_": [
+"cmtt10",
+95
+],
+"\\__angbracketleftBig__": [
+"cmex10",
+68
+],
+"\\__angbracketleftBigg__": [
+"cmex10",
+42
+],
+"\\__angbracketleft__": [
+"cmsy10",
+104
+],
+"\\__angbracketleftbig__": [
+"cmex10",
+173
+],
+"\\__angbracketleftbigg__": [
+"cmex10",
+191
+],
+"\\__angbracketrightBig__": [
+"cmex10",
+69
+],
+"\\__angbracketrightBigg__": [
+"cmex10",
+43
+],
+"\\__angbracketright__": [
+"cmsy10",
+105
+],
+"\\__angbracketrightbig__": [
+"cmex10",
+174
+],
+"\\__angbracketrightbigg__": [
+"cmex10",
+192
+],
+"\\__backslashBig__": [
+"cmex10",
+47
+],
+"\\__backslashBigg__": [
+"cmex10",
+45
+],
+"\\__backslashbig__": [
+"cmex10",
+178
+],
+"\\__backslashbigg__": [
+"cmex10",
+194
+],
+"\\__braceleftBig__": [
+"cmex10",
+110
+],
+"\\__braceleftBigg__": [
+"cmex10",
+40
+],
+"\\__braceleftbig__": [
+"cmex10",
+169
+],
+"\\__braceleftbigg__": [
+"cmex10",
+189
+],
+"\\__bracerightBig__": [
+"cmex10",
+111
+],
+"\\__bracerightBigg__": [
+"cmex10",
+41
+],
+"\\__bracerightbig__": [
+"cmex10",
+170
+],
+"\\__bracerightbigg__": [
+"cmex10",
+190
+],
+"\\__bracketleftBig__": [
+"cmex10",
+104
+],
+"\\__bracketleftBigg__": [
+"cmex10",
+34
+],
+"\\__bracketleftbig__": [
+"cmex10",
+163
+],
+"\\__bracketleftbigg__": [
+"cmex10",
+8729
+],
+"\\__bracketrightBig__": [
+"cmex10",
+105
+],
+"\\__bracketrightBigg__": [
+"cmex10",
+35
+],
+"\\__bracketrightbig__": [
+"cmex10",
+164
+],
+"\\__bracketrightbigg__": [
+"cmex10",
+184
+],
+"\\__ceilingleftBig__": [
+"cmex10",
+108
+],
+"\\__ceilingleftBigg__": [
+"cmex10",
+38
+],
+"\\__ceilingleftbig__": [
+"cmex10",
+167
+],
+"\\__ceilingleftbigg__": [
+"cmex10",
+187
+],
+"\\__ceilingrightBig__": [
+"cmex10",
+109
+],
+"\\__ceilingrightBigg__": [
+"cmex10",
+39
+],
+"\\__ceilingrightbig__": [
+"cmex10",
+168
+],
+"\\__ceilingrightbigg__": [
+"cmex10",
+188
+],
+"\\__floorleftBig__": [
+"cmex10",
+106
+],
+"\\__floorleftBigg__": [
+"cmex10",
+36
+],
+"\\__floorleftbig__": [
+"cmex10",
+165
+],
+"\\__floorleftbigg__": [
+"cmex10",
+185
+],
+"\\__floorrightBig__": [
+"cmex10",
+107
+],
+"\\__floorrightBigg__": [
+"cmex10",
+37
+],
+"\\__floorrightbig__": [
+"cmex10",
+166
+],
+"\\__floorrightbigg__": [
+"cmex10",
+186
+],
+"\\__hatwide__": [
+"cmex10",
+98
+],
+"\\__hatwider__": [
+"cmex10",
+99
+],
+"\\__hatwidest__": [
+"cmex10",
+100
+],
+"\\__parenleftBig__": [
+"cmex10",
+179
+],
+"\\__parenleftBigg__": [
+"cmex10",
+195
+],
+"\\__parenleftbig__": [
+"cmex10",
+161
+],
+"\\__parenleftbigg__": [
+"cmex10",
+181
+],
+"\\__parenrightBig__": [
+"cmex10",
+180
+],
+"\\__parenrightBigg__": [
+"cmex10",
+33
+],
+"\\__parenrightbig__": [
+"cmex10",
+162
+],
+"\\__parenrightbigg__": [
+"cmex10",
+182
+],
+"\\__radicalBig__": [
+"cmex10",
+113
+],
+"\\__radicalBigg__": [
+"cmex10",
+115
+],
+"\\__radicalbig__": [
+"cmex10",
+112
+],
+"\\__radicalbigg__": [
+"cmex10",
+114
+],
+"\\__slashBig__": [
+"cmex10",
+46
+],
+"\\__slashBigg__": [
+"cmex10",
+44
+],
+"\\__slashbig__": [
+"cmex10",
+177
+],
+"\\__slashbigg__": [
+"cmex10",
+193
+],
+"\\__sqrt__": [
+"cmex10",
+112
+],
+"\\__tildewide__": [
+"cmex10",
+101
+],
+"\\__tildewider__": [
+"cmex10",
+102
+],
+"\\__tildewidest__": [
+"cmex10",
+103
+],
+"\\aleph": [
+"cmsy10",
+64
+],
+"\\alpha": [
+"cmmi10",
+174
+],
+"\\approx": [
+"cmsy10",
+188
+],
+"\\ast": [
+"cmsy10",
+164
+],
+"\\asymp": [
+"cmsy10",
+179
+],
+"\\backslash": [
+"cmsy10",
+110
+],
+"\\beta": [
+"cmmi10",
+175
+],
+"\\bigcap": [
+"cmex10",
+92
+],
+"\\bigcirc": [
+"cmsy10",
+176
+],
+"\\bigcup": [
+"cmex10",
+91
+],
+"\\bigodot": [
+"cmex10",
+75
+],
+"\\bigoplus": [
+"cmex10",
+77
+],
+"\\bigotimes": [
+"cmex10",
+79
+],
+"\\bigtriangledown": [
+"cmsy10",
+53
+],
+"\\bigtriangleup": [
+"cmsy10",
+52
+],
+"\\biguplus": [
+"cmex10",
+93
+],
+"\\bigvee": [
+"cmex10",
+95
+],
+"\\bigwedge": [
+"cmex10",
+94
+],
+"\\bot": [
+"cmsy10",
+63
+],
+"\\bullet": [
+"cmsy10",
+178
+],
+"\\cap": [
+"cmsy10",
+92
+],
+"\\cdot": [
+"cmsy10",
+162
+],
+"\\chi": [
+"cmmi10",
+194
+],
+"\\circ": [
+"cmsy10",
+177
+],
+"\\circumflexaccent": [
+"cmr10",
+94
+],
+"\\clubsuit": [
+"cmsy10",
+124
+],
+"\\combiningacuteaccent": [
+"cmr10",
+182
+],
+"\\combiningbreve": [
+"cmr10",
+184
+],
+"\\combiningdiaeresis": [
+"cmr10",
+196
+],
+"\\combiningdotabove": [
+"cmr10",
+95
+],
+"\\combininggraveaccent": [
+"cmr10",
+181
+],
+"\\combiningoverline": [
+"cmr10",
+185
+],
+"\\combiningrightarrowabove": [
+"cmmi10",
+126
+],
+"\\combiningtilde": [
+"cmr10",
+126
+],
+"\\coprod": [
+"cmex10",
+97
+],
+"\\cup": [
+"cmsy10",
+91
+],
+"\\dag": [
+"cmsy10",
+121
+],
+"\\dashv": [
+"cmsy10",
+97
+],
+"\\ddag": [
+"cmsy10",
+122
+],
+"\\delta": [
+"cmmi10",
+177
+],
+"\\diamond": [
+"cmsy10",
+166
+],
+"\\diamondsuit": [
+"cmsy10",
+125
+],
+"\\div": [
+"cmsy10",
+165
+],
+"\\downarrow": [
+"cmsy10",
+35
+],
+"\\ell": [
+"cmmi10",
+96
+],
+"\\emptyset": [
+"cmsy10",
+59
+],
+"\\epsilon": [
+"cmmi10",
+178
+],
+"\\equiv": [
+"cmsy10",
+180
+],
+"\\eta": [
+"cmmi10",
+180
+],
+"\\exists": [
+"cmsy10",
+57
+],
+"\\flat": [
+"cmmi10",
+91
+],
+"\\forall": [
+"cmsy10",
+56
+],
+"\\frown": [
+"cmmi10",
+95
+],
+"\\gamma": [
+"cmmi10",
+176
+],
+"\\geq": [
+"cmsy10",
+184
+],
+"\\gg": [
+"cmsy10",
+192
+],
+"\\heartsuit": [
+"cmsy10",
+126
+],
+"\\imath": [
+"cmmi10",
+123
+],
+"\\in": [
+"cmsy10",
+50
+],
+"\\infty": [
+"cmsy10",
+49
+],
+"\\int": [
+"cmex10",
+90
+],
+"\\iota": [
+"cmmi10",
+182
+],
+"\\jmath": [
+"cmmi10",
+124
+],
+"\\kappa": [
+"cmmi10",
+8729
+],
+"\\lambda": [
+"cmmi10",
+184
+],
+"\\langle": [
+"cmex10",
+173
+],
+"\\lbrace": [
+"cmsy10",
+102
+],
+"\\lceil": [
+"cmsy10",
+100
+],
+"\\leftangle": [
+"cmex10",
+173
+],
+"\\leftarrow": [
+"cmsy10",
+195
+],
+"\\leftbrace": [
+"cmex10",
+169
+],
+"\\leftbracket": [
+"cmr10",
+91
+],
+"\\leftharpoondown": [
+"cmmi10",
+41
+],
+"\\leftharpoonup": [
+"cmmi10",
+40
+],
+"\\leftparen": [
+"cmr10",
+40
+],
+"\\leftrightarrow": [
+"cmsy10",
+36
+],
+"\\leq": [
+"cmsy10",
+8729
+],
+"\\lfloor": [
+"cmsy10",
+98
+],
+"\\ll": [
+"cmsy10",
+191
+],
+"\\mid": [
+"cmsy10",
+106
+],
+"\\mp": [
+"cmsy10",
+168
+],
+"\\mu": [
+"cmmi10",
+185
+],
+"\\nabla": [
+"cmsy10",
+114
+],
+"\\natural": [
+"cmmi10",
+92
+],
+"\\nearrow": [
+"cmsy10",
+37
+],
+"\\neg": [
+"cmsy10",
+58
+],
+"\\ni": [
+"cmsy10",
+51
+],
+"\\nu": [
+"cmmi10",
+186
+],
+"\\nwarrow": [
+"cmsy10",
+45
+],
+"\\odot": [
+"cmsy10",
+175
+],
+"\\oint": [
+"cmex10",
+73
+],
+"\\omega": [
+"cmmi10",
+33
+],
+"\\ominus": [
+"cmsy10",
+170
+],
+"\\oplus": [
+"cmsy10",
+169
+],
+"\\oslash": [
+"cmsy10",
+174
+],
+"\\otimes": [
+"cmsy10",
+173
+],
+"\\phi": [
+"cmmi10",
+193
+],
+"\\pi": [
+"cmmi10",
+188
+],
+"\\pm": [
+"cmsy10",
+167
+],
+"\\prec": [
+"cmsy10",
+193
+],
+"\\preceq": [
+"cmsy10",
+185
+],
+"\\prime": [
+"cmsy10",
+48
+],
+"\\prod": [
+"cmex10",
+89
+],
+"\\propto": [
+"cmsy10",
+47
+],
+"\\psi": [
+"cmmi10",
+195
+],
+"\\rangle": [
+"cmex10",
+174
+],
+"\\rbrace": [
+"cmsy10",
+103
+],
+"\\rceil": [
+"cmsy10",
+101
+],
+"\\rfloor": [
+"cmsy10",
+99
+],
+"\\rho": [
+"cmmi10",
+189
+],
+"\\rightangle": [
+"cmex10",
+174
+],
+"\\rightarrow": [
+"cmsy10",
+33
+],
+"\\rightbrace": [
+"cmex10",
+170
+],
+"\\rightbracket": [
+"cmr10",
+93
+],
+"\\rightharpoondown": [
+"cmmi10",
+43
+],
+"\\rightharpoonup": [
+"cmmi10",
+42
+],
+"\\rightparen": [
+"cmr10",
+41
+],
+"\\searrow": [
+"cmsy10",
+38
+],
+"\\sharp": [
+"cmmi10",
+93
+],
+"\\sigma": [
+"cmmi10",
+190
+],
+"\\sim": [
+"cmsy10",
+187
+],
+"\\simeq": [
+"cmsy10",
+39
+],
+"\\slash": [
+"cmsy10",
+54
+],
+"\\smile": [
+"cmmi10",
+94
+],
+"\\spadesuit": [
+"cmsy10",
+196
+],
+"\\sqcap": [
+"cmsy10",
+117
+],
+"\\sqcup": [
+"cmsy10",
+116
+],
+"\\sqsubseteq": [
+"cmsy10",
+118
+],
+"\\sqsupseteq": [
+"cmsy10",
+119
+],
+"\\subset": [
+"cmsy10",
+189
+],
+"\\subseteq": [
+"cmsy10",
+181
+],
+"\\succ": [
+"cmsy10",
+194
+],
+"\\succeq": [
+"cmsy10",
+186
+],
+"\\sum": [
+"cmex10",
+88
+],
+"\\supset": [
+"cmsy10",
+190
+],
+"\\supseteq": [
+"cmsy10",
+182
+],
+"\\swarrow": [
+"cmsy10",
+46
+],
+"\\tau": [
+"cmmi10",
+191
+],
+"\\theta": [
+"cmmi10",
+181
+],
+"\\times": [
+"cmsy10",
+163
+],
+"\\to": [
+"cmsy10",
+33
+],
+"\\top": [
+"cmsy10",
+62
+],
+"\\triangleleft": [
+"cmmi10",
+47
+],
+"\\triangleright": [
+"cmmi10",
+46
+],
+"\\uparrow": [
+"cmsy10",
+34
+],
+"\\updownarrow": [
+"cmsy10",
+108
+],
+"\\uplus": [
+"cmsy10",
+93
+],
+"\\upsilon": [
+"cmmi10",
+192
+],
+"\\varepsilon": [
+"cmmi10",
+34
+],
+"\\varphi": [
+"cmmi10",
+39
+],
+"\\varrho": [
+"cmmi10",
+37
+],
+"\\varsigma": [
+"cmmi10",
+38
+],
+"\\vartheta": [
+"cmmi10",
+35
+],
+"\\vdash": [
+"cmsy10",
+96
+],
+"\\vee": [
+"cmsy10",
+95
+],
+"\\vert": [
+"cmsy10",
+106
+],
+"\\wedge": [
+"cmsy10",
+94
+],
+"\\widebar": [
+"cmr10",
+185
+],
+"\\widehat": [
+"cmex10",
+98
+],
+"\\widetilde": [
+"cmex10",
+101
+],
+"\\wp": [
+"cmmi10",
+125
+],
+"\\wr": [
+"cmsy10",
+111
+],
+"\\xi": [
+"cmmi10",
+187
+],
+"\\zeta": [
+"cmmi10",
+179
+],
+"\\{": [
+"cmex10",
+169
+],
+"\\|": [
+"cmsy10",
+107
+],
+"\\}": [
+"cmex10",
+170
+],
+"]": [
+"cmr10",
+93
+],
+"{": [
+"cmex10",
+169
+],
+"|": [
+"cmsy10",
+106
+],
+"}": [
+"cmex10",
+170
+],
+"\u2212": [
+"cmsy10",
+161
+]
+},
+"stix_virtual_fonts": {
+"bb": {
+"rm": [
+[
+48,
+57,
+"rm",
+120792
+],
+[
+65,
+66,
+"rm",
+120120
+],
+[
+67,
+67,
+"rm",
+8450
+],
+[
+68,
+71,
+"rm",
+120123
+],
+[
+72,
+72,
+"rm",
+8461
+],
+[
+73,
+77,
+"rm",
+120128
+],
+[
+78,
+78,
+"rm",
+8469
+],
+[
+79,
+79,
+"rm",
+120134
+],
+[
+80,
+81,
+"rm",
+8473
+],
+[
+82,
+82,
+"rm",
+8477
+],
+[
+83,
+89,
+"rm",
+120138
+],
+[
+90,
+90,
+"rm",
+8484
+],
+[
+97,
+122,
+"rm",
+120146
+],
+[
+915,
+915,
+"rm",
+8510
+],
+[
+928,
+928,
+"rm",
+8511
+],
+[
+931,
+931,
+"rm",
+8512
+],
+[
+947,
+947,
+"rm",
+8509
+],
+[
+960,
+960,
+"rm",
+8508
+]
+],
+"it": [
+[
+48,
+57,
+"rm",
+120792
+],
+[
+65,
+66,
+"it",
+57684
+],
+[
+67,
+67,
+"it",
+8450
+],
+[
+68,
+68,
+"it",
+8517
+],
+[
+69,
+71,
+"it",
+57686
+],
+[
+72,
+72,
+"it",
+8461
+],
+[
+73,
+77,
+"it",
+57689
+],
+[
+78,
+78,
+"it",
+8469
+],
+[
+79,
+79,
+"it",
+57694
+],
+[
+80,
+81,
+"it",
+8473
+],
+[
+82,
+82,
+"it",
+8477
+],
+[
+83,
+89,
+"it",
+57695
+],
+[
+90,
+90,
+"it",
+8484
+],
+[
+97,
+99,
+"it",
+57702
+],
+[
+100,
+101,
+"it",
+8518
+],
+[
+102,
+104,
+"it",
+57705
+],
+[
+105,
+106,
+"it",
+8520
+],
+[
+107,
+122,
+"it",
+57708
+],
+[
+915,
+915,
+"it",
+8510
+],
+[
+928,
+928,
+"it",
+8511
+],
+[
+931,
+931,
+"rm",
+8512
+],
+[
+947,
+947,
+"it",
+8509
+],
+[
+960,
+960,
+"it",
+8508
+]
+],
+"bf": [
+[
+48,
+57,
+"rm",
+120792
+],
+[
+65,
+66,
+"bf",
+58250
+],
+[
+67,
+67,
+"bf",
+8450
+],
+[
+68,
+68,
+"bf",
+8517
+],
+[
+69,
+71,
+"bf",
+58253
+],
+[
+72,
+72,
+"bf",
+8461
+],
+[
+73,
+77,
+"bf",
+58256
+],
+[
+78,
+78,
+"bf",
+8469
+],
+[
+79,
+79,
+"bf",
+58261
+],
+[
+80,
+81,
+"bf",
+8473
+],
+[
+82,
+82,
+"bf",
+8477
+],
+[
+83,
+89,
+"bf",
+58262
+],
+[
+90,
+90,
+"bf",
+8484
+],
+[
+97,
+99,
+"bf",
+58269
+],
+[
+100,
+101,
+"bf",
+8518
+],
+[
+102,
+104,
+"bf",
+58274
+],
+[
+105,
+106,
+"bf",
+8520
+],
+[
+107,
+122,
+"bf",
+58279
+],
+[
+915,
+915,
+"bf",
+8510
+],
+[
+928,
+928,
+"bf",
+8511
+],
+[
+931,
+931,
+"bf",
+8512
+],
+[
+947,
+947,
+"bf",
+8509
+],
+[
+960,
+960,
+"bf",
+8508
+]
+],
+"normal": [
+[
+48,
+57,
+"rm",
+120792
+],
+[
+65,
+66,
+"it",
+57684
+],
+[
+67,
+67,
+"it",
+8450
+],
+[
+68,
+68,
+"it",
+8517
+],
+[
+69,
+71,
+"it",
+57686
+],
+[
+72,
+72,
+"it",
+8461
+],
+[
+73,
+77,
+"it",
+57689
+],
+[
+78,
+78,
+"it",
+8469
+],
+[
+79,
+79,
+"it",
+57694
+],
+[
+80,
+81,
+"it",
+8473
+],
+[
+82,
+82,
+"it",
+8477
+],
+[
+83,
+89,
+"it",
+57695
+],
+[
+90,
+90,
+"it",
+8484
+],
+[
+97,
+99,
+"it",
+57702
+],
+[
+100,
+101,
+"it",
+8518
+],
+[
+102,
+104,
+"it",
+57705
+],
+[
+105,
+106,
+"it",
+8520
+],
+[
+107,
+122,
+"it",
+57708
+],
+[
+915,
+915,
+"it",
+8510
+],
+[
+928,
+928,
+"it",
+8511
+],
+[
+931,
+931,
+"rm",
+8512
+],
+[
+947,
+947,
+"it",
+8509
+],
+[
+960,
+960,
+"it",
+8508
+]
+]
+},
+"cal": [
+[
+65,
+90,
+"it",
+57901
+]
+],
+"frak": {
+"rm": [
+[
+65,
+66,
+"rm",
+120068
+],
+[
+67,
+67,
+"rm",
+8493
+],
+[
+68,
+71,
+"rm",
+120071
+],
+[
+72,
+72,
+"rm",
+8460
+],
+[
+73,
+73,
+"rm",
+8465
+],
+[
+74,
+81,
+"rm",
+120077
+],
+[
+82,
+82,
+"rm",
+8476
+],
+[
+83,
+89,
+"rm",
+120086
+],
+[
+90,
+90,
+"rm",
+8488
+],
+[
+97,
+122,
+"rm",
+120094
+]
+],
+"bf": [
+[
+65,
+90,
+"bf",
+120172
+],
+[
+97,
+122,
+"bf",
+120198
+]
+]
+},
+"scr": [
+[
+65,
+65,
+"it",
+119964
+],
+[
+66,
+66,
+"it",
+8492
+],
+[
+67,
+68,
+"it",
+119966
+],
+[
+69,
+70,
+"it",
+8496
+],
+[
+71,
+71,
+"it",
+119970
+],
+[
+72,
+72,
+"it",
+8459
+],
+[
+73,
+73,
+"it",
+8464
+],
+[
+74,
+75,
+"it",
+119973
+],
+[
+76,
+76,
+"it",
+8466
+],
+[
+77,
+77,
+"it",
+8499
+],
+[
+78,
+81,
+"it",
+119977
+],
+[
+82,
+82,
+"it",
+8475
+],
+[
+83,
+90,
+"it",
+119982
+],
+[
+97,
+100,
+"it",
+119990
+],
+[
+101,
+101,
+"it",
+8495
+],
+[
+102,
+102,
+"it",
+119995
+],
+[
+103,
+103,
+"it",
+8458
+],
+[
+104,
+110,
+"it",
+119997
+],
+[
+111,
+111,
+"it",
+8500
+],
+[
+112,
+122,
+"it",
+120005
+]
+],
+"sf": {
+"rm": [
+[
+48,
+57,
+"rm",
+120802
+],
+[
+65,
+90,
+"rm",
+120224
+],
+[
+97,
+122,
+"rm",
+120250
+],
+[
+913,
+937,
+"rm",
+57725
+],
+[
+945,
+969,
+"rm",
+57750
+],
+[
+977,
+977,
+"rm",
+57776
+],
+[
+981,
+981,
+"rm",
+57777
+],
+[
+982,
+982,
+"rm",
+57779
+],
+[
+1009,
+1009,
+"rm",
+57778
+],
+[
+1013,
+1013,
+"rm",
+57775
+],
+[
+8706,
+8706,
+"rm",
+57724
+]
+],
+"it": [
+[
+48,
+57,
+"rm",
+120802
+],
+[
+65,
+90,
+"it",
+120328
+],
+[
+97,
+122,
+"it",
+120354
+],
+[
+913,
+937,
+"rm",
+57725
+],
+[
+945,
+969,
+"it",
+57816
+],
+[
+977,
+977,
+"it",
+57842
+],
+[
+981,
+981,
+"it",
+57843
+],
+[
+982,
+982,
+"it",
+57845
+],
+[
+1009,
+1009,
+"it",
+57844
+],
+[
+1013,
+1013,
+"it",
+57841
+]
+],
+"bf": [
+[
+48,
+57,
+"bf",
+120812
+],
+[
+65,
+90,
+"bf",
+120276
+],
+[
+97,
+122,
+"bf",
+120302
+],
+[
+913,
+937,
+"bf",
+120662
+],
+[
+945,
+969,
+"bf",
+120688
+],
+[
+977,
+977,
+"bf",
+120715
+],
+[
+981,
+981,
+"bf",
+120717
+],
+[
+982,
+982,
+"bf",
+120719
+],
+[
+1008,
+1008,
+"bf",
+120716
+],
+[
+1009,
+1009,
+"bf",
+120718
+],
+[
+1013,
+1013,
+"bf",
+120714
+],
+[
+8706,
+8706,
+"bf",
+120713
+],
+[
+8711,
+8711,
+"bf",
+120687
+]
+],
+"bfit": [
+[
+65,
+90,
+"bfit",
+119912
+],
+[
+97,
+122,
+"bfit",
+119938
+],
+[
+915,
+937,
+"bfit",
+120606
+],
+[
+945,
+969,
+"bfit",
+120630
+]
+],
+"normal": [
+[
+48,
+57,
+"rm",
+120802
+],
+[
+65,
+90,
+"it",
+120328
+],
+[
+97,
+122,
+"it",
+120354
+],
+[
+913,
+937,
+"rm",
+57725
+],
+[
+945,
+969,
+"it",
+57816
+],
+[
+977,
+977,
+"it",
+57842
+],
+[
+981,
+981,
+"it",
+57843
+],
+[
+982,
+982,
+"it",
+57845
+],
+[
+1009,
+1009,
+"it",
+57844
+],
+[
+1013,
+1013,
+"it",
+57841
+]
+]
+},
+"tt": [
+[
+48,
+57,
+"rm",
+120822
+],
+[
+65,
+90,
+"rm",
+120432
+],
+[
+97,
+122,
+"rm",
+120458
+]
+]
+},
+"stix_glyph_fixes": {
+"8914": 8915,
+"8915": 8914
+}
+}

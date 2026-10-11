@@ -40,7 +40,11 @@
     "tools/oracle/make_fonts.py",
     "tools/oracle/make_marker_paths.py",
     "tools/oracle/make_tex2uni.py",
-    "tools/oracle/make_colormaps.py"
+    "tools/oracle/make_colormaps.py",
+    "tools/oracle/make_mathtext_data.py",
+    "tools/oracle/make_unicode_letters.py",
+    "tests/oracle/mathtext.json",
+    "tests/oracle/mathtext_glyphs.json"
   ],
   "notice": "NOTICE",
   "components": [
@@ -505,7 +509,12 @@
         "data/marker_paths.json",
         "data/tex2uni.json",
         "src/text/mathtext.hpp",
-        "src/text/mathtext.cpp"
+        "src/text/mathtext.cpp",
+        "src/text/mathtext_fonts.hpp",
+        "src/text/mathtext_fonts.cpp",
+        "data/mathtext_data.json",
+        "src/support/fontconfig_pattern.hpp",
+        "src/support/fontconfig_pattern.cpp"
       ],
       "header": [
         "Copyright (c) 2012- Matplotlib Development Team; All Rights Reserved",
@@ -580,6 +589,37 @@
       ],
       "changes": "licensing/changes/fdlibm.md",
       "remarks": "One function (the base-10 logarithm), so that log scales give the same last bit on every C library."
+    },
+    {
+      "id": "unicode-data",
+      "name": "Unicode Character Database",
+      "version": "16.0.0",
+      "homepage": "https://www.unicode.org/ucd/",
+      "use": "runtime",
+      "licence": "Unicode-3.0",
+      "licenceFiles": [
+        {
+          "path": "LICENSES/Unicode-3.0.txt",
+          "upstream": "https://www.unicode.org/license.txt",
+          "sha256": "e7a93b009565cfce55919a381437ac4db883e9da2126fa28b91d12732bc53d96",
+          "upstreamMayChange": true,
+          "retrieved": "2026-10-10"
+        }
+      ],
+      "fetch": [],
+      "vendored": [],
+      "derived": [
+        "data/unicode_letters.json"
+      ],
+      "header": [
+        "Copyright (C) Unicode, Inc. All rights reserved.",
+        "LICENSES/Unicode-3.0.txt"
+      ],
+      "notices": [
+        "Copyright (C) Unicode, Inc. All rights reserved."
+      ],
+      "changes": "licensing/changes/unicode-data.md",
+      "remarks": "Three lists of code point ranges (letters, Greek capitals, digits), so that mathtext tells letters from other characters as Python's unicodedata does."
     }
   ]
 }

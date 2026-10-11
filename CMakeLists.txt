@@ -39,7 +39,8 @@ add_custom_command(
     VERBATIM)
 
 # Data files compiled into the library.
-set(embedded_files data/rcdefaults.json data/colors.json data/fonts.json data/marker_paths.json data/tex2uni.json data/colormaps.json)
+set(embedded_files data/rcdefaults.json data/colors.json data/fonts.json data/marker_paths.json data/tex2uni.json data/colormaps.json
+    data/mathtext_data.json data/unicode_letters.json)
 list(TRANSFORM embedded_files PREPEND "${PROJECT_SOURCE_DIR}/" OUTPUT_VARIABLE embedded_paths)
 add_custom_command(
     OUTPUT  ${PROJECT_BINARY_DIR}/generated/embedded.cpp
@@ -84,8 +85,11 @@ add_library(calculate-plot STATIC
     src/text/font_manager.cpp
     src/text/ft2font.cpp
     src/text/mathtext.cpp
+    src/text/mathtext_fonts.cpp
     src/text/text_render.cpp
+    src/support/fontconfig_pattern.cpp
     src/support/glob.cpp
+    src/support/pyparse.cpp
     src/support/json.cpp
     src/support/json_writer.cpp
     src/support/pyformat.cpp

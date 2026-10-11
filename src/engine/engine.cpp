@@ -5,6 +5,7 @@
 #include "engine/legend.hpp"
 #include "engine/tight_layout.hpp"
 #include "rc/rc_params.hpp"
+#include "support/pyparse.hpp"
 
 #include <cctype>
 #include <cmath>
@@ -358,6 +359,7 @@ private:
             axis.setLim(v[0], v[1], false);
             return true;
         }
+        if (call.method == "text") return axesText(ax, call, error);
         if (call.method == "plot") return plot(ax, call, error);
         if (call.method == "scatter") return scatter(ax, call, error);
         if (call.method == "fill_between") return fillBetween(ax, call, error);
@@ -968,6 +970,224 @@ private:
         }
         for (auto& l : capLines) ax.addLine(std::move(l));
         ax.requestAutoscaleView(true, true);
+        return true;
+    }
+
+    // The properties of a Text given as keywords. With `constructing`, as Text(x, y, text, **kwargs)
+    // takes them: its own parameters first (some unchecked), then the others through their
+    // setters; without, as Text.update does (every one through its setter). An alias together with
+    // its property is an error among those that go through update.
+    bool textProperties(Text& t, const std::vector<std::pair<std::string, const Json*>>& given, bool constructing,
+                        const std::string& where, std::string* error) {
+        static const std::pair<const char*, const char*> aliases[] = {
+            {"c", "color"},           {"family", "fontfamily"},   {"name", "fontname"},
+            {"size", "fontsize"},     {"stretch", "fontstretch"}, {"style", "fontstyle"},
+            {"variant", "fontvariant"}, {"weight", "fontweight"}, {"ha", "horizontalalignment"},
+            {"va", "verticalalignment"}, {"ma", "multialignment"}};
+        static const char* const own[] = {"color", "verticalalignment", "horizontalalignment", "multialignment",
+                                          "rotation", "linespacing", "rotation_mode", "usetex", "wrap",
+                                          "transform_rotates_text", "parse_math", "antialiased"};
+        const auto isOwn = [&](const std::string& name) {
+            return constructing && std::find_if(std::begin(own), std::end(own), [&](const char* o) { return name == o; }) != std::end(own);
+        };
+        const auto canonical = [&](const std::string& name) {
+            for (const auto& [alias, property] : aliases)
+                if (name == alias) return std::string(property);
+            return name;
+        };
+        const auto bad = [&](const std::string& name, const std::string& what) {
+            *error = where + ": " + name + " " + what;
+            return false;
+        };
+        // One property through its setter; `own` for a parameter of Text itself that is None
+        const auto set = [&](const std::string& name, const Json& v, bool isParameter) {
+            const std::string property = canonical(name);
+            double n = 0;
+            if (property == "color") {
+                if (v.isNull() && isParameter) return t.setColor(rc_.text("text.color")), true;
+                colors::Spec spec;
+                std::string why;
+                if (!color(v, &spec)) return bad(name, "is not a colour");
+                const auto rgba = colors::toRgba(spec, std::nullopt, rc_, &why);
+                if (!rgba) return bad(name, "is not a colour: " + why);
+                t.color = *rgba;
+            } else if (property == "horizontalalignment" || property == "verticalalignment" || property == "multialignment") {
+                // (Text.__init__ stores a multialignment unchecked, and the layout of several lines
+                // then breaks on an unknown one: it is checked here as its setter checks it)
+                if (property == "multialignment" && isParameter && v.isNull()) return t.multialignment.reset(), true;
+                if (!v.isString()) return bad(name, "must be a string");
+                const std::string& a = v.asString();
+                const bool vertical = property == "verticalalignment";
+                const bool ok = vertical ? (a == "top" || a == "bottom" || a == "center" || a == "baseline" || a == "center_baseline")
+                                         : (a == "center" || a == "right" || a == "left");
+                if (!ok) return bad(name, "is not an alignment: " + a);
+                if (vertical) t.verticalAlignment = a;
+                else if (property == "multialignment") t.multialignment = a;
+                else t.horizontalAlignment = a;
+            } else if (property == "rotation") {
+                if (v.isNull()) t.setRotation(0.0);
+                else if (readNumber(v, &n)) t.setRotation(n);
+                else if (v.isString() && (v.asString() == "horizontal" || v.asString() == "vertical")) t.setRotation(v.asString());
+                else return bad(name, "must be 'vertical', 'horizontal' or a number");
+            } else if (property == "linespacing") {
+                if (v.isNull() && isParameter) t.linespacing.reset();
+                else if (v.isString() && v.asString() == "normal") t.linespacing.reset();
+                else if (readNumber(v, &n)) t.linespacing = n;
+                else return bad(name, "must be 'normal' or a number");
+            } else if (property == "rotation_mode") {
+                if (v.isNull()) return t.rotationMode = "default", true;
+                if (!v.isString()) return bad(name, "must be a string");
+                const std::string& m = v.asString();
+                if (m != "anchor" && m != "default" && m != "xtick" && m != "ytick") return bad(name, "is not a rotation mode: " + m);
+                t.rotationMode = m;
+            } else if (property == "usetex" || property == "wrap" || property == "transform_rotates_text") {
+                if (!v.isNull() && !(v.isBool() && !v.asBool())) return bad(name, "is not supported yet");
+            } else if (property == "parse_math" || property == "antialiased") {
+                const char* key = property == "parse_math" ? "text.parse_math" : "text.antialiased";
+                if (!v.isBool() && !(v.isNull() && isParameter)) return bad(name, "must be True or False");
+                (property == "parse_math" ? t.parseMath : t.antialiased) = v.isNull() ? rc_.boolean(key) : v.asBool();
+            } else if (property == "alpha") {
+                if (v.isNull()) return t.alpha.reset(), true;
+                if (!readNumber(v, &n)) return bad(name, "must be a number or None");
+                if (!(0 <= n && n <= 1)) return bad(name, "is outside the 0-1 range");
+                t.alpha = n;
+            } else if (property == "fontsize") {
+                // FontProperties.set_size
+                double size = 0;
+                if (v.isNull()) {
+                    size = rc_.number("font.size");
+                } else if (readNumber(v, &size)) {
+                } else if (v.isString()) {
+                    const std::string& text = v.asString();
+                    const auto parsed = support::pythonFloat(text);
+                    const auto named = parsed ? std::optional<double>() : text::fontSize(text, rc_);
+                    if (!parsed && !named) return bad(name, "is not a font size: " + text);
+                    size = parsed ? *parsed : *named;
+                } else {
+                    return bad(name, "must be a number or the name of a size");
+                }
+                if (!std::isfinite(size)) return bad(name, "is not a font size");
+                // Fontsize < 1.0 pt not allowed by FreeType. Setting fontsize = 1 pt
+                t.font.size = size < 1.0 ? 1.0 : size;
+            } else if (property == "fontweight" || property == "fontstretch") {
+                // FontProperties.set_weight / set_stretch: a name of the table, or an integer from 0 to 1000
+                const bool weight = property == "fontweight";
+                text::FontValue& target = weight ? t.font.weight : t.font.stretch;
+                if (v.isNull()) {
+                    const auto& d = rc_.value(weight ? "font.weight" : "font.stretch");
+                    target = d.isNumber() ? text::FontValue(int(d.asNumber())) : text::FontValue(d.asString());
+                    return true;
+                }
+                std::optional<double> number;
+                if (v.isString()) {
+                    const std::string& text = v.asString();
+                    if (weight ? text::isFontWeightName(text) : text::isFontStretchName(text)) return target = text, true;
+                    const auto integer = support::pythonInt(text);
+                    if (!integer) return bad(name, "is invalid: " + text);
+                    number = double(*integer);
+                } else if (readNumber(v, &n)) {
+                    if (!std::isfinite(n)) return bad(name, "is invalid");
+                    number = std::trunc(n);
+                } else {
+                    return bad(name, "must be a name or a number");
+                }
+                if (!(0 <= *number && *number <= 1000)) return bad(name, "is invalid");
+                target = int(*number);
+            } else if (property == "fontstyle" || property == "fontvariant") {
+                const bool style = property == "fontstyle";
+                std::string value;
+                if (v.isNull()) value = rc_.text(style ? "font.style" : "font.variant");
+                else if (v.isString()) value = v.asString();
+                else return bad(name, "must be a string");
+                const bool ok = style ? (value == "normal" || value == "italic" || value == "oblique")
+                                      : (value == "normal" || value == "small-caps");
+                if (!ok) return bad(name, "is not one of the choices: " + value);
+                (style ? t.font.style : t.font.variant) = value;
+            } else if (property == "fontfamily" || property == "fontname") {
+                if (v.isNull()) return t.font.family = rc_.strings("font.family"), true;
+                if (v.isString()) return t.font.family = {v.asString()}, true;
+                const Json* list = sequence(v);
+                if (!list) return bad(name, "must be a name or a list of names");
+                std::vector<std::string> names;
+                for (const Json& item : list->items()) {
+                    if (!item.isString()) return bad(name, "must be a name or a list of names");
+                    names.push_back(item.asString());
+                }
+                t.font.family = names;
+            } else if (property == "math_fontfamily") {
+                // FontProperties.set_math_fontfamily
+                static const char* const fontsets[] = {"dejavusans", "dejavuserif", "cm", "stix", "stixsans", "custom"};
+                if (v.isNull()) return t.font.mathFontfamily = rc_.text("mathtext.fontset"), true;
+                if (!v.isString() || std::find_if(std::begin(fontsets), std::end(fontsets), [&](const char* f) { return v.asString() == f; }) == std::end(fontsets))
+                    return bad(name, "is not a math font family");
+                t.font.mathFontfamily = v.asString();
+            } else if (property == "zorder") {
+                if (v.isNull()) return t.zorder = 3, true;
+                if (!readNumber(v, &n)) return bad(name, "must be a number");
+                t.zorder = n;
+            } else if (property == "clip_on" || property == "visible") {
+                if (!v.isBool()) return bad(name, "must be True or False");
+                (property == "clip_on" ? t.clipOn : t.visible) = v.asBool();
+            } else if (property == "snap") {
+                if (v.isNull()) t.snap.reset();
+                else if (v.isBool()) t.snap = v.asBool();
+                else return bad(name, "must be True, False or None");
+            } else {
+                *error = where + ": unsupported keyword " + name;
+                return false;
+            }
+            return true;
+        };
+        if (constructing)
+            for (const char* parameter : own)
+                for (const auto& [name, value] : given)
+                    if (name == parameter && !set(name, *value, true)) return false;
+        std::vector<std::string> seen;
+        for (const auto& [name, value] : given) {
+            if (isOwn(name)) continue;
+            const std::string property = canonical(name);
+            if (std::find(seen.begin(), seen.end(), property) != seen.end()) {
+                *error = where + ": " + name + " is given twice (it is an alias of " + property + ")";
+                return false;
+            }
+            seen.push_back(property);
+            if (!set(name, *value, false)) return false;
+        }
+        return true;
+    }
+
+    // Axes.text(x, y, s, fontdict=None, **kwargs)
+    bool axesText(Axes& ax, const model::Call& call, std::string* error) {
+        const std::string where = call.on + ".text";
+        if (call.args.size() > 4) return *error = where + ": too many positional arguments", false;
+        const char* names[4] = {"x", "y", "s", "fontdict"};
+        const Json* values[4] = {nullptr, nullptr, nullptr, nullptr};
+        for (std::size_t i = 0; i < 4; ++i) {
+            values[i] = argument(call, i, names[i]);
+            if (i < call.args.size() && keyword(call, names[i])) return *error = where + ": " + names[i] + " is given twice", false;
+        }
+        double x = 0, y = 0;
+        if (!values[0] || !readNumber(*values[0], &x) || !values[1] || !readNumber(*values[1], &y))
+            return *error = where + ": x and y must be numbers", false;
+        if (!values[2] || !values[2]->isString()) return *error = where + ": the text must be a string", false;
+        // {'verticalalignment': 'baseline', 'horizontalalignment': 'left', 'transform': transData,
+        //  'clip_on': False, **kwargs}: a later one replaces an earlier one where it stands
+        const Json baseline = *support::parseJson("\"baseline\"", nullptr), left = *support::parseJson("\"left\"", nullptr),
+                   no = *support::parseJson("false", nullptr);
+        std::vector<std::pair<std::string, const Json*>> given = {
+            {"verticalalignment", &baseline}, {"horizontalalignment", &left}, {"clip_on", &no}};
+        const auto put = [&](const std::string& name, const Json& value) {
+            for (auto& g : given)
+                if (g.first == name) return void(g.second = &value);
+            given.emplace_back(name, &value);
+        };
+        // (a figure file has no dictionaries yet: the keywords say the same)
+        if (values[3] && !values[3]->isNull()) return *error = where + ": fontdict is not supported yet", false;
+        for (const auto& [name, value] : call.kwargs)
+            if (name != "x" && name != "y" && name != "s" && name != "fontdict") put(name, value);
+        auto t = std::make_unique<Text>(rc_, x, y, values[2]->asString());
+        if (!textProperties(*t, given, true, where, error)) return false;
+        ax.addText(std::move(t));
         return true;
     }
 
