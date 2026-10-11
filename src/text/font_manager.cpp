@@ -118,7 +118,7 @@ bool fontPropertiesFromPattern(const std::string& pattern, const rc::Params& rc,
         auto points = support::pythonFloat(value);
         if (!points) points = fontSize(value, rc);
         if (!points) return *error = "Size is invalid: '" + value + "'", false;
-        p.size = *points < 1.0 ? 1.0 : *points;
+        p.size = atLeastOnePoint(*points);
         return true;
     };
     for (const auto& [name, values] : parsed->properties) {
@@ -220,7 +220,7 @@ FontProperties FontProperties::defaults(const rc::Params& rc) {
     p.variant = rc.text("font.variant");
     p.weight = fontValue(rc.value("font.weight"));
     p.stretch = fontValue(rc.value("font.stretch"));
-    p.size = rc.number("font.size");
+    p.size = atLeastOnePoint(rc.number("font.size"));
     p.mathFontfamily = rc.text("mathtext.fontset");
     return p;
 }
@@ -246,6 +246,12 @@ std::optional<double> fontSize(const std::string& name, const rc::Params& rc) {
     const auto it = kFontScalings.find(name);
     if (it == kFontScalings.end()) return std::nullopt;
     return it->second * rc.number("font.size");
+}
+
+double fontSizeOf(const support::Json& value, const rc::Params& rc) {
+    if (value.isNumber()) return atLeastOnePoint(value.asNumber());
+    if (value.isString()) return atLeastOnePoint(*fontSize(value.asString(), rc));
+    return atLeastOnePoint(rc.number("font.size"));
 }
 
 std::string findFont(const FontProperties& prop, const rc::Params& rc, const std::vector<FontEntry>* fonts) {

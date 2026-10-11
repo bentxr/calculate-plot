@@ -194,6 +194,46 @@ std::vector<double> MaxNLocator::rawTicks(double vmin, double vmax) const {
     return ticks;
 }
 
+std::vector<double> AutoMinorLocator::operator()(std::vector<double> major, double vmin, double vmax) const {
+    // np.unique(self.axis.get_majorticklocs())
+    std::sort(major.begin(), major.end());
+    major.erase(std::unique(major.begin(), major.end()), major.end());
+    // Need at least two major ticks to find minor tick locations.
+    if (major.size() < 2) return {};
+    const double majorstep = major[1] - major[0];
+    int divisions = 0;
+    if (ndivs) {
+        divisions = *ndivs;
+    } else {
+        // 'auto': five where the step is 1, 2.5, 5 or 10 times a power of ten, else four
+        const double mantissa = std::pow(10.0, support::divmod(support::log10(majorstep), 1.0).second);
+        divisions = 4;
+        for (double round : {1.0, 2.5, 5.0, 10.0})
+            if (std::abs(mantissa - round) <= 1e-8 + 1e-5 * round) divisions = 5;  // np.isclose
+    }
+    const double minorstep = majorstep / divisions;  // (no divisions: an infinite step, and a tick at nan)
+    if (vmin > vmax) std::swap(vmin, vmax);
+    const double t0 = major[0];
+    const double tmin = std::nearbyint((vmin - t0) / minorstep);
+    const double tmax = std::nearbyint((vmax - t0) / minorstep) + 1;
+    // np.arange(tmin, tmax) * minorstep + t0
+    std::vector<double> locs;
+    for (double i = tmin; i < tmax && locs.size() < 1000000; i += 1) locs.push_back(i * minorstep + t0);
+    return locs;
+}
+
+std::vector<double> withoutMajorTicks(const std::vector<double>& minor, const std::vector<double>& major, double viewMin,
+                                      double viewMax) {
+    const double tol = std::abs(viewMax - viewMin) * 1e-5;
+    std::vector<double> out;
+    for (double m : minor) {
+        bool close = false;
+        for (double M : major) close = close || std::abs(m - M) <= tol;  // np.isclose(atol=tol, rtol=0)
+        if (!close) out.push_back(m);
+    }
+    return out;
+}
+
 // Formatter.fix_minus: U+2212 MINUS SIGN for the hyphens, if rcParams["axes.unicode_minus"]
 std::string ScalarFormatter::fixMinus(const std::string& s) const {
     if (!settings_.unicodeMinus) return s;

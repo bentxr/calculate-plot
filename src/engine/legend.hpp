@@ -84,7 +84,7 @@ private:
 struct LegendOptions {
     std::optional<std::string> loc;  // None: rcParams["legend.loc"]
     std::optional<std::string> title;
-    std::optional<double> fontsize;
+    std::optional<double> fontsize, titleFontsize;  // in points
     std::optional<bool> frameon, fancybox;
     std::optional<double> framealpha;
     std::optional<colors::Spec> facecolor, edgecolor;

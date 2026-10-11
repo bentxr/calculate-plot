@@ -4,6 +4,7 @@
 // Copyright (c) 2012- Matplotlib Development Team; All Rights Reserved
 // Licence: LICENSES/Matplotlib.txt. Changes: licensing/changes/matplotlib.md
 
+#include "text/font_manager.hpp"
 #include "engine/tight_layout.hpp"
 
 #include "engine/axes.hpp"
@@ -65,7 +66,8 @@ std::optional<SubplotsAdjustment> autoAdjust(Figure& figure, Renderer& renderer,
                                              const std::vector<Group>& groups,
                                              const std::vector<std::array<double, 4>>& axBboxes,
                                              const TightLayoutOptions& o, const std::optional<Rect>& rect) {
-    const double fontSizeInch = figure.rc().number("font.size") / 72;
+    // FontProperties(size=rcParams["font.size"]).get_size_in_points() / 72
+    const double fontSizeInch = text::atLeastOnePoint(figure.rc().number("font.size")) / 72;
     const double padInch = o.pad * fontSizeInch;
     const double vpadInch = o.hPad ? *o.hPad * fontSizeInch : padInch;
     const double hpadInch = o.wPad ? *o.wPad * fontSizeInch : padInch;

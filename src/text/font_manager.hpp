@@ -4,6 +4,8 @@
 // Licence: LICENSES/Matplotlib.txt. Changes: licensing/changes/matplotlib.md
 #pragma once
 
+#include "support/json.hpp"
+
 #include <optional>
 #include <string>
 #include <variant>
@@ -55,6 +57,12 @@ bool isFontStretchName(const std::string& name);
 // A named font size (xx-small ... xx-large, larger, smaller) in points: font_scalings times
 // rcParams["font.size"]; nullopt for an unknown name.
 std::optional<double> fontSize(const std::string& name, const rc::Params& rc);
+
+// FontProperties.set_size for a value of the rcParams: a number, the name of a size, or None for
+// rcParams["font.size"]. FreeType does not take a size below one point: it is one point then.
+double fontSizeOf(const support::Json& value, const rc::Params& rc);
+// The same for a size in points.
+inline double atLeastOnePoint(double size) { return size < 1.0 ? 1.0 : size; }
 
 // FontManager._find_fonts_by_props: for each family in turn, the best-scoring font (families with
 // no font scoring under 10 are skipped); if none was found, the default family's. `fonts` replaces

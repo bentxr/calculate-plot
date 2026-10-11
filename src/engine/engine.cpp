@@ -1290,16 +1290,20 @@ private:
             } else if (name == "title") {
                 if (!value.isString()) return *error = where + ": title must be a string", false;
                 o.title = value.asString();
-            } else if (name == "fontsize") {
+            } else if (name == "fontsize" || name == "title_fontsize") {
+                // FontProperties.set_size: a number, a number as text, or the name of a size
+                std::optional<double>& target = name == "fontsize" ? o.fontsize : o.titleFontsize;
                 if (value.isString()) {
-                    const auto size = text::fontSize(value.asString(), rc_);
+                    const auto parsed = support::pythonFloat(value.asString());
+                    const auto size = parsed ? parsed : text::fontSize(value.asString(), rc_);
                     if (!size) return *error = where + ": unknown font size " + value.asString(), false;
-                    o.fontsize = *size;
+                    target = *size;
                 } else if (readNumber(value, &n)) {
-                    o.fontsize = n;
+                    target = n;
                 } else {
-                    return *error = where + ": bad fontsize", false;
+                    return *error = where + ": bad " + name, false;
                 }
+                if (!std::isfinite(*target)) return *error = where + ": bad " + name, false;
             } else if (name == "frameon" || name == "fancybox") {
                 if (!value.isBool()) return *error = where + ": " + name + " must be True or False", false;
                 (name == "frameon" ? o.frameon : o.fancybox) = value.asBool();

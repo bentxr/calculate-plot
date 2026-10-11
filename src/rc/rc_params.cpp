@@ -56,14 +56,15 @@ bool fitsInt(const Json& v) {
 // Whether the engine reads a value of kind `got` for a key whose default is of kind `want`: the
 // same kind as the default, anything where the default is None, and for a few keys whose default is
 // a name a number as well (savefig.dpi: 'figure'; the font sizes: 'medium', 'large'; the font
-// weights: 'normal') or None (mathtext.fallback).
+// weights and the stretch: 'normal') or None (mathtext.fallback).
 bool readable(const std::string& key, Kind want, Kind got) {
     static const char* const kNumberOrName[] = {
         "savefig.dpi",     "axes.labelsize",   "axes.titlesize",  "figure.titlesize",   "legend.fontsize",
         "xtick.labelsize", "ytick.labelsize",  "axes.labelweight", "axes.titleweight",  "figure.titleweight",
-        "font.weight"};
+        "font.weight",     "font.stretch"};
     if (want == Kind::Null || got == want) return true;
     if (got == Kind::Null) return key == "mathtext.fallback";
+    if (key == "xtick.minor.ndivs" || key == "ytick.minor.ndivs") return true;  // 'auto' or a number
     // (their validators give a name or a number, nothing else)
     for (const char* k : kNumberOrName)
         if (key == k) return true;
@@ -175,7 +176,7 @@ const std::vector<std::string>& Params::unsupportedKeys() {
         "_internal.classic_mode", "agg.path.chunksize", "axes.axisbelow", "axes.formatter.use_locale", "backend",
         "figure.autolayout", "figure.constrained_layout.use", "figure.hooks", "font.enable_last_resort",
         "legend.labelcolor", "path.effects", "path.sketch", "path.snap", "text.hinting_factor", "text.kerning_factor",
-        "text.usetex", "xtick.minor.ndivs", "ytick.minor.ndivs"};
+        "text.usetex"};
     return keys;
 }
 
@@ -192,13 +193,21 @@ bool Params::set(const std::string& key, const Json& v, std::string* error) {
     Validated checked = validate(key, v);
     if (checked.state != Validated::State::Taken) return fail(checked.error);
     const auto listed = [&](const std::vector<std::string>& keys) { return std::binary_search(keys.begin(), keys.end(), key); };
+    // FontProperties.set_weight and set_stretch raise for a number that is not from 0 to 1000, as soon
+    // as a text takes these (every Axes makes its title and labels)
+    if (key == "font.weight" || key == "font.stretch" || key == "axes.titleweight" || key == "axes.labelweight")
+        if (checked.value.isNumber() && !(0 <= checked.value.asNumber() && checked.value.asNumber() <= 1000))
+            return fail("the value given for " + key + " is not valid: FontProperties takes a name or a number from 0 to 1000");
     if (!listed(inertKeys())) {
         const Json& standard = Params::standard().values_.at(key);
         if (listed(unsupportedKeys())) {
             if (!same(checked.value, standard)) return fail("rcParams[\"" + key + "\"] is not supported yet");
         } else if (!finite(checked.value) || !fitsInt(checked.value) || !readable(key, kindOf(standard), kindOf(checked.value)) ||
-                   (key == "axes.formatter.offset_threshold" && checked.value.asNumber() > 23)) {
-            // (10 ** (offset_threshold - 1) is an integer of any size in Python, and a double here, exact up to 1e22)
+                   (key == "axes.formatter.offset_threshold" && checked.value.asNumber() > 23) ||
+                   ((key == "xtick.minor.ndivs" || key == "ytick.minor.ndivs") && checked.value.isString() &&
+                    checked.value.asString() != "auto")) {
+            // (10 ** (offset_threshold - 1) is an integer of any size in Python, and a double here, exact up to
+            // 1e22. 'auto' in capitals is taken by the validator and breaks AutoMinorLocator, which looks for 'auto'.)
             return fail("this value of " + key + " is not supported yet");
         }
     }

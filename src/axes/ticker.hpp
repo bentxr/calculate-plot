@@ -34,6 +34,21 @@ struct MaxNLocator {
     std::vector<double> rawTicks(double vmin, double vmax) const;  // _raw_ticks
 };
 
+// ticker.AutoMinorLocator: the minor ticks of a linear axis, which divide the step between its major
+// ticks.
+struct AutoMinorLocator {
+    std::optional<int> ndivs;  // rcParams["xtick.minor.ndivs"]: the divisions; unset for 'auto' (4 or 5)
+
+    // __call__ for the major tick locations `major` and the view (vmin, vmax). (At most a million
+    // ticks are made: more could not be drawn, and a locator of major ticks never asks for them.)
+    std::vector<double> operator()(std::vector<double> major, double vmin, double vmax) const;
+};
+
+// Axis.get_minorticklocs on a linear scale: the minor ticks that are not on a major one (within a
+// hundred-thousandth of the view).
+std::vector<double> withoutMajorTicks(const std::vector<double>& minor, const std::vector<double>& major, double viewMin,
+                                      double viewMax);
+
 // ticker.ScalarFormatter with the default rcParams (offset on, threshold 4, power limits -5..6,
 // no mathtext, no locale, Unicode minus).
 class ScalarFormatter {

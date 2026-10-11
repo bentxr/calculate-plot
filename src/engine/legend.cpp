@@ -232,8 +232,8 @@ Legend::Legend(const rc::Params& rc, Axes& parent, const std::vector<Artist*>& h
                const LegendOptions& o, std::string* error)
     : Artist(rc), parent_(parent) {
     zorder = 5;
-    const auto& sizeValue = rc.value("legend.fontsize");
-    fontsize_ = o.fontsize ? *o.fontsize : sizeValue.isNumber() ? sizeValue.asNumber() : *text::fontSize(sizeValue.asString(), rc);
+    // FontProperties(size=fontsize or rcParams["legend.fontsize"]).get_size_in_points()
+    fontsize_ = o.fontsize ? text::atLeastOnePoint(*o.fontsize) : text::fontSizeOf(rc.value("legend.fontsize"), rc);
     borderpad_ = rcOr(rc, o.borderpad, "legend.borderpad");
     labelspacing_ = rcOr(rc, o.labelspacing, "legend.labelspacing");
     handlelength_ = rcOr(rc, o.handlelength, "legend.handlelength");
@@ -413,12 +413,11 @@ Legend::Legend(const rc::Params& rc, Axes& parent, const std::vector<Artist*>& h
     legendBox_->offsetFunction = [this](double w, double h, double xd, double yd, Renderer& r) {
         return findOffset(w, h, xd, yd, r);
     };
-    // set_title (font size: rcParams["legend.title_fontsize"], else the default size)
+    // set_title (font size: title_fontsize, rcParams["legend.title_fontsize"], else the default size)
     titleBox_->text.text = o.title ? *o.title : "";
     titleBox_->visible = titleBox_->text.visible = !titleBox_->text.text.empty();
     text::FontProperties titleProp = text::FontProperties::defaults(rc);
-    const auto& ts = rc.value("legend.title_fontsize");
-    if (!ts.isNull()) titleProp.size = ts.isNumber() ? ts.asNumber() : *text::fontSize(ts.asString(), rc);
+    titleProp.size = o.titleFontsize ? text::atLeastOnePoint(*o.titleFontsize) : text::fontSizeOf(rc.value("legend.title_fontsize"), rc);
     titleBox_->text.font = titleProp;
 }
 

@@ -122,6 +122,7 @@ public:
     axes::MaxNLocator locator = axes::MaxNLocator::autoLocator();
     axes::ScalarFormatter formatter;
     axes::LogLocator logLocator, logMinorLocator;
+    std::optional<axes::AutoMinorLocator> minorLocator;  // of a linear scale, if rcParams["xtick.minor.visible"]
     axes::LogFormatterSciNotation logFormatter, logMinorFormatter;
     double labelpad;
     std::string labelPosition;  // bottom/top, left/right
@@ -224,7 +225,6 @@ private:
     void updateTransScale();
     bool autotitlepos_ = true;
     bool ignoreExistingDataLimits_ = true;
-    bool minorTicksUnsupported_ = false;
     bool staleX_ = false, staleY_ = false;
     std::shared_ptr<SharedAxes> shared_[2];  // x, y
     std::size_t cycleIndex_ = 0, patchCycleIndex_ = 0;

@@ -148,6 +148,67 @@ TEST(Ticker, LabelsAndOffsetFollowTheFormattersSettings) {
     EXPECT_EQ(mismatches, 0);
 }
 
+// The minor ticks of linear axes (tests/oracle/minor_ticker.json, written by
+// tools/oracle/make_minor_ticker_oracle.py): AutoMinorLocator over the major ticks of the default
+// locator, and what Axis.get_minorticklocs keeps of them.
+TEST(Ticker, MinorTicksOfLinearAxesMatchMatplotlib) {
+    std::ifstream in(std::string(CALCULATE_PLOT_SOURCE_DIR) + "/tests/oracle/minor_ticker.json", std::ios::binary);
+    std::ostringstream text;
+    text << in.rdbuf();
+    const auto cases = calculate_plot::support::parseJson(text.str(), nullptr);
+    ASSERT_TRUE(cases.has_value());
+    const auto same = [](const std::vector<double>& got, const Json& want) {
+        if (got.size() != want.size()) return false;
+        for (std::size_t i = 0; i < got.size(); ++i) {
+            const double w = hex(want[i]);
+            if (std::isnan(w) ? !std::isnan(got[i]) : !(got[i] == w && std::signbit(got[i]) == std::signbit(w))) return false;
+        }
+        return true;
+    };
+    const auto show = [](const std::vector<double>& v) {
+        std::string out;
+        for (double x : v) out += hexText(x) + " ";
+        return out;
+    };
+    int checked = 0, wrong = 0, onMajor = 0, automatic = 0;
+    for (const auto& c : cases->items()) {
+        const double vmin = hex((*c.find("view"))[0]), vmax = hex((*c.find("view"))[1]);
+        ax::MaxNLocator locator = ax::MaxNLocator::autoLocator();
+        locator.tickSpace = int(c.find("tick_space")->asInteger());
+        const auto major = locator.tickValues(vmin, vmax);
+        ASSERT_TRUE(same(major, *c.find("major"))) << "case " << checked;
+        ax::AutoMinorLocator minor;
+        if (c.find("ndivs")->isNumber()) minor.ndivs = int(c.find("ndivs")->asInteger());
+        else ++automatic;
+        const auto raw = minor(major, vmin, vmax);
+        const auto kept = ax::withoutMajorTicks(raw, major, vmin, vmax);
+        if ((!same(raw, *c.find("raw")) || !same(kept, *c.find("minor"))) && ++wrong <= 8)
+            ADD_FAILURE() << "case " << checked << " [" << c.find("view")->items()[0].asString() << ", "
+                          << c.find("view")->items()[1].asString() << "] ndivs " << (minor.ndivs ? std::to_string(*minor.ndivs) : "auto")
+                          << "\n  ours:       " << show(raw) << "\n  kept:       " << show(kept);
+        onMajor += raw.size() != kept.size();
+        ++checked;
+    }
+    EXPECT_EQ(checked, 700);
+    EXPECT_EQ(wrong, 0);
+    EXPECT_EQ(onMajor, 636);
+    EXPECT_GT(automatic, 150);
+}
+
+// Fewer than two major ticks leave no minor ticks; several at the same place count once.
+TEST(Ticker, MinorTicksNeedTwoMajorOnes) {
+    const ax::AutoMinorLocator minor;
+    EXPECT_TRUE(minor({}, 0, 1).empty());
+    EXPECT_TRUE(minor({0.5}, 0, 1).empty());
+    EXPECT_TRUE(minor({0.5, 0.5, 0.5}, 0, 1).empty());
+    // np.unique: sorted, without repeats (a step of 1: five divisions)
+    EXPECT_EQ(minor({1.0, 0.0, 1.0, 0.0}, 0, 1), (std::vector<double>{0.0, 0.2, 0.4, 0.6000000000000001, 0.8, 1.0}));
+    EXPECT_EQ(minor({0.0, 1.0}, 1, 0), minor({0.0, 1.0}, 0, 1));  // the view in any order
+    // A view far wider than the major ticks are apart would take more ticks than can be drawn: no
+    // more than a million are made
+    EXPECT_EQ(minor({0.0, 1e-12}, 0, 1).size(), 1000000u);
+}
+
 TEST(PythonNumbers, FloorDivisionAndDivmod) {
     EXPECT_EQ(pn::floorDivide(7.0, 2.0), 3.0);
     EXPECT_EQ(pn::floorDivide(-7.0, 2.0), -4.0);

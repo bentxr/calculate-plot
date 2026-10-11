@@ -38,12 +38,8 @@ double rcNumber(const rc::Params& rc, std::initializer_list<const char*> names) 
     return rc.number(last);
 }
 
-// A font size given as a number or a name (Text(fontsize=...)).
-double fontSizeOf(const rc::Params& rc, const char* key) {
-    const auto& v = rc.value(key);
-    if (v.isNumber()) return v.asNumber();
-    return *text::fontSize(v.asString(), rc);
-}
+// The font size of an rcParam (Text(fontsize=rcParams[key])).
+double fontSizeOf(const rc::Params& rc, const char* key) { return text::fontSizeOf(rc.value(key), rc); }
 
 // mtransforms._interval_contains_close
 bool intervalContainsClose(double a, double b, double val, double rtol = 1e-10) {
@@ -404,6 +400,13 @@ void Axis::setScale(const std::string& name) {
         settings.useMathText = rc_.boolean("axes.formatter.use_mathtext");
         settings.unicodeMinus = rc_.boolean("axes.unicode_minus");
         formatter = axes::ScalarFormatter(settings);
+        // the minor locator: AutoMinorLocator() if rcParams["xtick.minor.visible"], else NullLocator()
+        const std::string tick = isX_ ? "xtick" : "ytick";
+        if (rc_.boolean(tick + ".minor.visible")) {
+            minorLocator = axes::AutoMinorLocator();
+            const auto& ndivs = rc_.value(tick + ".minor.ndivs");  // 'auto', or the divisions
+            if (ndivs.isNumber()) minorLocator->ndivs = int(ndivs.asNumber());
+        }
     }
 }
 
@@ -633,6 +636,19 @@ std::vector<Tick*> Axis::updateTicks() {
             ticks.push_back(minor[i]);
         }
     }
+    // AutoMinorLocator on a linear scale that has one; its labels are empty (NullFormatter)
+    // (every axis makes the same locator from the rcParams: this one's is as good as the owner's)
+    if (groupVisible(minorTickKw_) && scale_ != "log" && minorLocator) {
+        locator.tickSpace = owner.tickSpace();
+        const auto majorLocs = locator.tickValues(ownerView[0], ownerView[1]);
+        const auto locs = axes::withoutMajorTicks((*minorLocator)(majorLocs, ownerView[0], ownerView[1]), majorLocs, view[0], view[1]);
+        const std::vector<Tick*> minor = minorTicks(locs.size());
+        for (std::size_t i = 0; i < locs.size(); ++i) {
+            minor[i]->updatePosition(locs[i]);
+            minor[i]->label1.text = minor[i]->label2.text = "";
+            ticks.push_back(minor[i]);
+        }
+    }
     if (ticks.empty()) return {};
     double low = view[0], high = view[1];
     if (low > high) std::swap(low, high);
@@ -782,7 +798,6 @@ Axes::Axes(const rc::Params& rc, Figure& fig, const SubplotSpec& spec)
     updateTransScale();  // the end of clear()
     xaxis->setMinorTickSwitches(minorSw(true));
     yaxis->setMinorTickSwitches(minorSw(false));
-    if (rc.boolean("xtick.minor.visible") || rc.boolean("ytick.minor.visible")) minorTicksUnsupported_ = true;
 }
 
 void Axes::setTitleOffsetTrans(double points) {
@@ -805,8 +820,7 @@ Text& Axes::setTitle(const std::string& titleText, const std::string& loc, std::
     Text& t = loc == "left" ? *leftTitle : loc == "right" ? *rightTitle : *title;
     setTitleOffsetTrans(pad ? *pad : rc_.number("axes.titlepad"));
     t.text = titleText;
-    const auto& size = rc_.value("axes.titlesize");
-    t.font.size = size.isNumber() ? size.asNumber() : *text::fontSize(size.asString(), rc_);
+    t.font.size = fontSizeOf(rc_, "axes.titlesize");
     const auto& weight = rc_.value("axes.titleweight");
     t.font.weight = weight.isNumber() ? text::FontValue(int(weight.asNumber())) : text::FontValue(weight.asString());
     t.verticalAlignment = "baseline";
@@ -1183,7 +1197,6 @@ void Axes::setPosition(const transforms::BboxBase& pos) { position->setPoints(po
 
 std::optional<transforms::Bbox> Axes::tightbbox(Renderer& renderer, bool forLayoutOnly) {
     if (!visible) return std::nullopt;
-    if (minorTicksUnsupported_) renderer.unsupported("minor ticks on linear scales (AutoMinorLocator) are not supported yet");
     // apply_aspect: the 'auto' aspect keeps the original position
     std::vector<transforms::Bbox> bb;
     if (axisOn)
@@ -1246,7 +1259,6 @@ std::optional<transforms::Bbox> Axes::tightbbox(Renderer& renderer, bool forLayo
 void Axes::draw(Renderer& renderer) {
     if (!visible) return;
     unstaleViewLim();
-    if (minorTicksUnsupported_) renderer.unsupported("minor ticks on linear scales (AutoMinorLocator) are not supported yet");
     renderer.openGroup("axes", gid);
     // get_children without the patch: children, spines, axes, titles; sorted by zorder (stable)
     std::vector<Artist*> artists;

@@ -413,6 +413,69 @@ INSTANTIATE_TEST_SUITE_P(
                 "axs[0].legend: bad facecolor"},
         Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"edgecolor": [1, 2]}})", "axs[0].legend: bad edgecolor"}));
 
+class LegendRefusals : public testing::TestWithParam<Refusal> {};
+
+TEST_P(LegendRefusals, NameTheCallAndTheReason) {
+    const auto drawing = draw(kSubplots + R"({"on": "axs[0]", "call": "plot", "args": [[0, 1], [0, 1]], "kwargs": {"label": "a"}},)" +
+                              GetParam().call);
+    EXPECT_EQ(drawing.error, GetParam().error);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    Engine, LegendRefusals,
+    testing::Values(
+        Refusal{R"({"on": "axs[0]", "call": "legend", "args": [["a"]]})",
+                "axs[0].legend: handles and labels as arguments are not supported yet"},
+        Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"loc": 3}})", "axs[0].legend: loc must be a location name"},
+        Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"title": 3}})", "axs[0].legend: title must be a string"},
+        Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"fontsize": "huge"}})", "axs[0].legend: unknown font size huge"},
+        Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"fontsize": [8]}})", "axs[0].legend: bad fontsize"},
+        Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"fontsize": true}})", "axs[0].legend: bad fontsize"},
+        Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"fontsize": {"$float": "nan"}}})", "axs[0].legend: bad fontsize"},
+        Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"fontsize": "inf"}})", "axs[0].legend: bad fontsize"},
+        Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"title_fontsize": "Large"}})",
+                "axs[0].legend: unknown font size Large"},
+        Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"title_fontsize": [8]}})", "axs[0].legend: bad title_fontsize"},
+        Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"title_fontsize": {"$float": "inf"}}})",
+                "axs[0].legend: bad title_fontsize"},
+        Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"frameon": 1}})", "axs[0].legend: frameon must be True or False"},
+        Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"fancybox": "yes"}})",
+                "axs[0].legend: fancybox must be True or False"},
+        Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"markerfirst": 0}})",
+                "axs[0].legend: markerfirst must be True or False"},
+        Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"ncols": 0}})", "axs[0].legend: ncols must be a positive integer"},
+        Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"ncol": "2"}})", "axs[0].legend: ncols must be a positive integer"},
+        Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"borderpad": "1"}})", "axs[0].legend: borderpad must be a number"},
+        Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"columnspacing": [1]}})",
+                "axs[0].legend: columnspacing must be a number"},
+        Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"shadow": true}})", "axs[0].legend: unsupported keyword shadow"}));
+
+// A legend keyword that is None is the default.
+TEST(LegendCalls, NoneKeywordsAreTheDefaults) {
+    const std::string plot = R"({"on": "axs[0]", "call": "plot", "args": [[0, 1], [0, 1]], "kwargs": {"label": "a"}},)";
+    const auto plain = draw(kSubplots + plot + R"({"on": "axs[0]", "call": "legend"})");
+    const auto none = draw(kSubplots + plot + R"({"on": "axs[0]", "call": "legend", "kwargs": {"loc": null, "title": null,
+        "fontsize": null, "title_fontsize": null, "frameon": null, "fancybox": null, "ncols": null, "borderpad": null,
+        "facecolor": null, "markerfirst": null, "framealpha": null}})");
+    ASSERT_EQ(plain.error, "");
+    ASSERT_EQ(none.error, "");
+    EXPECT_EQ(plain.trace, none.trace);
+}
+
+// The legend's font sizes are read as FontProperties.set_size reads them: a number also as text.
+TEST(LegendCalls, FontSizesMayBeNumbersAsText) {
+    const std::string plot = R"({"on": "axs[0]", "call": "plot", "args": [[0, 1], [0, 1]], "kwargs": {"label": "a"}},)";
+    const auto legend = [&](const std::string& kwargs) {
+        const auto drawing = draw(kSubplots + plot + R"({"on": "axs[0]", "call": "legend", "kwargs": )" + kwargs + "}");
+        EXPECT_EQ(drawing.error, "") << kwargs;
+        return drawing.trace;
+    };
+    EXPECT_EQ(legend(R"({"title": "T", "fontsize": " 14.5 ", "title_fontsize": "7"})"),
+              legend(R"({"title": "T", "fontsize": 14.5, "title_fontsize": 7})"));
+    EXPECT_NE(legend(R"({"title": "T", "fontsize": 14.5, "title_fontsize": 7})"), legend(R"({"title": "T", "fontsize": 14.5})"));
+    EXPECT_NE(legend(R"({"title": "T", "fontsize": 14.5})"), legend(R"({"title": "T"})"));
+}
+
 // A collection of one path is drawn as markers when the path is smaller than the figure; for a
 // path with curves that the hull of its control points does not settle, the question is refused.
 TEST(CollectionCalls, OneCurvedPathLargerThanTheFigureIsRefused) {
@@ -427,13 +490,13 @@ TEST(CollectionCalls, OneCurvedPathLargerThanTheFigureIsRefused) {
 TEST(LayoutCalls, WhatCannotBeMeasuredStopsTheLayout) {
     std::string error;
     const auto figure = calculate_plot::model::parseFigure(
-        R"({"version": 1, "rc": {"xtick.minor.visible": true},
-            "calls": [{"call": "subplots", "as": ["fig", "ax"]}, {"on": "fig", "call": "tight_layout"}]})", &error);
+        R"({"version": 1, "calls": [{"call": "subplots", "as": ["fig", "ax"]}, {"on": "fig", "call": "tight_layout"}]})", &error);
     ASSERT_TRUE(figure.has_value()) << error;
+    // (the tick labels cannot be measured without their font)
     calculate_plot::engine::DrawOptions options;
-    options.fontDirectory = std::string(CALCULATE_PLOT_SOURCE_DIR) + "/fonts/ttf";
+    options.fontDirectory = std::string(CALCULATE_PLOT_SOURCE_DIR) + "/no such directory";
     EXPECT_EQ(calculate_plot::engine::drawAgg(*figure, options).error,
-              "fig.tight_layout: minor ticks on linear scales (AutoMinorLocator) are not supported yet");
+              "fig.tight_layout: LastResortHE-Regular.ttf: FT_New_Face failed with FreeType error 1");
 }
 
 // None for the optional keywords is the same as leaving them out.

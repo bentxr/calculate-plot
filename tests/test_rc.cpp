@@ -209,7 +209,14 @@ TEST(RcParams, ValuesTheEngineDoesNotReadYetAreRefused) {
         {"axes.formatter.min_exponent", "-3000000000"},
         {"axes.formatter.limits", "[-5, 2147483648]"},
         {"legend.numpoints", "1e10"},
+        {"xtick.minor.ndivs", "\"AUTO\""},            // taken by matplotlib, and then AutoMinorLocator breaks
+        {"ytick.minor.ndivs", "\"Auto\""},
+        {"ytick.minor.ndivs", "3000000000"},
     };
+    EXPECT_TRUE(p.set("xtick.minor.ndivs", json("\"auto\""), &error)) << error;
+    EXPECT_TRUE(p.set("ytick.minor.ndivs", json("0"), &error)) << error;
+    EXPECT_TRUE(p.set("ytick.minor.ndivs", json("\"7\""), &error)) << error;
+    EXPECT_EQ(p.number("ytick.minor.ndivs"), 7.0);
     EXPECT_TRUE(p.set("axes.formatter.offset_threshold", json("23"), &error)) << error;
     EXPECT_TRUE(p.set("axes.formatter.limits", json("\"-2147483647, 2147483647\""), &error)) << error;
     EXPECT_TRUE(p.set("axes.formatter.limits", json("[-5, 6]"), &error)) << error;
@@ -248,8 +255,6 @@ TEST(RcParams, KeysThatAreNotHonouredYetTakeOnlyTheirDefault) {
         {"text.hinting_factor", "8"},
         {"text.kerning_factor", "6"},
         {"text.usetex", "true"},
-        {"xtick.minor.ndivs", "4"},
-        {"ytick.minor.ndivs", "4"},
     };
     const auto& listed = Params::unsupportedKeys();
     EXPECT_EQ(listed.size(), std::size(other) + 1);  // and the backend, which takes nothing
@@ -272,10 +277,8 @@ TEST(RcParams, KeysThatAreNotHonouredYetTakeOnlyTheirDefault) {
     // a value of another kind than the default is not the default
     EXPECT_FALSE(p.set("axes.axisbelow", json("false"), &error));
     EXPECT_EQ(error, "rcParams[\"axes.axisbelow\"] is not supported yet");
-    EXPECT_FALSE(p.set("xtick.minor.ndivs", json("0"), &error));
     EXPECT_FALSE(p.set("agg.path.chunksize", json("\"7\""), &error));
     EXPECT_TRUE(p.set("agg.path.chunksize", json("\"0\""), &error)) << error;
-    EXPECT_TRUE(p.set("xtick.minor.ndivs", json("\"auto\""), &error)) << error;
     EXPECT_FALSE(p.set("text.kerning_factor", json("0"), &error));
     EXPECT_FALSE(p.set("backend", json("\"agg\""), &error));
     EXPECT_EQ(error, "the choice of a backend is not supported yet");
@@ -305,4 +308,26 @@ TEST(RcParams, KeysOfWhatIsNotDrawnTakeWhatMatplotlibTakes) {
         const auto& refused = Params::unsupportedKeys();
         EXPECT_EQ(std::find(refused.begin(), refused.end(), key), refused.end()) << key;
     }
+}
+
+// A font weight or stretch beyond 0-1000 is taken by rcParams and refused by FontProperties as soon
+// as a text is made, which every Axes does: it is refused here. figure.titleweight is only used by a
+// suptitle, which refuses it then.
+TEST(RcParams, FontWeightsAndStretchesAreFromZeroToAThousand) {
+    for (const char* key : {"font.weight", "font.stretch", "axes.titleweight", "axes.labelweight"}) {
+        Params p = Params::defaults();
+        std::string error;
+        for (const char* bad : {"1001", "-1", "\"1001\"", "2000.5", "-1.5"}) {
+            EXPECT_FALSE(p.set(key, json(bad), &error)) << key << " " << bad;
+            EXPECT_EQ(error, std::string("the value given for ") + key + " is not valid: FontProperties takes a name or a number "
+                                                                          "from 0 to 1000");
+        }
+        for (const char* good : {"1000", "0", "\"0\"", "1000.9", "-0.5", "500"})  // (int() cuts the fraction off)
+            EXPECT_TRUE(p.set(key, json(good), &error)) << key << " " << good << ": " << error;
+        EXPECT_EQ(p.number(key), 500.0);
+    }
+    Params p = Params::defaults();
+    std::string error;
+    EXPECT_TRUE(p.set("figure.titleweight", json("1001"), &error)) << error;
+    EXPECT_TRUE(p.set("figure.labelweight", json("-7"), &error)) << error;
 }
