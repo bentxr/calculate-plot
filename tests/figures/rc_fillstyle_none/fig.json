@@ -1,0 +1,15 @@
+{"version": 1,
+ "rc": {"markers.fillstyle": "none"},
+ "calls": [
+  {"call": "subplots", "args": [1, 2], "kwargs": {"figsize": {"$tuple": [8.0, 3.5]}}, "as": ["fig", "axs"]},
+  {"on": "axs[0]", "call": "scatter", "args": [[1, 2, 3, 4], [1, 3, 2, 4]], "kwargs": {"c": [0.1, 0.4, 0.6, 0.9], "s": 120, "label": "mapped"}},
+  {"on": "axs[0]", "call": "scatter", "args": [[1, 2, 3, 4], [2, 4, 3, 5]], "kwargs": {"c": ["red", "C2", "k", "0.5"], "marker": "s", "label": "listed"}},
+  {"on": "axs[0]", "call": "scatter", "args": [[1, 2, 3, 4], [3, 5, 4, 6]], "kwargs": {"marker": "^", "label": "plain", "linewidths": 3}},
+  {"on": "axs[0]", "call": "scatter", "args": [[1, 2, 3, 4], [4, 6, 5, 7]], "kwargs": {"c": [1, 2, 3, 4], "marker": "x", "label": "crosses"}},
+  {"on": "axs[0]", "call": "scatter", "args": [[1, 2, 3, 4], [5, 7, 6, 8]], "kwargs": {"c": [1, 2, 3, 4], "edgecolors": "red", "alpha": 0.5, "vmin": 0, "vmax": 10}},
+  {"on": "axs[0]", "call": "legend", "args": []},
+  {"on": "axs[1]", "call": "plot", "args": [[1, 2, 3, 4], [1, 3, 2, 4], "o-"], "kwargs": {"label": "line", "markersize": 10}},
+  {"on": "axs[1]", "call": "plot", "args": [[1, 2, 3, 4], [2, 4, 3, 5]], "kwargs": {"marker": "D", "markerfacecolor": "red", "linestyle": "none", "label": "diamonds"}},
+  {"on": "axs[1]", "call": "errorbar", "args": [[1, 2, 3, 4], [3, 5, 4, 6]], "kwargs": {"yerr": 0.4, "fmt": "s", "label": "bars"}},
+  {"on": "axs[1]", "call": "legend", "args": []}
+]}

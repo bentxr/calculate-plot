@@ -289,7 +289,7 @@ TEST(RcParams, KeysThatAreNotHonouredYetTakeOnlyTheirDefault) {
 TEST(RcParams, KeysOfWhatIsNotDrawnTakeWhatMatplotlibTakes) {
     Params p = Params::defaults();
     std::string error;
-    EXPECT_EQ(Params::inertKeys().size(), 136u);
+    EXPECT_EQ(Params::inertKeys().size(), 137u);
     EXPECT_TRUE(p.set("boxplot.whiskers", json("[5, 95]"), &error)) << error;
     EXPECT_TRUE(p.set("boxplot.whiskers", json("2.5"), &error)) << error;
     EXPECT_TRUE(p.set("boxplot.flierprops.marker", json("5"), &error)) << error;
@@ -330,4 +330,50 @@ TEST(RcParams, FontWeightsAndStretchesAreFromZeroToAThousand) {
     std::string error;
     EXPECT_TRUE(p.set("figure.titleweight", json("1001"), &error)) << error;
     EXPECT_TRUE(p.set("figure.labelweight", json("-7"), &error)) << error;
+}
+
+// What FontProperties and the artists refuse as soon as an Axes is made is refused when it is set:
+// a font style or variant that is not one, and the transparency of the grid outside 0-1.
+TEST(RcParams, ValuesEveryFigureWouldBreakOnAreRefused) {
+    Params p = Params::defaults();
+    std::string error;
+    for (const char* style : {"\"normal\"", "\"italic\"", "\"oblique\""}) EXPECT_TRUE(p.set("font.style", json(style), &error)) << error;
+    for (const char* bad : {"\"t\"", "\"Italic\"", "\"\"", "\"slanted\""}) {
+        EXPECT_FALSE(p.set("font.style", json(bad), &error)) << bad;
+        EXPECT_EQ(error, "the value given for font.style is not valid: FontProperties takes normal, italic or oblique");
+    }
+    for (const char* variant : {"\"normal\"", "\"small-caps\""}) EXPECT_TRUE(p.set("font.variant", json(variant), &error)) << error;
+    for (const char* bad : {"\"smallcaps\"", "\"Normal\"", "\"\""}) {
+        EXPECT_FALSE(p.set("font.variant", json(bad), &error)) << bad;
+        EXPECT_EQ(error, "the value given for font.variant is not valid: FontProperties takes normal or small-caps");
+    }
+    for (const char* key : {"grid.alpha", "grid.major.alpha", "grid.minor.alpha"}) {
+        for (const char* good : {"0", "1", "0.5", "-0.0", "true"}) EXPECT_TRUE(p.set(key, json(good), &error)) << key << good << error;
+        for (const char* bad : {"2", "-0.1", "1.0000001"}) {
+            EXPECT_FALSE(p.set(key, json(bad), &error)) << key << bad;
+            EXPECT_EQ(error, std::string("the value given for ") + key + " is not valid: an alpha is from 0 to 1");
+        }
+    }
+    EXPECT_TRUE(p.set("grid.major.alpha", json("null"), &error)) << error;
+    // a width or a size may be any number
+    EXPECT_TRUE(p.set("grid.linewidth", json("2"), &error)) << error;
+}
+
+// The grid's own line styles may be None (grid.linestyle then); an on-off sequence is not read yet.
+TEST(RcParams, GridLineStylesAreNamesOrNone) {
+    Params p = Params::defaults();
+    std::string error;
+    for (const char* key : {"grid.major.linestyle", "grid.minor.linestyle"}) {
+        EXPECT_TRUE(p.set(key, json("\"--\""), &error)) << error;
+        EXPECT_EQ(p.text(key), "--");
+        EXPECT_TRUE(p.set(key, json("\"Dotted\""), &error)) << error;
+        EXPECT_EQ(p.text(key), "dotted");
+        EXPECT_TRUE(p.set(key, json("null"), &error)) << error;
+        EXPECT_TRUE(p.value(key).isNull());
+        for (const char* sequence : {"\"1,5\"", "[1, 5]", "\"(0, (1, 2))\"", "{\"$tuple\": [0, [1, 2]]}"}) {
+            EXPECT_FALSE(p.set(key, json(sequence), &error)) << key << sequence;
+            EXPECT_EQ(error, std::string("this value of ") + key + " is not supported yet");
+        }
+        EXPECT_TRUE(p.value(key).isNull());
+    }
 }

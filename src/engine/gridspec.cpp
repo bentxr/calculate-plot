@@ -17,6 +17,11 @@ SubplotParams SubplotParams::defaults(const rc::Params& rc) {
             rc.number("figure.subplot.wspace"), rc.number("figure.subplot.hspace")};
 }
 
+bool SubplotParams::valid(std::string* error) const {
+    SubplotParams copy = *this;
+    return copy.update({}, {}, {}, {}, {}, {}, error);
+}
+
 bool SubplotParams::update(std::optional<double> l, std::optional<double> b, std::optional<double> r,
                            std::optional<double> t, std::optional<double> ws, std::optional<double> hs,
                            std::string* error) {

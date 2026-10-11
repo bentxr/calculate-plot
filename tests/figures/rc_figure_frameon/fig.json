@@ -1,0 +1,6 @@
+{"version": 1,
+ "rc": {"figure.frameon": false, "figure.facecolor": "0.9", "figure.edgecolor": "red"},
+ "calls": [
+  {"call": "subplots", "args": [], "kwargs": {"figsize": {"$tuple": [3.0, 2.0]}}, "as": ["fig", "ax"]},
+  {"on": "ax", "call": "plot", "args": [[0, 1], [0, 1]]}
+]}

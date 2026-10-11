@@ -128,6 +128,9 @@ int draw(const std::vector<std::string>& args, std::ostream& err) {
                 replay.fontDirectory = args[4];
                 const auto result = render::replayTrace(drawing.trace, replay);
                 error = result.error;
+                // (matplotlib: "cannot write empty image as PNG")
+                if (error.empty() && (result.image.width == 0 || result.image.height == 0))
+                    error = "the figure has no pixels: it cannot be written as a PNG";
                 output = png::encodePng(result.image, {{"Software", "calculate-plot " + std::string(versionString())}});
             }
         }

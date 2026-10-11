@@ -26,9 +26,22 @@ void GC::setAlpha(std::optional<double> a) {
     setForeground(rgb);
 }
 
-void GC::setDashes(double offset, const std::optional<std::vector<double>>& dashList) {
+const char* GC::setDashes(double offset, const std::optional<std::vector<double>>& dashList) {
+    if (const char* problem = dashListProblem(dashList)) return problem;
     dashOffset = offset;
     dashes = dashList;
+    return nullptr;
+}
+
+const char* dashListProblem(const std::optional<std::vector<double>>& dashList) {
+    if (!dashList) return nullptr;
+    bool positive = false;
+    for (double d : *dashList) {
+        if (d < 0.0) return "All values in the dash list must be non-negative";
+        positive = positive || d > 0.0;
+    }
+    if (!dashList->empty() && !positive) return "At least one value in the dash list must be positive";
+    return nullptr;
 }
 
 }  // namespace calculate_plot::engine

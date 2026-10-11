@@ -338,6 +338,8 @@ Axis::Axis(const rc::Params& rc, Axes& axes, bool isX)
 }
 
 void Axis::setViewInterval(double vmin, double vmax) {
+    // (self.axes.viewLim: asking for it brings any pending autoscaling up to date first, of both directions)
+    axes_.unstaleViewLim();
     auto p = axes_.viewLim->points();
     if (isX_) p[0] = vmin, p[2] = vmax;
     else p[1] = vmin, p[3] = vmax;
@@ -798,6 +800,10 @@ Axes::Axes(const rc::Params& rc, Figure& fig, const SubplotSpec& spec)
     updateTransScale();  // the end of clear()
     xaxis->setMinorTickSwitches(minorSw(true));
     yaxis->setMinorTickSwitches(minorSw(false));
+    // set_tick_params goes over the ticks of each axis, which makes the first one of each list
+    // (_LazyTickList), and making a tick sets the position of the two spines it sits on: from here on
+    // the spines have their own transforms, also where no tick is ever drawn.
+    for (const char* side : {"bottom", "top", "left", "right"}) spine(side).spineTransform();
 }
 
 void Axes::setTitleOffsetTrans(double points) {
@@ -1011,7 +1017,7 @@ Collection& Axes::addCollection(std::unique_ptr<Collection> c) {
         std::make_shared<transforms::Bbox>(std::array<double, 4>{0, 0, 1, 1}), patch->fullTransform());
     unstaleViewLim();
     // _update_collection_limits: the box's corners and its minpos (when finite)
-    const auto d = c->dataLim();
+    const auto d = c->dataLim(transData);
     std::vector<std::array<double, 2>> points{{d.points[0], d.points[1]}, {d.points[2], d.points[3]}};
     if (std::isfinite(d.minpos[0]) || std::isfinite(d.minpos[1])) points.push_back(d.minpos);
     updateDatalim(points);
@@ -1030,7 +1036,7 @@ Collection& Axes::addLinesCollection(std::unique_ptr<Collection> c) {
     Collection& ref = *c;
     children.push_back(std::move(c));
     if (!ref.paths.empty()) {
-        const auto d = ref.dataLim();
+        const auto d = ref.dataLim(transData);
         updateDatalim({{d.points[0], d.points[1]}, {d.points[2], d.points[3]}});
         requestAutoscaleView(true, true);
     }

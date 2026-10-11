@@ -569,6 +569,14 @@ void RendererSVG::drawPathCollection(const Gc& gc, const Collection& c) {
                 if (!c.linewidths.empty()) gc0.linewidth = c.linewidths[i % c.linewidths.size()];
                 if (!c.linestyles.empty()) {
                     const auto& ls = c.linestyles[i % c.linestyles.size()];
+                    // gc0.set_dashes(*ls): no value may be negative, and one must be positive
+                    bool positive = !ls.second || ls.second->empty();
+                    for (double d : ls.second ? *ls.second : std::vector<double>{}) {
+                        if (d < 0.0) error = "All values in the dash list must be non-negative";
+                        positive = positive || d > 0.0;
+                    }
+                    if (error.empty() && !positive) error = "At least one value in the dash list must be positive";
+                    if (!error.empty()) return;
                     gc0.dashOffset = ls.first;
                     gc0.dashes = ls.second;
                 }

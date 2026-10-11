@@ -108,9 +108,25 @@ public:
     double transform1d(double v) const;
     double inverse1d(double v) const;  // InvertedLogTransform
     double base() const { return base_; }
+    TransformPtr inverted() const override;
 
 private:
     double base_;
+};
+
+// InvertedLogTransform: the base to the power of its coordinate; like LogTransform, one direction of
+// a blended transform.
+class InvertedLogTransform : public Transform {
+public:
+    explicit InvertedLogTransform(double base) : log_(base) {}
+    Matrix matrix() const override { return {}; }
+    bool isAffine() const override { return false; }
+    bool isAffine2DBase() const override { return false; }
+    double transform1d(double v) const { return log_.inverse1d(v); }
+    TransformPtr inverted() const override { return std::make_shared<LogTransform>(log_.base()); }
+
+private:
+    LogTransform log_;
 };
 
 class Affine2D : public Transform {

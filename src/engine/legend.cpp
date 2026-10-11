@@ -260,7 +260,12 @@ Legend::Legend(const rc::Params& rc, Axes& parent, const std::vector<Artist*>& h
     patch_->setEdgecolor(edge);
     patch_->setFacecolor(face);
     if (!rc.value("legend.linewidth").isNull()) patch_->setLinewidth(rc.number("legend.linewidth"));
-    patch_->setAlpha(o.framealpha ? *o.framealpha : rc.number("legend.framealpha"));
+    const double framealpha = o.framealpha ? *o.framealpha : rc.number("legend.framealpha");
+    if (!(0 <= framealpha && framealpha <= 1)) {  // Artist.set_alpha
+        *error = "framealpha is outside the 0-1 range";
+        return;
+    }
+    patch_->setAlpha(framealpha);
     patch_->snap = true;
     patch_->visible = o.frameon ? *o.frameon : rc.boolean("legend.frameon");
     patch_->transform = std::make_shared<transforms::IdentityTransform>();  // the legend's transform

@@ -201,6 +201,25 @@ TEST(Cli, DrawSaysWhatItCannotDraw) {
     std::filesystem::remove(in);
 }
 
+// A figure of no pixels (a tiny dpi) cannot be a PNG, as in matplotlib ("cannot write empty image as
+// PNG"); the SVG and the draw calls are written all the same.
+TEST(Cli, DrawRefusesAPngWithoutPixels) {
+    const std::string in = tempFile(".json");
+    std::ofstream(in) << R"({"version":1,"rc":{"figure.dpi":0.001},"calls":[{"call":"subplots","as":["fig","ax"]}]})";
+    const std::string png = tempFile(".png");
+    const Outcome r = cplot({"draw", in, png, "--fonts", kFontDir});
+    EXPECT_EQ(r.status, 1);
+    EXPECT_NE(r.err.find("the figure has no pixels: it cannot be written as a PNG"), std::string::npos) << r.err;
+    EXPECT_FALSE(std::filesystem::exists(png));
+    for (const char* ending : {".svg", ".json"}) {
+        const std::string out = tempFile(ending);
+        const Outcome ok = cplot({"draw", in, out, "--fonts", kFontDir});
+        EXPECT_EQ(ok.status, 0) << ok.err;
+        std::filesystem::remove(out);
+    }
+    std::filesystem::remove(in);
+}
+
 TEST(Cli, DrawReportsABadFigureFile) {
     const std::string in = tempFile(".json");
     std::ofstream(in) << R"({"version":1,"calls":[{"call":"__import__"}]})";

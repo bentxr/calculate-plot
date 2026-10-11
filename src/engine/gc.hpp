@@ -47,7 +47,11 @@ struct GC {
 
     void setForeground(const std::vector<double>& rgba);  // set_foreground(fg, isRGBA=True)
     void setAlpha(std::optional<double> a);
-    void setDashes(double offset, const std::optional<std::vector<double>>& dashList);
+    // set_dashes; the reason where matplotlib raises (a negative value, or none that is positive)
+    const char* setDashes(double offset, const std::optional<std::vector<double>>& dashList);
 };
+
+// GraphicsContextBase.set_dashes' checks: why a dash list cannot be set, or nullptr.
+const char* dashListProblem(const std::optional<std::vector<double>>& dashList);
 
 }  // namespace calculate_plot::engine

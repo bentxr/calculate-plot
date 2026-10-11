@@ -19,6 +19,8 @@ struct SubplotParams {
     double left, bottom, right, top, wspace, hspace;
     static SubplotParams defaults(const rc::Params& rc);
     // SubplotParams.update: unset values stay; false (with *error) where matplotlib raises.
+    // SubplotParams(): the checks of update() on the values as they are (left < right, bottom < top)
+    bool valid(std::string* error) const;
     bool update(std::optional<double> left, std::optional<double> bottom, std::optional<double> right,
                 std::optional<double> top, std::optional<double> wspace, std::optional<double> hspace,
                 std::string* error);

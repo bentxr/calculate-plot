@@ -1,6 +1,7 @@
 // What the engine answers to calls it cannot run: an error that names the call and says why, never
 // a figure drawn differently from matplotlib's.
 #include "engine/engine.hpp"
+#include "render/svg_replay.hpp"
 #include "model/figure_model.hpp"
 
 #include <gtest/gtest.h>
@@ -497,6 +498,79 @@ TEST(LayoutCalls, WhatCannotBeMeasuredStopsTheLayout) {
     options.fontDirectory = std::string(CALCULATE_PLOT_SOURCE_DIR) + "/no such directory";
     EXPECT_EQ(calculate_plot::engine::drawAgg(*figure, options).error,
               "fig.tight_layout: LastResortHE-Regular.ttf: FT_New_Face failed with FreeType error 1");
+}
+
+// Settings that matplotlib takes and then breaks on when they are used stop the drawing with the reason.
+TEST(RcCalls, SettingsThatBreakWhenUsed) {
+    const auto errors = [](const std::string& rc, const std::string& calls) {
+        std::string parseError;
+        const auto figure = calculate_plot::model::parseFigure(
+            R"({"version": 1, "rc": )" + rc + R"(, "calls": [{"call": "subplots", "as": ["fig", "ax"]})" + calls + "]}", &parseError);
+        EXPECT_TRUE(figure.has_value()) << parseError;
+        if (!figure) return std::pair<std::string, std::string>();
+        calculate_plot::engine::DrawOptions options;
+        options.fontDirectory = std::string(CALCULATE_PLOT_SOURCE_DIR) + "/fonts/ttf";
+        // (the SVG renderer's own errors come when the calls are replayed)
+        const auto svg = calculate_plot::engine::drawSvg(*figure, options);
+        const std::string svgError = svg.error.empty() ? calculate_plot::render::replaySvgTrace(svg.trace, options.fontDirectory).error : svg.error;
+        return std::make_pair(calculate_plot::engine::drawAgg(*figure, options).error, svgError);
+    };
+    const auto both = [&](const std::string& rc, const std::string& calls, const std::string& error) {
+        const auto got = errors(rc, calls);
+        EXPECT_EQ(got.first, error) << rc;
+        EXPECT_EQ(got.second, error) << rc;
+    };
+    // SubplotParams, when the figure is made
+    both(R"({"figure.subplot.left": 0.95})", "", "plt.subplots: left cannot be >= right");
+    both(R"({"figure.subplot.right": 0.125})", "", "plt.subplots: left cannot be >= right");
+    both(R"({"figure.subplot.top": 0.1})", "", "plt.subplots: bottom cannot be >= top");
+    both(R"({"figure.subplot.bottom": 0.88})", "", "plt.subplots: bottom cannot be >= top");
+    both(R"({"figure.subplot.bottom": 0.87, "figure.subplot.left": 0.89})", "", "");
+    {
+        std::string parseError;
+        const auto figure = calculate_plot::model::parseFigure(
+            R"({"version": 1, "rc": {"figure.subplot.left": 0.95}, "calls": [{"call": "figure", "as": ["fig"]}]})", &parseError);
+        ASSERT_TRUE(figure.has_value()) << parseError;
+        EXPECT_EQ(calculate_plot::engine::drawAgg(*figure, {}).error, "plt.figure: left cannot be >= right");
+    }
+    // the legend's frame
+    const std::string legend = R"(, {"on": "ax", "call": "plot", "args": [[0, 1], [0, 1]], "kwargs": {"label": "a"}}, {"on": "ax", "call": "legend")";
+    both(R"({"legend.framealpha": 2})", legend + "}", "ax.legend: framealpha is outside the 0-1 range");
+    both(R"({"legend.framealpha": -0.5})", legend + "}", "ax.legend: framealpha is outside the 0-1 range");
+    both(R"({"legend.framealpha": 2})", legend + R"(, "kwargs": {"framealpha": 0.5}})", "");
+    both("{}", legend + R"(, "kwargs": {"framealpha": 1.5}})", "ax.legend: framealpha is outside the 0-1 range");
+    both(R"({"legend.framealpha": 2})", "", "");  // (no legend, no harm)
+    both(R"({"legend.framealpha": 1})", legend + "}", "");
+    // the edge colour of scatter's markers
+    const std::string scatter = R"(, {"on": "ax", "call": "scatter", "args": [[0, 1], [0, 1]])";
+    both(R"({"scatter.edgecolors": "nocolor"})", scatter + "}", "ax.scatter: rcParams[\"scatter.edgecolors\"] is not a colour");
+    both(R"({"scatter.edgecolors": "t"})", scatter + "}", "ax.scatter: rcParams[\"scatter.edgecolors\"] is not a colour");
+    both(R"({"scatter.edgecolors": "nocolor"})", scatter + R"(, "kwargs": {"edgecolors": "red"}})", "");
+    both(R"({"scatter.edgecolors": "nocolor"})", "", "");
+    both(R"({"scatter.edgecolors": "C3"})", scatter + "}", "");
+    // dashes: none may be negative, and one must be positive
+    const std::string dashed = R"(, {"on": "ax", "call": "plot", "args": [[0, 1], [0, 1], "--"]})";
+    both(R"({"lines.dashed_pattern": [-1, 2]})", dashed, "All values in the dash list must be non-negative");
+    both(R"({"lines.dashed_pattern": [0, 0]})", dashed, "At least one value in the dash list must be positive");
+    both(R"({"lines.dashed_pattern": [0, 2]})", dashed, "");
+    both(R"({"lines.dashed_pattern": [-1, 2]})", R"(, {"on": "ax", "call": "plot", "args": [[0, 1], [0, 1], "-."]})", "");
+    // a patch sets its dashes when it has an edge to draw
+    const std::string span = R"(, {"on": "ax", "call": "axvspan", "args": [0, 1], "kwargs": {"linestyle": "--")";
+    both(R"({"lines.dashed_pattern": [-1, 2]})", span + R"(, "linewidth": 2, "edgecolor": "k"}})",
+         "All values in the dash list must be non-negative");
+    both(R"({"lines.dashed_pattern": [0, 0]})", span + R"(, "linewidth": 2, "edgecolor": "k"}})",
+         "At least one value in the dash list must be positive");
+    both(R"({"lines.dashed_pattern": [-1, 2]})", span + R"(, "linewidth": 2}})", "");  // (no edge colour: no edge)
+    both(R"({"lines.dashed_pattern": [-1, 2]})", span + "}}", "");
+    // a collection of several lines is drawn by the Agg renderer without a look at its dashes; the
+    // SVG renderer looks
+    const std::string lines = R"(, {"on": "ax", "call": "hlines", "args": [[1, 2], 0, 1], "kwargs": {"linestyles": "dashed"}})";
+    const auto zero = errors(R"({"lines.linewidth": 0})", lines);
+    EXPECT_EQ(zero.first, "");
+    EXPECT_EQ(zero.second, "At least one value in the dash list must be positive");
+    const auto negative = errors(R"({"lines.dashed_pattern": [3, -1]})", lines);
+    EXPECT_EQ(negative.first, "");
+    EXPECT_EQ(negative.second, "All values in the dash list must be non-negative");
 }
 
 // None for the optional keywords is the same as leaving them out.

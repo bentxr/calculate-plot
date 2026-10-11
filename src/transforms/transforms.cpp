@@ -199,10 +199,14 @@ std::array<double, 2> CompositeTransform::transformNonAffine(double x, double y)
 std::array<double, 2> BlendedAffine2D::transformNonAffine(double x, double y) const {
     if (x_->isAffine() && y_->isAffine()) return {x, y};
     // a one-dimensional part transforms its own coordinate; a two-dimensional one gives its column
-    const auto* lx = dynamic_cast<const LogTransform*>(x_.get());
-    const auto* ly = dynamic_cast<const LogTransform*>(y_.get());
-    const double rx = lx ? lx->transform1d(x) : x_->transformNonAffine(x, y)[0];
-    const double ry = ly ? ly->transform1d(y) : y_->transformNonAffine(x, y)[1];
+    const auto one = [](const Transform& t, double v, double* out) {
+        if (const auto* log = dynamic_cast<const LogTransform*>(&t)) return *out = log->transform1d(v), true;
+        if (const auto* power = dynamic_cast<const InvertedLogTransform*>(&t)) return *out = power->transform1d(v), true;
+        return false;
+    };
+    double rx = 0, ry = 0;
+    if (!one(*x_, x, &rx)) rx = x_->transformNonAffine(x, y)[0];
+    if (!one(*y_, y, &ry)) ry = y_->transformNonAffine(x, y)[1];
     return {rx, ry};
 }
 
@@ -215,6 +219,8 @@ double LogTransform::transform1d(double v) const {
     if (v <= 0) out = -1000;
     return out;
 }
+
+TransformPtr LogTransform::inverted() const { return std::make_shared<InvertedLogTransform>(base_); }
 
 double LogTransform::inverse1d(double v) const {
     // InvertedLogTransform: np.exp2 for base 2, else np.exp(values * np.log(base))

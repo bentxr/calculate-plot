@@ -386,8 +386,8 @@ void Line2D::draw(Renderer& renderer) {
         if (sketch) gc.sketch = sketch;
         const auto rgba = *colors::toRgba(color, alpha, rc_, nullptr);
         gc.setForeground(std::vector<double>(rgba.begin(), rgba.end()));
-        if (linewidth_ > 0) gc.setDashes(dashes_.first, dashes_.second);
-        else gc.setDashes(0, std::nullopt);
+        if (const char* problem = linewidth_ > 0 ? gc.setDashes(dashes_.first, dashes_.second) : gc.setDashes(0, std::nullopt))
+            renderer.unsupported(problem);
         renderer.drawPath(gc, tpath, affine, std::nullopt);
     }
     if (!markerStyle.isNone() && markersize > 0) {

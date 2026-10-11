@@ -133,8 +133,8 @@ void Patch::draw(Renderer& renderer) {
     gc.setAlpha(alpha);
     if (sketch) gc.sketch = sketch;
     gc.setForeground(std::vector<double>(edgecolor_.begin(), edgecolor_.end()));
-    if (lw > 0) gc.setDashes(dashes_.first, dashes_.second);
-    else gc.setDashes(0, std::nullopt);
+    if (const char* problem = lw > 0 ? gc.setDashes(dashes_.first, dashes_.second) : gc.setDashes(0, std::nullopt))
+        renderer.unsupported(problem);
     renderer.drawPath(gc, transformPathNonAffine(path(), *t), t->matrix(), face);
     renderer.closeGroup("patch");
 }

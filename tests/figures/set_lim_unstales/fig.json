@@ -1,0 +1,6 @@
+{"version": 1, "calls": [
+  {"call": "subplots", "args": [1, 2], "kwargs": {"sharex": true}, "as": ["fig", "axs"]},
+  {"on": "axs[0]", "call": "scatter", "args": [[-1.58, -0.08, 1.42, 2.92, 4.42, 5.92, 7.42, 8.92, 10.42], [9.0, -3.301, 5.3, 8.44, 8.0, 4.125, -3.0, -2.0, -0.65]]},
+  {"on": "axs[0]", "call": "set_ylim", "args": [-4.2, 780.5]},
+  {"on": "axs[1]", "call": "axvspan", "args": [-2.729, -0.944]}
+]}

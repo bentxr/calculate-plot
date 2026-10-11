@@ -48,7 +48,7 @@ public:
         std::array<double, 4> points;
         std::array<double, 2> minpos;
     };
-    virtual DataLim dataLim() const;
+    virtual DataLim dataLim(const transforms::TransformPtr& transData) const;
     // Collection.update_from: colours (originals, resolved, mapped), widths, styles and the Artist part
     void updateFrom(const Collection& other);
     const std::vector<double>& linewidths() const { return linewidths_; }
@@ -100,7 +100,7 @@ class FillBetweenPolyCollection : public PolyCollection {
 public:
     FillBetweenPolyCollection(const rc::Params& rc, const std::vector<double>& t, const std::vector<double>& f1,
                               const std::vector<double>& f2, const std::vector<bool>& where);
-    DataLim dataLim() const override { return bbox_; }
+    DataLim dataLim(const transforms::TransformPtr&) const override { return bbox_; }
 
 private:
     static std::vector<std::vector<std::array<double, 2>>> makeVerts(const std::vector<double>& t,
@@ -114,7 +114,7 @@ private:
 class LineCollection : public Collection {
 public:
     LineCollection(const rc::Params& rc, const std::vector<std::vector<std::array<double, 2>>>& segments);
-    DataLim dataLim() const override;  // the segments' extents (get_path_collection_extents)
+    DataLim dataLim(const transforms::TransformPtr& transData) const override;  // the segments' extents
 };
 
 // PathCollection: paths drawn at the offsets, scaled by sizes (areas in points²).

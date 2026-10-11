@@ -115,7 +115,7 @@ void Collection::setAlpha(std::optional<double> a) {
     applyEdgecolor();
 }
 
-Collection::DataLim Collection::dataLim() const {
+Collection::DataLim Collection::dataLim(const transforms::TransformPtr&) const {
     // The transform is the identity: the offsets, through offset_trf - transData (the identity),
     // bound the data (Bbox.update_from_data_xy on a null box).
     const double inf = std::numeric_limits<double>::infinity();
@@ -189,7 +189,7 @@ void Collection::draw(Renderer& renderer) {
     if (single) {
         gc.setForeground(std::vector<double>(edges[0].begin(), edges[0].end()));
         gc.linewidth = linewidths_[0];
-        gc.setDashes(linestyles_[0].first, linestyles_[0].second);
+        gc.setDashes(linestyles_[0].first, linestyles_[0].second);  // (solid: one path is drawn alone only then)
         gc.antialiased = antialiaseds_[0];
         gc.url = url;
         std::vector<double> xy;
@@ -343,21 +343,28 @@ LineCollection::LineCollection(const rc::Params& rc, const std::vector<std::vect
     }
 }
 
-Collection::DataLim LineCollection::dataLim() const {
-    // get_path_collection_extents with the identity (transform - transData) and the origin offset:
-    // the finite vertices' box and their smallest positive values
+Collection::DataLim LineCollection::dataLim(const transforms::TransformPtr& transData) const {
+    // Collection.get_datalim: the paths through the non-affine part of their transform, then
+    // through data_trf = transform.get_affine() - transData, and get_path_collection_extents of
+    // that: the finite vertices' box. On linear scales data_trf
+    // is the identity; on a log scale the vertices go to the scale's space and come back, which
+    // changes their last bits and leaves what is not positive at 0.
+    // (data_trf's own affine part is the identity for a collection in data coordinates, as all are here)
+    const auto dataTrf = transforms::subtract(std::make_shared<transforms::Affine2D>(transform->matrix()), transData);
     const double inf = std::numeric_limits<double>::infinity();
     DataLim d{{inf, inf, -inf, -inf}, {inf, inf}};
     for (const auto& p : paths) {
         const auto& v = *p.vertices;
         for (std::size_t i = 0; i + 1 < v.size(); i += 2) {
-            if (!std::isfinite(v[i]) || !std::isfinite(v[i + 1])) continue;
-            d.points[0] = std::min(d.points[0], v[i]), d.points[2] = std::max(d.points[2], v[i]);
-            d.points[1] = std::min(d.points[1], v[i + 1]), d.points[3] = std::max(d.points[3], v[i + 1]);
-            if (v[i] > 0) d.minpos[0] = std::min(d.minpos[0], v[i]);
-            if (v[i + 1] > 0) d.minpos[1] = std::min(d.minpos[1], v[i + 1]);
+            std::array<double, 2> q = transform->transformNonAffine(v[i], v[i + 1]);
+            q = dataTrf->transformNonAffine(q[0], q[1]);
+            if (!std::isfinite(q[0]) || !std::isfinite(q[1])) continue;
+            d.points[0] = std::min(d.points[0], q[0]), d.points[2] = std::max(d.points[2], q[0]);
+            d.points[1] = std::min(d.points[1], q[1]), d.points[3] = std::max(d.points[3], q[1]);
         }
     }
+    // (vlines and hlines give update_datalim the corners alone: the smallest positive values of
+    // the box are not used, and not worked out)
     return d;
 }
 

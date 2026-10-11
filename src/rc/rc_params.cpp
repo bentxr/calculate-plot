@@ -133,7 +133,8 @@ std::vector<std::vector<double>> Params::colorCycle() const {
 
 const std::vector<std::string>& Params::inertKeys() {
     // Animations, 3D axes, box plots, contours, dates, images, the keys and windows of the interactive
-    // backends, PDF, PGF and PostScript output, and the like.
+    // backends, PDF, PGF and PostScript output, and the like. And figure.frameon, which pyplot's figures
+    // never read (pyplot.figure has its own frameon=True).
     static const std::vector<std::string> keys = {
         "animation.bitrate", "animation.codec", "animation.convert_args", "animation.convert_path",
         "animation.embed_limit", "animation.ffmpeg_args", "animation.ffmpeg_path", "animation.frame_format",
@@ -158,16 +159,17 @@ const std::vector<std::string>& Params::inertKeys() {
         "date.autoformatter.second", "date.autoformatter.year", "date.converter", "date.epoch",
         "date.interval_multiples", "docstring.hardcopy", "figure.constrained_layout.h_pad",
         "figure.constrained_layout.hspace", "figure.constrained_layout.w_pad", "figure.constrained_layout.wspace",
-        "figure.labelsize", "figure.labelweight", "figure.max_open_warning", "figure.raise_window", "hatch.color",
-        "hist.bins", "image.aspect", "image.composite_image", "image.interpolation", "image.interpolation_stage",
-        "image.lut", "image.origin", "image.resample", "interactive", "keymap.back", "keymap.copy", "keymap.forward",
-        "keymap.fullscreen", "keymap.grid", "keymap.grid_minor", "keymap.help", "keymap.home", "keymap.pan",
-        "keymap.quit", "keymap.quit_all", "keymap.save", "keymap.xscale", "keymap.yscale", "keymap.zoom",
-        "macosx.window_mode", "pcolor.shading", "pcolormesh.snap", "pdf.compression", "pdf.fonttype",
-        "pdf.inheritcolor", "pdf.use14corefonts", "pgf.preamble", "pgf.rcfonts", "pgf.texsystem", "polaraxes.grid",
-        "ps.distiller.res", "ps.fonttype", "ps.papersize", "ps.useafm", "ps.usedistiller", "savefig.directory",
-        "savefig.format", "savefig.orientation", "text.latex.engine", "text.latex.preamble", "timezone",
-        "tk.window_focus", "toolbar", "webagg.address", "webagg.open_in_browser", "webagg.port", "webagg.port_retries"};
+        "figure.frameon", "figure.labelsize", "figure.labelweight", "figure.max_open_warning", "figure.raise_window",
+        "hatch.color", "hist.bins", "image.aspect", "image.composite_image", "image.interpolation",
+        "image.interpolation_stage", "image.lut", "image.origin", "image.resample", "interactive", "keymap.back",
+        "keymap.copy", "keymap.forward", "keymap.fullscreen", "keymap.grid", "keymap.grid_minor", "keymap.help",
+        "keymap.home", "keymap.pan", "keymap.quit", "keymap.quit_all", "keymap.save", "keymap.xscale",
+        "keymap.yscale", "keymap.zoom", "macosx.window_mode", "pcolor.shading", "pcolormesh.snap", "pdf.compression",
+        "pdf.fonttype", "pdf.inheritcolor", "pdf.use14corefonts", "pgf.preamble", "pgf.rcfonts", "pgf.texsystem",
+        "polaraxes.grid", "ps.distiller.res", "ps.fonttype", "ps.papersize", "ps.useafm", "ps.usedistiller",
+        "savefig.directory", "savefig.format", "savefig.orientation", "text.latex.engine", "text.latex.preamble",
+        "timezone", "tk.window_focus", "toolbar", "webagg.address", "webagg.open_in_browser", "webagg.port",
+        "webagg.port_retries"};
     return keys;
 }
 
@@ -198,6 +200,16 @@ bool Params::set(const std::string& key, const Json& v, std::string* error) {
     if (key == "font.weight" || key == "font.stretch" || key == "axes.titleweight" || key == "axes.labelweight")
         if (checked.value.isNumber() && !(0 <= checked.value.asNumber() && checked.value.asNumber() <= 1000))
             return fail("the value given for " + key + " is not valid: FontProperties takes a name or a number from 0 to 1000");
+    // The same for a style or a variant that is not one (they are validated as any string)
+    const std::string& word = checked.value.asString();
+    if (key == "font.style" && word != "normal" && word != "italic" && word != "oblique")
+        return fail("the value given for font.style is not valid: FontProperties takes normal, italic or oblique");
+    if (key == "font.variant" && word != "normal" && word != "small-caps")
+        return fail("the value given for font.variant is not valid: FontProperties takes normal or small-caps");
+    // Every tick has a grid line, made with the grid's alpha: Artist.set_alpha takes 0 to 1
+    if (key == "grid.alpha" || key == "grid.major.alpha" || key == "grid.minor.alpha")
+        if (checked.value.isNumber() && !(0 <= checked.value.asNumber() && checked.value.asNumber() <= 1))
+            return fail("the value given for " + key + " is not valid: an alpha is from 0 to 1");
     if (!listed(inertKeys())) {
         const Json& standard = Params::standard().values_.at(key);
         if (listed(unsupportedKeys())) {
@@ -205,9 +217,11 @@ bool Params::set(const std::string& key, const Json& v, std::string* error) {
         } else if (!finite(checked.value) || !fitsInt(checked.value) || !readable(key, kindOf(standard), kindOf(checked.value)) ||
                    (key == "axes.formatter.offset_threshold" && checked.value.asNumber() > 23) ||
                    ((key == "xtick.minor.ndivs" || key == "ytick.minor.ndivs") && checked.value.isString() &&
-                    checked.value.asString() != "auto")) {
+                    checked.value.asString() != "auto") ||
+                   ((key == "grid.major.linestyle" || key == "grid.minor.linestyle") && checked.value.isArray())) {
             // (10 ** (offset_threshold - 1) is an integer of any size in Python, and a double here, exact up to
-            // 1e22. 'auto' in capitals is taken by the validator and breaks AutoMinorLocator, which looks for 'auto'.)
+            // 1e22. 'auto' in capitals is taken by the validator and breaks AutoMinorLocator, which looks for 'auto'.
+            // An on-off sequence as the line style of the grid is not read yet.)
             return fail("this value of " + key + " is not supported yet");
         }
     }

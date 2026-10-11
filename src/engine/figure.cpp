@@ -26,7 +26,8 @@ Figure::Figure(const rc::Params& rc, const FigureOptions& o) : Artist(rc), subpl
     dpi = o.dpi ? *o.dpi : rc.number("figure.dpi");
     const std::string facecolor = o.facecolor ? *o.facecolor : rc.text("figure.facecolor");
     const std::string edgecolor = o.edgecolor ? *o.edgecolor : rc.text("figure.edgecolor");
-    const bool frameon = o.frameon ? *o.frameon : rc.boolean("figure.frameon");
+    // (pyplot.figure passes frameon=True unless told otherwise: rcParams["figure.frameon"] is for Figure() alone)
+    const bool frameon = o.frameon ? *o.frameon : true;
 
     bboxInches = transforms::Bbox::fromBounds(0, 0, figsize[0], figsize[1]);
     dpiScaleTrans = std::make_shared<transforms::Affine2D>();

@@ -104,6 +104,7 @@ private:
         for (const auto& [name, value] : call.kwargs)
             if (!figureKeyword(name, value, options, "plt.figure", error)) return false;
         figure_ = std::make_unique<Figure>(rc_, options);
+        if (!figure_->subplotpars.valid(error)) return *error = "plt.figure: " + *error, false;
         axes_.clear();
         figureName_ = call.as.size() == 1 ? call.as[0] : std::string();
         return true;
@@ -148,6 +149,7 @@ private:
         const int nrows = int(grid[0]), ncols = int(grid[1]);
         if (nrows < 1 || ncols < 1) return *error = "plt.subplots: nrows and ncols must be positive", false;
         figure_ = std::make_unique<Figure>(rc_, options);
+        if (!figure_->subplotpars.valid(error)) return *error = "plt.subplots: " + *error, false;
         const std::vector<Axes*> made = figure_->subplots(nrows, ncols, sharex, sharey);
         axes_.clear();
         figureName_.clear();
@@ -647,6 +649,7 @@ private:
             const std::string e = rc_.text("scatter.edgecolors");
             if (e == "face") edgeFace = true;
             else if (e == "none") edgeNone = true;
+            else if (!colors::toRgba(e, std::nullopt, rc_, nullptr)) return *error = where + ": rcParams[\"scatter.edgecolors\"] is not a colour", false;
             else edgecolors = std::vector<colors::Spec>{e};
         }
         std::vector<colors::Spec> faces;
@@ -685,11 +688,15 @@ private:
         if (edgeFace) edgeArg.kind = ColorArg::Face;
         else if (edgeNone) edgeArg.kind = ColorArg::None;
         else edgeArg = argOf(*edgecolors);
+        bool mapped = mappedValues.has_value();
         if (!style.filled()) {
             if (style.fillstyle() == "none") {
+                // promote the facecolor to be the edgecolor, and set the facecolor to 'none'. (The
+                // values to map are then lost: matplotlib maps them only while there are no colours.)
                 edgeArg = faceArg;
                 faceArg = ColorArg{};
                 faceArg.kind = ColorArg::None;
+                mapped = false;
             } else {
                 edgeArg = ColorArg{};
                 edgeArg.kind = ColorArg::Face;
@@ -703,7 +710,7 @@ private:
         for (std::size_t i = 0; i < xs.size(); ++i) collection->offsets.push_back({xs[i], ys[i]});
         collection->offsetTransform = ax.transData;
         if (alpha) collection->setAlpha(alpha);
-        if (mappedValues) {  // set_cmap, set_norm(Normalize()), set_array(c), _scale_norm
+        if (mapped) {  // set_cmap, set_norm(Normalize()), set_array(c), _scale_norm
             collection->cmap = colors::ListedColormap::named(cmapName);
             if (!collection->cmap) return *error = where + ": the colormap " + cmapName + " is not supported yet", false;
             collection->array = mappedValues;
