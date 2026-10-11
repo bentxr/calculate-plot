@@ -76,6 +76,33 @@ TEST(RcParams, MathtextChoicesAreChecked) {
     EXPECT_TRUE(p.value("mathtext.fallback").isNull());
 }
 
+// The font lists (validate_stringlist) also take one string: its parts between commas, trimmed,
+// the empty ones dropped; in a list an empty string is dropped too.
+TEST(RcParams, FontListsTakeAStringOfNames) {
+    Params p = Params::defaults();
+    std::string error;
+    using Names = std::vector<std::string>;
+    ASSERT_TRUE(p.set("font.family", json("\"serif\""), &error)) << error;
+    EXPECT_EQ(p.strings("font.family"), Names{"serif"});
+    ASSERT_TRUE(p.set("font.family", json("\" DejaVu Serif ,monospace,, \""), &error)) << error;
+    EXPECT_EQ(p.strings("font.family"), (Names{"DejaVu Serif", "monospace"}));
+    ASSERT_TRUE(p.set("font.family", json("\"\""), &error)) << error;
+    EXPECT_EQ(p.strings("font.family"), Names{});
+    ASSERT_TRUE(p.set("font.family", json("[\"cursive\", \"\", \" sans \"]"), &error)) << error;
+    EXPECT_EQ(p.strings("font.family"), (Names{"cursive", " sans "}));
+    for (const char* key : {"font.serif", "font.sans-serif", "font.cursive", "font.fantasy", "font.monospace"}) {
+        ASSERT_TRUE(p.set(key, json("\"DejaVu Sans Mono, x\""), &error)) << key << error;
+        EXPECT_EQ(p.strings(key), (Names{"DejaVu Sans Mono", "x"})) << key;
+    }
+    EXPECT_FALSE(p.set("font.family", json("[\"serif\", 3]"), &error));
+    EXPECT_NE(error.find("font.family"), std::string::npos) << error;
+    EXPECT_FALSE(p.set("font.family", json("3"), &error));
+    EXPECT_FALSE(p.set("font.family", json("null"), &error));
+    EXPECT_EQ(p.strings("font.family"), (Names{"cursive", " sans "}));
+    // another list does not take a string
+    EXPECT_FALSE(p.set("figure.figsize", json("\"6, 4\""), &error));
+}
+
 TEST(RcParams, IntegersAreAcceptedWhereFloatsAre) {
     Params p = Params::defaults();
     std::string error;

@@ -1,0 +1,7 @@
+{"version": 1, "rc": {"font.family": "serif, monospace", "font.serif": "no such serif,DejaVu Sans Mono ,", "font.monospace": ["", "DejaVu Serif"]}, "calls": [
+  {"call": "subplots", "args": [], "kwargs": {"figsize": {"$tuple": [5.0, 3.5]}}, "as": ["fig", "ax"]},
+  {"on": "ax", "call": "plot", "args": [[0, 1, 2], [0, 1, 4]], "kwargs": {"label": "in the first family"}},
+  {"on": "ax", "call": "set_title", "args": ["The serif list was given as one string"]},
+  {"on": "ax", "call": "set_xlabel", "args": ["monospace is a serif here"], "kwargs": {"family": "monospace"}},
+  {"on": "ax", "call": "legend", "args": []}
+]}

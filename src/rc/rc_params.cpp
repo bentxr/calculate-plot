@@ -1,9 +1,11 @@
 #include "rc/rc_params.hpp"
 
 #include <algorithm>
+#include <cstring>
 
 #include "support/embedded.hpp"
 #include "support/fontconfig_pattern.hpp"
+#include "support/json_writer.hpp"
 
 namespace calculate_plot::rc {
 
@@ -101,6 +103,42 @@ bool Params::set(const std::string& key, const Json& v, std::string* error) {
         v.isString() && !support::parseFontconfigPattern(v.asString())) {
         if (error) *error = "'" + v.asString() + "' is not a fontconfig pattern";
         return false;
+    }
+    // validate_stringlist: the font lists take a list of strings (the empty ones go), or one
+    // string with the names between commas
+    static const char* const kFontLists[] = {"font.family", "font.serif", "font.sans-serif",
+                                             "font.cursive", "font.fantasy", "font.monospace"};
+    if (std::find_if(std::begin(kFontLists), std::end(kFontLists), [&](const char* k) { return key == k; }) != std::end(kFontLists)) {
+        std::vector<std::string> names;
+        if (v.isString()) {
+            const std::string& text = v.asString();
+            for (std::size_t a = 0; a <= text.size();) {
+                const std::size_t comma = std::min(text.find(',', a), text.size());
+                std::size_t from = a, to = comma;
+                // (str.strip(): the blanks of ASCII)
+                while (from < to && std::strchr(" \t\n\r\f\v", text[from])) ++from;
+                while (to > from && std::strchr(" \t\n\r\f\v", text[to - 1])) --to;
+                if (to > from) names.push_back(text.substr(from, to - from));
+                a = comma + 1;
+            }
+        } else if (v.isArray()) {
+            for (const Json& item : v.items()) {
+                if (!item.isString()) {
+                    if (error) *error = "the value given for " + key + " is not a list of strings";
+                    return false;
+                }
+                if (!item.asString().empty()) names.push_back(item.asString());
+            }
+        } else {
+            if (error) *error = "the value given for " + key + " is not of the right kind";
+            return false;
+        }
+        support::JsonWriter list;
+        list.beginArray();
+        for (const std::string& name : names) list.value(name);
+        list.endArray();
+        it->second = *support::parseJson(list.text(), nullptr);
+        return true;
     }
     if (key == "mathtext.fallback") {
         if (!v.isString() && !v.isNull()) {

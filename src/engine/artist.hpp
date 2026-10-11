@@ -82,6 +82,7 @@ public:
         edgecolor_ = c.edge, facecolor_ = c.face;
     }
     void setFill(bool b);
+    void updateFrom(const Patch& other);  // Patch.update_from, for the handle of a legend
     void setColor(const std::string& c) {  // Patch.set_color: edge and face
         setEdgecolor(c);
         setFacecolor(c);

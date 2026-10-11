@@ -92,6 +92,19 @@ void Patch::setLinewidth(std::optional<double> w) {
     dashes_ = scaleDashes(unscaledDashes_, linewidth_, rc_);
 }
 
+void Patch::updateFrom(const Patch& o) {
+    // Artist.update_from: of what it copies only the alpha shows in a legend's handle, the one use
+    // of this (the transform and the clip are set anew there; a span cannot be hidden or sketched)
+    alpha = o.alpha;
+    // Patch.update_from: the colours as resolved and the dashes (not the line style's name, nor
+    // antialiasing, cap or join), then set_linewidth, which scales the dashes. (It also copies the
+    // colours as they were set and the fill: only a later change of alpha or fill would read them.)
+    edgecolor_ = o.edgecolor_;
+    facecolor_ = o.facecolor_;
+    unscaledDashes_ = o.unscaledDashes_;
+    setLinewidth(o.linewidth_);
+}
+
 void Patch::setLinestyle(const std::string& style) {
     linestyle_ = (style == " " || style == "" || style == "none") ? "None" : style;
     unscaledDashes_ = dashPattern(linestyle_, rc_);

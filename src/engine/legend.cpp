@@ -1,6 +1,6 @@
 // Derived from Matplotlib 3.11.2: lib/matplotlib/legend.py (Legend), lib/matplotlib/offsetbox.py
 // (TextArea, DrawingArea, HPacker, VPacker and their helpers) and lib/matplotlib/legend_handler.py
-// (HandlerLine2D, HandlerPathCollection, HandlerPolyCollection).
+// (HandlerLine2D, HandlerPathCollection, HandlerPolyCollection, HandlerPatch).
 // Copyright (c) 2012- Matplotlib Development Team; All Rights Reserved
 // Licence: LICENSES/Matplotlib.txt. Changes: licensing/changes/matplotlib.md
 
@@ -313,6 +313,11 @@ Legend::Legend(const rc::Params& rc, Axes& parent, const std::vector<Artist*>& h
             rect->setLinewidth(poly->linewidths().empty() ? std::optional<double>() : poly->linewidths()[0]);
             rect->transform = trans;
             handlebox->addArtist(std::move(rect));
+        } else if (auto* patch = dynamic_cast<Rectangle*>(handles[i])) {  // HandlerPatch
+            auto rect = std::make_unique<Rectangle>(rc, -xd, -yd, w, h);
+            rect->updateFrom(*patch);
+            rect->transform = trans;
+            handlebox->addArtist(std::move(rect));
         } else {
             *error = "legend entries for this kind of artist are not supported yet";
         }
@@ -384,6 +389,7 @@ std::array<double, 2> Legend::findBestPosition(double width, double height, Rend
     // _auto_legend_data
     std::vector<std::pair<std::vector<double>, std::vector<unsigned char>>> lines;
     std::vector<std::array<double, 2>> offsets;
+    std::vector<std::array<double, 4>> bboxes;
     for (const auto& child : parent_.children) {
         if (auto* line = dynamic_cast<Line2D*>(child.get())) {
             const Path p = line->path();
@@ -404,6 +410,16 @@ std::array<double, 2> Legend::findBestPosition(double width, double height, Rend
             }
         } else if (auto* c = dynamic_cast<Collection*>(child.get())) {
             for (const auto& o : c->offsets) offsets.push_back(c->offsetTransform->transform(o[0], o[1]));
+        } else if (auto* rectangle = dynamic_cast<Rectangle*>(child.get())) {
+            // artist.get_bbox().transformed(artist.get_data_transform()): Bbox.transformed takes three
+            // corners through the transform
+            const double x0 = rectangle->x0, y0 = rectangle->y0, x1 = x0 + rectangle->width, y1 = y0 + rectangle->height;
+            const auto ll = rectangle->transform->transform(x0, y0);
+            const auto ul = rectangle->transform->transform(x0, y1);
+            const auto lr = rectangle->transform->transform(x1, y0);
+            bboxes.push_back({ll[0], ll[1], lr[0], ul[1]});
+        } else if (auto* text = dynamic_cast<Text*>(child.get())) {
+            bboxes.push_back(text->windowExtent(renderer).points());
         } else {
             renderer.unsupported("'best' legend placement around this kind of artist is not supported yet");
         }
@@ -426,7 +442,7 @@ std::array<double, 2> Legend::findBestPosition(double width, double height, Rend
         std::vector<double> flat;
         for (const auto& o : offsets) flat.push_back(o[0]), flat.push_back(o[1]);
         badness += countContains(box, flat);
-        badness += mpl::count_bboxes_overlapping_bbox(box, {});  // (no texts or rectangles yet)
+        badness += mpl::count_bboxes_overlapping_bbox(box, bboxes);
         for (const auto& l : lines) {
             auto v = std::make_shared<std::vector<double>>(l.first);
             auto codes = l.second.empty() ? nullptr : std::make_shared<std::vector<uint8_t>>(l.second);

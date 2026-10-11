@@ -1,0 +1,31 @@
+# Written by calculate-plot 0.1.0: this script draws the same figure with Matplotlib 3.11.2.
+import matplotlib.pyplot as plt
+
+fig, axs = plt.subplots(2, 3, figsize=(11.0, 6.5))
+axs[0, 0].plot([0, 1, 2], [0, 0.2, 0.3], label='low line')
+axs[0, 0].axvspan(1.2, 2.0, alpha=0.3, label='right span')
+axs[0, 0].set_ylim(0, 1)
+axs[0, 0].legend()
+axs[0, 1].plot([0, 1, 2], [0, 0.2, 0.3], label='low line')
+axs[0, 1].axhspan(0.6, 1.0, alpha=0.3, label='top span')
+axs[0, 1].set_ylim(0, 1)
+axs[0, 1].legend(loc='best')
+axs[0, 2].axvspan(0.0, 0.5, color='C1', alpha=0.4, label='left')
+axs[0, 2].axvspan(1.5, 2.0, color='C2', alpha=0.4, label='right')
+axs[0, 2].plot([0, 2], [0, 1], label='diagonal')
+axs[0, 2].legend()
+axs[1, 0].axhspan(0.0, 0.4, alpha=0.3)
+axs[1, 0].axhspan(0.6, 1.0, alpha=0.3)
+axs[1, 0].plot([0, 1], [0.5, 0.5], label='between the spans')
+axs[1, 0].legend()
+axs[1, 1].axvspan(10, 100, alpha=0.3, label='decade')
+axs[1, 1].plot([1, 10, 100, 1000], [1, 10, 100, 1000], label='on log axes')
+axs[1, 1].set_xscale('log')
+axs[1, 1].set_yscale('log')
+axs[1, 1].legend()
+axs[1, 2].axhspan(0.0, 1.0, alpha=0.2, label='everything')
+axs[1, 2].axvspan(0.0, 1.0, alpha=0.2, color='C3')
+axs[1, 2].legend()
+
+if __name__ == "__main__":
+    plt.show()

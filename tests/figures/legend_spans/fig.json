@@ -1,0 +1,12 @@
+{"version": 1, "calls": [
+  {"call": "subplots", "args": [], "kwargs": {"figsize": {"$tuple": [6.0, 4.5]}}, "as": ["fig", "ax"]},
+  {"on": "ax", "call": "axvspan", "args": [0.0, 1.0], "kwargs": {"label": "plain"}},
+  {"on": "ax", "call": "axvspan", "args": [1.0, 2.0], "kwargs": {"fc": "C1", "ec": "k", "lw": 2.5, "ls": "--", "label": "dashed edge"}},
+  {"on": "ax", "call": "axvspan", "args": [2.0, 3.0], "kwargs": {"color": "C2", "alpha": 0.4, "label": "half there"}},
+  {"on": "ax", "call": "axhspan", "args": [0.1, 0.3], "kwargs": {"fill": false, "ec": "C3", "lw": 1.5, "ls": ":", "label": "no fill, dotted"}},
+  {"on": "ax", "call": "axhspan", "args": [0.5, 0.6], "kwargs": {"fc": "none", "ec": "C4", "label": "no face"}},
+  {"on": "ax", "call": "axhspan", "args": [0.7, 0.8], "kwargs": {"fc": "#33669980", "ec": "none", "lw": 0, "label": "RGBA face", "zorder": 3}},
+  {"on": "ax", "call": "axhspan", "args": [0.85, 0.9], "kwargs": {"label": "_hidden from the legend"}},
+  {"on": "ax", "call": "plot", "args": [[0, 3], [0, 1]], "kwargs": {"label": "a line among them"}},
+  {"on": "ax", "call": "legend", "args": [], "kwargs": {"loc": "center left", "ncols": 2, "fontsize": 8}}
+]}
