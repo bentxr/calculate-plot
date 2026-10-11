@@ -30,6 +30,8 @@ struct Path {
                      bool closed = false);
     // Path.unit_rectangle(): (0, 0), (1, 0), (1, 1), (0, 1), closed.
     static Path unitRectangle(const rc::Params& rc);
+    // The same path made under other rcParams (its simplification settings are theirs).
+    Path madeWith(const rc::Params& rc) const;
 };
 
 // Transform.transform_path_non_affine: the vertices through the transform's non-affine part, the

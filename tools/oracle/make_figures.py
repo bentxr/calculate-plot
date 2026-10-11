@@ -23,7 +23,8 @@ sys.path.insert(0, str(HERE))
 import matplotlib  # noqa: E402
 
 matplotlib.use("agg")
-import matplotlib.pyplot as plt  # noqa: E402
+import matplotlib.pyplot as plt
+from matplotlib.path import Path  # noqa: E402
 import numpy as np  # noqa: E402
 from PIL import Image  # noqa: E402
 
@@ -38,6 +39,11 @@ def run_script(path):
     """Runs an exported script as a module (not __main__, so it does not show) and returns its figure."""
     plt.close("all")
     plt.rcdefaults()
+    # The unit paths that Path makes on first use keep the simplification settings of the rcParams
+    # of that moment: a script that runs alone makes them with its own.
+    Path._unit_rectangle = Path._unit_circle = Path._unit_circle_righthalf = None
+    Path._unit_regular_polygons.clear()
+    Path._unit_regular_stars.clear()
     namespace = runpy.run_path(str(path), run_name="calculate_plot_oracle")
     fig = namespace.get("fig") or plt.gcf()
     return fig

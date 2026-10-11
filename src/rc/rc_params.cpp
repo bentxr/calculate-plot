@@ -160,7 +160,7 @@ const std::vector<std::string>& Params::inertKeys() {
         "date.interval_multiples", "docstring.hardcopy", "figure.constrained_layout.h_pad",
         "figure.constrained_layout.hspace", "figure.constrained_layout.w_pad", "figure.constrained_layout.wspace",
         "figure.frameon", "figure.labelsize", "figure.labelweight", "figure.max_open_warning", "figure.raise_window",
-        "hatch.color", "hist.bins", "image.aspect", "image.composite_image", "image.interpolation",
+        "hist.bins", "image.aspect", "image.composite_image", "image.interpolation",
         "image.interpolation_stage", "image.lut", "image.origin", "image.resample", "interactive", "keymap.back",
         "keymap.copy", "keymap.forward", "keymap.fullscreen", "keymap.grid", "keymap.grid_minor", "keymap.help",
         "keymap.home", "keymap.pan", "keymap.quit", "keymap.quit_all", "keymap.save", "keymap.xscale",
@@ -217,10 +217,12 @@ bool Params::set(const std::string& key, const Json& v, std::string* error) {
                    (key == "axes.formatter.offset_threshold" && checked.value.asNumber() > 23) ||
                    ((key == "xtick.minor.ndivs" || key == "ytick.minor.ndivs") && checked.value.isString() &&
                     checked.value.asString() != "auto") ||
-                   ((key == "grid.major.linestyle" || key == "grid.minor.linestyle") && checked.value.isArray())) {
+                   ((key == "grid.major.linestyle" || key == "grid.minor.linestyle" || key == "grid.major.color" ||
+                     key == "grid.minor.color") &&
+                    checked.value.isArray())) {
             // (10 ** (offset_threshold - 1) is an integer of any size in Python, and a double here, exact up to
             // 1e22. 'auto' in capitals is taken by the validator and breaks AutoMinorLocator, which looks for 'auto'.
-            // An on-off sequence as the line style of the grid is not read yet.)
+            // An on-off sequence as the line style of the grid, or a tuple as its colour, is not read yet.)
             return fail("this value of " + key + " is not supported yet");
         }
     }

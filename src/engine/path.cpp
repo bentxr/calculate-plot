@@ -39,6 +39,10 @@ Path transformPathNonAffine(const Path& path, const transforms::Transform& trans
     return out;
 }
 
+Path Path::madeWith(const rc::Params& rc) const {
+    return make(*vertices, codes ? *codes : std::vector<unsigned char>{}, rc);
+}
+
 Path Path::unitRectangle(const rc::Params& rc) {
     return make({0, 0, 1, 0, 1, 1, 0, 1, 0, 0}, {}, rc, true);
 }

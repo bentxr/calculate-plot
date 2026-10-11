@@ -205,8 +205,15 @@ void Collection::draw(Renderer& renderer) {
         a.facecolors = faces;
         a.edgecolors = edges;
         // get_hatchcolor(): 'edge' (hatch.color) follows the edges, or the default edge colour
-        if (edges.empty()) a.hatchcolors = {*colors::toRgba(rc_.text("patch.edgecolor"), alpha, rc_, nullptr)};
-        else a.hatchcolors = edges;
+        // (another hatch.color: that colour with the collection's alpha; 'none' is no colour)
+        const std::string hatch = rc_.text("hatch.color");
+        if (hatch != "edge") {
+            if (!colors::isNone(colors::Spec(hatch))) a.hatchcolors = {*colors::toRgba(hatch, alpha, rc_, nullptr)};
+        } else if (edges.empty()) {
+            a.hatchcolors = {*colors::toRgba(rc_.text("patch.edgecolor"), alpha, rc_, nullptr)};
+        } else {
+            a.hatchcolors = edges;
+        }
         a.linewidths = linewidths_;
         a.dashes = linestyles_;
         a.antialiaseds = antialiaseds_;

@@ -20,7 +20,9 @@ namespace calculate_plot::engine {
 
 namespace {
 
-// The marker paths markers.py makes when it is imported (with the default rcParams).
+// The marker paths markers.py makes when it is imported (with the default rcParams). The unit
+// circle, rectangle, polygons and star are made by Path the first time they are asked for, under the
+// rcParams of then: the figure's (MarkerStyle::set gives them those).
 const Path& pathOf(std::vector<double> vertices, std::vector<unsigned char> codes, bool closed, int which) {
     static std::map<int, Path> cache;
     auto it = cache.find(which);
@@ -154,9 +156,9 @@ bool MarkerStyle::set(const std::string& marker, const std::optional<std::string
     } else if (marker == "o" || marker == ".") {  // _set_circle, _set_point
         t.scale(0.5 * (marker == "." ? 0.5 : 1.0));
         snapThreshold_ = inf;
-        path_ = unitCircle();
+        path_ = unitCircle().madeWith(rc);
     } else if (marker == ",") {  // _set_pixel
-        path_ = Path::unitRectangle(rc::Params::defaults());
+        path_ = Path::unitRectangle(rc);
         t.translate(-0.49999, -0.49999);
     } else if (marker == "^") triangle(0.0);
     else if (marker == "v") triangle(180.0);
@@ -165,34 +167,34 @@ bool MarkerStyle::set(const std::string& marker, const std::optional<std::string
     else if (marker == "s") {  // _set_square
         t.translate(-0.5, -0.5);
         snapThreshold_ = 2.0;
-        path_ = Path::unitRectangle(rc::Params::defaults());
+        path_ = Path::unitRectangle(rc);
         joinstyle_ = "miter";
     } else if (marker == "D" || marker == "d") {  // _set_diamond, _set_thin_diamond
         t.translate(-0.5, -0.5).rotateDeg(45);
         snapThreshold_ = 5.0;
-        path_ = Path::unitRectangle(rc::Params::defaults());
+        path_ = Path::unitRectangle(rc);
         joinstyle_ = "miter";
         if (marker == "d") t.scale(0.6, 1.0);
     } else if (marker == "p") {  // _set_pentagon
         t.scale(0.5);
         snapThreshold_ = 5.0;
-        path_ = markerData("polygon5");
+        path_ = markerData("polygon5").madeWith(rc);
         joinstyle_ = "miter";
     } else if (marker == "*") {  // _set_star
         t.scale(0.5);
         snapThreshold_ = 5.0;
-        path_ = markerData("star5");
+        path_ = markerData("star5").madeWith(rc);
         joinstyle_ = "bevel";
     } else if (marker == "h" || marker == "H") {  // _set_hexagon1, _set_hexagon2
         t.scale(0.5);
         if (marker == "H") t.rotateDeg(30);
-        path_ = markerData("polygon6");
+        path_ = markerData("polygon6").madeWith(rc);
         joinstyle_ = "miter";
     } else if (marker == "8") {  // _set_octagon
         t.scale(0.5);
         snapThreshold_ = 5.0;
         t.rotateDeg(22.5);
-        path_ = markerData("polygon8");
+        path_ = markerData("polygon8").madeWith(rc);
         joinstyle_ = "miter";
     } else if (marker == "|" || marker == "_") {  // _set_vline, _set_hline
         t.scale(0.5);

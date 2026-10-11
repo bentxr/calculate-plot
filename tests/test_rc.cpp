@@ -288,7 +288,7 @@ TEST(RcParams, KeysThatAreNotHonouredYetTakeOnlyTheirDefault) {
 TEST(RcParams, KeysOfWhatIsNotDrawnTakeWhatMatplotlibTakes) {
     Params p = Params::defaults();
     std::string error;
-    EXPECT_EQ(Params::inertKeys().size(), 137u);
+    EXPECT_EQ(Params::inertKeys().size(), 136u);
     EXPECT_TRUE(p.set("boxplot.whiskers", json("[5, 95]"), &error)) << error;
     EXPECT_TRUE(p.set("boxplot.whiskers", json("2.5"), &error)) << error;
     EXPECT_TRUE(p.set("boxplot.flierprops.marker", json("5"), &error)) << error;

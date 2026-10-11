@@ -586,6 +586,17 @@ TEST(RcCalls, SettingsThatBreakWhenUsed) {
         ASSERT_TRUE(figure.has_value()) << parseError;
         EXPECT_EQ(calculate_plot::engine::drawAgg(*figure, {}).error, "plt.figure: left cannot be >= right");
     }
+    // the marker every line starts with (matplotlib breaks when the first line without one is made:
+    // here no figure is drawn with such a setting)
+    both(R"({"lines.marker": "Auto"})", "", "rc lines.marker: marker 'Auto' is not supported yet");
+    both(R"({"lines.marker": "both"})", R"(, {"on": "ax", "call": "plot", "args": [[0, 1], [0, 1]]})",
+         "rc lines.marker: marker 'both' is not supported yet");
+    both(R"({"lines.marker": "s", "markers.fillstyle": "none"})", R"(, {"on": "ax", "call": "plot", "args": [[0, 1], [0, 1]]})", "");
+    both(R"({"lines.marker": "", "markers.fillstyle": "left"})", R"(, {"on": "ax", "call": "plot", "args": [[0, 1], [0, 1]]})", "");
+    // the colours of the grid: a colour with its alpha is not read yet
+    both(R"({"grid.major.color": {"$tuple": ["C1", 0.5]}})", "", "rc grid.major.color: this value of grid.major.color is not supported yet");
+    both(R"({"grid.minor.color": [0.1, 0.2, 0.3]})", "", "rc grid.minor.color: this value of grid.minor.color is not supported yet");
+    both(R"({"grid.minor.color": "C1", "grid.major.color": "#ff000080"})", "", "");
     // the legend's frame
     const std::string legend = R"(, {"on": "ax", "call": "plot", "args": [[0, 1], [0, 1]], "kwargs": {"label": "a"}}, {"on": "ax", "call": "legend")";
     both(R"({"legend.framealpha": 2})", legend + "}", "ax.legend: framealpha is outside the 0-1 range");

@@ -1665,6 +1665,13 @@ std::string runFigure(const model::Figure& model, const DrawOptions& options, Dr
         std::string error;
         if (!rc.set(key, value, &error)) return "rc " + key + ": " + error;
     }
+    // A line made without a marker takes rcParams["lines.marker"], and matplotlib breaks there if it is
+    // not one (or the engine, if it is one it does not draw yet): no figure is drawn with such a setting.
+    {
+        MarkerStyle probe;
+        std::string error;
+        if (!probe.set(rc.text("lines.marker"), std::string("full"), rc, &error)) return "rc lines.marker: " + error;
+    }
     Executor executor(std::move(rc), options);
     for (const auto& call : model.calls) {
         std::string error;
