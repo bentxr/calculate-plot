@@ -168,17 +168,23 @@ void Collection::draw(Renderer& renderer) {
         linewidths_.size() == 1 && solid && antialiaseds_.size() == 1) {
         // Affine2D(trans[0]) + transform
         if (!transforms.empty()) combined = transform->isIdentity() ? transforms[0] : transforms::dot(master, transforms[0]);
-        // extents of the path through the combined transform, against the figure's box: the control
-        // points' hull decides when it fits (the curve then fits too)
-        double x0 = std::numeric_limits<double>::infinity(), x1 = -x0, y0 = x0, y1 = -x0;
+        // Path.get_extents(combined_transform) against the figure's box. Of a path of straight
+        // lines the extents are those of its MOVETO and LINETO vertices; of one with curves they lie
+        // within the hull of its control points, which settles it when the hull fits.
         const auto& v = *drawPaths[0].vertices;
+        const auto* codes = drawPaths[0].codes.get();
+        bool curved = false;
+        if (codes)
+            for (unsigned char c : *codes) curved = curved || c == CURVE3 || c == CURVE4;
+        double x0 = std::numeric_limits<double>::infinity(), x1 = -x0, y0 = x0, y1 = -x0;
         for (std::size_t i = 0; i + 1 < v.size(); i += 2) {
+            if (codes && !curved && (*codes)[i / 2] != MOVETO && (*codes)[i / 2] != LINETO) continue;
             const auto p = transforms::apply(combined, v[i], v[i + 1]);
             x0 = std::min(x0, p[0]), x1 = std::max(x1, p[0]), y0 = std::min(y0, p[1]), y1 = std::max(y1, p[1]);
         }
         const auto fb = figure->bbox->points();
         if (x1 - x0 < fb[2] - fb[0] && y1 - y0 < fb[3] - fb[1]) single = true;
-        else renderer.unsupported("collections larger than the figure are not supported yet");
+        else if (curved) renderer.unsupported("collections of one curved path larger than the figure are not supported yet");
     }
     if (single) {
         gc.setForeground(std::vector<double>(edges[0].begin(), edges[0].end()));

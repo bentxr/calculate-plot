@@ -405,6 +405,17 @@ INSTANTIATE_TEST_SUITE_P(
                 "axs[0].legend: bad facecolor"},
         Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"edgecolor": [1, 2]}})", "axs[0].legend: bad edgecolor"}));
 
+// A collection of one path is drawn as markers when the path is smaller than the figure; for a
+// path with curves that the hull of its control points does not settle, the question is refused.
+TEST(CollectionCalls, OneCurvedPathLargerThanTheFigureIsRefused) {
+    const auto huge = draw(kSubplots + R"({"on": "axs[0]", "call": "scatter", "args": [[1.0], [1.0]], "kwargs": {"s": 2000000}})");
+    EXPECT_EQ(huge.error, "collections of one curved path larger than the figure are not supported yet");
+    const auto large = draw(kSubplots + R"({"on": "axs[0]", "call": "scatter", "args": [[1.0], [1.0]], "kwargs": {"s": 20000}})");
+    EXPECT_EQ(large.error, "");
+    const auto square = draw(kSubplots + R"({"on": "axs[0]", "call": "scatter", "args": [[1.0], [1.0]], "kwargs": {"s": 2000000, "marker": "s"}})");
+    EXPECT_EQ(square.error, "");
+}
+
 TEST(LayoutCalls, WhatCannotBeMeasuredStopsTheLayout) {
     std::string error;
     const auto figure = calculate_plot::model::parseFigure(
