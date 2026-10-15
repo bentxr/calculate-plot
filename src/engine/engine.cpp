@@ -1763,8 +1763,9 @@ private:
             else if (name[0] == 'f') p.setFacecolor(spec);
             else p.setEdgecolor(spec);
         } else if (name == "alpha") {
-            if (!readAlpha(v, &n)) return *error = where + ": alpha must be a number from 0 to 1", false;
-            p.setAlpha(n, v.isNumber() && v.isInteger());
+            if (v.isNull()) p.setAlpha(std::nullopt);  // set_alpha(None)
+            else if (!readAlpha(v, &n)) return *error = where + ": alpha must be a number from 0 to 1", false;
+            else p.setAlpha(n, v.isNumber() && v.isInteger());
         } else if (name == "linewidth" || name == "lw") {
             if (!readFinite(v, &n)) return *error = where + ": linewidth must be a finite number", false;
             p.setLinewidth(n);

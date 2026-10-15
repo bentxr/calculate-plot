@@ -163,9 +163,15 @@ bool alphaIsInt(const Spec& spec, std::optional<double> alpha, bool alphaGivenAs
         const auto cycle = rc.colorCycle();
         std::size_t n = 0;
         for (std::size_t i = 1; i < s.size(); ++i) n = (n * 10 + std::size_t(s[i] - '0')) % cycle.size();
-        return cycle[n].isArray() && cycle[n].size() == 3;
+        return alphaIsInt(specOf(cycle[n]), alpha, alphaGivenAsInt, rc);
     }
-    return false;
+    // a named colour defined as an RGB tuple (the base colours 'b', 'g', ... 'k', 'w')
+    const auto& names = namedColors();
+    const Json* named = nullptr;
+    if (auto it = names.find(s); it != names.end()) named = &it->second;
+    else if (s.size() != 1)
+        if (auto lit = names.find(lower(s)); lit != names.end()) named = &lit->second;
+    return named && named->isArray() && named->size() == 3;
 }
 
 const std::vector<Json>* colorSequence(const std::string& name) {
