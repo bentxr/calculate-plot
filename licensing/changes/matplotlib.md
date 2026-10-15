@@ -17,7 +17,7 @@ it comes from in its first lines. The changes, as a whole:
 - **Clip path identity** (`PathIterator::get_id`) is an explicit identity carried by the path (recorded from
   Matplotlib) instead of the address of a Python array.
 - **Text** (src/text): src/ft2font.cpp and .h without pybind11; fonts are opened from a file path with
-  FT_New_Face instead of a Python file stream; the module-level FreeType library is created on first use;
+  FT_New_Face, or from bytes the application holds with FT_New_Memory_Face, instead of a Python file stream; the module-level FreeType library is created on first use;
   missing-glyph warnings are collected instead of issued through Python; the FT2Image whole-string bitmap
   path (draw_glyphs_to_bitmap, draw_glyph_to_bitmap) is not included. From src/ft2font_wrapper.cpp:
   FT2Font._layout (layout items) and FT2Font._render_glyph (with the bitmap conversion). From Python,

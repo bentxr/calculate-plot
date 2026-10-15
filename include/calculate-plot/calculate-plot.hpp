@@ -1,5 +1,8 @@
 #pragma once
 
+#include <cstdint>
+#include <functional>
+#include <string>
 #include <string_view>
 #include <vector>
 
@@ -16,5 +19,38 @@ struct LicenceText {
     std::string_view text;
 };
 std::vector<LicenceText> licenceTexts();
+
+// Drawing a figure file (the JSON call list `cplot export-py` turns into a matplotlib script). Each
+// function returns nothing and says why in *error when the file cannot be read or drawn; what matplotlib
+// 3.11.2 refuses is refused, and what calculate-plot does not do yet is refused as "not supported yet".
+//
+// The fonts are matplotlib's (fonts/ttf of the source tree): they are read from `fontDirectory`, or
+// from the bytes useFontBytes gives for a file name.
+
+// Where the fonts' bytes come from, for an application that holds the font files itself (as
+// resources): the bytes of a file by its name, or empty to look in the font directory. Set it once,
+// before drawing; the bytes must stay valid. nullptr goes back to the directory alone.
+void useFontBytes(std::function<std::string_view(std::string_view fileName)> bytes);
+
+// Figure.savefig as a PNG (rcParams savefig.*): the file's bytes.
+std::string drawPng(std::string_view figureFile, const std::string& fontDirectory, std::string* error);
+
+// Figure.savefig as an SVG: the document.
+std::string drawSvg(std::string_view figureFile, const std::string& fontDirectory, std::string* error);
+
+// The figure as a plain Python script that draws it with matplotlib.
+std::string exportPython(std::string_view figureFile, std::string* error);
+
+// An 8-bit RGBA image, rows from the top, 4 bytes per pixel, alpha not premultiplied.
+struct Image {
+    int width = 0;
+    int height = 0;
+    std::vector<std::uint8_t> rgba;
+};
+
+// The figure on a screen with `devicePixelRatio` device pixels per logical pixel, as matplotlib's Qt
+// canvas draws it: at the figure's dpi times the ratio, without the savefig settings.
+Image drawScreen(std::string_view figureFile, double devicePixelRatio, const std::string& fontDirectory,
+                 std::string* error);
 
 }  // namespace calculate_plot

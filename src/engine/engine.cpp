@@ -2321,6 +2321,16 @@ AggDrawing drawAgg(const model::Figure& model, const DrawOptions& options) {
     return out;
 }
 
+AggDrawing drawScreen(const model::Figure& model, double ratio, const DrawOptions& options) {
+    AggDrawing out;
+    out.error = runFigure(model, options, [&](Figure& figure) {
+        std::string error;
+        out.trace = drawScreenTrace(figure, ratio, options.locale, options.fontDirectory, &error);
+        return error;
+    });
+    return out;
+}
+
 SvgDrawing drawSvg(const model::Figure& model, const DrawOptions& options) {
     SvgDrawing out;
     out.error = runFigure(model, options, [&](Figure& figure) {

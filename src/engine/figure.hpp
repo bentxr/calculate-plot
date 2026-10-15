@@ -73,6 +73,10 @@ public:
 // be traced.
 std::string drawAggTrace(Figure& figure, const std::string& locale, const std::string& fontDirectory,
                          std::string* error);
+// FigureCanvasQTAgg's drawing on a screen of `ratio` device pixels per logical pixel: the figure at its
+// dpi times the ratio, drawn as FigureCanvasAgg.draw draws it (no savefig settings), into a trace.
+std::string drawScreenTrace(Figure& figure, double ratio, const std::string& locale, const std::string& fontDirectory,
+                            std::string* error);
 // Figure.savefig as an SVG, into a trace (render/svg_replay writes the SVG): print_figure as above,
 // then FigureCanvasSVG.print_svg: the figure is drawn at 72 dpi, its images at the dpi of the save.
 std::string drawSvgTrace(Figure& figure, const std::string& locale, const std::string& fontDirectory,

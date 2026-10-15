@@ -64,6 +64,8 @@ class FT2Font
     FT2Font(std::vector<FT2Font *> &fallback_list, bool warn_if_used);
     virtual ~FT2Font();
     bool open(const std::string &path, FT_Long face_index);
+    // The same from the font file's bytes, which must outlive the font; `path` names it.
+    bool openMemory(const std::string &path, std::string_view bytes, FT_Long face_index);
     void close();
     void clear();
     void set_size(double ptsize, double dpi);

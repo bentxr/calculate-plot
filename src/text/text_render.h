@@ -6,6 +6,7 @@
 
 #include "text/ft2font.h"
 
+#include <functional>
 #include <map>
 #include <memory>
 #include <optional>
@@ -25,6 +26,12 @@ std::optional<FT_Int32> hintingFlags(const std::string& hinting);
 
 // Fonts by file name, opened once with their fallback chain, as font_manager._get_font builds it:
 // the given fonts in order, then the Last Resort font (which never warns when it is used).
+// Where FontCache finds a font file's bytes before it looks in its directory: an application that
+// holds the fonts itself (as resources) sets it once; none by default. An empty answer means "look in
+// the directory". The bytes must stay valid while fonts are open.
+using FontBytes = std::function<std::string_view(std::string_view fileName)>;
+void setFontBytes(FontBytes bytes);
+
 class FontCache {
 public:
     explicit FontCache(std::string directory);
@@ -41,6 +48,7 @@ private:
         std::vector<FT2Font*> fallbackPointers;
         std::unique_ptr<FT2Font> font;
     };
+    bool openFile(FT2Font& font, const std::string& name);  // from the bytes set, else from the directory
     std::string directory_;
     std::map<std::vector<std::string>, std::unique_ptr<Entry>> fonts_;
 };

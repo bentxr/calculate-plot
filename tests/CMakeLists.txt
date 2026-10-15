@@ -6,6 +6,7 @@ set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
 add_executable(calculate-plot-tests
+    test_api.cpp
     test_base64.cpp
     test_cli.cpp
     test_colormap.cpp

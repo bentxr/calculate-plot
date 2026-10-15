@@ -269,6 +269,17 @@ std::string drawAggTrace(Figure& figure, const std::string& locale, const std::s
     return final.trace();
 }
 
+std::string drawScreenTrace(Figure& figure, double ratio, const std::string& locale, const std::string& fontDirectory,
+                            std::string* error) {
+    figure.setDpi(figure.dpi * ratio);  // _set_dpi(dpi * device_pixel_ratio)
+    const auto size = figure.canvasSize();
+    AggTraceRenderer renderer(size[0], size[1], figure.dpi, figure.rc(), locale, fontDirectory);
+    renderer.clear();
+    figure.draw(renderer);
+    *error = renderer.error();
+    return renderer.trace();
+}
+
 std::string drawSvgTrace(Figure& figure, const std::string& locale, const std::string& fontDirectory,
                          const SvgMetadata& metadata,
                          const std::string& hashsalt, std::string* error) {

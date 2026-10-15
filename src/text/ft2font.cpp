@@ -169,6 +169,20 @@ bool FT2Font::open(const std::string &path, FT_Long face_index)
     return true;
 }
 
+bool FT2Font::openMemory(const std::string &path, std::string_view bytes, FT_Long face_index)
+{
+    m_path = path;
+    if (FT_Error code = FT_New_Memory_Face(ft2Library(), reinterpret_cast<const FT_Byte *>(bytes.data()),
+                                           static_cast<FT_Long>(bytes.size()), face_index, &face)) {
+        face = nullptr;
+        fail("FT_New_Memory_Face", code);
+        return false;
+    }
+    face->generic.data = this;
+    face->generic.finalizer = nullptr;
+    return true;
+}
+
 void FT2Font::close()
 {
     // This should be idempotent, in case a user manually calls close before the

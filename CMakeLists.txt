@@ -54,6 +54,7 @@ add_custom_command(
 add_library(calculate-plot STATIC
     ${PROJECT_BINARY_DIR}/generated/embedded.cpp
     ${PROJECT_BINARY_DIR}/generated/notices.cpp
+    src/api.cpp
     src/version.cpp
     src/agg/agg_hooks.cpp
     src/axes/log_ticker.cpp

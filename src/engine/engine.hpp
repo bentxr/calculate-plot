@@ -23,6 +23,10 @@ struct DrawOptions {
 // Runs a figure file's calls and draws the figure as matplotlib's FigureCanvasAgg.draw would.
 AggDrawing drawAgg(const model::Figure& figure, const DrawOptions& options);
 
+// Runs a figure file's calls and draws the figure on a screen of `ratio` device pixels per logical
+// pixel, as matplotlib's Qt canvas does (drawScreenTrace).
+AggDrawing drawScreen(const model::Figure& figure, double ratio, const DrawOptions& options);
+
 struct SvgDrawing {
     std::string trace;  // the draw calls, in the trace format of record.py's record_svg
     std::string error;

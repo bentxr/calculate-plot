@@ -29,7 +29,25 @@ std::optional<FT_Int32> hintingFlags(const std::string& hinting) {
     return std::nullopt;
 }
 
+namespace {
+FontBytes& fontBytes() {
+    static FontBytes bytes;
+    return bytes;
+}
+}  // namespace
+
+void setFontBytes(FontBytes bytes) { fontBytes() = std::move(bytes); }
+
 FontCache::FontCache(std::string directory) : directory_(std::move(directory)) {}
+
+bool FontCache::openFile(FT2Font& font, const std::string& name) {
+    const std::string path = directory_ + "/" + name;
+    if (fontBytes()) {
+        const std::string_view bytes = fontBytes()(name);
+        if (!bytes.empty()) return font.openMemory(path, bytes, 0);
+    }
+    return font.open(path, 0);
+}
 FontCache::~FontCache() = default;
 
 FT2Font* FontCache::get(const std::vector<std::string>& names, bool enableLastResort) {
@@ -43,7 +61,7 @@ FT2Font* FontCache::get(const std::vector<std::string>& names, bool enableLastRe
     auto open = [&](const std::string& name, bool warnIfUsed) -> std::unique_ptr<FT2Font> {
         std::vector<FT2Font*> none;
         auto font = std::make_unique<FT2Font>(none, warnIfUsed);
-        if (!font->open(directory_ + "/" + name, 0)) {
+        if (!openFile(*font, name)) {
             error = name + ": " + font->error;
             return nullptr;
         }
@@ -67,7 +85,7 @@ FT2Font* FontCache::get(const std::vector<std::string>& names, bool enableLastRe
     }
     for (auto& f : entry->fallbacks) entry->fallbackPointers.push_back(f.get());
     entry->font = std::make_unique<FT2Font>(entry->fallbackPointers, false);
-    if (!entry->font->open(directory_ + "/" + names[0], 0)) {
+    if (!openFile(*entry->font, names[0])) {
         error = names[0] + ": " + entry->font->error;
         return nullptr;
     }
