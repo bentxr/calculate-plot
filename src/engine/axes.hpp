@@ -126,6 +126,9 @@ public:
     axes::LogLocator logLocator, logMinorLocator;
     std::optional<axes::AutoMinorLocator> minorLocator;  // of a linear scale, if rcParams["xtick.minor.visible"]
     axes::LogFormatterSciNotation logFormatter, logMinorFormatter;
+    // NullFormatter() set as the major or the minor formatter: no labels, no offset text. The scale's
+    // defaults replace it when the scale is set.
+    bool nullMajorFormatter = false, nullMinorFormatter = false;
     double labelpad;
     std::string labelPosition;  // bottom/top, left/right
     bool autoscaleOn = true;

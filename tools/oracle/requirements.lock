@@ -12,3 +12,8 @@ pyparsing==3.3.3
 python-dateutil==2.9.0.post0
 packaging==26.3
 six==1.17.0
+# for tools/oracle/conformance.py: matplotlib's own image tests
+pytest==9.1.1
+pluggy==1.7.0
+iniconfig==2.3.1
+Pygments==2.21.0

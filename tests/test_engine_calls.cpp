@@ -1274,3 +1274,35 @@ TEST(SaveOptions, RefuseWhatCannotBeSaved) {
 }
 
 }  // namespace
+
+class AxisRefusals : public testing::TestWithParam<Refusal> {};
+
+TEST_P(AxisRefusals, NameTheCallAndTheReason) {
+    const auto drawing = draw(kSubplots + GetParam().call);
+    EXPECT_EQ(drawing.error, GetParam().error);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    Engine, AxisRefusals,
+    testing::Values(
+        Refusal{R"({"on": "axs[0].xaxis", "call": "set_major_formatter"})",
+                "axs[0].xaxis.set_major_formatter: missing 1 required positional argument: 'formatter'"},
+        Refusal{R"({"on": "axs[0].xaxis", "call": "set_major_formatter", "args": [{"$new": "NullFormatter"}, 1]})",
+                "axs[0].xaxis.set_major_formatter: too many positional arguments"},
+        Refusal{R"({"on": "axs[0].xaxis", "call": "set_major_formatter", "args": [{"$new": "NullFormatter"}],
+                    "kwargs": {"formatter": {"$new": "NullFormatter"}}})",
+                "axs[0].xaxis.set_major_formatter: got multiple values for argument 'formatter'"},
+        Refusal{R"({"on": "axs[0].yaxis", "call": "set_minor_formatter", "kwargs": {"fmt": {"$new": "NullFormatter"}}})",
+                "axs[0].yaxis.set_minor_formatter: got an unexpected keyword argument 'fmt'"},
+        Refusal{R"({"on": "axs[0].yaxis", "call": "set_minor_formatter", "args": ["%d"]})",
+                "axs[0].yaxis.set_minor_formatter: a formatter other than NullFormatter() is not supported yet"},
+        Refusal{R"({"on": "axs[0].yaxis", "call": "set_minor_formatter", "args": [{"$new": "ScalarFormatter"}]})",
+                "axs[0].yaxis.set_minor_formatter: a formatter other than NullFormatter() is not supported yet"},
+        Refusal{R"({"on": "axs[0].xaxis", "call": "set_major_locator", "args": [{"$new": "NullLocator"}]})",
+                "unsupported call: axs[0].xaxis.set_major_locator"},
+        Refusal{R"({"on": "axs[0].zaxis", "call": "set_major_formatter", "args": [{"$new": "NullFormatter"}]})",
+                "unsupported call: axs[0].zaxis.set_major_formatter"},
+        Refusal{R"({"on": "fig.xaxis", "call": "set_major_formatter", "args": [{"$new": "NullFormatter"}]})",
+                "unsupported call: fig.xaxis.set_major_formatter"},
+        Refusal{R"({"on": "axs[0]", "call": "plot", "args": [{"$new": "NullFormatter"}]})",
+                "axs[0].plot: y must be a list of numbers"}));

@@ -19,15 +19,26 @@ bool isIdentifier(const std::string& s) {
     return s.rfind("__", 0) != 0;  // no dunder names: nothing but plain plotting calls
 }
 
-// "ax", "axs[1]", "axs[0, 1]": a name, optionally indexed by integers.
+// "ax", "axs[1]", "axs[0, 1]", "ax.xaxis", "axs[1].yaxis": a name, optionally indexed by integers, then
+// optionally attributes of it.
 bool isObjectReference(const std::string& s, std::string& name) {
-    const auto bracket = s.find('[');
-    name = s.substr(0, bracket);
+    const auto end = s.find_first_of("[.");
+    name = s.substr(0, end);
     if (!isIdentifier(name)) return false;
-    if (bracket == std::string::npos) return true;
-    if (s.back() != ']') return false;
-    for (char c : s.substr(bracket + 1, s.size() - bracket - 2))
-        if (!(std::isdigit(static_cast<unsigned char>(c)) || c == ',' || c == ' ' || c == '-')) return false;
+    std::size_t at = end;
+    if (at != std::string::npos && s[at] == '[') {
+        const auto close = s.find(']', at);
+        if (close == std::string::npos) return false;
+        for (char c : s.substr(at + 1, close - at - 1))
+            if (!(std::isdigit(static_cast<unsigned char>(c)) || c == ',' || c == ' ' || c == '-')) return false;
+        at = close + 1 == s.size() ? std::string::npos : close + 1;
+    }
+    while (at != std::string::npos) {
+        if (s[at] != '.') return false;
+        const auto next = s.find('.', at + 1);
+        if (!isIdentifier(s.substr(at + 1, next == std::string::npos ? std::string::npos : next - at - 1))) return false;
+        at = next;
+    }
     return true;
 }
 
@@ -44,9 +55,15 @@ bool validValue(const Json& v, std::string* error) {
             if (error) *error = "{\"$float\": ...} must be \"nan\", \"inf\" or \"-inf\"";
             return false;
         }
+        if (v.members()[0].first == "$new") {
+            const Json& cls = v.members()[0].second;
+            if (v.members().size() == 1 && cls.isString() && isIdentifier(cls.asString())) return true;
+            if (error) *error = "{\"$new\": ...} must name a class pyplot holds, and nothing else";
+            return false;
+        }
         if (v.members().size() != 1 || v.members()[0].first != "$tuple" || !v.members()[0].second.isArray()) {
             if (error)
-                *error = "an object value must be {\"$tuple\": [...]} or {\"$float\": ...}, not " +
+                *error = "an object value must be {\"$tuple\": [...]}, {\"$float\": ...} or {\"$new\": ...}, not " +
                          (v.members().empty() ? std::string("{}") : v.members()[0].first);
             return false;
         }
@@ -72,6 +89,7 @@ std::string python(const Json& v) {
     }
     case Json::Type::Object: {
         if (v.members()[0].first == "$float") return "float('" + v.members()[0].second.asString() + "')";
+        if (v.members()[0].first == "$new") return "plt." + v.members()[0].second.asString() + "()";
         const Json& items = v.members()[0].second;
         std::string out = "(";
         for (std::size_t i = 0; i < items.size(); ++i) out += (i ? ", " : "") + python(items[i]);

@@ -383,6 +383,7 @@ void Axis::setLabelsOn(bool first, bool on) {
 
 void Axis::setScale(const std::string& name) {
     scale_ = name;
+    nullMajorFormatter = nullMinorFormatter = false;
     // The locators and formatters keep their settings of before matplotlib 2 in the classic style
     const bool classic = rc_.boolean("_internal.classic_mode");
     if (name == "log") {  // LogScale.set_default_locators_and_formatters
@@ -483,7 +484,11 @@ std::vector<Tick*> Axis::minorTicks(std::size_t count) {
     return out;
 }
 
-std::string Axis::offsetString() const { return scale_ == "log" ? std::string() : formatter.offsetText(); }
+std::string Axis::offsetString() const {
+    // NullFormatter.get_offset() is '' (a log scale's formatters have none either)
+    if (scale_ == "log" || tickerAxis().nullMajorFormatter) return std::string();
+    return formatter.offsetText();
+}
 
 void Axis::setLabelText(const std::string& t, const std::string& loc) {
     label.text = t;
@@ -615,8 +620,16 @@ std::vector<Tick*> Axis::updateTicks() {
             logLocator.tickSpace = owner.tickSpace();
             logLocator.minpos = owner.minpos();
             locs = logLocator.tickValues(ownerView[0], ownerView[1]);
-            logFormatter.setLocs(ownerView[0], ownerView[1]);
-            for (double v : locs) labels.push_back(logFormatter(v));
+            if (owner.nullMajorFormatter) {
+                labels.assign(locs.size(), "");
+            } else {
+                logFormatter.setLocs(ownerView[0], ownerView[1]);
+                for (double v : locs) labels.push_back(logFormatter(v));
+            }
+        } else if (owner.nullMajorFormatter) {
+            locator.tickSpace = owner.tickSpace();
+            locs = locator.tickValues(ownerView[0], ownerView[1]);
+            labels.assign(locs.size(), "");
         } else {
             locator.tickSpace = owner.tickSpace();
             locs = locator.tickValues(ownerView[0], ownerView[1]);
@@ -644,7 +657,7 @@ std::vector<Tick*> Axis::updateTicks() {
         const std::vector<Tick*> minor = minorTicks(locs.size());
         for (std::size_t i = 0; i < locs.size(); ++i) {
             minor[i]->updatePosition(locs[i]);
-            minor[i]->label1.text = minor[i]->label2.text = logMinorFormatter(locs[i]);
+            minor[i]->label1.text = minor[i]->label2.text = owner.nullMinorFormatter ? "" : logMinorFormatter(locs[i]);
             ticks.push_back(minor[i]);
         }
     }

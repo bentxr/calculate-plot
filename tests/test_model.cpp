@@ -92,6 +92,29 @@ TEST(FigureModel, AStyleIsANameOrAListOfNames) {
     }
 }
 
+TEST(FigureModel, ACallMayBeOnAnAttributeOfAnObject) {
+    const auto f = parsed(R"({"version":1,"calls":[
+        {"call":"subplots","args":[1,2],"as":["fig","axs"]},
+        {"on":"axs[1].xaxis","call":"set_major_formatter","args":[{"$new":"NullFormatter"}]}]})");
+    ASSERT_EQ(f.calls.size(), 2u);
+    EXPECT_EQ(f.calls[1].on, "axs[1].xaxis");
+    EXPECT_NE(m::exportPython(f, "x").find("axs[1].xaxis.set_major_formatter(plt.NullFormatter())\n"), std::string::npos)
+        << m::exportPython(f, "x");
+    for (const char* on : {"axs.", "axs..xaxis", "axs.__class__", "axs.1", "axs[1].x axis", "xaxis", "axs[1]x"}) {
+        const std::string json = std::string(R"({"version":1,"calls":[{"call":"subplots","as":["fig","axs"]},{"on":")") +
+                                 on + R"(","call":"grid"}]})";
+        EXPECT_FALSE(m::parseFigure(json, nullptr).has_value()) << on;
+    }
+}
+
+TEST(FigureModel, ANewObjectIsAPyplotClassWithoutArguments) {
+    for (const char* bad : {R"({"$new":"os.system"})", R"({"$new":"__import__"})", R"({"$new":3})",
+                            R"({"$new":"NullFormatter","x":1})", R"({"$new":""})"}) {
+        const std::string json = std::string(R"({"version":1,"calls":[{"call":"figure","args":[)") + bad + "]}]}";
+        EXPECT_NE(refused(json).find("$new"), std::string::npos) << bad;
+    }
+}
+
 TEST(FigureModel, IntegersStayIntegersAndFloatsStayExact) {
     const auto f = parsed(R"({"version":1,"calls":[{"call":"figure","args":[1, 1.0, 2.5e-300, -0.0, 123456789012345678]}]})");
     EXPECT_NE(m::exportPython(f, "x").find("plt.figure(1, 1.0, 2.5e-300, -0.0, 123456789012345678)"), std::string::npos)

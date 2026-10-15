@@ -73,8 +73,33 @@ public:
         const auto ax = axes_.find(call.on);
         if (ax != axes_.end()) return axesCall(*ax->second, call, error);
         if (!figureName_.empty() && call.on == figureName_) return figureCall(call, error);
+        const auto dot = call.on.rfind('.');
+        if (dot != std::string::npos) {  // ax.xaxis, ax.yaxis
+            const auto owner = axes_.find(call.on.substr(0, dot));
+            const std::string attribute = call.on.substr(dot + 1);
+            if (owner != axes_.end() && (attribute == "xaxis" || attribute == "yaxis"))
+                return axisCall(attribute == "xaxis" ? *owner->second->xaxis : *owner->second->yaxis, call, error);
+        }
         *error = "unsupported call: " + (call.on.empty() ? "plt" : call.on) + "." + call.method;
         return false;
+    }
+
+    // Axis.set_major_formatter / set_minor_formatter, with NullFormatter() so far. The formatter is the
+    // one of the Ticker the Axes sharing this axis share.
+    bool axisCall(Axis& axis, const model::Call& call, std::string* error) {
+        const std::string where = call.on + "." + call.method;
+        const bool major = call.method == "set_major_formatter";
+        if (!major && call.method != "set_minor_formatter") return *error = "unsupported call: " + where, false;
+        const Json* formatter = call.args.empty() ? keyword(call, "formatter") : &call.args[0];
+        for (const auto& [name, value] : call.kwargs)
+            if (name != "formatter") return *error = where + ": got an unexpected keyword argument '" + name + "'", false;
+        if (!formatter)
+            return *error = where + ": missing 1 required positional argument: 'formatter'", false;
+        if (!(formatter->isObject() && formatter->members()[0].first == "$new" &&
+              formatter->members()[0].second.asString() == "NullFormatter"))
+            return *error = where + ": a formatter other than NullFormatter() is not supported yet", false;
+        (major ? axis.tickerAxis().nullMajorFormatter : axis.tickerAxis().nullMinorFormatter) = true;
+        return true;
     }
 
     Figure* currentFigure() { return figure_.get(); }
@@ -109,6 +134,8 @@ private:
             {"set_ylabel", {"ylabel"}, -1},
             {"set_xlim", {"left", "right"}, 2},
             {"set_ylim", {"bottom", "top"}, 2},
+            {"set_major_formatter", {"formatter"}, 1},
+            {"set_minor_formatter", {"formatter"}, 1},
         };
         const std::string where = (call.on.empty() ? "plt" : call.on) + "." + call.method;
         for (const Signature& signature : signatures) {
