@@ -1,0 +1,11 @@
+{"version": 1,
+ "calls": [
+  {"call": "subplots", "args": [1, 2], "kwargs": {"figsize": {"$tuple": [6.4, 3.0]}}, "as": ["fig", "axs"]},
+  {"on": "axs[0]", "call": "hlines", "args": [[{"$float": "nan"}, 2, 3.5], 5.2, 1000.0], "kwargs": {"label": "y bad"}},
+  {"on": "axs[0]", "call": "hlines", "args": [[1, 2.5], [5.2, {"$float": "nan"}], 800.0], "kwargs": {"colors": "C1"}},
+  {"on": "axs[0]", "call": "hlines", "args": [[{"$float": "nan"}], 300, 900], "kwargs": {"colors": "C2", "label": "one, bad"}},
+  {"on": "axs[0]", "call": "legend"},
+  {"on": "axs[1]", "call": "vlines", "args": [[1, 2, 3], 0, [5, {"$float": "inf"}, 2]]},
+  {"on": "axs[1]", "call": "vlines", "args": [[{"$float": "-inf"}, 4], [1, 2], [3, 4]], "kwargs": {"colors": "C3", "linestyles": "dashed"}},
+  {"on": "axs[1]", "call": "vlines", "args": [5, {"$float": "nan"}, 2]}
+ ]}

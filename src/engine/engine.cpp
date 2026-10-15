@@ -728,9 +728,6 @@ private:
         std::vector<double> xs, ys;
         if (!x || !y || !numbers(*x, &xs) || !numbers(*y, &ys)) return *error = where + ": x and y must be lists of numbers", false;
         if (xs.size() != ys.size()) return *error = where + ": x and y must be the same size", false;
-        for (std::size_t i = 0; i < xs.size(); ++i)
-            if (!std::isfinite(xs[i]) || !std::isfinite(ys[i]))
-                return *error = where + ": non-finite points are not supported yet", false;
         // s: lines.markersize ** 2 by default; one size or one per point
         std::vector<double> sizes;
         const bool classic = rc_.boolean("_internal.classic_mode");
@@ -842,6 +839,16 @@ private:
         }
         if (!mappedValues && faces.size() != 1 && faces.size() != xs.size() && !faces.empty())
             return *error = where + ": 'c' has a size inconsistent with x and y", false;
+        // cbook._combine_masks(x, y, s, c, ...): a point is bad where any of them, one value per point,
+        // is not finite; its offset is then NaN (the masked offsets are filled with NaN when drawn), it
+        // bounds no data, and its value to map is masked (the colormap's 'bad' colour)
+        const std::size_t n = xs.size();
+        std::vector<bool> bad(n, false);
+        for (std::size_t i = 0; i < n; ++i) {
+            bad[i] = !std::isfinite(xs[i]) || !std::isfinite(ys[i]);
+            if (sizes.size() == n && !std::isfinite(sizes[i])) bad[i] = true;
+            if (mappedValues && !std::isfinite((*mappedValues)[i])) bad[i] = true;
+        }
 
         MarkerStyle style;
         if (!style.set(marker, std::nullopt, rc_, error)) return false;
@@ -883,16 +890,23 @@ private:
         collection->setFacecolor(faceArg);
         collection->setEdgecolor(edgeArg);
         collection->setLinewidths(linewidthsGiven ? linewidths : std::vector<double>{});
-        for (std::size_t i = 0; i < xs.size(); ++i) collection->offsets.push_back({xs[i], ys[i]});
+        const double nan = std::numeric_limits<double>::quiet_NaN();
+        for (std::size_t i = 0; i < n; ++i) collection->offsets.push_back(bad[i] ? std::array<double, 2>{nan, nan} : std::array<double, 2>{xs[i], ys[i]});
         collection->offsetTransform = ax.transData;
         if (alpha) collection->setAlpha(alpha);
         if (mapped) {  // set_cmap, set_norm(Normalize()), set_array(c), _scale_norm
             collection->cmap = colors::ListedColormap::named(cmapName);
             if (!collection->cmap) return *error = where + ": the colormap " + cmapName + " is not supported yet", false;
-            collection->array = mappedValues;
+            // the norm scales to the values that are not masked, and masked values map to 'bad'
+            std::vector<double> values = *mappedValues, unmasked;
+            for (std::size_t i = 0; i < n; ++i) {
+                if (bad[i]) values[i] = nan;
+                else unmasked.push_back(values[i]);
+            }
+            collection->array = values;
             collection->norm.vmin = vmin;
             collection->norm.vmax = vmax;
-            collection->norm.autoscaleNone(*mappedValues);
+            if (!unmasked.empty()) collection->norm.autoscaleNone(unmasked);
         } else if (vmin || vmax || cmapName != rc_.text("image.cmap")) {
             // matplotlib warns that these are ignored without values to map
         }
@@ -1791,6 +1805,16 @@ private:
             else if (!numbers(*a, &v[i])) return *error = where + ": " + names[i] + " must be numbers", false;
         }
         const std::size_t n = v[0].size();
+        // cbook._combine_masks(x, ymin, ymax): those as long as x share one mask, set where any of
+        // them is not finite, and are NaN there (masked vertices); the others stay as they are
+        std::vector<bool> bad(n, false);
+        for (int i = 0; i < 3; ++i)
+            if (v[i].size() == n)
+                for (std::size_t k = 0; k < n; ++k) bad[k] = bad[k] || !std::isfinite(v[i][k]);
+        for (int i = 0; i < 3; ++i)
+            if (v[i].size() == n)
+                for (std::size_t k = 0; k < n; ++k)
+                    if (bad[k]) v[i][k] = std::numeric_limits<double>::quiet_NaN();
         for (int i = 1; i < 3; ++i) {
             if (v[i].size() == 1) {
                 const double one = v[i][0];  // (assign must not read from the vector it replaces)
