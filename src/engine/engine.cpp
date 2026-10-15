@@ -604,6 +604,22 @@ private:
 
     bool axesCall(Axes& ax, const model::Call& call, std::string* error) {
         const std::string where = call.on + "." + call.method;
+        if (call.method == "set") {
+            // Artist.set: set_<name>(value) for each keyword, in the order given
+            if (!call.args.empty())
+                return *error = where + ": set() takes 1 positional argument but " + std::to_string(call.args.size() + 1) + " were given", false;
+            static const char* const setters[] = {"title", "xlabel", "ylabel", "xlim", "ylim", "xscale", "yscale"};
+            for (const auto& [name, value] : call.kwargs) {
+                if (std::find(std::begin(setters), std::end(setters), name) == std::end(setters))
+                    return *error = where + ": set(" + name + "=...) is not supported yet", false;
+                model::Call c;
+                c.on = call.on;
+                c.method = "set_" + name;
+                c.args = {value};
+                if (!positionalArguments(c, error) || !axesCall(ax, c, error)) return false;
+            }
+            return true;
+        }
         if (call.method == "set_title") {
             std::vector<std::pair<std::string, const Json*>> given;
             if (!otherKeywords(call, {"label", "loc", "pad", "y"}, &given, error)) return false;

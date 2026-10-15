@@ -1393,3 +1393,12 @@ TEST(SubplotCalls, ArgumentsAreReadAsMatplotlibReadsThem) {
     EXPECT_EQ(draw(R"({"call": "plot", "args": [[0, 1]]}, {"call": "xlim"})").error,
               "plt.xlim() without arguments (the limits as they are) is not supported yet");
 }
+
+// ax.set(**kwargs): each keyword through its setter, in order; positional arguments are refused.
+TEST(AxesCalls, SetGoesThroughTheSetters) {
+    const auto error = [](const std::string& call) { return draw(kSubplots + call).error; };
+    EXPECT_EQ(error(R"({"on": "axs[0]", "call": "set", "kwargs": {"xlim": [0, 1], "title": "t"}})"), "");
+    EXPECT_EQ(error(R"({"on": "axs[0]", "call": "set", "args": [1]})"), "axs[0].set: set() takes 1 positional argument but 2 were given");
+    EXPECT_EQ(error(R"({"on": "axs[0]", "call": "set", "kwargs": {"aspect": "equal"}})"), "axs[0].set: set(aspect=...) is not supported yet");
+    EXPECT_EQ(error(R"({"on": "axs[0]", "call": "set", "kwargs": {"xlim": [0, {"$float": "nan"}]}})").find("axs[0].set_xlim"), 0u);
+}
