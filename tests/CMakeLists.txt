@@ -33,6 +33,7 @@ add_executable(calculate-plot-tests
     test_png.cpp
     test_rc.cpp
     test_rc_validate.cpp
+    test_styles.cpp
     test_pyformat.cpp
     test_pynum.cpp
     test_replay.cpp

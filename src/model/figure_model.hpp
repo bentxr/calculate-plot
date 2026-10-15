@@ -11,7 +11,7 @@
 namespace calculate_plot::model {
 
 // A figure as the ordered list of matplotlib calls that draws it (the figure file, JSON):
-//   {"version": 1, "rc": {...rcParams...},
+//   {"version": 1, "style": "ggplot" | [names...], "rc": {...rcParams...},
 //    "calls": [{"on": "ax", "call": "plot", "args": [...], "kwargs": {...}, "as": "line"}, ...]}
 // A call without "on" is a pyplot function (plt.figure, plt.subplots). "as" names the result (a list
 // of names unpacks it). Values are JSON values; {"$tuple": [...]} is a Python tuple and
@@ -25,6 +25,7 @@ struct Call {
 };
 
 struct Figure {
+    support::Json style;  // plt.style.use's argument, before the rcParams: a name or a list of names; null: none
     std::vector<std::pair<std::string, support::Json>> rc;
     std::vector<Call> calls;
 };

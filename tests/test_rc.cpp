@@ -339,7 +339,6 @@ TEST(RcParams, AxisbelowIsABoolOrLine) {
 // The keys of what the engine does not do yet take their default value and no other.
 TEST(RcParams, KeysThatAreNotHonouredYetTakeOnlyTheirDefault) {
     const std::pair<const char*, const char*> other[] = {
-        {"agg.path.chunksize", "100"},
         {"axes.formatter.use_locale", "true"},
         {"figure.autolayout", "true"},
         {"figure.constrained_layout.use", "true"},
@@ -373,8 +372,8 @@ TEST(RcParams, KeysThatAreNotHonouredYetTakeOnlyTheirDefault) {
     // a value of another kind than the default is not the default
     EXPECT_FALSE(p.set("text.kerning_factor", json("0"), &error));
     EXPECT_EQ(error, "rcParams[\"text.kerning_factor\"] is not supported yet");
-    EXPECT_FALSE(p.set("agg.path.chunksize", json("\"7\""), &error));
-    EXPECT_TRUE(p.set("agg.path.chunksize", json("\"0\""), &error)) << error;
+    EXPECT_FALSE(p.set("path.snap", json("\"no\""), &error));
+    EXPECT_TRUE(p.set("path.snap", json("\"yes\""), &error)) << error;
     EXPECT_FALSE(p.set("text.kerning_factor", json("0"), &error));
     EXPECT_FALSE(p.set("backend", json("\"agg\""), &error));
     EXPECT_EQ(error, "the choice of a backend is not supported yet");

@@ -95,6 +95,13 @@ std::optional<Figure> parseFigure(std::string_view json, std::string* error) {
     const Json* version = doc->find("version");
     if (!version || !version->isNumber() || version->asNumber() != 1) return fail("unsupported figure file version");
     Figure figure;
+    if (const Json* style = doc->find("style")) {
+        bool names = style->isString() || style->isArray();
+        if (style->isArray())
+            for (const Json& name : style->items()) names = names && name.isString();
+        if (!names) return fail("\"style\" must be a style name or a list of style names");
+        figure.style = *style;
+    }
     if (const Json* rc = doc->find("rc")) {
         if (!rc->isObject()) return fail("\"rc\" must be an object");
         for (const auto& [key, value] : rc->members()) {
@@ -167,6 +174,7 @@ std::string exportPython(const Figure& figure, std::string_view version) {
                       "    locale.setlocale(locale.LC_CTYPE, \"C.UTF-8\")\n"
                       "except locale.Error:\n"
                       "    locale.setlocale(locale.LC_CTYPE, \"C\")\n\n";
+    if (!figure.style.isNull()) out += "plt.style.use(" + python(figure.style) + ")\n";
     if (!figure.rc.empty()) {
         out += "plt.rcParams.update({\n";
         for (const auto& [key, value] : figure.rc) out += "    " + svg::pythonStrRepr(key) + ": " + python(value) + ",\n";

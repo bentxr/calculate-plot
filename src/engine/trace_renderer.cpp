@@ -160,6 +160,13 @@ void AggTraceRenderer::clear() {
 
 void AggTraceRenderer::drawPath(const GC& gc, const Path& path, const transforms::Matrix& affine,
                                 const std::optional<std::vector<double>>& face) {
+    const std::vector<Path> chunks = aggChunks(path, face.has_value(), gc.hatch.has_value(), rc_);
+    if (chunks.empty()) return drawWhole(gc, path, affine, face);
+    for (const Path& chunk : chunks) drawWhole(gc, chunk, affine, face);
+}
+
+void AggTraceRenderer::drawWhole(const GC& gc, const Path& path, const transforms::Matrix& affine,
+                                 const std::optional<std::vector<double>>& face) {
     events_.beginObject();
     events_.key("op").value("draw_path");
     events_.key("gc");

@@ -69,6 +69,29 @@ TEST(FigureModel, ExportsAPlainMatplotlibScript) {
               "    plt.show()\n");
 }
 
+TEST(FigureModel, AStyleIsUsedBeforeTheRcParams) {
+    const auto f = parsed(R"({"version":1,"style":["ggplot","dark_background"],"rc":{"lines.linewidth":2.5},
+        "calls":[{"call":"figure"}]})");
+    ASSERT_TRUE(f.style.isArray());
+    EXPECT_NE(m::exportPython(f, "x").find("plt.style.use(['ggplot', 'dark_background'])\n"
+                                           "plt.rcParams.update({\n"),
+              std::string::npos)
+        << m::exportPython(f, "x");
+    const auto one = parsed(R"({"version":1,"style":"classic","calls":[{"call":"figure"}]})");
+    EXPECT_NE(m::exportPython(one, "x").find("\nplt.style.use('classic')\nplt.figure()\n"), std::string::npos)
+        << m::exportPython(one, "x");
+    const auto none = parsed(R"({"version":1,"calls":[{"call":"figure"}]})");
+    EXPECT_TRUE(none.style.isNull());
+    EXPECT_EQ(m::exportPython(none, "x").find("style"), std::string::npos);
+}
+
+TEST(FigureModel, AStyleIsANameOrAListOfNames) {
+    for (const char* bad : {"3", "null", "true", "[1]", "[[\"ggplot\"]]", "{\"lines.linewidth\": 2}"}) {
+        const std::string json = std::string(R"({"version":1,"style":)") + bad + R"(,"calls":[]})";
+        EXPECT_NE(refused(json).find("style"), std::string::npos) << bad;
+    }
+}
+
 TEST(FigureModel, IntegersStayIntegersAndFloatsStayExact) {
     const auto f = parsed(R"({"version":1,"calls":[{"call":"figure","args":[1, 1.0, 2.5e-300, -0.0, 123456789012345678]}]})");
     EXPECT_NE(m::exportPython(f, "x").find("plt.figure(1, 1.0, 2.5e-300, -0.0, 123456789012345678)"), std::string::npos)

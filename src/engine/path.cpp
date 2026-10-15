@@ -1,4 +1,5 @@
-// Derived from Matplotlib 3.11.2: lib/matplotlib/path.py (Path).
+// Derived from Matplotlib 3.11.2: lib/matplotlib/path.py (Path) and lib/matplotlib/backends/backend_agg.py
+// (RendererAgg.draw_path: chunks).
 // Copyright (c) 2012- Matplotlib Development Team; All Rights Reserved
 // Licence: LICENSES/Matplotlib.txt. Changes: licensing/changes/matplotlib.md
 
@@ -7,6 +8,7 @@
 #include "rc/rc_params.hpp"
 
 #include <algorithm>
+#include <cmath>
 
 namespace calculate_plot::engine {
 
@@ -25,6 +27,28 @@ Path Path::make(std::vector<double> vertices, std::vector<unsigned char> codes, 
     p.vertices = std::make_shared<std::vector<double>>(std::move(vertices));
     if (!codes.empty() || (closed && n)) p.codes = std::make_shared<std::vector<unsigned char>>(std::move(codes));
     return p;
+}
+
+std::vector<Path> aggChunks(const Path& path, bool filled, bool hatched, const rc::Params& rc) {
+    const double nmax = rc.number("agg.path.chunksize");
+    const std::size_t npts = path.size();
+    if (!(double(npts) > nmax && nmax > 100 && path.shouldSimplify && !filled && !hatched)) return {};
+    const double nch = std::ceil(double(npts) / nmax);
+    const auto chsize = static_cast<std::size_t>(std::ceil(double(npts) / nch));
+    std::vector<Path> chunks;
+    for (std::size_t i0 = 0; i0 < npts; i0 += chsize) {
+        const std::size_t i1 = i0 + chsize < npts ? i0 + chsize - 1 : npts;
+        std::vector<double> v(path.vertices->begin() + 2 * i0, path.vertices->begin() + 2 * i1);
+        std::vector<unsigned char> c;
+        if (path.codes) {
+            c.assign(path.codes->begin() + i0, path.codes->begin() + i1);
+            c[0] = MOVETO;  // move to the end of the last chunk
+        }
+        Path p = Path::make(std::move(v), std::move(c), rc);
+        p.simplifyThreshold = path.simplifyThreshold;
+        chunks.push_back(std::move(p));
+    }
+    return chunks;
 }
 
 Path transformPathNonAffine(const Path& path, const transforms::Transform& transform) {

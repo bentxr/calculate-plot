@@ -35,6 +35,8 @@ public:
     // the form matplotlib stores it (rc_validate.hpp). What matplotlib takes and calculate-plot does
     // not do yet is refused as "not supported yet", never taken and ignored.
     bool set(const std::string& key, const support::Json& value, std::string* error);
+    // rcParams[key] = rcParamsDefault[key].
+    void reset(const std::string& key);
 
     // The keys of what calculate-plot does not draw at all: they are checked and stored, and change
     // nothing. In alphabetical order.

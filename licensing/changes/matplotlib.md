@@ -74,8 +74,8 @@ it comes from in its first lines. The changes, as a whole:
   is_color_like, translated to C++ over the values of a figure file (JSON) instead of Python objects; which key has
   which validator is a table written by tools/oracle/make_rcdefaults.py. The stored values are JSON values (a tuple
   is a list). Text that matplotlib reads with ast.literal_eval is read by calculate-plot's own reader of Python
-  literals (src/support/pyliteral), which leaves some spellings unread; cyclers written as text, dates and backend
-  names are not validated but refused as not supported. The error messages are calculate-plot's.
+  literals (src/support/pyliteral), which leaves some spellings unread; dates and backend names are not validated
+  but refused as not supported. The error messages are calculate-plot's.
   path.py's Path (vertices, codes and the simplification settings),
   backend_bases.py's GraphicsContextBase and the RendererBase interface, artist.py's Artist (clip settings),
   patches.py's Patch and Rectangle, lines.py's dash patterns and figure.py's Figure (its boxes, transforms and
@@ -173,6 +173,13 @@ it comes from in its first lines. The changes, as a whole:
   scatter and its margins, fill_between without normalised keywords or a colour from the cycle);
   Axes.set_axisbelow; legend_handler.py's HandlerNpoints.get_xdata, the handlers' use of numpoints,
   scatterpoints, scatteryoffsets and markerscale, and HandlerRegularPolyCollection.get_sizes, translated to C++.
+  Style sheets: style/__init__.py's use (names, lists of names, the aliases, "default", the settings that are
+  not about style left alone), translated to C++ (src/rc/styles); a figure file names only the bundled styles,
+  never a file, a URL or a package. The bundled style sheets (mpl-data/stylelib/*.mplstyle) are data
+  (data/styles.json; Solarize_Light2 in data/styles_solarized.json): each setting as the text the sheet gives,
+  read as _rc_params_in_file reads a line, by tools/oracle/make_styles.py; the comments are left out.
+  backend_agg.py's RendererAgg.draw_path: the chunks of rcParams["agg.path.chunksize"] (src/engine/path.cpp).
+  The MOVETO codes matplotlib writes into the original path are written into the chunks only.
 - File names drop the leading underscore (e.g. src/_backend_agg.h is src/agg/backend_agg.h); includes follow.
 - RendererAgg's rasterizer takes Matplotlib's 32 768 blocks of cells on 64-bit targets and 4 096 on 32-bit ones
   (WebAssembly), which have no memory for more: a path that needs more is refused there with the same

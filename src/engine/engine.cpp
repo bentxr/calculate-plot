@@ -5,6 +5,7 @@
 #include "engine/legend.hpp"
 #include "engine/tight_layout.hpp"
 #include "rc/rc_params.hpp"
+#include "rc/styles.hpp"
 #include "support/pyparse.hpp"
 
 #include <cctype>
@@ -1900,6 +1901,10 @@ private:
 template <typename Draw>
 std::string runFigure(const model::Figure& model, const DrawOptions& options, Draw draw) {
     rc::Params rc = rc::Params::defaults();
+    if (!model.style.isNull()) {
+        std::string error;
+        if (!rc::useStyle(rc, model.style, &error)) return "plt.style.use: " + error;
+    }
     for (const auto& [key, value] : model.rc) {
         std::string error;
         if (!rc.set(key, value, &error)) return "rc " + key + ": " + error;

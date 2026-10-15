@@ -105,6 +105,13 @@ All rights reserved. Used under the BSD 3-Clause licence (LICENSES/cycler.txt; c
 licensing/changes/cycler.md).
 
 
+Solarized 1.0.0beta2
+--------------------
+The colours of the Solarize_Light2 style sheet are the Solarized palette:
+Copyright (c) 2011 Ethan Schoonover
+Used under the MIT licence (LICENSES/Solarized.txt; changes: licensing/changes/solarized.md).
+
+
 FDLIBM 5.3
 ----------
 The base-10 logarithm is derived from FDLIBM's e_log10.c:

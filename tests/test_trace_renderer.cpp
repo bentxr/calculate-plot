@@ -52,6 +52,64 @@ TEST(AggTraceRenderer, DrawsMarkersAsMatplotlib) {
     EXPECT_EQ(firstDifference(events(r)[0], want, "event"), "");
 }
 
+// RendererAgg.draw_path splits a long path it may simplify into chunks of rcParams["agg.path.chunksize"]
+// vertices at most, each a new Path; the vertex before each chunk's start is left out.
+TEST(AggTraceRenderer, SplitsLongPathsIntoChunks) {
+    auto rc = calculate_plot::rc::Params::defaults();
+    std::string error;
+    ASSERT_TRUE(rc.set("agg.path.chunksize", Json::integer(200), &error)) << error;
+    std::vector<double> v;
+    for (int i = 0; i < 450; ++i) v.push_back(i), v.push_back(i % 7);
+    const Path line = Path::make(v, {}, rc);
+    ASSERT_TRUE(line.shouldSimplify);
+    const auto count = [&](const GC& gc, const Path& path, const std::optional<std::vector<double>>& face) {
+        AggTraceRenderer r(320, 240, 100, rc, "C.UTF-8", fonts());
+        r.drawPath(gc, path, {1, 0, 0, 1, 0, 0}, face);
+        return events(r);
+    };
+    GC gc(rc);
+    // 450 vertices, at most 200 a chunk: 3 chunks of 150 from 0, 150, 300: [0, 149), [150, 299), [300, 450).
+    const Json chunks = count(gc, line, std::nullopt);
+    ASSERT_EQ(chunks.size(), 3u);
+    const double starts[] = {0, 150, 300};
+    const std::size_t sizes[] = {149, 149, 150};
+    for (std::size_t i = 0; i < 3; ++i) {
+        const Json& path = *chunks[i].find("path");
+        EXPECT_EQ(path.find("vertices")->size(), 2 * sizes[i]) << i;
+        EXPECT_EQ((*path.find("vertices"))[0].asNumber(), starts[i]) << i;
+        EXPECT_TRUE(path.find("codes")->isNull()) << i;
+        EXPECT_TRUE(path.find("simplify")->asBool()) << i;  // each chunk a new Path: 149 vertices >= 128
+    }
+    // Codes: each chunk starts with a MOVETO.
+    std::vector<unsigned char> codes(450, LINETO);
+    codes[0] = MOVETO;
+    const Json withCodes = count(gc, Path::make(v, codes, rc), std::nullopt);
+    ASSERT_EQ(withCodes.size(), 3u);
+    for (std::size_t i = 0; i < 3; ++i) {
+        const Json& c = *withCodes[i].find("path")->find("codes");
+        ASSERT_EQ(c.size(), sizes[i]) << i;
+        EXPECT_EQ(c[0].asNumber(), MOVETO) << i;
+        EXPECT_EQ(c[1].asNumber(), LINETO) << i;
+    }
+    // Not split: a filled path, a hatched one, one that may not be simplified, or a chunk size of 100 or less.
+    EXPECT_EQ(count(gc, line, std::vector<double>{1, 0, 0}).size(), 1u);
+    GC hatched(rc);
+    hatched.hatch = "/";
+    EXPECT_EQ(count(hatched, line, std::nullopt).size(), 1u);
+    Path plain = line;
+    plain.shouldSimplify = false;
+    EXPECT_EQ(count(gc, plain, std::nullopt).size(), 1u);
+    ASSERT_TRUE(rc.set("agg.path.chunksize", Json::integer(100), &error)) << error;
+    EXPECT_EQ(count(gc, line, std::nullopt).size(), 1u);
+    ASSERT_TRUE(rc.set("agg.path.chunksize", Json::integer(450), &error)) << error;
+    EXPECT_EQ(count(gc, line, std::nullopt).size(), 1u);  // npts > nmax
+    ASSERT_TRUE(rc.set("agg.path.chunksize", Json::integer(449), &error)) << error;
+    const Json two = count(gc, line, std::nullopt);
+    ASSERT_EQ(two.size(), 2u);  // 225 each: [0, 224), [225, 450)
+    EXPECT_EQ(two[0].find("path")->find("vertices")->size(), 2 * 224u);
+    EXPECT_EQ(two[1].find("path")->find("vertices")->size(), 2 * 225u);
+}
+
 TEST(AggTraceRenderer, DrawsTextAsMatplotlib) {
     const auto rc = calculate_plot::rc::Params::defaults();
     AggTraceRenderer r(320, 240, 100, rc, "C.UTF-8", fonts());

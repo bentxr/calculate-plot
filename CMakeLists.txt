@@ -40,7 +40,7 @@ add_custom_command(
 
 # Data files compiled into the library.
 set(embedded_files data/rcdefaults.json data/colors.json data/fonts.json data/marker_paths.json data/tex2uni.json data/colormaps.json
-    data/mathtext_data.json data/unicode_letters.json)
+    data/mathtext_data.json data/unicode_letters.json data/styles.json data/styles_solarized.json)
 list(TRANSFORM embedded_files PREPEND "${PROJECT_SOURCE_DIR}/" OUTPUT_VARIABLE embedded_paths)
 add_custom_command(
     OUTPUT  ${PROJECT_BINARY_DIR}/generated/embedded.cpp
@@ -79,6 +79,7 @@ add_library(calculate-plot STATIC
     src/rc/cycler_text.cpp
     src/rc/rc_params.cpp
     src/rc/rc_validate.cpp
+    src/rc/styles.cpp
     src/render/replay.cpp
     src/render/svg_replay.cpp
     src/support/base64.cpp

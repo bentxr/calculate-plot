@@ -108,6 +108,11 @@ const Params& Params::standard() {
 
 Params Params::defaults() { return standard(); }
 
+void Params::reset(const std::string& key) {
+    const auto it = standard().values_.find(key);
+    if (it != standard().values_.end()) values_[key] = it->second;
+}
+
 std::vector<std::string> Params::keys() const {
     std::vector<std::string> out;
     for (const auto& [key, value] : values_) out.push_back(key);
@@ -195,7 +200,7 @@ const std::vector<std::string>& Params::inertKeys() {
 
 const std::vector<std::string>& Params::unsupportedKeys() {
     static const std::vector<std::string> keys = {
-        "agg.path.chunksize", "axes.formatter.use_locale", "backend",
+        "axes.formatter.use_locale", "backend",
         "figure.autolayout", "figure.constrained_layout.use", "figure.hooks", "font.enable_last_resort",
         "path.effects", "path.sketch", "path.snap", "text.hinting_factor", "text.kerning_factor", "text.usetex"};
     return keys;

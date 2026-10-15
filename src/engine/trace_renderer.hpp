@@ -75,6 +75,9 @@ public:
     std::string trace() override;
 
 private:
+    // The draw_path call itself, after RendererAgg.draw_path's chunks.
+    void drawWhole(const GC& gc, const Path& path, const transforms::Matrix& affine,
+                   const std::optional<std::vector<double>>& face);
     void writeFace(const std::optional<std::vector<double>>& face);
 };
 

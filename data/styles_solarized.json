@@ -1,0 +1,34 @@
+{
+ "_provenance": [
+  "Derived from Solarized 1.0.0beta2 (its palette, https://ethanschoonover.com/solarized/) by way of",
+  "Matplotlib 3.11.2: lib/matplotlib/mpl-data/stylelib/Solarize_Light2.mplstyle, written by",
+  "tools/oracle/make_styles.py.",
+  "Copyright (c) 2011 Ethan Schoonover",
+  "Licence: LICENSES/Solarized.txt (MIT).",
+  "Copyright (c) 2012- Matplotlib Development Team; All Rights Reserved",
+  "Licence: LICENSES/Matplotlib.txt. Changes: licensing/changes/matplotlib.md"
+ ],
+ "styles": {
+  "Solarize_Light2": {
+   "axes.axisbelow": "True",
+   "axes.edgecolor": "eee8d5",
+   "axes.facecolor": "eee8d5",
+   "axes.grid": "True",
+   "axes.labelcolor": "657b83",
+   "axes.labelsize": "12",
+   "axes.prop_cycle": "cycler('color', ['268BD2', '2AA198', '859900', 'B58900', 'CB4B16', 'DC322F', 'D33682', '6C71C4'])",
+   "axes.titlesize": "16",
+   "figure.facecolor": "FDF6E3",
+   "grid.color": "fdf6e3",
+   "grid.linestyle": "-",
+   "grid.linewidth": "1",
+   "lines.linewidth": "2.0",
+   "lines.solid_capstyle": "butt",
+   "patch.antialiased": "True",
+   "xtick.color": "657b83",
+   "xtick.direction": "out",
+   "ytick.color": "657b83",
+   "ytick.direction": "out"
+  }
+ }
+}

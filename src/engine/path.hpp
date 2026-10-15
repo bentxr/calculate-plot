@@ -1,4 +1,5 @@
-// Derived from Matplotlib 3.11.2: lib/matplotlib/path.py (Path).
+// Derived from Matplotlib 3.11.2: lib/matplotlib/path.py (Path) and lib/matplotlib/backends/backend_agg.py
+// (RendererAgg.draw_path: chunks).
 // Copyright (c) 2012- Matplotlib Development Team; All Rights Reserved
 // Licence: LICENSES/Matplotlib.txt. Changes: licensing/changes/matplotlib.md
 #pragma once
@@ -33,6 +34,14 @@ struct Path {
     // The same path made under other rcParams (its simplification settings are theirs).
     Path madeWith(const rc::Params& rc) const;
 };
+
+// RendererAgg.draw_path: a path of more than rcParams["agg.path.chunksize"] (> 100) vertices that may be
+// simplified, drawn without a face or a hatch, goes to Agg as chunks of at most that many vertices, each
+// a new Path (its own should_simplify, the original threshold), starting with a MOVETO when there are
+// codes; the vertex before each chunk is left out. Empty when the path is drawn whole.
+// Matplotlib also writes those MOVETOs into the original path's codes; a later draw of the same path
+// would see them. No path the engine draws has codes and that many vertices without a face.
+std::vector<Path> aggChunks(const Path& path, bool filled, bool hatched, const rc::Params& rc);
 
 // Transform.transform_path_non_affine: the vertices through the transform's non-affine part, the
 // codes and simplification settings kept (_fast_from_codes_and_verts); the path itself when affine.
