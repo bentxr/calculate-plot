@@ -947,7 +947,7 @@ INSTANTIATE_TEST_SUITE_P(
                 "axs[0].axhspan: edgecolor is not a colour"},
         Refusal{R"({"on": "axs[0]", "call": "axvline", "args": [1], "kwargs": {"c": null}})", "axs[0].axvline: bad color"},
         Refusal{R"({"on": "axs[0]", "call": "fill_between", "args": [[1, 2], [1, 2]], "kwargs": {"step": false}})",
-                "axs[0].fill_between: step is not supported yet"},
+                "axs[0].fill_between: step must be 'pre', 'post' or 'mid'"},
         Refusal{R"({"on": "axs[0]", "call": "set_xlim", "kwargs": {"left": {"$float": "nan"}}})",
                 "axs[0].set_xlim: limits cannot be NaN or Inf"},
         Refusal{R"({"on": "axs[0]", "call": "set_xlim", "args": [0, {"$float": "inf"}]})", "axs[0].set_xlim: limits cannot be NaN or Inf"},
@@ -1142,7 +1142,7 @@ TEST(ArgumentForms, NoneForAParameterOfALineIsItsDefault) {
 }
 
 // fill_between draws straight between the points: no interpolation of crossings, no steps.
-TEST(ArgumentForms, FillBetweenTakesNoInterpolationOrSteps) {
+TEST(ArgumentForms, FillBetweenTakesNoInterpolationAndStepsByName) {
     const auto fill = [](const std::string& kwargs) {
         return draw(kSubplots + R"({"on": "axs[0]", "call": "fill_between", "args": [[1, 2], [1, 2]], "kwargs": )" + kwargs + "}");
     };
@@ -1154,7 +1154,9 @@ TEST(ArgumentForms, FillBetweenTakesNoInterpolationOrSteps) {
     }
     EXPECT_EQ(fill(R"({"interpolate": true})").error, "axs[0].fill_between: interpolate is not supported yet");
     EXPECT_EQ(fill(R"({"interpolate": 0})").error, "axs[0].fill_between: interpolate is not supported yet");
-    EXPECT_EQ(fill(R"({"step": "pre"})").error, "axs[0].fill_between: step is not supported yet");
+    EXPECT_EQ(fill(R"({"step": "pre"})").error, "");
+    EXPECT_EQ(fill(R"({"step": "steps"})").error, "axs[0].fill_between: step must be 'pre', 'post' or 'mid'");
+    EXPECT_EQ(fill(R"({"step": "Pre"})").error, "axs[0].fill_between: step must be 'pre', 'post' or 'mid'");
 }
 
 // scatter's own edgecolors and linewidths join the keywords only when they are not None.

@@ -945,6 +945,7 @@ private:
         if (!values(y2a, &f2, 0.0)) return *error = where + ": y2 must be a number or a list as long as x", false;
         std::vector<bool> mask(t.size(), true);
         std::optional<std::string> hatchPattern;
+        std::string stepKind;
         ColorArg face, edge, hatch;
         bool faceGiven = false;
         std::optional<double> alpha, zorder;
@@ -970,8 +971,13 @@ private:
             } else if (name == "interpolate") {
                 if (!value.isNull() && !(value.isBool() && !value.asBool())) return *error = where + ": interpolate is not supported yet", false;
             } else if (name == "step") {
-                // (None is no steps; False is not: matplotlib breaks on it)
-                if (!value.isNull()) return *error = where + ": step is not supported yet", false;
+                // STEP_LOOKUP_MAP["steps-" + step]: 'pre', 'post' or 'mid'; None is no steps (False is
+                // not: matplotlib breaks on it)
+                if (!value.isNull()) {
+                    if (!value.isString() || (value.asString() != "pre" && value.asString() != "post" && value.asString() != "mid"))
+                        return *error = where + ": step must be 'pre', 'post' or 'mid'", false;
+                    stepKind = value.asString();
+                }
             } else if (name == "color" || name == "facecolor" || name == "facecolors" || name == "fc") {
                 colors::Spec c;
                 if (!color(value, &c)) return *error = where + ": bad " + name, false;
@@ -1007,7 +1013,7 @@ private:
         // x, y1 and y2 are masked where they are not finite (np.ma.masked_invalid): the regions break there
         for (std::size_t i = 0; i < t.size(); ++i)
             mask[i] = mask[i] && std::isfinite(t[i]) && std::isfinite(f1[i]) && std::isfinite(f2[i]);
-        auto collection = std::make_unique<FillBetweenPolyCollection>(rc_, t, f1, f2, mask);
+        auto collection = std::make_unique<FillBetweenPolyCollection>(rc_, t, f1, f2, mask, stepKind);
         // the keyword arguments are set after the defaults (_internal_update)
         collection->setFacecolor(face);
         if (edge.kind != ColorArg::Default) collection->setEdgecolor(edge);

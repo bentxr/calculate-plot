@@ -183,7 +183,8 @@ it comes from in its first lines. The changes, as a whole:
   Line2D's draw styles (cbook.py's pts_to_prestep, pts_to_poststep, pts_to_midstep), its subslice of long
   sorted lines (recache's condition, _x_filled with numpy.interp's formula, _path.is_sorted_and_has_non_nan,
   draw's searchsorted on the x bounds), markers drawn without the draw style and the path that recache then
-  leaves as get_path(); the legend's numpoints, scatterpoints and markerscale keywords; cbook._combine_masks
+  leaves as get_path(), and the same steps in fill_between's regions (_make_verts_for_region); markers.py's
+  integer markers; the legend's numpoints, scatterpoints and markerscale keywords; cbook._combine_masks
   in scatter, hlines and vlines and np.ma.masked_invalid in fill_between, translated to C++.
   Hatches: hatch.py (get_path and the pattern classes, NumPy's linspace arithmetic; the unit star's
   vertices taken as data, data/marker_paths.json) translated to C++ (src/engine/hatch); Patch's and

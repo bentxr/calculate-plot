@@ -325,8 +325,8 @@ PolyCollection::PolyCollection(const rc::Params& rc, const std::vector<std::vect
 
 FillBetweenPolyCollection::FillBetweenPolyCollection(const rc::Params& rc, const std::vector<double>& t,
                                                      const std::vector<double>& f1, const std::vector<double>& f2,
-                                                     const std::vector<bool>& where)
-    : PolyCollection(rc, makeVerts(t, f1, f2, where)) {
+                                                     const std::vector<bool>& where, const std::string& step)
+    : PolyCollection(rc, makeVerts(t, f1, f2, where, step)) {
     groupName = "FillBetweenPolyCollection";
     // _make_verts' box: the points (t, f1) and (t, f2) where drawn, and their minpos
     const double inf = std::numeric_limits<double>::infinity();
@@ -348,9 +348,10 @@ FillBetweenPolyCollection::FillBetweenPolyCollection(const rc::Params& rc, const
 std::vector<std::vector<std::array<double, 2>>> FillBetweenPolyCollection::makeVerts(const std::vector<double>& t,
                                                                                     const std::vector<double>& f1,
                                                                                     const std::vector<double>& f2,
-                                                                                    const std::vector<bool>& where) {
+                                                                                    const std::vector<bool>& where,
+                                                                                    const std::string& step) {
     std::vector<std::vector<std::array<double, 2>>> regions;
-    // cbook.contiguous_regions(where), then _make_verts_for_region without step or interpolation
+    // cbook.contiguous_regions(where), then _make_verts_for_region without interpolation
     std::size_t i = 0;
     while (i < t.size()) {
         if (!where[i]) {
@@ -359,11 +360,36 @@ std::vector<std::vector<std::array<double, 2>>> FillBetweenPolyCollection::makeV
         }
         std::size_t j = i;
         while (j < t.size() && where[j]) ++j;
+        std::vector<double> ts(t.begin() + std::ptrdiff_t(i), t.begin() + std::ptrdiff_t(j));
+        std::vector<double> f1s(f1.begin() + std::ptrdiff_t(i), f1.begin() + std::ptrdiff_t(j));
+        std::vector<double> f2s(f2.begin() + std::ptrdiff_t(i), f2.begin() + std::ptrdiff_t(j));
+        if (!step.empty()) {  // STEP_LOOKUP_MAP["steps-" + step](t, f1, f2)
+            const std::size_t n = ts.size();
+            std::vector<double> st, s1, s2;
+            for (std::size_t k = 0; k < n; ++k) {
+                if (step == "mid") {
+                    // pts_to_midstep: x0, the midpoints twice each, the last x; each y twice
+                    st.push_back(k == 0 ? ts[0] : (ts[k - 1] + ts[k]) / 2);
+                    st.push_back(k + 1 == n ? ts[n - 1] : (ts[k] + ts[k + 1]) / 2);
+                    s1.insert(s1.end(), {f1s[k], f1s[k]});
+                    s2.insert(s2.end(), {f2s[k], f2s[k]});
+                    continue;
+                }
+                st.push_back(ts[k]), s1.push_back(f1s[k]), s2.push_back(f2s[k]);
+                if (k + 1 < n) {  // pts_to_prestep: the y step first; pts_to_poststep: the x step first
+                    const bool pre = step == "pre";
+                    st.push_back(pre ? ts[k] : ts[k + 1]);
+                    s1.push_back(pre ? f1s[k + 1] : f1s[k]);
+                    s2.push_back(pre ? f2s[k + 1] : f2s[k]);
+                }
+            }
+            ts = std::move(st), f1s = std::move(s1), f2s = std::move(s2);
+        }
         std::vector<std::array<double, 2>> pts;
-        pts.push_back({t[i], f2[i]});                              // start
-        for (std::size_t k = i; k < j; ++k) pts.push_back({t[k], f1[k]});
-        pts.push_back({t[j - 1], f2[j - 1]});                      // end
-        for (std::size_t k = j; k-- > i;) pts.push_back({t[k], f2[k]});
+        pts.push_back({ts.front(), f2s.front()});  // start
+        for (std::size_t k = 0; k < ts.size(); ++k) pts.push_back({ts[k], f1s[k]});
+        pts.push_back({ts.back(), f2s.back()});    // end
+        for (std::size_t k = ts.size(); k-- > 0;) pts.push_back({ts[k], f2s[k]});
         regions.push_back(std::move(pts));
         i = j;
     }
