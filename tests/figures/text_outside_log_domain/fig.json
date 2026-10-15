@@ -1,0 +1,10 @@
+{"version": 1,
+ "calls": [
+  {"call": "subplots", "args": [2, 2], "kwargs": {"sharey": true}, "as": ["fig", "axs"]},
+  {"on": "axs[1, 0]", "call": "set_yscale", "args": ["log"]},
+  {"on": "axs[1, 1]", "call": "text", "args": [33.40047, -1, "below the log domain"]},
+  {"on": "axs[0, 1]", "call": "set_xscale", "args": ["log"]},
+  {"on": "axs[0, 1]", "call": "text", "args": [0, 0.5, "at x = 0 on a log axis"]},
+  {"on": "axs[0, 0]", "call": "text", "args": [0.5, 2, "inside"]},
+  {"on": "fig", "call": "tight_layout"}
+ ]}

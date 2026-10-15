@@ -1272,6 +1272,11 @@ std::optional<transforms::Bbox> Axes::tightbbox(Renderer& renderer, bool forLayo
         // the union is the same either way.
         if (c->clipOn && c->clipBox && !c->clipPath && patch->visible) continue;
         if (const Text* t = dynamic_cast<const Text*>(c.get()); t && !c->clipOn) {
+            // Text.get_tightbbox: nothing for an empty text, nor for one in data coordinates outside the
+            // domain of the scales (_point_in_data_domain: val_in_range is finite, and > 0 on a log scale)
+            const auto inDomain = [](const Axis& axis, double v) { return std::isfinite(v) && (axis.scale() != "log" || v > 0); };
+            if (t->text.empty()) continue;
+            if (transforms::equal(*t->transform, *transData) && !(inDomain(*xaxis, t->x) && inDomain(*yaxis, t->y))) continue;
             extra(t->windowExtent(renderer));  // Artist.get_tightbbox of an artist that is not clipped
             continue;
         }
