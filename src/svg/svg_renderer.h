@@ -148,7 +148,7 @@ private:
     std::map<std::string, std::string> markers_;
     int pathCollectionId_ = 0;
     struct Hatch {
-        std::string key;
+        std::string hatch;
         PathData path;
         std::optional<std::vector<double>> face;
         std::vector<double> edge;

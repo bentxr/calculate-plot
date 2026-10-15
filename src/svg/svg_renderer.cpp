@@ -371,10 +371,12 @@ std::string RendererSVG::hatch(const Gc& gc, const std::optional<Face>& face) {
         gc.hatchNumpy ? "np.str_(" + pythonStrRepr(*gc.hatch) + ")" : pythonStrRepr(*gc.hatch);
     const std::string key = pyTuple({hatchText, pyColour(faceColour, face && face->numpy, face && face->intAlpha),
                                      pyColour(edge, false, gc.hatchColor && gc.hatchColorIntAlpha), pythonRepr(gc.hatchLinewidth)});
+    // The dictionary finds an equal key (np.str_('/') == '/', np.float64(1.0) == 1), so the first pattern of
+    // equal values is reused, its id made from its own repr.
     for (const auto& h : hatches_)
-        if (h.key == key) return h.id;
+        if (h.hatch == *gc.hatch && h.face == faceColour && h.edge == edge && h.linewidth == gc.hatchLinewidth) return h.id;
     const std::string id = makeId("h", key);
-    hatches_.push_back(Hatch{key, gc.hatchPath, faceColour, edge, gc.hatchLinewidth, id});
+    hatches_.push_back(Hatch{*gc.hatch, gc.hatchPath, faceColour, edge, gc.hatchLinewidth, id});
     return id;
 }
 

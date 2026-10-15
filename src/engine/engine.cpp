@@ -2215,6 +2215,44 @@ private:
         if (log) {
             ax.setScale(!vertical, "log");  // set_yscale('log', nonpositive='clip') (set_xscale for barh)
         }
+        // Axes._convert_dx(dx, x0, xconv, convert): a width becomes (x0 + dx) - x0, with x0 the first finite
+        // position (cbook._safe_first_finite: else the first), so it carries that addition's rounding;
+        // the widths go with bar's x (barh's left), the heights and yerr with its y, xerr with its x
+        std::vector<double>& xs = v[barh ? 3 : 0];
+        std::vector<double>& ys = v[barh ? 0 : 3];
+        const auto convertDx = [](const std::vector<double>& positions, std::vector<double>* dx) {
+            if (positions.empty()) return;
+            double x0 = positions[0];
+            for (double p : positions)
+                if (std::isfinite(p)) {
+                    x0 = p;
+                    break;
+                }
+            for (double& d : *dx) d = (x0 + d) - x0;
+        };
+        convertDx(xs, &v[barh ? 1 : 2]);
+        convertDx(ys, &v[barh ? 2 : 1]);
+        // xerr and yerr the same way when a number or a list of numbers (else x0 + ddx raises: as given)
+        Json convertedErr[2];
+        for (int k = 0; k < 2; ++k) {
+            const Json*& err = k == 0 ? xerr : yerr;
+            if (!err || err->isNull()) continue;
+            std::vector<double> e;
+            double one = 0;
+            const bool scalar = readNumber(*err, &one);
+            if (scalar) e = {one};
+            else if (!numbers(*err, &e)) continue;
+            const std::vector<double> before = e;
+            convertDx(k == 0 ? xs : ys, &e);
+            if (std::equal(e.begin(), e.end(), before.begin(), [](double a, double b) {
+                    return a == b || (std::isnan(a) && std::isnan(b));
+                }))
+                continue;
+            std::vector<Json> items;
+            for (double d : e) items.push_back(Json::real(d));
+            convertedErr[k] = scalar ? Json::real(e[0]) : Json::array(items);
+            err = &convertedErr[k];
+        }
         // align: the bars' left (vertical) or bottom (horizontal) edges
         std::vector<double> left(n), bottom(n), width(n), height(n);
         for (std::size_t i = 0; i < n; ++i) {

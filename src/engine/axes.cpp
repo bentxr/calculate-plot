@@ -1110,7 +1110,9 @@ void Axes::autoscaleView(bool scalex, bool scaley) {
             for (const Axes* ax : siblings)
                 for (const auto& c : ax->children)
                     for (double v : isX ? c->stickyX : c->stickyY) stickies.push_back(v);
-        std::sort(stickies.begin(), stickies.end());
+        // (np.sort and np.searchsorted: NaN after every number)
+        const auto nanLast = [](double a, double b) { return !std::isnan(a) && (std::isnan(b) || a < b); };
+        std::sort(stickies.begin(), stickies.end(), nanLast);
         if (axis.scale() == "log") stickies.erase(std::remove_if(stickies.begin(), stickies.end(), [](double v) { return !(v > 0); }), stickies.end());
         // the finite ends of the data limits of all the Axes sharing the axis
         bool any = false;
@@ -1136,9 +1138,9 @@ void Axes::autoscaleView(bool scalex, bool scaley) {
         std::optional<double> x0bound, x1bound;
         if (!stickies.empty()) {
             const double tol = 1e-5 * std::abs(x1 - x0);
-            const auto i0 = std::lower_bound(stickies.begin(), stickies.end(), x0 + tol) - stickies.begin() - 1;
+            const auto i0 = std::lower_bound(stickies.begin(), stickies.end(), x0 + tol, nanLast) - stickies.begin() - 1;
             if (i0 != -1) x0bound = stickies[std::size_t(i0)];
-            const auto i1 = std::lower_bound(stickies.begin(), stickies.end(), x1 - tol) - stickies.begin();
+            const auto i1 = std::lower_bound(stickies.begin(), stickies.end(), x1 - tol, nanLast) - stickies.begin();
             if (std::size_t(i1) != stickies.size()) x1bound = stickies[std::size_t(i1)];
         }
         if (axis.scale() == "log") {  // limit_range_for_scale(x0, x1, minimum_minpos)
