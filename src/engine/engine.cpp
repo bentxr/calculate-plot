@@ -1525,8 +1525,28 @@ private:
             for (const char* k : noneIsDefault) known = known || name == k;
             if (value.isNull() && known) continue;
             if (name == "loc") {
-                if (!value.isString()) return *error = where + ": loc must be a location name", false;
-                o.loc = value.asString();
+                // set_loc: a name, an integer code 0-10 (a bool is one), or a pair of coordinates in the
+                // box the legend is anchored to
+                const char* const why = ": loc must be string, coordinate tuple, or an integer 0-10";
+                const Json* pair = sequence(value);
+                const auto real = [](const Json& j, double* out) {
+                    if (j.isBool()) return *out = j.asBool() ? 1 : 0, true;
+                    return j.isNumber() && (*out = j.asNumber(), true);
+                };
+                if (value.isString()) {
+                    o.loc = value.asString();
+                } else if (value.isBool()) {
+                    o.locCode = value.asBool() ? 1 : 0;
+                } else if (value.isNumber() && value.isInteger()) {
+                    if (value.asNumber() < 0 || value.asNumber() > 10) return *error = where + why, false;
+                    o.locCode = int(value.asNumber());
+                } else if (pair && pair->size() == 2) {
+                    std::array<double, 2> xy{};
+                    if (!real((*pair)[0], &xy[0]) || !real((*pair)[1], &xy[1])) return *error = where + why, false;
+                    o.locXY = xy;
+                } else {
+                    return *error = where + why, false;
+                }
             } else if (name == "title") {
                 if (!value.isString()) return *error = where + ": title must be a string", false;
                 o.title = value.asString();
@@ -1560,6 +1580,11 @@ private:
                 if (!(word && *word == "inherit") && !colors::toRgba(c, std::nullopt, rc_, nullptr))
                     return *error = where + ": bad " + name, false;
                 (name == "facecolor" ? o.facecolor : o.edgecolor) = c;
+            } else if (name == "shadow") {
+                // a bool, or 0 or 1 (a dict of the shadow's properties cannot be written in a figure file yet)
+                if (value.isBool()) o.shadow = value.asBool();
+                else if (value.isNumber() && (value.asNumber() == 0 || value.asNumber() == 1)) o.shadow = value.asNumber() == 1;
+                else return *error = where + ": Legend shadow must be a dict or bool", false;
             } else if (name == "numpoints" || name == "scatterpoints") {
                 // counts of points (np.linspace takes an integer only)
                 if (!value.isNumber() || !value.isInteger() || std::abs(value.asNumber()) > 1e6)

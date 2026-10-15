@@ -75,6 +75,7 @@ public:
         faceNumpy_ = true;
     }
     double linewidth() const { return linewidth_; }
+    const colors::Rgba& facecolorRgba() const { return facecolor_; }  // get_facecolor()
     // The colours as they were set and as they resolved, to put back what a save changes for a while
     struct Colors {
         std::optional<colors::Spec> originalEdge, originalFace;
@@ -124,6 +125,21 @@ protected:
     double linewidth_ = 0;
     std::string linestyle_ = "solid";
     std::pair<double, std::optional<std::vector<double>>> unscaledDashes_{0.0, std::nullopt}, dashes_{0.0, std::nullopt};
+};
+
+// patches.Shadow: another patch's path and look, darkened (shade), half transparent, and shifted by
+// (ox, oy) points.
+class Shadow : public Patch {
+public:
+    Shadow(const rc::Params& rc, const Patch& patch, double ox, double oy, double shade = 0.7);
+    Path path() const override { return patch_.path(); }
+    transforms::TransformPtr patchTransform() const override;  // the patch's, then the shift
+    void draw(Renderer& renderer) override;                    // _update_transform, then Patch.draw
+
+private:
+    const Patch& patch_;
+    double ox_, oy_;
+    double oxPixels_ = 0, oyPixels_ = 0;
 };
 
 class Rectangle : public Patch {

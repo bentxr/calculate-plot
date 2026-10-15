@@ -180,6 +180,36 @@ void Patch::draw(Renderer& renderer) {
     renderer.closeGroup("patch");
 }
 
+Shadow::Shadow(const rc::Params& rc, const Patch& patch, double ox, double oy, double shade)
+    : Patch(rc), patch_(patch), ox_(ox), oy_(oy) {
+    // update_from(patch): the Artist part (transform, visibility, clip) and the Patch part
+    updateFrom(patch);
+    transform = patch.transform;
+    visible = patch.visible;
+    clipOn = patch.clipOn;
+    clipBox = patch.clipBox;
+    clipPath = patch.clipPath;
+    // (1 - shade) * to_rgb(patch.get_facecolor()) as face and edge, then alpha 0.5
+    const colors::Rgba f = patch.facecolorRgba();
+    const double k = 1 - shade;
+    const colors::Spec color = std::vector<double>{k * f[0], k * f[1], k * f[2]};
+    setFacecolor(color);
+    setEdgecolor(color);
+    setAlpha(0.5);
+}
+
+transforms::TransformPtr Shadow::patchTransform() const {
+    auto shift = std::make_shared<transforms::Affine2D>();
+    shift->translate(oxPixels_, oyPixels_);
+    return transforms::compose(patch_.patchTransform(), shift);
+}
+
+void Shadow::draw(Renderer& renderer) {
+    oxPixels_ = renderer.pointsToPixels(ox_);
+    oyPixels_ = renderer.pointsToPixels(oy_);
+    Patch::draw(renderer);
+}
+
 Rectangle::Rectangle(const rc::Params& rc, double x, double y, double w, double h, double a)
     : Patch(rc), x0(x), y0(y), width(w), height(h), angle(a) {}
 

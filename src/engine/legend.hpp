@@ -84,6 +84,8 @@ private:
 
 struct LegendOptions {
     std::optional<std::string> loc;  // None: rcParams["legend.loc"]
+    std::optional<int> locCode;                   // or a location's code, 0 ('best') to 10 ('center')
+    std::optional<std::array<double, 2>> locXY;   // or the lower left corner, as fractions of the anchor box
     std::optional<std::string> title;
     std::optional<double> fontsize, titleFontsize;  // in points
     std::optional<bool> frameon, fancybox;
@@ -95,6 +97,7 @@ struct LegendOptions {
     std::optional<double> borderpad, labelspacing, handlelength, handletextpad, borderaxespad, columnspacing;
     std::optional<int> numpoints, scatterpoints;  // None: rcParams["legend.numpoints"] / ["legend.scatterpoints"]
     std::optional<double> markerscale;            // None: rcParams["legend.markerscale"]
+    std::optional<bool> shadow;                    // None: rcParams["legend.shadow"]
 };
 
 class Legend : public Artist {
@@ -117,7 +120,9 @@ private:
     double fontsize_;  // points
     double borderpad_, labelspacing_, handlelength_, handleheight_, handletextpad_, borderaxespad_, columnspacing_;
     int loc_ = 0;
+    std::optional<std::array<double, 2>> locXY_;
     std::unique_ptr<FancyBboxPatch> patch_;
+    bool shadow_ = false;
     std::vector<std::unique_ptr<OffsetBox>> boxes_;  // owns every box below
     TextArea* titleBox_ = nullptr;
     Packer* legendBox_ = nullptr;

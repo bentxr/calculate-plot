@@ -440,7 +440,16 @@ INSTANTIATE_TEST_SUITE_P(
     testing::Values(
         Refusal{R"({"on": "axs[0]", "call": "legend", "args": [["a"]]})",
                 "axs[0].legend: handles and labels as arguments are not supported yet"},
-        Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"loc": 3}})", "axs[0].legend: loc must be a location name"},
+        Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"loc": 11}})",
+                "axs[0].legend: loc must be string, coordinate tuple, or an integer 0-10"},
+        Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"loc": -1}})",
+                "axs[0].legend: loc must be string, coordinate tuple, or an integer 0-10"},
+        Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"loc": 3.0}})",
+                "axs[0].legend: loc must be string, coordinate tuple, or an integer 0-10"},
+        Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"loc": [0.5]}})",
+                "axs[0].legend: loc must be string, coordinate tuple, or an integer 0-10"},
+        Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"loc": [0.5, "top"]}})",
+                "axs[0].legend: loc must be string, coordinate tuple, or an integer 0-10"},
         Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"title": 3}})", "axs[0].legend: title must be a string"},
         Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"fontsize": "huge"}})", "axs[0].legend: unknown font size huge"},
         Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"fontsize": [8]}})", "axs[0].legend: bad fontsize"},
@@ -473,7 +482,8 @@ INSTANTIATE_TEST_SUITE_P(
         Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"labelcolor": [0.1, 0.2, 7]}})", "axs[0].legend: Invalid labelcolor"},
         Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"labelcolor": ["red", ["green"]]}})",
                 "axs[0].legend: Invalid labelcolor"},
-        Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"shadow": true}})", "axs[0].legend: unsupported keyword shadow"}));
+        Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"shadow": 2}})", "axs[0].legend: Legend shadow must be a dict or bool"},
+        Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"shadow": "yes"}})", "axs[0].legend: Legend shadow must be a dict or bool"}));
 
 // What matplotlib breaks on in a legend entry for vlines or hlines: lines with no colour (the entry
 // takes the first one), and white lines with labelcolor='linecolor' (their four equal numbers are
@@ -595,7 +605,7 @@ TEST(LegendCalls, NoneForAKeywordNotTakenYetIsItsDefault) {
     const auto plain = draw(kSubplots + plot + R"({"on": "axs[0]", "call": "legend"})");
     ASSERT_EQ(plain.error, "");
     for (const char* name : {"handles", "labels", "reverse", "scatteryoffsets", "prop",
-                             "handleheight", "mode", "shadow", "linewidth", "bbox_to_anchor", "bbox_transform", "handler_map",
+                             "handleheight", "mode", "linewidth", "bbox_to_anchor", "bbox_transform", "handler_map",
                              "title_fontproperties", "draggable"}) {
         const auto none = draw(kSubplots + plot + R"({"on": "axs[0]", "call": "legend", "kwargs": {")" + name + R"(": null}})");
         EXPECT_EQ(none.error, "") << name;

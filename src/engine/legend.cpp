@@ -355,7 +355,7 @@ Legend::Legend(const rc::Params& rc, Axes& parent, const std::vector<Artist*>& h
     handletextpad_ = rcOr(rc, o.handletextpad, "legend.handletextpad");
     borderaxespad_ = rcOr(rc, o.borderaxespad, "legend.borderaxespad");
     columnspacing_ = rcOr(rc, o.columnspacing, "legend.columnspacing");
-    if (rc.boolean("legend.shadow")) *error = "legend shadows are not supported yet";
+    shadow_ = o.shadow ? *o.shadow : rc.boolean("legend.shadow");
     const int numpoints = o.numpoints ? *o.numpoints : int(rc.number("legend.numpoints"));
     const int scatterpoints = o.scatterpoints ? *o.scatterpoints : int(rc.number("legend.scatterpoints"));
     const double markerscale = o.markerscale ? *o.markerscale : rc.number("legend.markerscale");
@@ -387,8 +387,10 @@ Legend::Legend(const rc::Params& rc, Axes& parent, const std::vector<Artist*>& h
     patch_->setEdgecolor(edge);
     patch_->setFacecolor(face);
     if (!rc.value("legend.linewidth").isNull()) patch_->setLinewidth(rc.number("legend.linewidth"));
-    // alpha=framealpha, else rcParams["legend.framealpha"]: None there leaves the colours their own alpha
+    // alpha=framealpha, else 1 with a shadow asked for by the keyword, else rcParams["legend.framealpha"]:
+    // None there leaves the colours their own alpha
     std::optional<double> framealpha = o.framealpha;
+    if (!framealpha && o.shadow && *o.shadow) framealpha = 1.0;
     if (!framealpha && !rc.value("legend.framealpha").isNull()) framealpha = rc.number("legend.framealpha");
     if (framealpha && !(0 <= *framealpha && *framealpha <= 1)) {  // Artist.set_alpha
         *error = "framealpha is outside the 0-1 range";
@@ -604,9 +606,15 @@ Legend::Legend(const rc::Params& rc, Axes& parent, const std::vector<Artist*>& h
     boxes_.push_back(std::move(legendBox));
 
     // set_loc
-    const std::string loc = o.loc ? *o.loc : rc.text("legend.loc");
-    loc_ = locCode(loc);
-    if (loc_ < 0) *error = "unknown legend location '" + loc + "'";
+    if (o.locCode) {
+        loc_ = *o.locCode;
+    } else if (o.locXY) {
+        locXY_ = o.locXY;
+    } else {
+        const std::string loc = o.loc ? *o.loc : rc.text("legend.loc");
+        loc_ = locCode(loc);
+        if (loc_ < 0) *error = "unknown legend location '" + loc + "'";
+    }
     legendBox_->offsetFunction = [this](double w, double h, double xd, double yd, Renderer& r) {
         return findOffset(w, h, xd, yd, r);
     };
@@ -706,8 +714,14 @@ std::array<double, 2> Legend::findBestPosition(double width, double height, Rend
 std::array<double, 2> Legend::findOffset(double width, double height, double xdescent, double ydescent,
                                          Renderer& renderer) {
     std::array<double, 2> xy;
-    if (loc_ == 0) xy = findBestPosition(width, height, renderer);
-    else xy = anchoredBbox(loc_, fromBounds(0, 0, width, height), renderer);
+    if (locXY_) {  // axes coordinates: the corner at those fractions of the anchor box (the Axes' box)
+        const auto [x0, y0, w, h] = parent_.bbox->bounds();
+        xy = {x0 + w * (*locXY_)[0], y0 + h * (*locXY_)[1]};
+    } else if (loc_ == 0) {
+        xy = findBestPosition(width, height, renderer);
+    } else {
+        xy = anchoredBbox(loc_, fromBounds(0, 0, width, height), renderer);
+    }
     return {xy[0] + xdescent, xy[1] + ydescent};
 }
 
@@ -718,6 +732,7 @@ void Legend::draw(Renderer& renderer) {
     const auto b = legendBox_->windowExtent(renderer).bounds();
     patch_->setBounds(b[0], b[1], b[2], b[3]);
     patch_->mutationScale = fontsize;
+    if (shadow_) Shadow(patch_->rc(), *patch_, 2, -2).draw(renderer);
     patch_->draw(renderer);
     legendBox_->draw(renderer);
     renderer.closeGroup("legend");
