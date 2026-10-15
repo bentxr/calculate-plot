@@ -58,6 +58,10 @@ public:
     // "none", "all", "row" or "col".
     std::vector<Axes*> subplots(int nrows, int ncols, const std::string& sharex = "none",
                                 const std::string& sharey = "none");
+    // Figure.add_subplot(nrows, ncols, index): an Axes in cells num1 ... num2 (row-major, from 0) of a
+    // grid of that shape: the one an Axes of the figure already uses (GridSpec._check_gridspec_exists),
+    // or a new one.
+    Axes* addSubplot(int nrows, int ncols, int num1, int num2);
 };
 
 // Figure.savefig as a PNG, into a trace: what FigureCanvasBase.print_figure sets for the save

@@ -1371,3 +1371,25 @@ TEST(MarkerCalls, IntegerMarkersAreMatplotlibs) {
         EXPECT_EQ(error(call, R"("caretdownbase")"), where + "Unrecognized marker style 'caretdownbase'");
     }
 }
+
+// add_subplot and plt.subplot read their arguments as SubplotSpec._from_subplot_args does.
+TEST(SubplotCalls, ArgumentsAreReadAsMatplotlibReadsThem) {
+    const auto error = [](const std::string& args) {
+        return draw(R"({"call": "figure", "as": "fig"}, {"on": "fig", "call": "add_subplot", "args": )" + args + "}").error;
+    };
+    EXPECT_EQ(error("[]"), "");
+    EXPECT_EQ(error("[111]"), "");
+    EXPECT_EQ(error(R"([2, 2, {"$tuple": [-1, 4]}])"), "");
+    EXPECT_EQ(error("[1111]"), "fig.add_subplot: Single argument to subplot must be a three-digit integer, not 1111");
+    EXPECT_EQ(error("[true]"), "fig.add_subplot: Single argument to subplot must be a three-digit integer, not True");
+    EXPECT_EQ(error("[110]"), "fig.add_subplot: num must be an integer with 1 <= num <= 1, not 0");
+    EXPECT_EQ(error("[2, 2, 5]"), "fig.add_subplot: num must be an integer with 1 <= num <= 4, not 5");
+    EXPECT_EQ(error(R"([2, 2, {"$tuple": [0, 1]}])"), "fig.add_subplot: GridSpec slice would result in no space allocated for subplot");
+    EXPECT_EQ(error(R"([2, 2, {"$tuple": [3, 1]}])"), "fig.add_subplot: GridSpec slice would result in no space allocated for subplot");
+    EXPECT_EQ(error("[0, 1, 1]"), "fig.add_subplot: Number of rows must be a positive integer, not 0");
+    EXPECT_EQ(error("[1.5, 1, 1]"), "fig.add_subplot: Number of rows must be a positive integer, not 1.5");
+    EXPECT_EQ(error("[1, 2]"), "fig.add_subplot: subplot() takes 1 or 3 positional arguments but 2 were given");
+    EXPECT_EQ(error(R"([2, 2, {"$tuple": [1, 2.5]}])"), "fig.add_subplot: Subplot specifier tuple must contain integers, not (1, 2.5)");
+    EXPECT_EQ(draw(R"({"call": "plot", "args": [[0, 1]]}, {"call": "xlim"})").error,
+              "plt.xlim() without arguments (the limits as they are) is not supported yet");
+}

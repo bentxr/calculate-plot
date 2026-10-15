@@ -191,6 +191,8 @@ it comes from in its first lines. The changes, as a whole:
   Collection's hatch, hatch colour and hatch line width, and HandlerPolyCollection's copy of them. Whether a
   colour's alpha is a Python int (to_rgba of an RGB tuple) is followed for the faces of patches, as the
   SVG ids of hatches hash its repr.
+  pyplot's current figure and Axes (gcf, gca, sca through subplot), the functions of pyplot that act on
+  them, Figure.add_subplot and SubplotSpec._from_subplot_args with GridSpec._check_gridspec_exists.
   Legends: the location as a code or a pair of coordinates (set_loc), and the shadow (patches.py's
   Shadow behind the frame, the frame's alpha of 1 when the keyword asks for a shadow).
   Colour sequences: colors.py's ColorSequenceRegistry (the built-in sequences only) with _cm.py's data

@@ -6,6 +6,8 @@
 #include "engine/tight_layout.hpp"
 #include "rc/rc_params.hpp"
 #include "rc/styles.hpp"
+#include "support/pyformat.hpp"
+#include "svg/svg_renderer.h"
 #include "support/pyparse.hpp"
 
 #include <cctype>
@@ -70,9 +72,39 @@ public:
         if (!positionalArguments(call, error)) return false;
         if (call.on.empty() && call.method == "figure") return figure(call, error);
         if (call.on.empty() && call.method == "subplots") return subplots(call, error);
+        if (call.on.empty()) {
+            if (call.method == "gcf") {  // the current figure, made if there is none
+                gcf();
+                return nameResult(call, nullptr, error);
+            }
+            if (call.method == "gca") return noArguments(call, error) && nameResult(call, &gca(), error);
+            if (call.method == "subplot") return subplot(call, error);
+            // the pyplot functions of the current Axes and of the current figure
+            static const std::map<std::string, std::string> ofAxes = {
+                {"plot", "plot"}, {"scatter", "scatter"}, {"fill_between", "fill_between"}, {"errorbar", "errorbar"},
+                {"axhline", "axhline"}, {"axvline", "axvline"}, {"axhspan", "axhspan"}, {"axvspan", "axvspan"},
+                {"hlines", "hlines"}, {"vlines", "vlines"}, {"grid", "grid"}, {"legend", "legend"}, {"text", "text"},
+                {"title", "set_title"}, {"xlabel", "set_xlabel"}, {"ylabel", "set_ylabel"}, {"xlim", "set_xlim"},
+                {"ylim", "set_ylim"}, {"xscale", "set_xscale"}, {"yscale", "set_yscale"}};
+            static const std::map<std::string, std::string> ofFigure = {
+                {"suptitle", "suptitle"}, {"figtext", "text"}, {"subplots_adjust", "subplots_adjust"}, {"tight_layout", "tight_layout"}};
+            const auto a = ofAxes.find(call.method);
+            const auto f = ofFigure.find(call.method);
+            if (a != ofAxes.end() || f != ofFigure.end()) {
+                if ((call.method == "xlim" || call.method == "ylim") && call.args.empty() && call.kwargs.empty())
+                    return *error = "plt." + call.method + "() without arguments (the limits as they are) is not supported yet", false;
+                model::Call c = call;
+                c.on = "plt";
+                c.method = a != ofAxes.end() ? a->second : f->second;
+                if (!positionalArguments(c, error)) return false;
+                if (a != ofAxes.end()) return axesCall(gca(), c, error);
+                gcf();
+                return figureCall(c, error);
+            }
+        }
         const auto ax = axes_.find(call.on);
         if (ax != axes_.end()) return axesCall(*ax->second, call, error);
-        if (!figureName_.empty() && call.on == figureName_) return figureCall(call, error);
+        if (figureNames_.count(call.on)) return figureCall(call, error);
         const auto dot = call.on.rfind('.');
         if (dot != std::string::npos) {  // ax.xaxis, ax.yaxis
             const auto owner = axes_.find(call.on.substr(0, dot));
@@ -258,7 +290,9 @@ private:
         figure_ = std::make_unique<Figure>(rc_, options);
         if (!figure_->subplotpars.valid(error)) return *error = "plt.figure: " + *error, false;
         axes_.clear();
-        figureName_ = call.as.size() == 1 ? call.as[0] : std::string();
+        figureNames_.clear();
+        current_ = nullptr;
+        if (call.as.size() == 1) figureNames_.insert(call.as[0]);
         return true;
     }
 
@@ -301,10 +335,11 @@ private:
         if (!figure_->subplotpars.valid(error)) return *error = "plt.subplots: " + *error, false;
         const std::vector<Axes*> made = figure_->subplots(nrows, ncols, sharex, sharey);
         axes_.clear();
-        figureName_.clear();
+        figureNames_.clear();
+        current_ = made.back();  // (each add_subplot makes its Axes the current one)
         if (call.as.empty()) return true;
         if (call.as.size() != 2) return *error = "plt.subplots returns (fig, axs): name both", false;
-        figureName_ = call.as[0];
+        figureNames_.insert(call.as[0]);
         // the names the returned array answers to: squeezed to a single Axes or a 1-d array when it can be
         const std::string& n = call.as[1];
         for (int r = 0; r < nrows; ++r)
@@ -317,8 +352,134 @@ private:
         return true;
     }
 
+    // plt.gcf(): the figure, made with the defaults when there is none
+    Figure& gcf() {
+        if (!figure_) {
+            figure_ = std::make_unique<Figure>(rc_, FigureOptions{});
+            axes_.clear();
+            figureNames_.clear();
+            current_ = nullptr;
+        }
+        return *figure_;
+    }
+
+    // Figure.gca(): the current Axes, else a new add_subplot()
+    Axes& gca() {
+        Figure& f = gcf();
+        if (!current_) current_ = f.addSubplot(1, 1, 0, 0);
+        return *current_;
+    }
+
+    bool noArguments(const model::Call& call, std::string* error) {
+        if (call.args.empty() && call.kwargs.empty()) return true;
+        return *error = (call.on.empty() ? "plt" : call.on) + "." + call.method + " takes no arguments", false;
+    }
+
+    // What a call that returns an Axes (or, with none, the figure) is named in the figure file
+    bool nameResult(const model::Call& call, Axes* ax, std::string* error) {
+        if (call.as.empty()) return true;
+        if (call.as.size() != 1)
+            return *error = (call.on.empty() ? "plt" : call.on) + "." + call.method + " returns one object: name it once", false;
+        if (ax) axes_[call.as[0]] = ax;
+        else figureNames_.insert(call.as[0]);
+        return true;
+    }
+
+    // A value as Python writes it, for messages
+    static std::string repr(const Json& v) {
+        if (v.isBool()) return v.asBool() ? "True" : "False";
+        if (v.isNumber()) return v.isInteger() ? v.numberText() : support::pythonRepr(v.asNumber());
+        if (v.isString()) return svg::pythonStrRepr(v.asString());
+        if (v.isNull()) return "None";
+        const Json* seq = sequence(v);
+        if (!seq) return "?";
+        const bool tuple = v.isObject();
+        std::string out = tuple ? "(" : "[";
+        for (std::size_t i = 0; i < seq->size(); ++i) out += (i ? ", " : "") + repr((*seq)[i]);
+        return out + (tuple && seq->size() == 1 ? ",)" : tuple ? ")" : "]");
+    }
+
+    // SubplotSpec._from_subplot_args: the grid's rows and columns, and the first and last cells
+    // (from 0) of subplot(*args) and add_subplot(*args); no arguments are (1, 1, 1)
+    bool subplotSpecOf(const model::Call& call, int out[4], std::string* error) {
+        const std::string where = (call.on.empty() ? "plt" : call.on) + "." + call.method + ": ";
+        const auto integer = [](const Json& v) { return v.isNumber() && v.isInteger() && !v.isBool(); };
+        Json rows = Json::integer(1), cols = Json::integer(1), num = Json::integer(1);
+        if (call.args.size() == 1) {
+            const Json& arg = call.args[0];
+            const std::string why = "Single argument to subplot must be a three-digit integer, not " + repr(arg);
+            if (!integer(arg)) return *error = where + why, false;
+            const std::string digits = arg.numberText();
+            if (digits.size() != 3 || !std::all_of(digits.begin(), digits.end(), [](char c) { return c >= '0' && c <= '9'; }))
+                return *error = where + why, false;
+            rows = Json::integer(digits[0] - '0'), cols = Json::integer(digits[1] - '0'), num = Json::integer(digits[2] - '0');
+        } else if (call.args.size() == 3) {
+            rows = call.args[0], cols = call.args[1], num = call.args[2];
+        } else if (!call.args.empty()) {
+            return *error = where + "subplot() takes 1 or 3 positional arguments but " + std::to_string(call.args.size()) +
+                            " were given",
+                   false;
+        }
+        // GridSpec(rows, cols)
+        if (!integer(rows) || rows.asNumber() <= 0) return *error = where + "Number of rows must be a positive integer, not " + repr(rows), false;
+        if (!integer(cols) || cols.asNumber() <= 0) return *error = where + "Number of columns must be a positive integer, not " + repr(cols), false;
+        if (rows.asNumber() > 1000 || cols.asNumber() > 1000) return *error = where + "grids of more than 1000 rows or columns are not supported yet", false;
+        const int r = int(rows.asNumber()), c = int(cols.asNumber()), size = r * c;
+        int first = 0, last = 0;
+        const Json* pair = num.isObject() ? sequence(num) : nullptr;
+        if (pair && pair->size() == 2) {
+            if (!integer((*pair)[0]) || !integer((*pair)[1]))
+                return *error = where + "Subplot specifier tuple must contain integers, not " + repr(num), false;
+            // gs[i - 1:j]: the slice's indices, then at least one cell
+            const auto clamp = [size](double k) { return k < 0 ? std::max(k + size, 0.0) : std::min(k, double(size)); };
+            const double start = clamp((*pair)[0].asNumber() - 1), stop = clamp((*pair)[1].asNumber());
+            if (!(stop > start)) return *error = where + "GridSpec slice would result in no space allocated for subplot", false;
+            first = int(start), last = int(stop) - 1;
+        } else {
+            if (!integer(num) || num.asNumber() < 1 || num.asNumber() > size)
+                return *error = where + "num must be an integer with 1 <= num <= " + std::to_string(size) + ", not " + repr(num), false;
+            first = last = int(num.asNumber()) - 1;
+        }
+        out[0] = r, out[1] = c, out[2] = first, out[3] = last;
+        return true;
+    }
+
+    // plt.subplot(*args): the figure's Axes of that grid and cells, else a new one; either is current
+    bool subplot(const model::Call& call, std::string* error) {
+        if (!call.kwargs.empty()) return *error = "plt.subplot: keyword arguments are not supported yet", false;
+        int spec[4];
+        if (!subplotSpecOf(call, spec, error)) return false;
+        Figure& f = gcf();
+        Axes* found = nullptr;
+        for (const auto& a : f.axes)
+            if (a->subplotSpec && a->subplotSpec->gridspec->nrows == spec[0] && a->subplotSpec->gridspec->ncols == spec[1] &&
+                a->subplotSpec->num1 == spec[2] && a->subplotSpec->num2 == spec[3]) {
+                // (the same grid object: the first of that shape, which add_subplot would take too)
+                const GridSpec* first = nullptr;
+                for (const auto& b : f.axes)
+                    if (b->subplotSpec && b->subplotSpec->gridspec->nrows == spec[0] && b->subplotSpec->gridspec->ncols == spec[1]) {
+                        first = b->subplotSpec->gridspec;
+                        break;
+                    }
+                if (a->subplotSpec->gridspec == first) {
+                    found = a.get();
+                    break;
+                }
+            }
+        current_ = found ? found : f.addSubplot(spec[0], spec[1], spec[2], spec[3]);
+        return nameResult(call, current_, error);
+    }
+
     bool figureCall(const model::Call& call, std::string* error) {
         const std::string where = call.on + "." + call.method;
+        if (call.method == "add_subplot") {
+            if (!call.kwargs.empty()) return *error = where + ": keyword arguments are not supported yet", false;
+            int spec[4];
+            if (!subplotSpecOf(call, spec, error)) return false;
+            current_ = figure_->addSubplot(spec[0], spec[1], spec[2], spec[3]);
+            return nameResult(call, current_, error);
+        }
+        if (call.method == "gca") return noArguments(call, error) && nameResult(call, &gca(), error);
         if (call.method == "text") return figureText(call, error);
         if (call.method == "suptitle") {
             // FigureBase._suplabels with suptitle's info: (0.5, 0.98), centred, top, figure.titlesize/titleweight
@@ -2034,7 +2195,8 @@ private:
     DrawOptions options_;  // what measuring texts needs before the drawing (tight_layout)
     std::unique_ptr<Figure> figure_;
     std::map<std::string, Axes*> axes_;
-    std::string figureName_;
+    std::set<std::string> figureNames_;  // what the figure file calls the figure
+    Axes* current_ = nullptr;            // the figure's current Axes (gca), if any
 };
 
 }  // namespace

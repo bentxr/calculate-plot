@@ -75,6 +75,21 @@ std::vector<Axes*> Figure::subplots(int nrows, int ncols, const std::string& sha
     return out;
 }
 
+Axes* Figure::addSubplot(int nrows, int ncols, int num1, int num2) {
+    const GridSpec* gs = nullptr;
+    for (const auto& a : axes)
+        if (a->subplotSpec && a->subplotSpec->gridspec->nrows == nrows && a->subplotSpec->gridspec->ncols == ncols) {
+            gs = a->subplotSpec->gridspec;
+            break;
+        }
+    if (!gs) {
+        gridspecs.push_back(std::make_unique<GridSpec>(nrows, ncols));
+        gs = gridspecs.back().get();
+    }
+    axes.push_back(std::make_unique<Axes>(rc_, *this, SubplotSpec{gs, num1, num2}));
+    return axes.back().get();
+}
+
 void Figure::draw(Renderer& renderer) {
     if (!visible) return;
     // _get_draw_artists: the children but the patch, sorted by zorder (stable)
