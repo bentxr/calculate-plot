@@ -146,10 +146,11 @@ std::string pyTuple(const std::vector<std::string>& items) {
     return out + (items.size() == 1 ? ",)" : ")");
 }
 
-std::string pyColour(const std::optional<std::vector<double>>& c, bool numpy) {
+std::string pyColour(const std::optional<std::vector<double>>& c, bool numpy, bool intAlpha = false) {
     if (!c) return "None";
     std::vector<std::string> items;
     for (double v : *c) items.push_back(pyFloat(v, numpy));
+    if (intAlpha && c->size() == 4) items.back() = std::to_string(static_cast<long long>(c->back()));
     return pyTuple(items);
 }
 
@@ -368,8 +369,8 @@ std::string RendererSVG::hatch(const Gc& gc, const std::optional<Face>& face) {
     // Patches keep the hatch pattern as a NumPy string (np.str_('/')), collections as a str.
     const std::string hatchText =
         gc.hatchNumpy ? "np.str_(" + pythonStrRepr(*gc.hatch) + ")" : pythonStrRepr(*gc.hatch);
-    const std::string key = pyTuple({hatchText, pyColour(faceColour, face && face->numpy),
-                                     pyColour(edge, false), pythonRepr(gc.hatchLinewidth)});
+    const std::string key = pyTuple({hatchText, pyColour(faceColour, face && face->numpy, face && face->intAlpha),
+                                     pyColour(edge, false, gc.hatchColor && gc.hatchColorIntAlpha), pythonRepr(gc.hatchLinewidth)});
     for (const auto& h : hatches_)
         if (h.key == key) return h.id;
     const std::string id = makeId("h", key);

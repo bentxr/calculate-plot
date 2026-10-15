@@ -28,6 +28,7 @@ ColorArg ColorArg::of(colors::Spec c) {
 
 Collection::Collection(const rc::Params& rc, CollectionDefaults defaults) : Artist(rc), defaults_(std::move(defaults)) {
     zorder = defaults_.zorder;
+    hatchLinewidth = rc.number("hatch.linewidth");
     setFacecolor(ColorArg{});
     setEdgecolor(ColorArg{});
     setLinewidths({});
@@ -166,6 +167,10 @@ void Collection::draw(Renderer& renderer) {
     GC gc = renderer.newGc();
     setGcClip(gc);
     gc.snap = snap;
+    if (hatch && !hatch->empty()) {
+        gc.hatch = hatch;
+        gc.hatchLinewidth = hatchLinewidth;
+    }
     if (sketch) gc.sketch = sketch;
     const std::vector<colors::Rgba> faces = facecolors_, edges = edgecolors();
     bool single = false;
@@ -173,7 +178,7 @@ void Collection::draw(Renderer& renderer) {
     bool solid = true;
     for (const auto& ls : linestyles_) solid = solid && !ls.second;
     if (drawPaths.size() == 1 && transforms.size() <= 1 && faces.size() == 1 && edges.size() == 1 &&
-        linewidths_.size() == 1 && solid && antialiaseds_.size() == 1) {
+        linewidths_.size() == 1 && solid && antialiaseds_.size() == 1 && !hatch) {
         // Affine2D(trans[0]) + transform
         if (!transforms.empty()) combined = transform->isIdentity() ? transforms[0] : transforms::dot(master, transforms[0]);
         // Path.get_extents(combined_transform) against the figure's box. Of a path of straight
@@ -223,18 +228,7 @@ void Collection::draw(Renderer& renderer) {
         a.offsetTrans = offsetTrf;
         a.facecolors = faces;
         a.edgecolors = edges;
-        // get_hatchcolor(): the colour given (set_color), else hatch.color; 'edge' follows the edges, or
-        // the kind's default edge colour without them (a colour takes the collection's alpha; 'none' is no colour)
-        ColorArg hatch = originalHatchcolor_;
-        bool followsEdge = false;
-        if (hatch.kind == ColorArg::Default) {
-            const std::string named = rc_.text("hatch.color");
-            followsEdge = named == "edge";
-            if (!followsEdge) hatch = ColorArg::of(named);
-        }
-        if (!followsEdge) a.hatchcolors = toRgbaArray(hatch);
-        else if (edges.empty()) a.hatchcolors = {*colors::toRgba(rc_.text(defaults_.edgecolorKey), alpha, rc_, nullptr)};
-        else a.hatchcolors = edges;
+        a.hatchcolors = hatchcolors();
         a.linewidths = linewidths_;
         a.dashes = linestyles_;
         a.antialiaseds = antialiaseds_;
@@ -244,6 +238,22 @@ void Collection::draw(Renderer& renderer) {
         renderer.drawPathCollection(gc, a);
     }
     renderer.closeGroup(groupName);
+}
+
+std::vector<colors::Rgba> Collection::hatchcolors() const {
+    // get_hatchcolor(): the colour given (set_color), else hatch.color; 'edge' follows the edges, or
+    // the kind's default edge colour without them (a colour takes the collection's alpha; 'none' is no colour)
+    ColorArg h = originalHatchcolor_;
+    bool followsEdge = false;
+    if (h.kind == ColorArg::Default) {
+        const std::string named = rc_.text("hatch.color");
+        followsEdge = named == "edge";
+        if (!followsEdge) h = ColorArg::of(named);
+    }
+    if (!followsEdge) return toRgbaArray(h);
+    const auto edges = edgecolors();
+    if (edges.empty()) return {*colors::toRgba(rc_.text(defaults_.edgecolorKey), alpha, rc_, nullptr)};
+    return edges;
 }
 
 void Collection::updateFrom(const Collection& o) {
@@ -269,6 +279,7 @@ void Collection::updateFrom(const Collection& o) {
     array = o.array;
     norm = o.norm;
     cmap = o.cmap;
+    hatch = o.hatch;
 }
 
 void Collection::updateScalarMappable() {

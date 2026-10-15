@@ -65,11 +65,14 @@ public:
     std::string capstyle = "butt";
     std::string joinstyle = "miter";
 
-    void setAlpha(std::optional<double> a);  // Patch.set_alpha: the colours are made again
+    // Patch.set_alpha: the colours are made again (`isInt`: the alpha was a Python int)
+    void setAlpha(std::optional<double> a, bool isInt = false);
     // What HandlerPolyCollection._update_prop sets directly: the resolved colours (no alpha applied)
     void setResolvedColors(const colors::Rgba& face, const colors::Rgba& edge) {
         facecolor_ = face;
         edgecolor_ = edge;
+        faceAlphaInt_ = edgeAlphaInt_ = false;  // (rows of NumPy arrays)
+        faceNumpy_ = true;
     }
     double linewidth() const { return linewidth_; }
     // The colours as they were set and as they resolved, to put back what a save changes for a while
@@ -84,14 +87,36 @@ public:
     }
     void setFill(bool b);
     void updateFrom(const Patch& other);  // Patch.update_from, for the handle of a legend
-    void setColor(const colors::Spec& c) {  // Patch.set_color: edge and face
+    void setColor(const colors::Spec& c) {  // Patch.set_color: edge, hatch and face
         setEdgecolor(c);
+        setHatchcolor(c);
         setFacecolor(c);
     }
+    // set_hatch: the pattern ('/', 'x', 'o'...), or None for none; an empty one draws none either
+    void setHatch(const std::optional<std::string>& hatch) { hatch_ = hatch; }
+    const std::optional<std::string>& hatch() const { return hatch_; }
+    // What HandlerPolyCollection._update_prop sets directly: the hatch and its resolved colour
+    void setResolvedHatch(const std::optional<std::string>& hatch, const colors::Rgba& color) {
+        hatch_ = hatch;
+        hatchFollowsEdge_ = false;
+        hatchcolor_ = color;
+    }
+    // set_hatchcolor: a colour, 'edge' (the edge colour when drawn), or None for rcParams["hatch.color"]
+    void setHatchcolor(const std::optional<colors::Spec>& color);
+    std::vector<double> hatchcolor() const;  // get_hatchcolor()
 
 protected:
     void applyEdgecolor();
     void applyFacecolor();
+    void applyHatchcolor();
+    std::optional<std::string> hatch_;
+    std::optional<colors::Spec> originalHatchcolor_;
+    bool hatchFollowsEdge_ = false;  // _hatch_color == 'edge'
+    colors::Rgba hatchcolor_{};
+    double hatchLinewidth_ = 0;     // rcParams["hatch.linewidth"] when made
+    bool alphaInt_ = false;          // the alpha was given as a Python int
+    bool faceAlphaInt_ = false, edgeAlphaInt_ = false;  // colors::alphaIsInt of each
+    bool faceNumpy_ = false;  // the face colour is a tuple of NumPy floats
     bool fill_ = true;
     bool edgeDefault_ = false;
     std::optional<colors::Spec> originalEdgecolor_, originalFacecolor_;

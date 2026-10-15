@@ -55,6 +55,7 @@ struct Gc {
     bool hatchNumpy = false;  // a np.str_ (patches) rather than a str (collections)
     PathData hatchPath;
     std::optional<std::vector<double>> hatchColor;
+    bool hatchColorIntAlpha = false;
     double hatchLinewidth = 1.0;
     std::optional<std::array<double, 3>> sketch;
     std::optional<std::string> url;
@@ -66,6 +67,7 @@ struct Gc {
 struct Face {
     std::vector<double> rgba;
     bool numpy = false;
+    bool intAlpha = false;  // the alpha is a Python int (1 for an RGB tuple), which the id hashes print so
 };
 
 struct Metadata {

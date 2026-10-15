@@ -295,6 +295,7 @@ def svg_gc(g):
     clip_index = None
     if clip_path is not None:
         clip_index = _svg_clip_paths.setdefault(id(clip_path), (len(_svg_clip_paths), clip_path))[0]
+    d["hatch_color"] = exact_color(g.get_hatch_color())
     d.update({"url": g.get_url(), "gid": g.get_gid(), "hatch_string": g.get_hatch(),
               # Patches keep their hatch as np.str_, collections as str: the id hash spells them apart.
               "hatch_numpy": isinstance(g.get_hatch(), np.str_),
@@ -306,9 +307,25 @@ def matrix(transform):
     return None if transform is None else affine(transform.get_matrix())
 
 
+def exact_color(c):
+    """A colour as numbers, integers kept as integers: an alpha of 1 (to_rgba of an RGB tuple) and of 1.0
+    print differently in the hashes of SVG ids."""
+    if c is None:
+        return None
+    return [int(v) if isinstance(v, (int, np.integer)) and not isinstance(v, bool) else number(v) for v in c]
+
+
+def face_numpy(rgb_face):
+    """{"face_numpy": True} for a face of NumPy floats (a legend handle's, first_color of an array): a
+    hatch's SVG id hashes its repr, np.float64(...); nothing otherwise."""
+    if rgb_face is not None and len(rgb_face) and isinstance(rgb_face[0], np.floating):
+        return {"face_numpy": True}
+    return {}
+
+
 def face(rgb_face):
-    """A face colour with its length (the SVG style rules depend on it)."""
-    return None if rgb_face is None else numbers(rgb_face)
+    """A face colour with its length (the SVG style rules depend on it), integers kept."""
+    return None if rgb_face is None else exact_color(rgb_face)
 
 
 def record_svg(fig, metadata):
@@ -351,7 +368,7 @@ def record_svg(fig, metadata):
 
     wrap("draw_path", lambda self, g, p, transform, rgbFace=None: {
         "op": "draw_path", "gc": svg_gc(g), "path": path(p), "transform": matrix(transform),
-        "face": face(rgbFace), "clip_transform": clip_transform_text(g)})
+        "face": face(rgbFace), "clip_transform": clip_transform_text(g), **face_numpy(rgbFace)})
     wrap("draw_markers", lambda self, g, marker_path, marker_trans, p, trans, rgbFace=None: {
         "op": "draw_markers", "gc": svg_gc(g), "marker_path": path(marker_path),
         "marker_transform": matrix(marker_trans), "path": path(p), "transform": matrix(trans),

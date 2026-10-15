@@ -185,6 +185,11 @@ it comes from in its first lines. The changes, as a whole:
   draw's searchsorted on the x bounds), markers drawn without the draw style and the path that recache then
   leaves as get_path(); the legend's numpoints, scatterpoints and markerscale keywords; cbook._combine_masks
   in scatter, hlines and vlines and np.ma.masked_invalid in fill_between, translated to C++.
+  Hatches: hatch.py (get_path and the pattern classes, NumPy's linspace arithmetic; the unit star's
+  vertices taken as data, data/marker_paths.json) translated to C++ (src/engine/hatch); Patch's and
+  Collection's hatch, hatch colour and hatch line width, and HandlerPolyCollection's copy of them. Whether a
+  colour's alpha is a Python int (to_rgba of an RGB tuple) is followed for the faces of patches, as the
+  SVG ids of hatches hash its repr.
   Colour sequences: colors.py's ColorSequenceRegistry (the built-in sequences only) with _cm.py's data
   (data/color_sequences.json; ColorBrewer's schemes in data/color_sequences_colorbrewer.json), written as JSON
   numbers by tools/oracle/make_color_sequences.py; rcsetup.py's _single_string_color_list takes them in cycles.

@@ -68,6 +68,7 @@ add_library(calculate-plot STATIC
     src/engine/tight_layout.cpp
     src/engine/gc.cpp
     src/engine/gridspec.cpp
+    src/engine/hatch.cpp
     src/engine/legend.cpp
     src/engine/lines.cpp
     src/engine/path.cpp

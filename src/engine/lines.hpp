@@ -14,6 +14,10 @@ namespace calculate_plot::engine {
 
 class Axes;
 
+// Path.unit_circle() and Path.unit_regular_star(5) (inner circle 0.5), as hatches take them.
+const Path& unitCirclePath();
+const Path& unitStarPath();
+
 // MarkerStyle: a marker's path, its transform (unit size), and how it is stroked and filled.
 class MarkerStyle {
 public:

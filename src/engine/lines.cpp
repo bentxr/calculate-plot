@@ -85,6 +85,12 @@ const Path& unitCircle() {
     return pathOf(std::move(v), std::move(codes), false, 12);
 }
 
+}  // namespace
+
+const Path& unitCirclePath() { return unitCircle(); }
+
+namespace {
+
 // lines.py's line style names and their long forms
 std::string shortLinestyle(const std::string& ls) {
     if (ls == "solid") return "-";
@@ -113,6 +119,8 @@ const Path& markerData(const std::string& name) {
 }
 
 }  // namespace
+
+const Path& unitStarPath() { return markerData("star5_hatch"); }
 
 bool MarkerStyle::set(const std::string& marker, const std::optional<std::string>& fillstyle, const rc::Params& rc,
                       std::string* error) {

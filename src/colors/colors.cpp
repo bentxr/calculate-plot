@@ -155,6 +155,19 @@ bool hasAlphaChannel(const Spec& spec) {
     return std::get<std::vector<double>>(spec).size() == 4;
 }
 
+bool alphaIsInt(const Spec& spec, std::optional<double> alpha, bool alphaGivenAsInt, const rc::Params& rc) {
+    if (alpha) return alphaGivenAsInt;
+    if (const auto* tuple = std::get_if<std::vector<double>>(&spec)) return tuple->size() == 3;
+    const std::string& s = std::get<std::string>(spec);
+    if (s.size() >= 2 && s[0] == 'C' && std::all_of(s.begin() + 1, s.end(), [](char ch) { return ch >= '0' && ch <= '9'; })) {
+        const auto cycle = rc.colorCycle();
+        std::size_t n = 0;
+        for (std::size_t i = 1; i < s.size(); ++i) n = (n * 10 + std::size_t(s[i] - '0')) % cycle.size();
+        return cycle[n].isArray() && cycle[n].size() == 3;
+    }
+    return false;
+}
+
 const std::vector<Json>* colorSequence(const std::string& name) {
     static const std::map<std::string, std::vector<Json>> sequences = [] {
         std::map<std::string, std::vector<Json>> loaded;

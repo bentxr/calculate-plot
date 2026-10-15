@@ -537,6 +537,7 @@ Legend::Legend(const rc::Params& rc, Axes& parent, const std::vector<Artist*>& h
             auto rect = std::make_unique<Rectangle>(rc, -xd, -yd, w, h);
             const auto first = [](const std::vector<colors::Rgba>& c) { return c.empty() ? colors::Rgba{0, 0, 0, 0} : c[0]; };
             rect->setResolvedColors(first(poly->facecolors()), first(poly->edgecolors()));
+            rect->setResolvedHatch(poly->hatch, first(poly->hatchcolors()));
             rect->setLinewidth(poly->linewidths().empty() ? std::optional<double>() : poly->linewidths()[0]);
             rect->transform = trans;
             handleColors.push_back(colorsOf(*rect));

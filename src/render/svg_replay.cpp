@@ -91,6 +91,10 @@ svg::Gc graphicsContext(Reader& in, const Json& g, const Json& clipTransformText
     gc.hatchNumpy = in.boolean(in.field(g, "hatch_numpy"));
     gc.hatchPath = path(in, in.field(g, "hatch"));
     gc.hatchColor = optionalNumbers(in, in.field(g, "hatch_color"));
+    {
+        const Json& hc = in.field(g, "hatch_color");
+        gc.hatchColorIntAlpha = hc.isArray() && hc.size() == 4 && hc[3].isNumber() && hc[3].isInteger();
+    }
     gc.hatchLinewidth = in.number(in.field(g, "hatch_linewidth"));
     if (auto s = optionalNumbers(in, in.field(g, "sketch"))) {
         if (s->size() != 3) in.fail("sketch parameters need 3 numbers");
@@ -105,7 +109,7 @@ std::optional<svg::Face> face(Reader& in, const Json& j) {
     auto v = optionalNumbers(in, j);
     if (!v) return std::nullopt;
     if (v->size() != 3 && v->size() != 4) in.fail("a colour must have 3 or 4 components");
-    return svg::Face{*v, false};
+    return svg::Face{*v, false, v->size() == 4 && j[3].isNumber() && j[3].isInteger()};
 }
 
 // An array recorded as {"shape", "data"}, as rows of `width` numbers.
@@ -185,7 +189,8 @@ SvgReplayResult replaySvgTrace(std::string_view traceJson, const std::string& fo
         if (op == "draw_path") {
             const auto p = path(in, in.field(e, "path"));
             const auto t = affine(in, in.field(e, "transform"));
-            const auto f = face(in, in.field(e, "face"));
+            auto f = face(in, in.field(e, "face"));
+            if (f && e.find("face_numpy") && e.find("face_numpy")->isBool()) f->numpy = e.find("face_numpy")->asBool();
             if (in.error.empty()) r.drawPath(gc, p, t, f);
         } else if (op == "draw_markers") {
             const auto mp = path(in, in.field(e, "marker_path"));

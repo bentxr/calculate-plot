@@ -39,6 +39,7 @@ protected:
     void writePath(const Path& path);
     void writeMatrix(const transforms::Matrix& m);
     void writeNumbers(const std::vector<double>& values);
+    void writeColour(const std::vector<double>& rgba, bool intAlpha);
     void writeOptionalText(const std::optional<std::string>& text);
     void writeArray(const std::vector<std::size_t>& shape, const std::vector<double>& data);  // record.py's array()
     void writeCollectionFields(const PathCollectionArgs& args);

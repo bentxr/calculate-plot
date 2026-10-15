@@ -1,5 +1,6 @@
 #include "engine/trace_renderer.hpp"
 
+#include "engine/hatch.hpp"
 #include "rc/rc_params.hpp"
 #include "support/base64.hpp"
 #include "text/mathtext.hpp"
@@ -76,7 +77,14 @@ void TraceRenderer::writeGcFields(const GC& gc) {
     events_.key("snap");
     if (gc.snap) events_.value(*gc.snap);
     else events_.null();
-    events_.key("hatch").null();  // hatch paths come with Plan 8's hatched artists
+    // get_hatch_path(): Path.hatch(hatch, 6.0); the artists set a hatch only when it is not empty
+    events_.key("hatch");
+    if (gc.hatch && !gc.hatch->empty()) {
+        if (const auto hatch = hatchPath(*gc.hatch, rc_)) writePath(*hatch);
+        else events_.null();
+    } else {
+        events_.null();
+    }
     events_.key("hatch_color");
     if (gc.hatchColor) writeNumbers(*gc.hatchColor);
     else events_.null();
@@ -84,6 +92,15 @@ void TraceRenderer::writeGcFields(const GC& gc) {
     events_.key("sketch");
     if (gc.sketch) writeNumbers({(*gc.sketch)[0], (*gc.sketch)[1], (*gc.sketch)[2]});
     else events_.null();
+}
+
+void TraceRenderer::writeColour(const std::vector<double>& rgba, bool intAlpha) {
+    // an alpha that is a Python int is written as a JSON integer (the SVG id hashes tell them apart)
+    if (!intAlpha || rgba.size() != 4 || rgba[3] != double(static_cast<long long>(rgba[3]))) return writeNumbers(rgba);
+    events_.beginArray();
+    for (std::size_t i = 0; i < 3; ++i) events_.value(rgba[i]);
+    events_.value(static_cast<long long>(rgba[3]));
+    events_.endArray();
 }
 
 void TraceRenderer::writeOptionalText(const std::optional<std::string>& text) {
@@ -447,10 +464,11 @@ void SvgTraceRenderer::drawPath(const GC& gc, const Path& path, const transforms
     events_.key("transform");
     writeMatrix(affine);
     events_.key("face");
-    if (face) writeNumbers(*face);
+    if (face) writeColour(*face, gc.faceAlphaInt);
     else events_.null();
     events_.key("clip_transform");
     writeClipTransform(gc);
+    if (face && gc.faceNumpy) events_.key("face_numpy").value(true);
     events_.endObject();
 }
 

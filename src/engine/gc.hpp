@@ -40,6 +40,10 @@ struct GC {
     bool hatchNumpy = false;  // patches keep their hatch as np.str_, collections as str (SVG ids differ)
     std::optional<std::vector<double>> hatchColor;
     double hatchLinewidth;
+    // Whether the alpha of the face drawn with this context is a Python int (the hatch colour's never
+    // is: set_hatch_color makes floats of it)
+    bool faceAlphaInt = false;
+    bool faceNumpy = false;  // the face is a tuple of NumPy floats (a legend handle's first colour)
     std::optional<std::string> url;
     std::optional<std::string> gid;
     std::optional<bool> snap;

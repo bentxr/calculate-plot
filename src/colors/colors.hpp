@@ -32,6 +32,11 @@ bool isNone(const Spec& spec);
 // _has_alpha_channel: '#rgba' and '#rrggbbaa' strings, and tuples of four (for a valid colour).
 bool hasAlphaChannel(const Spec& spec);
 
+// Whether to_rgba(spec, alpha) gives a Python int as its alpha: the alpha given, when it is one; or 1,
+// with no alpha given, for a colour that is an RGB tuple ('CN' too, when that entry of the cycle is one).
+// (An SVG id hashes the colour's repr, where 1 and 1.0 differ.)
+bool alphaIsInt(const Spec& spec, std::optional<double> alpha, bool alphaGivenAsInt, const rc::Params& rc);
+
 // matplotlib.color_sequences[name]: the colours of a built-in colour sequence (data/color_sequences.json
 // and data/color_sequences_colorbrewer.json) as RGB(A) numbers; nullptr for another name.
 const std::vector<support::Json>* colorSequence(const std::string& name);

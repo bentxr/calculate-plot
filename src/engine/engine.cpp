@@ -944,6 +944,7 @@ private:
         if (!y1a || !values(y1a, &f1, 0.0)) return *error = where + ": y1 must be a number or a list as long as x", false;
         if (!values(y2a, &f2, 0.0)) return *error = where + ": y2 must be a number or a list as long as x", false;
         std::vector<bool> mask(t.size(), true);
+        std::optional<std::string> hatchPattern;
         ColorArg face, edge, hatch;
         bool faceGiven = false;
         std::optional<double> alpha, zorder;
@@ -963,6 +964,9 @@ private:
                     if (!(*seq)[i].isBool()) return *error = where + ": where must be booleans", false;
                     mask[i] = (*seq)[i].asBool();
                 }
+            } else if (name == "hatch") {
+                if (!value.isNull() && !value.isString()) return *error = where + ": hatch must be a string", false;
+                if (value.isString()) hatchPattern = value.asString();
             } else if (name == "interpolate") {
                 if (!value.isNull() && !(value.isBool() && !value.asBool())) return *error = where + ": interpolate is not supported yet", false;
             } else if (name == "step") {
@@ -1008,6 +1012,7 @@ private:
         collection->setFacecolor(face);
         if (edge.kind != ColorArg::Default) collection->setEdgecolor(edge);
         collection->setHatchcolor(hatch);
+        collection->hatch = hatchPattern;
         if (!linewidths.empty()) collection->setLinewidths(linewidths);
         if (alpha) collection->setAlpha(alpha);
         if (zorder) collection->zorder = *zorder;
@@ -1728,7 +1733,7 @@ private:
             else p.setEdgecolor(spec);
         } else if (name == "alpha") {
             if (!readAlpha(v, &n)) return *error = where + ": alpha must be a number from 0 to 1", false;
-            p.setAlpha(n);
+            p.setAlpha(n, v.isNumber() && v.isInteger());
         } else if (name == "linewidth" || name == "lw") {
             if (!readFinite(v, &n)) return *error = where + ": linewidth must be a finite number", false;
             p.setLinewidth(n);
@@ -1742,7 +1747,18 @@ private:
             if (!v.isBool()) return *error = where + ": fill must be True or False", false;
             p.setFill(v.asBool());
         } else if (name == "hatch") {
-            if (!v.isNull()) return *error = where + ": hatches are not supported yet", false;
+            // set_hatch: a pattern, or None
+            if (!v.isNull() && !v.isString()) return *error = where + ": hatch must be a string", false;
+            p.setHatch(v.isNull() ? std::nullopt : std::optional<std::string>(v.asString()));
+        } else if (name == "hatchcolor") {
+            if (v.isNull()) {
+                p.setHatchcolor(std::nullopt);
+            } else {
+                colors::Spec spec;
+                if (v.isString() && v.asString() == "edge") spec = std::string("edge");
+                else if (!color(v, &spec)) return *error = where + ": hatchcolor is not a colour", false;
+                p.setHatchcolor(spec);
+            }
         } else if (name == "zorder") {
             if (!readFinite(v, &n)) return *error = where + ": zorder must be a finite number", false;
             p.zorder = n;

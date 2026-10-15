@@ -46,7 +46,9 @@ void Artist::setGcClip(GC& gc) const {
 // Patch.__init__ with its defaults, in its order: edge colour, face colour, line style, line width.
 Patch::Patch(const rc::Params& rc) : Artist(rc), antialiased(rc.boolean("patch.antialiased")) {
     zorder = 1;
+    hatchLinewidth_ = rc.number("hatch.linewidth");
     setEdgecolor(std::nullopt);
+    setHatchcolor(std::nullopt);
     setFacecolor(std::nullopt);
     setLinestyle("solid");
     setLinewidth(std::nullopt);
@@ -63,6 +65,7 @@ void Patch::applyEdgecolor() {
     else if (rc_.boolean("patch.force_edgecolor") || !fill_ || edgeDefault_) c = rc_.text("patch.edgecolor");
     else c = std::string("none");
     edgecolor_ = *colors::toRgba(c, alpha, rc_, nullptr);
+    edgeAlphaInt_ = colors::alphaIsInt(c, alpha, alphaInt_, rc_);
 }
 
 void Patch::setFacecolor(const std::optional<colors::Spec>& color) {
@@ -73,18 +76,42 @@ void Patch::setFacecolor(const std::optional<colors::Spec>& color) {
 void Patch::applyFacecolor() {
     const colors::Spec c = originalFacecolor_ ? *originalFacecolor_ : colors::Spec(rc_.text("patch.facecolor"));
     facecolor_ = *colors::toRgba(c, fill_ ? alpha : std::optional<double>(0.0), rc_, nullptr);
+    faceAlphaInt_ = fill_ ? colors::alphaIsInt(c, alpha, alphaInt_, rc_) : true;  // (alpha 0 when not filled)
 }
 
-void Patch::setAlpha(std::optional<double> a) {
+void Patch::setHatchcolor(const std::optional<colors::Spec>& color) {
+    originalHatchcolor_ = color;
+    applyHatchcolor();
+}
+
+void Patch::applyHatchcolor() {
+    // _set_hatchcolor: None is rcParams["hatch.color"]; 'edge' is kept as such, a colour takes the alpha
+    const colors::Spec c = originalHatchcolor_ ? *originalHatchcolor_ : colors::Spec(rc_.text("hatch.color"));
+    const auto* name = std::get_if<std::string>(&c);
+    hatchFollowsEdge_ = name && *name == "edge";
+    if (!hatchFollowsEdge_) hatchcolor_ = *colors::toRgba(c, alpha, rc_, nullptr);
+}
+
+std::vector<double> Patch::hatchcolor() const {
+    // get_hatchcolor: 'edge' is the edge colour, or rcParams["patch.edgecolor"] when that is transparent
+    colors::Rgba c = hatchcolor_;
+    if (hatchFollowsEdge_) c = edgecolor_[3] == 0 ? *colors::toRgba(rc_.text("patch.edgecolor"), std::nullopt, rc_, nullptr) : edgecolor_;
+    return std::vector<double>(c.begin(), c.end());
+}
+
+void Patch::setAlpha(std::optional<double> a, bool isInt) {
     alpha = a;
+    alphaInt_ = a && isInt;
     applyFacecolor();
     applyEdgecolor();
+    applyHatchcolor();
 }
 
 void Patch::setFill(bool b) {
     fill_ = b;
     applyFacecolor();
     applyEdgecolor();
+    applyHatchcolor();
 }
 
 void Patch::setLinewidth(std::optional<double> w) {
@@ -101,6 +128,13 @@ void Patch::updateFrom(const Patch& o) {
     // colours as they were set and the fill: only a later change of alpha or fill would read them.)
     edgecolor_ = o.edgecolor_;
     facecolor_ = o.facecolor_;
+    faceAlphaInt_ = o.faceAlphaInt_;
+    edgeAlphaInt_ = o.edgeAlphaInt_;
+    faceNumpy_ = o.faceNumpy_;
+    hatch_ = o.hatch_;  // and the hatch with its colour (not its line width)
+    hatchFollowsEdge_ = o.hatchFollowsEdge_;
+    hatchcolor_ = o.hatchcolor_;
+    originalHatchcolor_ = o.originalHatchcolor_;
     unscaledDashes_ = o.unscaledDashes_;
     setLinewidth(o.linewidth_);
 }
@@ -133,6 +167,13 @@ void Patch::draw(Renderer& renderer) {
     gc.setAlpha(alpha);
     if (sketch) gc.sketch = sketch;
     gc.setForeground(std::vector<double>(edgecolor_.begin(), edgecolor_.end()));
+    if (hatch_ && !hatch_->empty()) {
+        gc.hatch = hatch_;
+        gc.hatchColor = hatchcolor();
+        gc.hatchLinewidth = hatchLinewidth_;
+    }
+    gc.faceAlphaInt = faceAlphaInt_;
+    gc.faceNumpy = faceNumpy_;
     if (const char* problem = lw > 0 ? gc.setDashes(dashes_.first, dashes_.second) : gc.setDashes(0, std::nullopt))
         renderer.unsupported(problem);
     renderer.drawPath(gc, transformPathNonAffine(path(), *t), t->matrix(), face);

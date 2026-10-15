@@ -71,6 +71,10 @@ public:
 
     std::vector<colors::Rgba> facecolors() const { return facecolors_; }
     std::vector<colors::Rgba> edgecolors() const;  // get_edgecolor: the face colours for 'face'
+    std::vector<colors::Rgba> hatchcolors() const;  // get_hatchcolor
+    // set_hatch: the pattern, or None; an empty one draws no hatch (but is not None)
+    std::optional<std::string> hatch;
+    double hatchLinewidth;  // rcParams["hatch.linewidth"] when made
 
 protected:
     virtual void beforeDraw() {}

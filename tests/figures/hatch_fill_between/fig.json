@@ -1,0 +1,10 @@
+{"version": 1,
+ "calls": [
+  {"call": "subplots", "args": [1, 2], "kwargs": {"figsize": {"$tuple": [6.4, 3.2]}}, "as": ["fig", "axs"]},
+  {"on": "axs[0]", "call": "fill_between", "args": [[0, 1, 2, 3], [0, 1, 0.5, 2], [2, 3, 3, 4]], "kwargs": {"hatch": "//"}},
+  {"on": "axs[0]", "call": "fill_between", "args": [[0, 1, 2, 3], [-1, -2, -1, -3]], "kwargs": {"hatch": "x", "alpha": 0.5, "color": "C2"}},
+  {"on": "axs[0]", "call": "fill_between", "args": [[0, 1, 2, 3], [4, 5, 4, 5], 6], "kwargs": {"hatch": "o.", "edgecolor": "C3", "facecolor": "none"}},
+  {"on": "axs[1]", "call": "fill_between", "args": [[0, 1, {"$float": "nan"}, 3, 4], [1, 2, 1, 2, 1]], "kwargs": {"hatch": "*", "linewidth": 2}},
+  {"on": "axs[1]", "call": "fill_between", "args": [[0, 4], [3, 3], 4], "kwargs": {"hatch": ""}},
+  {"on": "axs[1]", "call": "fill_between", "args": [[0, 4], [5, 5], 6], "kwargs": {"hatch": "-|", "color": "0.6"}}
+ ]}

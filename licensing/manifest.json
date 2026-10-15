@@ -524,7 +524,9 @@
         "src/rc/styles.hpp",
         "src/rc/styles.cpp",
         "data/styles.json",
-        "data/color_sequences.json"
+        "data/color_sequences.json",
+        "src/engine/hatch.hpp",
+        "src/engine/hatch.cpp"
       ],
       "header": [
         "Copyright (c) 2012- Matplotlib Development Team; All Rights Reserved",
