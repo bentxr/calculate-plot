@@ -180,6 +180,11 @@ it comes from in its first lines. The changes, as a whole:
   read as _rc_params_in_file reads a line, by tools/oracle/make_styles.py; the comments are left out.
   backend_agg.py's RendererAgg.draw_path: the chunks of rcParams["agg.path.chunksize"] (src/engine/path.cpp).
   The MOVETO codes matplotlib writes into the original path are written into the chunks only.
+  Line2D's draw styles (cbook.py's pts_to_prestep, pts_to_poststep, pts_to_midstep), its subslice of long
+  sorted lines (recache's condition, _x_filled with numpy.interp's formula, _path.is_sorted_and_has_non_nan,
+  draw's searchsorted on the x bounds), markers drawn without the draw style and the path that recache then
+  leaves as get_path(); the legend's numpoints, scatterpoints and markerscale keywords; cbook._combine_masks
+  in scatter, hlines and vlines and np.ma.masked_invalid in fill_between, translated to C++.
   Colour sequences: colors.py's ColorSequenceRegistry (the built-in sequences only) with _cm.py's data
   (data/color_sequences.json; ColorBrewer's schemes in data/color_sequences_colorbrewer.json), written as JSON
   numbers by tools/oracle/make_color_sequences.py; rcsetup.py's _single_string_color_list takes them in cycles.

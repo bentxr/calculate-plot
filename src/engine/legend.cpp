@@ -356,11 +356,11 @@ Legend::Legend(const rc::Params& rc, Axes& parent, const std::vector<Artist*>& h
     borderaxespad_ = rcOr(rc, o.borderaxespad, "legend.borderaxespad");
     columnspacing_ = rcOr(rc, o.columnspacing, "legend.columnspacing");
     if (rc.boolean("legend.shadow")) *error = "legend shadows are not supported yet";
-    const int numpoints = int(rc.number("legend.numpoints"));
-    const int scatterpoints = int(rc.number("legend.scatterpoints"));
-    const double markerscale = rc.number("legend.markerscale");
+    const int numpoints = o.numpoints ? *o.numpoints : int(rc.number("legend.numpoints"));
+    const int scatterpoints = o.scatterpoints ? *o.scatterpoints : int(rc.number("legend.scatterpoints"));
+    const double markerscale = o.markerscale ? *o.markerscale : rc.number("legend.markerscale");
     if (numpoints <= 0) *error = "numpoints must be > 0; it was " + std::to_string(numpoints);
-    if (scatterpoints <= 0) *error = "legend.scatterpoints below 1 is not supported yet";
+    if (scatterpoints <= 0) *error = "scatterpoints below 1 are not supported yet";
     // scatteryoffsets: [3/8, 4/8, 2.5/8] over and over, one for each scatter point
     std::vector<double> scatterYOffsets;
     for (int k = 0; k < scatterpoints; ++k) scatterYOffsets.push_back(std::array<double, 3>{3. / 8., 4. / 8., 2.5 / 8.}[std::size_t(k % 3)]);
@@ -434,7 +434,7 @@ Legend::Legend(const rc::Params& rc, Axes& parent, const std::vector<Artist*>& h
                     l->clipBox.reset();
                     l->clipPath.reset();
                 }
-                // (and set_drawstyle('default'): no line has another draw style yet)
+                legline->setDrawstyle("default");
                 legline->setMarker("none", &ignored);
                 marker->setLinestyle("None", &ignored);
                 if (markerscale != 1) marker->markersize = marker->markersize * markerscale;

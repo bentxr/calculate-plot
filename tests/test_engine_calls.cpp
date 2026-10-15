@@ -594,7 +594,7 @@ TEST(LegendCalls, NoneForAKeywordNotTakenYetIsItsDefault) {
     const std::string plot = R"({"on": "axs[0]", "call": "plot", "args": [[0, 1], [0, 1]], "kwargs": {"label": "a"}},)";
     const auto plain = draw(kSubplots + plot + R"({"on": "axs[0]", "call": "legend"})");
     ASSERT_EQ(plain.error, "");
-    for (const char* name : {"handles", "labels", "numpoints", "markerscale", "reverse", "scatterpoints", "scatteryoffsets", "prop",
+    for (const char* name : {"handles", "labels", "reverse", "scatteryoffsets", "prop",
                              "handleheight", "mode", "shadow", "linewidth", "bbox_to_anchor", "bbox_transform", "handler_map",
                              "title_fontproperties", "draggable"}) {
         const auto none = draw(kSubplots + plot + R"({"on": "axs[0]", "call": "legend", "kwargs": {")" + name + R"(": null}})");
@@ -603,6 +603,20 @@ TEST(LegendCalls, NoneForAKeywordNotTakenYetIsItsDefault) {
         EXPECT_EQ(draw(kSubplots + plot + R"({"on": "axs[0]", "call": "legend", "kwargs": {")" + name + R"(": 1}})").error,
                   std::string("axs[0].legend: unsupported keyword ") + name);
     }
+}
+
+// numpoints, scatterpoints and markerscale: the keyword, or else the rcParams; the counts are integers.
+TEST(LegendCalls, PointCountsAreIntegers) {
+    const std::string plot = R"({"on": "axs[0]", "call": "plot", "args": [[0, 1], [0, 1]], "kwargs": {"label": "a", "marker": "o"}},)";
+    const auto legend = [&](const std::string& kwargs) {
+        return draw(kSubplots + plot + R"({"on": "axs[0]", "call": "legend", "kwargs": )" + kwargs + "}").error;
+    };
+    EXPECT_EQ(legend(R"({"numpoints": 3, "scatterpoints": 2, "markerscale": 1.5})"), "");
+    EXPECT_EQ(legend(R"({"numpoints": 2.5})"), "axs[0].legend: numpoints must be an integer");
+    EXPECT_EQ(legend(R"({"scatterpoints": "2"})"), "axs[0].legend: scatterpoints must be an integer");
+    EXPECT_EQ(legend(R"({"numpoints": 0})"), "axs[0].legend: numpoints must be > 0; it was 0");
+    EXPECT_EQ(legend(R"({"scatterpoints": 0})"), "axs[0].legend: scatterpoints below 1 are not supported yet");
+    EXPECT_EQ(legend(R"({"markerscale": "big"})"), "axs[0].legend: markerscale must be a number");
 }
 
 // The legend's font sizes are read as FontProperties.set_size reads them: a number also as text.
@@ -771,8 +785,8 @@ TEST(RcCalls, ALegendEntryHasAtLeastOnePoint) {
     };
     EXPECT_EQ(error(R"({"legend.numpoints": 0})"), "ax.legend: numpoints must be > 0; it was 0");
     EXPECT_EQ(error(R"({"legend.numpoints": -2})"), "ax.legend: numpoints must be > 0; it was -2");
-    EXPECT_EQ(error(R"({"legend.scatterpoints": 0})"), "ax.legend: legend.scatterpoints below 1 is not supported yet");
-    EXPECT_EQ(error(R"({"legend.scatterpoints": -1})"), "ax.legend: legend.scatterpoints below 1 is not supported yet");
+    EXPECT_EQ(error(R"({"legend.scatterpoints": 0})"), "ax.legend: scatterpoints below 1 are not supported yet");
+    EXPECT_EQ(error(R"({"legend.scatterpoints": -1})"), "ax.legend: scatterpoints below 1 are not supported yet");
     EXPECT_EQ(error(R"({"legend.numpoints": 1, "legend.scatterpoints": 1, "legend.markerscale": 0.5})"), "");
     EXPECT_EQ(error(R"({"legend.numpoints": 4, "legend.scatterpoints": 7})"), "");
 }
@@ -1109,7 +1123,11 @@ TEST(ArgumentForms, NoneForAParameterOfALineIsItsDefault) {
     }
     // (the keywords that are no parameter of Line2D go to their setters, None or not)
     EXPECT_EQ(plot(R"({"zorder": null})").error, "axs[0].plot: zorder must be a finite number");
-    EXPECT_EQ(plot(R"({"drawstyle": "steps"})").error, "axs[0].plot: unsupported keyword drawstyle");
+    EXPECT_EQ(plot(R"({"drawstyle": "steps"})").error, "");
+    EXPECT_EQ(plot(R"({"drawstyle": "stairs"})").error,
+              "axs[0].plot: drawstyle must be one of 'default', 'steps-mid', 'steps-pre', 'steps-post', 'steps'");
+    EXPECT_EQ(plot(R"({"ds": 1})").error,
+              "axs[0].plot: drawstyle must be one of 'default', 'steps-mid', 'steps-pre', 'steps-post', 'steps'");
     EXPECT_EQ(plot(R"({"bogus": null})").error, "axs[0].plot: unsupported keyword bogus");
 }
 

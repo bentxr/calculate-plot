@@ -1555,13 +1555,18 @@ private:
                 if (!(word && *word == "inherit") && !colors::toRgba(c, std::nullopt, rc_, nullptr))
                     return *error = where + ": bad " + name, false;
                 (name == "facecolor" ? o.facecolor : o.edgecolor) = c;
+            } else if (name == "numpoints" || name == "scatterpoints") {
+                // counts of points (np.linspace takes an integer only)
+                if (!value.isNumber() || !value.isInteger() || std::abs(value.asNumber()) > 1e6)
+                    return *error = where + ": " + name + " must be an integer", false;
+                (name == "numpoints" ? o.numpoints : o.scatterpoints) = int(value.asNumber());
             } else {
                 static const char* const numeric[] = {"framealpha", "borderpad", "labelspacing", "handlelength",
-                                                      "handletextpad", "borderaxespad", "columnspacing"};
+                                                      "handletextpad", "borderaxespad", "columnspacing", "markerscale"};
                 std::optional<double>* targets[] = {&o.framealpha, &o.borderpad, &o.labelspacing, &o.handlelength,
-                                                    &o.handletextpad, &o.borderaxespad, &o.columnspacing};
+                                                    &o.handletextpad, &o.borderaxespad, &o.columnspacing, &o.markerscale};
                 bool found = false;
-                for (int i = 0; i < 7; ++i)
+                for (int i = 0; i < 8; ++i)
                     if (name == numeric[i]) {
                         if (!readNumber(value, &n)) return *error = where + ": " + name + " must be a number", false;
                         *targets[i] = n;
@@ -1933,6 +1938,13 @@ private:
         } else if (name == "visible") {
             if (!v.isBool()) return *error = where + ": visible must be True or False", false;
             line.visible = v.asBool();
+        } else if (name == "drawstyle") {
+            // set_drawstyle: None is 'default'
+            static const char* const styles[] = {"default", "steps-mid", "steps-pre", "steps-post", "steps"};
+            const std::string s = v.isNull() ? std::string("default") : v.isString() ? v.asString() : std::string();
+            if (std::find(std::begin(styles), std::end(styles), s) == std::end(styles))
+                return *error = where + ": drawstyle must be one of 'default', 'steps-mid', 'steps-pre', 'steps-post', 'steps'", false;
+            line.setDrawstyle(s);
         } else if (name == "fillstyle") {
             if (!v.isString()) return *error = where + ": fillstyle must be a string", false;
             if (!line.markerStyle.set(line.markerStyle.marker(), v.asString(), rc_, error)) return false;

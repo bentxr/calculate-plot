@@ -941,6 +941,7 @@ void Axes::updateFromPath(const std::vector<double>& v, bool updatex, bool updat
 }
 
 Line2D& Axes::addLine(std::unique_ptr<Line2D> line, bool keepTransform) {
+    line->axes = this;
     if (!keepTransform) line->transform = transData;  // _set_artist_props
     // set_clip_path(self.patch): a Rectangle clips by its box
     line->clipBox = std::make_shared<transforms::TransformedBbox>(

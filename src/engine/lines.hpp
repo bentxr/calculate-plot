@@ -1,5 +1,5 @@
-// Derived from Matplotlib 3.11.2: lib/matplotlib/lines.py (Line2D) and lib/matplotlib/markers.py
-// (MarkerStyle).
+// Derived from Matplotlib 3.11.2: lib/matplotlib/lines.py (Line2D), lib/matplotlib/markers.py
+// (MarkerStyle) and lib/matplotlib/cbook.py (the step functions of STEP_LOOKUP_MAP).
 // Copyright (c) 2012- Matplotlib Development Team; All Rights Reserved
 // Licence: LICENSES/Matplotlib.txt. Changes: licensing/changes/matplotlib.md
 #pragma once
@@ -11,6 +11,8 @@
 #include <vector>
 
 namespace calculate_plot::engine {
+
+class Axes;
 
 // MarkerStyle: a marker's path, its transform (unit size), and how it is stroked and filled.
 class MarkerStyle {
@@ -64,8 +66,12 @@ public:
     double markersize, markeredgewidth;
     bool antialiased;
     std::string dashCapstyle, dashJoinstyle, solidCapstyle, solidJoinstyle;
-    std::string drawstyle = "default";
+    // set_drawstyle: 'default', 'steps' (as 'steps-pre'), 'steps-pre', 'steps-mid' or 'steps-post'
+    void setDrawstyle(const std::string& style);
+    const std::string& drawstyle() const { return drawstyle_; }
     MarkerStyle markerStyle;
+    // The Axes the line is in (Artist.axes), which decides whether a long line is drawn in a subslice.
+    const Axes* axes = nullptr;
 
 private:
     bool isDashed() const { return linestyle_ == "--" || linestyle_ == "-." || linestyle_ == ":"; }
@@ -73,8 +79,16 @@ private:
     colors::Spec markerFaceColor(bool alt) const;
     void recache();
 
+    // The points, as the path of the given draw style makes them: all of them, or [start, stop).
+    std::vector<double> vertices(std::size_t start, std::size_t stop, bool withDrawstyle) const;
+
     std::vector<double> x_, y_;
-    Path path_;
+    std::vector<double> xy_;       // the points (x0, y0, x1, y1 ...) after broadcasting
+    bool subslice_ = false;        // Line2D._subslice
+    std::vector<double> xFilled_;  // _x_filled: x with its NaNs interpolated
+    std::string drawstyle_ = "default";
+    Path path_;      // get_path()
+    Path linePath_;  // the path the line is drawn with (its TransformedPath's), the draw style's
     bool invalid_ = true;
     double linewidth_ = 0;
     std::string linestyle_ = "-";

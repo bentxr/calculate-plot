@@ -93,6 +93,8 @@ struct LegendOptions {
     int ncols = 1;  // the columns to split the entries into (no more than there are entries)
     bool markerfirst = true;
     std::optional<double> borderpad, labelspacing, handlelength, handletextpad, borderaxespad, columnspacing;
+    std::optional<int> numpoints, scatterpoints;  // None: rcParams["legend.numpoints"] / ["legend.scatterpoints"]
+    std::optional<double> markerscale;            // None: rcParams["legend.markerscale"]
 };
 
 class Legend : public Artist {

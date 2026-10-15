@@ -1,11 +1,12 @@
-// Derived from Matplotlib 3.11.2: lib/matplotlib/lines.py (Line2D) and lib/matplotlib/markers.py
-// (MarkerStyle).
+// Derived from Matplotlib 3.11.2: lib/matplotlib/lines.py (Line2D), lib/matplotlib/markers.py
+// (MarkerStyle) and lib/matplotlib/cbook.py (the step functions of STEP_LOOKUP_MAP).
 // Copyright (c) 2012- Matplotlib Development Team; All Rights Reserved
 // Licence: LICENSES/Matplotlib.txt. Changes: licensing/changes/matplotlib.md
 
 #include "support/pynum.hpp"
 #include "engine/lines.hpp"
 
+#include "engine/axes.hpp"
 #include "rc/rc_params.hpp"
 #include "support/embedded.hpp"
 #include "support/json.hpp"
@@ -13,6 +14,7 @@
 #include <cctype>
 #include <cmath>
 #include <cstdlib>
+#include <algorithm>
 #include <limits>
 #include <map>
 
@@ -310,16 +312,108 @@ void Line2D::setYdata(std::vector<double> y) {
     invalid_ = true;
 }
 
+namespace {
+
+// _path.is_sorted_and_has_non_nan: ascending where not NaN, and not all NaN
+bool isSortedAndHasNonNan(const std::vector<double>& x) {
+    double last = -std::numeric_limits<double>::infinity();
+    bool found = false;
+    for (double v : x) {
+        if (v == v) {
+            found = true;
+            if (v < last) return false;
+            last = v;
+        }
+    }
+    return found;
+}
+
+// np.interp(indices[nan], indices[~nan], x[~nan]): the NaNs of x filled along the index
+std::vector<double> filledByIndex(const std::vector<double>& x) {
+    std::vector<std::size_t> known;
+    for (std::size_t i = 0; i < x.size(); ++i)
+        if (!std::isnan(x[i])) known.push_back(i);
+    std::vector<double> out = x;
+    for (std::size_t i = 0; i < x.size(); ++i) {
+        if (!std::isnan(x[i])) continue;
+        const auto after = std::upper_bound(known.begin(), known.end(), i);
+        if (after == known.begin()) {
+            out[i] = x[known.front()];  // left of the known points: the first one
+        } else if (after == known.end()) {
+            out[i] = x[known.back()];   // right of them: the last one
+        } else {
+            const std::size_t a = *(after - 1), b = *after;
+            const double xa = double(a), xb = double(b), ya = x[a], yb = x[b];
+            const double slope = (yb - ya) / (xb - xa);
+            double v = slope * (double(i) - xa) + ya;
+            if (std::isnan(v)) {  // numpy tries the other end, then the equal ends
+                v = slope * (double(i) - xb) + yb;
+                if (std::isnan(v) && ya == yb) v = ya;
+            }
+            out[i] = v;
+        }
+    }
+    return out;
+}
+
+}  // namespace
+
+void Line2D::setDrawstyle(const std::string& style) {
+    if (drawstyle_ != style) invalid_ = true;
+    drawstyle_ = style;
+}
+
 void Line2D::recache() {
     // np.column_stack(np.broadcast_arrays(x, y))
-    std::vector<double> xy;
+    xy_.clear();
     const std::size_t n = x_.size() == 1 ? y_.size() : x_.size();
     for (std::size_t i = 0; i < n; ++i) {
-        xy.push_back(x_.size() == 1 ? x_[0] : x_[i]);
-        xy.push_back(y_.size() == 1 ? y_[0] : y_[i]);
+        xy_.push_back(x_.size() == 1 ? x_[0] : x_[i]);
+        xy_.push_back(y_.size() == 1 ? y_[0] : y_[i]);
     }
-    path_ = Path::make(std::move(xy), {}, rc_);
+    // A long line with sorted x on a linear x axis, clipped, in data coordinates and with markers on
+    // every point, is drawn in the slice of points the view shows (_subslice; the condition is taken
+    // here, when the path is made).
+    subslice_ = axes && x_.size() > 1000 && isSortedAndHasNonNan(x_) && axes->xaxis->scale() == "linear" && !markevery &&
+                clipOn && transforms::equal(*transform, *axes->transData);
+    if (subslice_) {
+        std::vector<double> x(n);
+        for (std::size_t i = 0; i < n; ++i) x[i] = xy_[2 * i];
+        xFilled_ = filledByIndex(x);
+    }
+    path_ = Path::make(vertices(0, n, true), {}, rc_);
+    linePath_ = path_;
     invalid_ = false;
+}
+
+std::vector<double> Line2D::vertices(std::size_t start, std::size_t stop, bool withDrawstyle) const {
+    std::vector<double> out;
+    const std::size_t n = stop - start;
+    const auto x = [&](std::size_t i) { return xy_[2 * (start + i)]; };
+    const auto y = [&](std::size_t i) { return xy_[2 * (start + i) + 1]; };
+    if (!withDrawstyle || drawstyle_ == "default") {
+        out.assign(xy_.begin() + std::ptrdiff_t(2 * start), xy_.begin() + std::ptrdiff_t(2 * stop));
+    } else if (drawstyle_ == "steps-mid") {
+        // pts_to_midstep: x0, then the midpoints twice each, then the last x; each y twice
+        for (std::size_t i = 0; i < n; ++i) {
+            const double left = i == 0 ? x(0) : (x(i - 1) + x(i)) / 2;
+            const double right = i + 1 == n ? x(n - 1) : (x(i) + x(i + 1)) / 2;
+            out.push_back(left), out.push_back(y(i));
+            out.push_back(right), out.push_back(y(i));
+        }
+    } else {
+        // pts_to_prestep ('steps', 'steps-pre'): between two points first the y step, then the x step;
+        // pts_to_poststep: the other way round
+        const bool pre = drawstyle_ != "steps-post";
+        for (std::size_t i = 0; i < n; ++i) {
+            out.push_back(x(i)), out.push_back(y(i));
+            if (i + 1 < n) {
+                out.push_back(pre ? x(i) : x(i + 1));
+                out.push_back(pre ? y(i + 1) : y(i));
+            }
+        }
+    }
+    return out;
 }
 
 void Line2D::updateFrom(const Line2D& o) {
@@ -347,7 +441,7 @@ void Line2D::updateFrom(const Line2D& o) {
     solidCapstyle = o.solidCapstyle;
     solidJoinstyle = o.solidJoinstyle;
     markerStyle = o.markerStyle;
-    drawstyle = o.drawstyle;
+    drawstyle_ = o.drawstyle_;  // (update_from sets it without a recache)
 }
 
 const Path& Line2D::path() {
@@ -387,9 +481,27 @@ void Line2D::draw(Renderer& renderer) {
     if (!visible) return;
     if (invalid_) recache();
     renderer.openGroup("line2d", gid);
+    // A subslice: the points from one before the first in the view (get_xbound) to one after the last
+    const std::size_t points = xy_.size() / 2;
+    std::size_t start = 0, stop = points;
+    if (subslice_ && axes) {
+        const auto view = axes->xaxis->viewInterval();
+        const double x0 = std::min(view[0], view[1]), x1 = std::max(view[0], view[1]);
+        const auto i0 = std::size_t(std::lower_bound(xFilled_.begin(), xFilled_.end(), x0) - xFilled_.begin());
+        const auto i1 = std::size_t(std::upper_bound(xFilled_.begin(), xFilled_.end(), x1) - xFilled_.begin());
+        start = i0 > 0 ? i0 - 1 : 0;
+        stop = std::min(i1 + 1, points);
+    }
+    const auto made = [&](bool withDrawstyle) {  // _transform_path(subslice): a new Path of those points
+        Path p = Path::make(vertices(start, stop, withDrawstyle), {}, rc_);
+        p.interpolationSteps = path_.interpolationSteps;
+        return p;
+    };
     // get_transformed_path_and_affine: the non-affine part applied to the path, the affine part apart
     const transforms::Matrix affine = transform->matrix();
-    const Path tpath = transformPathNonAffine(path_, *transform);
+    const Path tpath = transformPathNonAffine(subslice_ && axes ? made(true) : linePath_, *transform);
+    // markers are drawn at the points themselves, whatever the draw style
+    const Path markerPoints = drawstyle_ == "default" ? tpath : transformPathNonAffine(made(false), *transform);
     if (linestyle_ != "None" && tpath.size()) {
         GC gc = renderer.newGc();
         setGcClip(gc);
@@ -419,7 +531,7 @@ void Line2D::draw(Renderer& renderer) {
         if (isAuto(markeredgecolor, false) && !colors::isNone(markerFaceColor(false))) ec[3] = fc[3];
         gc.setForeground(std::vector<double>(ec.begin(), ec.end()));
         if (sketch) gc.sketch = std::array<double, 3>{(*sketch)[0] / 2, (*sketch)[1] / 2, 2 * (*sketch)[2]};
-        if (tpath.size()) {
+        if (markerPoints.size()) {
             const auto threshold = markerStyle.snapThreshold();
             if (threshold) gc.snap = renderer.pointsToPixels(markersize) >= *threshold;
             else gc.snap.reset();
@@ -429,11 +541,11 @@ void Line2D::draw(Renderer& renderer) {
             const double w = renderer.pointsToPixels(markersize);
             if (markerStyle.marker() == ",") gc.linewidth = 0;
             else markerTrans.scale(w);
-            Path subsampled = tpath;
+            Path subsampled = markerPoints;
             if (markevery) {  // _mark_every_path with a list of indices
                 std::vector<double> v;
-                const auto& all = *tpath.vertices;
-                const long long n = (long long)tpath.size();
+                const auto& all = *markerPoints.vertices;
+                const long long n = (long long)markerPoints.size();
                 for (long long i : *markevery) {
                     const long long k = i < 0 ? i + n : i;
                     if (k < 0 || k >= n) {
@@ -443,10 +555,17 @@ void Line2D::draw(Renderer& renderer) {
                     v.push_back(all[std::size_t(2 * k)]), v.push_back(all[std::size_t(2 * k + 1)]);
                 }
                 subsampled = Path::make(std::move(v), {}, rc_);
-                if (tpath.codes) renderer.unsupported("markevery on paths with codes is not supported yet");
+                if (markerPoints.codes) renderer.unsupported("markevery on paths with codes is not supported yet");
             }
             renderer.drawMarkers(gc, markerStyle.path(), markerTrans.matrix(), subsampled, affine,
                                  std::vector<double>(fc.begin(), fc.end()));
+        }
+        // The markers' recache under the 'default' draw style leaves its path as get_path() from now
+        // on (only _drawstyle and _transformed_path are put back): what a legend placed 'best' avoids.
+        if (drawstyle_ != "default") {
+            const int steps = path_.interpolationSteps;
+            path_ = Path::make(vertices(0, points, false), {}, rc_);
+            path_.interpolationSteps = steps;
         }
     }
     renderer.closeGroup("line2d");
