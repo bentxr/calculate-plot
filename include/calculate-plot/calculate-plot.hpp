@@ -41,6 +41,15 @@ std::string drawSvg(std::string_view figureFile, const std::string& fontDirector
 // The figure as a plain Python script that draws it with matplotlib.
 std::string exportPython(std::string_view figureFile, std::string* error);
 
+// The calls a figure file can make, as matplotlib defines them (data/schema.json, derived from
+// matplotlib 3.11.2): for each call ("on": plt, figure, axes or axis), its parameters (name,
+// positional, default) and the properties of the artist its other keywords set (name, aliases, valid
+// values, kind: number, integer, bool, colour, choice with its choices, text or other). Each parameter
+// and property has "supported": true when calculate-plot takes it, false when it refuses it as not
+// supported yet, null when that could not be told (no sample value). JSON text; the fonts are needed
+// for the calls that measure text.
+std::string schema(const std::string& fontDirectory);
+
 // An 8-bit RGBA image, rows from the top, 4 bytes per pixel, alpha not premultiplied.
 struct Image {
     int width = 0;

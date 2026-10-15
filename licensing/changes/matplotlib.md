@@ -196,6 +196,8 @@ it comes from in its first lines. The changes, as a whole:
   Figure.add_axes and pyplot.axes, Axes.set, set_axis_off, loglog, semilogx and semilogy.
   Legends: the location as a code or a pair of coordinates (set_loc), and the shadow (patches.py's
   Shadow behind the frame, the frame's alpha of 1 when the keyword asks for a shadow).
+  The schema of the calls (data/schema.json): the signatures of the calls and the setters, aliases and
+  documented valid values of the artists (ArtistInspector), as data written by tools/oracle/make_schema.py.
   Colour sequences: colors.py's ColorSequenceRegistry (the built-in sequences only) with _cm.py's data
   (data/color_sequences.json; ColorBrewer's schemes in data/color_sequences_colorbrewer.json), written as JSON
   numbers by tools/oracle/make_color_sequences.py; rcsetup.py's _single_string_color_list takes them in cycles.

@@ -6,7 +6,12 @@
 #include "png/png.hpp"
 #include "render/replay.hpp"
 #include "render/svg_replay.hpp"
+#include "support/embedded.hpp"
+#include "support/json.hpp"
+#include "support/json_writer.hpp"
 #include "text/text_render.h"
+
+#include <map>
 
 namespace calculate_plot {
 
@@ -29,7 +34,145 @@ std::optional<png::Image> pixels(const engine::AggDrawing& drawing, const std::s
     return std::move(result.image);
 }
 
+using support::Json;
+
+void write(support::JsonWriter& w, const Json& v) {
+    switch (v.type()) {
+    case Json::Type::Null: w.null(); break;
+    case Json::Type::Bool: w.value(v.asBool()); break;
+    case Json::Type::Number: w.raw(v.numberText()); break;
+    case Json::Type::String: w.value(v.asString()); break;
+    case Json::Type::Array:
+        w.beginArray();
+        for (const Json& x : v.items()) write(w, x);
+        w.endArray();
+        break;
+    case Json::Type::Object:
+        w.beginObject();
+        for (const auto& [k, x] : v.members()) {
+            w.key(k);
+            write(w, x);
+        }
+        w.endObject();
+        break;
+    }
+}
+
+// The arguments a call needs at the least, as a figure file writes them
+const std::map<std::string, std::string>& leastArguments() {
+    static const std::map<std::string, std::string> args = {
+        {"plot", "[[0, 1], [0, 1]]"},     {"scatter", "[[0, 1], [0, 1]]"},  {"fill_between", "[[0, 1], [0, 1]]"},
+        {"errorbar", "[[0, 1], [0, 1]]"}, {"loglog", "[[1, 2], [1, 2]]"},   {"semilogx", "[[1, 2], [1, 2]]"},
+        {"semilogy", "[[1, 2], [1, 2]]"}, {"axhspan", "[0, 1]"},            {"axvspan", "[0, 1]"},
+        {"hlines", "[[1], 0, 1]"},        {"vlines", "[[1], 0, 1]"},        {"set_title", "[\"a\"]"},
+        {"set_xlabel", "[\"a\"]"},      {"set_ylabel", "[\"a\"]"},      {"set_xlim", "[]"},
+        {"set_ylim", "[]"},           {"set_xscale", "[\"log\"]"},    {"set_yscale", "[\"log\"]"},
+        {"add_axes", "[[0.1, 0.1, 0.8, 0.8]]"}, {"suptitle", "[\"a\"]"},
+        {"set_major_formatter", "[{\"$new\": \"NullFormatter\"}]"},
+        {"set_minor_formatter", "[{\"$new\": \"NullFormatter\"}]"}};
+    return args;
+}
+
+// A figure file that makes the call, with `keyword` set to `value` (JSON) when there is one
+std::string probe(const std::string& on, const std::string& call, const std::string& keyword, const std::string& value) {
+    std::string args = "[]";
+    const auto it = leastArguments().find(call);
+    if (it != leastArguments().end()) args = it->second;
+    if (call == "text") args = on == "figure" ? "[0.5, 0.5, \"a\"]" : "[0, 0, \"a\"]";
+    std::string kwargs = keyword.empty() ? "{}" : "{\"" + keyword + "\": " + value + "}";
+    std::string setup, receiver;
+    if (on != "plt") {
+        setup = R"({"call": "subplots", "as": ["fig", "ax"]}, )";
+        receiver = on == "figure" ? R"("on": "fig", )" : on == "axes" ? R"("on": "ax", )" : R"("on": "ax.xaxis", )";
+    }
+    return R"({"version": 1, "calls": [)" + setup + "{" + receiver + R"("call": ")" + call + R"(", "args": )" + args +
+           R"(, "kwargs": )" + kwargs + "}]}";
+}
+
+// A value to try a property with: by its name for some, else by its kind
+std::string sample(const Json& entry) {
+    const std::string name = entry.find("name")->asString();
+    static const std::map<std::string, std::string> byName = {
+        {"shadow", "true"},           {"loc", "\"upper left\""},      {"numpoints", "2"},
+        {"scatterpoints", "2"},       {"mode", "\"expand\""},          {"linespacing", "1.5"},
+        {"figsize", "[4, 3]"},        {"rect", "[0, 0, 1, 1]"},          {"where", "[true, true]"},
+        {"elinestyle", "\"dashed\""}, {"c", "\"C1\""},               {"labelcolor", "\"C1\""},
+        {"edgecolor", "\"C1\""},    {"facecolor", "\"C1\""},         {"title", "\"a\""},
+        {"hatch_linewidth", "2.0"},   {"num", "1"},                      {"width_ratios", "[1]"},
+        {"height_ratios", "[1]"},     {"language", "\"en\""},          {"left", "0.25"},
+        {"right", "0.75"},            {"bottom", "0.25"},                {"top", "0.75"}};
+    const Json* choices = entry.find("choices");
+    if (choices && choices->size()) return "\"" + (*choices)[0].asString() + "\"";
+    if (const auto it = byName.find(name); it != byName.end()) return it->second;
+    const Json* kind = entry.find("kind");
+    const std::string k = kind ? kind->asString() : "";
+    if (k == "number") return "0.25";
+    if (k == "integer") return "2";
+    if (k == "bool") return "true";
+    if (k == "colour") return "\"C1\"";
+    if (k == "text") return "\"a\"";
+    if (name == "marker") return "\"o\"";
+    return {};
+}
+
 }  // namespace
+
+std::string schema(const std::string& fontDirectory) {
+    const auto doc = support::parseJson(embedded::file("data/schema.json"), nullptr);
+    if (!doc) return {};
+    engine::DrawOptions options;
+    options.fontDirectory = fontDirectory;
+    const auto outcome = [&](const std::string& figureFile) -> Json {
+        std::string why;
+        const auto figure = model::parseFigure(figureFile, &why);
+        if (figure) why = engine::runCalls(*figure, options);
+        if (why.empty()) return Json::boolean(true);
+        if (why.find("unsupported keyword") != std::string::npos || why.find("not supported yet") != std::string::npos ||
+            why.find("unsupported call") != std::string::npos)
+            return Json::boolean(false);
+        return Json();
+    };
+    support::JsonWriter w;
+    w.beginObject().key("calls").beginArray();
+    for (const Json& call : doc->find("calls")->items()) {
+        const std::string on = call.find("on")->asString(), name = call.find("call")->asString();
+        w.beginObject();
+        for (const auto& [k, v] : call.members()) {
+            if (k != "parameters" && k != "properties") {
+                w.key(k);
+                write(w, v);
+                continue;
+            }
+            w.key(k).beginArray();
+            for (const Json& entry : v.items()) {
+                const std::string keyword = entry.find("name")->asString();
+                std::string value;
+                if (k == "properties" || entry.find("kind")) value = sample(entry);
+                if (!value.empty()) {
+                } else if (const Json* d = entry.find("default"); d && !d->isNull() && !(d->isString() && d->asString().find('<') != std::string::npos)) {
+                    support::JsonWriter one;
+                    write(one, *d);
+                    value = one.text();
+                }
+                Json supported;
+                if (k == "parameters" && entry.find("required")) supported = outcome(probe(on, name, "", ""));
+                else if (!value.empty()) supported = outcome(probe(on, name, keyword, value));
+                w.beginObject();
+                for (const auto& [ek, ev] : entry.members()) {
+                    w.key(ek);
+                    write(w, ev);
+                }
+                w.key("supported");
+                write(w, supported);
+                w.endObject();
+            }
+            w.endArray();
+        }
+        w.endObject();
+    }
+    w.endArray().endObject();
+    return w.text();
+}
 
 void useFontBytes(std::function<std::string_view(std::string_view fileName)> bytes) { text::setFontBytes(std::move(bytes)); }
 

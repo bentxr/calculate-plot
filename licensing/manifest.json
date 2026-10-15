@@ -46,7 +46,8 @@
     "tests/oracle/mathtext.json",
     "tests/oracle/mathtext_glyphs.json",
     "tools/oracle/make_styles.py",
-    "tools/oracle/make_color_sequences.py"
+    "tools/oracle/make_color_sequences.py",
+    "tools/oracle/make_schema.py"
   ],
   "notice": "NOTICE",
   "components": [
@@ -526,7 +527,8 @@
         "data/styles.json",
         "data/color_sequences.json",
         "src/engine/hatch.hpp",
-        "src/engine/hatch.cpp"
+        "src/engine/hatch.cpp",
+        "data/schema.json"
       ],
       "header": [
         "Copyright (c) 2012- Matplotlib Development Team; All Rights Reserved",

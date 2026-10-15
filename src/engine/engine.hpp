@@ -27,6 +27,9 @@ AggDrawing drawAgg(const model::Figure& figure, const DrawOptions& options);
 // pixel, as matplotlib's Qt canvas does (drawScreenTrace).
 AggDrawing drawScreen(const model::Figure& figure, double ratio, const DrawOptions& options);
 
+// Runs a figure file's calls without drawing the figure: what they refuse, or "".
+std::string runCalls(const model::Figure& figure, const DrawOptions& options);
+
 struct SvgDrawing {
     std::string trace;  // the draw calls, in the trace format of record.py's record_svg
     std::string error;

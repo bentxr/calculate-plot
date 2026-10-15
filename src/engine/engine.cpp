@@ -2321,6 +2321,10 @@ AggDrawing drawAgg(const model::Figure& model, const DrawOptions& options) {
     return out;
 }
 
+std::string runCalls(const model::Figure& model, const DrawOptions& options) {
+    return runFigure(model, options, [](Figure&) { return std::string(); });
+}
+
 AggDrawing drawScreen(const model::Figure& model, double ratio, const DrawOptions& options) {
     AggDrawing out;
     out.error = runFigure(model, options, [&](Figure& figure) {
