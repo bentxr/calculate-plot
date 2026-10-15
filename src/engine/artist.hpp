@@ -42,6 +42,8 @@ public:
     std::string label;
     transforms::TransformPtr transform = std::make_shared<transforms::IdentityTransform>();
     bool transformSet = false;  // is_transform_set()
+    // sticky_edges: data values autoscaling margins do not cross (bars stand on their base)
+    std::vector<double> stickyX, stickyY;
 
 protected:
     void setGcClip(GC& gc) const;  // Artist._set_gc_clip
@@ -94,11 +96,16 @@ public:
         setFacecolor(c);
     }
     // set_hatch: the pattern ('/', 'x', 'o'...), or None for none; an empty one draws none either
-    void setHatch(const std::optional<std::string>& hatch) { hatch_ = hatch; }
+    // (`numpy`: the pattern is a np.str_, as bar's hatches are: an SVG hatch id prints it so)
+    void setHatch(const std::optional<std::string>& hatch, bool numpy = false) {
+        hatch_ = hatch;
+        hatchNumpy_ = numpy;
+    }
     const std::optional<std::string>& hatch() const { return hatch_; }
     // What HandlerPolyCollection._update_prop sets directly: the hatch and its resolved colour
     void setResolvedHatch(const std::optional<std::string>& hatch, const colors::Rgba& color) {
         hatch_ = hatch;
+        hatchNumpy_ = false;
         hatchFollowsEdge_ = false;
         hatchcolor_ = color;
     }
@@ -111,6 +118,7 @@ protected:
     void applyFacecolor();
     void applyHatchcolor();
     std::optional<std::string> hatch_;
+    bool hatchNumpy_ = false;
     std::optional<colors::Spec> originalHatchcolor_;
     bool hatchFollowsEdge_ = false;  // _hatch_color == 'edge'
     colors::Rgba hatchcolor_{};

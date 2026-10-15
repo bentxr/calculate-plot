@@ -181,6 +181,8 @@ private:
             {"set_ylabel", {"ylabel"}, -1},
             {"set_xlim", {"left", "right"}, 2},
             {"set_ylim", {"bottom", "top"}, 2},
+            {"bar", {"x", "height", "width", "bottom"}, 4},
+            {"barh", {"y", "width", "height", "left"}, 4},
             {"set_major_formatter", {"formatter"}, 1},
             {"set_minor_formatter", {"formatter"}, 1},
         };
@@ -786,6 +788,7 @@ private:
         if (call.method == "grid") return grid(ax, call, error);
         if (call.method == "axhline" || call.method == "axvline") return axline(ax, call, error);
         if (call.method == "axhspan" || call.method == "axvspan") return axspan(ax, call, error);
+        if (call.method == "bar" || call.method == "barh") return bar(ax, call, error);
         if (call.method == "vlines" || call.method == "hlines") return lines(ax, call, error);
         if (call.method == "set_xscale" || call.method == "set_yscale") {
             if (!call.kwargs.empty()) return *error = where + ": scale options are not supported yet", false;
@@ -2076,6 +2079,197 @@ private:
         rect->transformSet = true;
         ax.addPatch(std::move(rect));  // (the other direction's limits are kept as they were)
         ax.requestAutoscaleView(!horizontal, horizontal);
+        return true;
+    }
+
+    // Axes.bar(x, height, width=0.8, bottom=None, *, align='center', **kwargs) and barh(y, width,
+    // height=0.8, left=None, ...), which is bar(left, height, width, y, orientation='horizontal')
+    bool bar(Axes& ax, const model::Call& call, std::string* error) {
+        const std::string where = call.on + "." + call.method;
+        const bool barh = call.method == "barh";
+        // cbook.normalize_kwargs(kwargs, Patch)
+        static const Aliases patchAliases = {{"aa", "antialiased"}, {"ec", "edgecolor"}, {"fc", "facecolor"},
+                                             {"ls", "linestyle"}, {"lw", "linewidth"}};
+        if (!givenOnce(call, patchAliases, where, error)) return false;
+        const char* const names[4] = {barh ? "y" : "x", barh ? "width" : "height", barh ? "height" : "width",
+                                      barh ? "left" : "bottom"};
+        const Json* given[4];
+        for (int i = 0; i < 4; ++i) given[i] = argument(call, std::size_t(i), names[i]);
+        if (!given[0] || !given[1]) return *error = where + ": " + names[given[0] ? 1 : 0] + " is required", false;
+        std::string orientation = barh ? "horizontal" : "vertical", align = "center", label;
+        std::vector<std::string> patchLabels;
+        bool log = false, labelList = false;
+        const Json *xerr = nullptr, *yerr = nullptr, *facecolor = nullptr, *colorArg = nullptr, *edgecolor = nullptr,
+                   *linewidth = nullptr, *hatch = nullptr, *ecolor = nullptr, *capsize = nullptr;
+        std::vector<std::pair<std::string, const Json*>> rest;  // through the setters, in order (_internal_update)
+        for (const auto& [rawName, value] : call.kwargs) {
+            const std::string name = fullName(rawName, patchAliases);
+            bool positional = false;
+            for (const char* n : names) positional = positional || name == n;
+            if (positional) continue;
+            if (name == "align") {
+                if (!value.isString() || (value.asString() != "center" && value.asString() != "edge"))
+                    return *error = where + ": align must be 'center' or 'edge'", false;
+                align = value.asString();
+            } else if (name == "orientation" && !barh) {
+                if (!value.isString() || (value.asString() != "vertical" && value.asString() != "horizontal"))
+                    return *error = where + ": orientation must be 'vertical' or 'horizontal'", false;
+                orientation = value.asString();
+            } else if (name == "log") {
+                if (!value.isBool()) return *error = where + ": log must be True or False", false;
+                log = value.asBool();
+            } else if (name == "label") {
+                if (value.isString()) {
+                    label = value.asString();
+                } else if (const Json* seq = sequence(value)) {
+                    labelList = true;
+                    for (const Json& l : seq->items()) {
+                        if (!l.isString()) return *error = where + ": labels must be strings", false;
+                        patchLabels.push_back(l.asString());
+                    }
+                } else {
+                    return *error = where + ": label must be a string or a list of strings", false;
+                }
+            } else if (name == "xerr") xerr = &value;
+            else if (name == "yerr") yerr = &value;
+            else if (name == "color") colorArg = &value;
+            else if (name == "facecolor") facecolor = &value;
+            else if (name == "edgecolor") edgecolor = &value;
+            else if (name == "linewidth") linewidth = &value;
+            else if (name == "hatch") hatch = &value;
+            else if (name == "ecolor") ecolor = &value;
+            else if (name == "capsize") capsize = &value;
+            else if (name == "tick_label") return *error = where + ": tick_label is not supported yet", false;
+            else if (name == "error_kw") {
+                if (!value.isNull()) return *error = where + ": error_kw is not supported yet", false;
+            } else rest.emplace_back(name, &value);
+        }
+        const bool vertical = orientation == "vertical";
+        // the numbers: one or one per bar each, broadcast together
+        std::vector<double> v[4];
+        const double defaults[4] = {0, 0, 0.8, 0};
+        for (int i = 0; i < 4; ++i) {
+            double one = 0;
+            if (!given[i] || given[i]->isNull()) v[i] = {i == 3 ? 0.0 : defaults[i]};
+            else if (readNumber(*given[i], &one)) v[i] = {one};
+            else if (!numbers(*given[i], &v[i])) return *error = where + ": " + names[i] + " must be numbers", false;
+        }
+        std::vector<double> widths, hatchesUnused;
+        std::vector<std::optional<double>> lws{std::nullopt};
+        if (linewidth && !linewidth->isNull()) {
+            double one = 0;
+            std::vector<double> l;
+            if (readNumber(*linewidth, &one)) l = {one};
+            else if (!numbers(*linewidth, &l)) return *error = where + ": linewidth must be numbers", false;
+            lws.assign(l.begin(), l.end());
+        }
+        std::vector<std::optional<std::string>> hatches{std::nullopt};
+        if (hatch && !hatch->isNull()) {
+            hatches.clear();
+            if (hatch->isString()) hatches.push_back(hatch->asString());
+            else if (const Json* seq = sequence(*hatch)) {
+                for (const Json& h : seq->items()) {
+                    if (!h.isNull() && !h.isString()) return *error = where + ": hatch must be strings", false;
+                    hatches.push_back(h.isNull() ? std::nullopt : std::optional<std::string>(h.asString()));
+                }
+            } else {
+                return *error = where + ": hatch must be a string", false;
+            }
+        }
+        std::size_t n = 1;
+        const std::size_t sizes[6] = {v[0].size(), v[1].size(), v[2].size(), v[3].size(), lws.size(), hatches.size()};
+        for (std::size_t sz : sizes) if (sz != 1) n = sz;
+        for (std::size_t sz : sizes)
+            if (sz != 1 && sz != n) return *error = where + ": the arguments cannot be broadcast to one shape", false;
+        if (std::any_of(std::begin(sizes), std::end(sizes), [](std::size_t sz) { return sz == 0; })) n = 0;
+        const auto at = [](const auto& list, std::size_t i) { return list.size() == 1 ? list[0] : list[i]; };
+        if (labelList && patchLabels.size() != n)
+            return *error = where + ": number of labels (" + std::to_string(patchLabels.size()) + ") does not match number of bars (" +
+                            std::to_string(n) + ").",
+                   false;
+        // _parse_bar_color_args: facecolor, else color, else the next colour of the cycle; to_rgba_array
+        std::vector<colors::Spec> faces, edges;
+        const Json* face = facecolor && !facecolor->isNull() ? facecolor : colorArg && !colorArg->isNull() ? colorArg : nullptr;
+        if (face) {
+            if (!colorList(*face, &faces)) return *error = where + ": facecolor is not a colour", false;
+        } else {
+            faces = {ax.nextPatchColor()};
+        }
+        const auto rgbaRows = [&](std::vector<colors::Spec>& list) {
+            std::vector<colors::Spec> rows;
+            for (const auto& c : list) {
+                if (colors::isNone(c) && list.size() == 1) return rows;  // to_rgba_array('none'): no rows
+                const auto rgba = colors::toRgba(c, std::nullopt, rc_, nullptr);
+                if (!rgba) return std::vector<colors::Spec>{c};
+                rows.push_back(std::vector<double>(rgba->begin(), rgba->end()));
+            }
+            return rows;
+        };
+        faces = rgbaRows(faces);
+        bool edgeGiven = false;
+        if (edgecolor && !edgecolor->isNull()) {
+            if (!colorList(*edgecolor, &edges)) return *error = where + ": edgecolor is not a colour", false;
+            edges = rgbaRows(edges);
+            edgeGiven = true;
+        }
+        if (log) {
+            ax.setScale(!vertical, "log");  // set_yscale('log', nonpositive='clip') (set_xscale for barh)
+        }
+        // align: the bars' left (vertical) or bottom (horizontal) edges
+        std::vector<double> left(n), bottom(n), width(n), height(n);
+        for (std::size_t i = 0; i < n; ++i) {
+            const double x = at(v[0], i), h = at(v[1], i), w = at(v[2], i), y = at(v[3], i);
+            // (barh: y, width, height, left are bar's y, height-as-width... read as bar(left, height, width, y))
+            const double bx = barh ? y : x, bh = barh ? w : h, bw = barh ? h : w, by = barh ? x : y;
+            width[i] = bw, height[i] = bh;
+            if (align == "center") {
+                if (vertical) left[i] = bx - bw / 2, bottom[i] = by;
+                else bottom[i] = by - bh / 2, left[i] = bx;
+            } else {
+                left[i] = bx, bottom[i] = by;
+            }
+        }
+        ErrorbarContainer container;
+        container.isBars = true;
+        container.label = labelList ? "_nolegend_" : label;
+        for (std::size_t i = 0; i < n; ++i) {
+            auto r = std::make_unique<Rectangle>(rc_, left[i], bottom[i], width[i], height[i]);
+            // Rectangle(xy, width, height, facecolor=, edgecolor=, linewidth=, label=, hatch=)
+            if (edgeGiven) r->setEdgecolor(edges.empty() ? colors::Spec(std::string("none")) : edges[i % edges.size()]);
+            r->setFacecolor(faces.empty() ? colors::Spec(std::string("none")) : faces[i % faces.size()]);
+            r->setLinewidth(lws[i % lws.size()]);
+            r->setHatch(hatches[i % hatches.size()], true);  // (itertools.cycle(np.atleast_1d(hatch)): np.str_)
+            r->label = labelList ? patchLabels[i] : "_nolegend_";
+            for (const auto& [name, value] : rest)
+                if (!patchProperty(*r, name, *value, where, error)) return false;
+            if (vertical) r->stickyY.push_back(bottom[i]);
+            else r->stickyX.push_back(left[i]);
+            container.bars.push_back(r.get());
+            ax.addPatch(std::move(r));
+        }
+        if ((xerr && !xerr->isNull()) || (yerr && !yerr->isNull())) {
+            // errorbar(ex, ey, yerr=, xerr=, fmt='none', ecolor=, capsize=, zorder=, label='_nolegend_')
+            model::Call e;
+            e.on = call.on;
+            e.method = "errorbar";
+            std::vector<Json> ex, ey;
+            for (std::size_t i = 0; i < n; ++i) {
+                ex.push_back(Json::real(vertical ? left[i] + 0.5 * width[i] : left[i] + width[i]));
+                ey.push_back(Json::real(vertical ? bottom[i] + height[i] : bottom[i] + 0.5 * height[i]));
+            }
+            e.args = {Json::array(ex), Json::array(ey)};
+            if (yerr && !yerr->isNull()) e.kwargs.emplace_back("yerr", *yerr);
+            if (xerr && !xerr->isNull()) e.kwargs.emplace_back("xerr", *xerr);
+            e.kwargs.emplace_back("fmt", Json::string("none"));
+            e.kwargs.emplace_back("ecolor", ecolor ? *ecolor : Json::string("k"));
+            e.kwargs.emplace_back("capsize", capsize ? *capsize : rc_.value("errorbar.capsize"));
+            for (const auto& [name, value] : rest)
+                if (name == "zorder" && value->isNumber()) e.kwargs.emplace_back("zorder", Json::real(value->asNumber() + 0.01));
+            e.kwargs.emplace_back("label", Json::string("_nolegend_"));
+            if (!errorbar(ax, e, error)) return false;
+        }
+        ax.requestAutoscaleView(true, true);
+        ax.containers.push_back(container);
         return true;
     }
 

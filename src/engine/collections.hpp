@@ -144,7 +144,11 @@ class Line2D;
 
 // ErrorbarContainer: what an errorbar call made (its data line if any, the cap lines, the
 // collections of bars), which a legend lists under the call's label
+// The containers a legend lists under their labels: errorbar's (ErrorbarContainer), or bar's (BarContainer:
+// `bars` set; its entry is drawn from its first bar).
 struct ErrorbarContainer {
+    std::vector<Rectangle*> bars;  // BarContainer
+    bool isBars = false;
     Line2D* dataLine = nullptr;
     std::vector<Line2D*> caplines;
     std::vector<Collection*> barlinecols;

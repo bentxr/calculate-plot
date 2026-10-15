@@ -1417,3 +1417,17 @@ TEST(SubplotCalls, AxesAtARect) {
     EXPECT_EQ(draw(kSubplots + R"({"on": "axs[0]", "call": "loglog", "args": [[1, 2]], "kwargs": {"base": 2}})").error,
               "axs[0].loglog: the keywords of the log scale are not supported yet");
 }
+
+// bar and barh: their arguments broadcast together; labels one per bar or one for all.
+TEST(BarCalls, ArgumentsAreReadAsMatplotlibReadsThem) {
+    const auto error = [](const std::string& kwargs) {
+        return draw(kSubplots + R"({"on": "axs[0]", "call": "bar", "args": [[1, 2, 3], [4, 5, 6]], "kwargs": )" + kwargs + "}").error;
+    };
+    EXPECT_EQ(error("{}"), "");
+    EXPECT_EQ(error(R"({"width": [0.5, 0.5]})"), "axs[0].bar: the arguments cannot be broadcast to one shape");
+    EXPECT_EQ(error(R"({"label": ["a", "b"]})"), "axs[0].bar: number of labels (2) does not match number of bars (3).");
+    EXPECT_EQ(error(R"({"align": "left"})"), "axs[0].bar: align must be 'center' or 'edge'");
+    EXPECT_EQ(error(R"({"tick_label": ["a", "b", "c"]})"), "axs[0].bar: tick_label is not supported yet");
+    EXPECT_EQ(error(R"({"lw": 1, "linewidth": 2})").find("axs[0].bar:"), 0u);
+    EXPECT_EQ(draw(kSubplots + R"({"on": "axs[0]", "call": "bar", "args": [[1, 2]]})").error, "axs[0].bar: height is required");
+}

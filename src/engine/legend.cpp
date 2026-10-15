@@ -419,7 +419,14 @@ Legend::Legend(const rc::Params& rc, Axes& parent, const std::vector<Artist*>& h
         auto handlebox = std::make_unique<DrawingArea>(handlelength_ * fontsize, height, 0., descent);
         const double xd = handlebox->xdescent, yd = handlebox->ydescent, w = handlebox->width, h = handlebox->height;
         const transforms::TransformPtr trans = handlebox->transform();
-        if (const ErrorbarContainer* bars = containers[i]) {  // HandlerErrorbar
+        if (const ErrorbarContainer* barContainer = containers[i]; barContainer && barContainer->isBars) {
+            // HandlerPatch(update_func=update_from_first_child): a Rectangle like the first bar
+            auto rect = std::make_unique<Rectangle>(rc, -xd, -yd, w, h);
+            if (!barContainer->bars.empty()) rect->updateFrom(*barContainer->bars[0]);
+            rect->transform = trans;
+            handleColors.push_back(colorsOf(*rect));
+            handlebox->addArtist(std::move(rect));
+        } else if (const ErrorbarContainer* bars = containers[i]) {  // HandlerErrorbar
             std::vector<double> xmarker;
             const std::vector<double> xdata = xdataOf(numpoints, xd, w, &xmarker), ydata(xdata.size(), (h - yd) / 2);
             const std::vector<double> ymarker(xmarker.size(), ydata[0]);

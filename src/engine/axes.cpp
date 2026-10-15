@@ -1100,10 +1100,18 @@ void Axes::unstaleViewLim() {
 }
 
 void Axes::autoscaleView(bool scalex, bool scaley) {
-    // No artist has sticky edges yet (lines have none).
     const auto handle = [&](bool scale, Axis& axis, bool isX, double margin) {
         if (!(scale && axis.autoscaleOn)) return;
         const std::vector<Axes*>& siblings = shared_[isX ? 0 : 1]->members;
+        // the sticky edges of the data children of the Axes sharing the axis, sorted (only with a margin;
+        // positive ones on a log scale)
+        std::vector<double> stickies;
+        if (margin != 0)
+            for (const Axes* ax : siblings)
+                for (const auto& c : ax->children)
+                    for (double v : isX ? c->stickyX : c->stickyY) stickies.push_back(v);
+        std::sort(stickies.begin(), stickies.end());
+        if (axis.scale() == "log") stickies.erase(std::remove_if(stickies.begin(), stickies.end(), [](double v) { return !(v > 0); }), stickies.end());
         // the finite ends of the data limits of all the Axes sharing the axis
         bool any = false;
         double x0 = 0, x1 = 0;
@@ -1124,6 +1132,15 @@ void Axes::autoscaleView(bool scalex, bool scaley) {
             x1 = std::numeric_limits<double>::infinity();
         }
         std::tie(x0, x1) = axis.locatorNonsingular(x0, x1);
+        // the stickies the margins must not cross: the largest below x0 + tol, the smallest above x1 - tol
+        std::optional<double> x0bound, x1bound;
+        if (!stickies.empty()) {
+            const double tol = 1e-5 * std::abs(x1 - x0);
+            const auto i0 = std::lower_bound(stickies.begin(), stickies.end(), x0 + tol) - stickies.begin() - 1;
+            if (i0 != -1) x0bound = stickies[std::size_t(i0)];
+            const auto i1 = std::lower_bound(stickies.begin(), stickies.end(), x1 - tol) - stickies.begin();
+            if (std::size_t(i1) != stickies.size()) x1bound = stickies[std::size_t(i1)];
+        }
         if (axis.scale() == "log") {  // limit_range_for_scale(x0, x1, minimum_minpos)
             double mp = axis.sharedMinpos();
             if (!std::isfinite(mp)) mp = 1e-300;
@@ -1134,6 +1151,8 @@ void Axes::autoscaleView(bool scalex, bool scaley) {
         double delta = (x1t - x0t) * margin;
         if (!std::isfinite(delta)) delta = 0;
         x0 = axis.scaleInverse(x0t - delta), x1 = axis.scaleInverse(x1t + delta);
+        if (x0bound) x0 = std::max(x0, *x0bound);
+        if (x1bound) x1 = std::min(x1, *x1bound);
         if (!tight) std::tie(x0, x1) = axis.locatorViewLimits(x0, x1);
         // set_xbound: sorted, reversed if the axis is inverted
         const auto view = axis.viewInterval();

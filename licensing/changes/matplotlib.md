@@ -198,6 +198,9 @@ it comes from in its first lines. The changes, as a whole:
   Shadow behind the frame, the frame's alpha of 1 when the keyword asks for a shadow).
   The schema of the calls (data/schema.json): the signatures of the calls and the setters, aliases and
   documented valid values of the artists (ArtistInspector), as data written by tools/oracle/make_schema.py.
+  Bars: Axes.bar and barh (_parse_bar_color_args, the broadcasting, align, the error bars through
+  errorbar), BarContainer and its legend entry (update_from_first_child), the sticky edges of
+  autoscale_view.
   Colour sequences: colors.py's ColorSequenceRegistry (the built-in sequences only) with _cm.py's data
   (data/color_sequences.json; ColorBrewer's schemes in data/color_sequences_colorbrewer.json), written as JSON
   numbers by tools/oracle/make_color_sequences.py; rcsetup.py's _single_string_color_list takes them in cycles.

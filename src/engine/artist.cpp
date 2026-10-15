@@ -132,6 +132,7 @@ void Patch::updateFrom(const Patch& o) {
     edgeAlphaInt_ = o.edgeAlphaInt_;
     faceNumpy_ = o.faceNumpy_;
     hatch_ = o.hatch_;  // and the hatch with its colour (not its line width)
+    hatchNumpy_ = o.hatchNumpy_;
     hatchFollowsEdge_ = o.hatchFollowsEdge_;
     hatchcolor_ = o.hatchcolor_;
     originalHatchcolor_ = o.originalHatchcolor_;
@@ -169,6 +170,7 @@ void Patch::draw(Renderer& renderer) {
     gc.setForeground(std::vector<double>(edgecolor_.begin(), edgecolor_.end()));
     if (hatch_ && !hatch_->empty()) {
         gc.hatch = hatch_;
+        gc.hatchNumpy = hatchNumpy_;
         gc.hatchColor = hatchcolor();
         gc.hatchLinewidth = hatchLinewidth_;
     }
