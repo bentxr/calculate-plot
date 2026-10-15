@@ -951,15 +951,22 @@ Line2D& Axes::addLine(std::unique_ptr<Line2D> line, bool keepTransform) {
         std::vector<double> v = *path.vertices;
         const auto update = transforms::containsBranchSeparately(line->transform, transData);
         // A line whose transform equals transData (as transforms compare: an axhline's blend does
-        // while the view limits are still (0, 1)) gives its path as it is; otherwise
-        // trf_to_data = line_trf - transData, applied as one affine.
+        // while the view limits are still (0, 1)) gives its path as it is; otherwise its path goes
+        // through trf_to_data = line_trf - transData: as one affine when transData is affine, and
+        // whole (trf_to_data.transform_path) when it is not (a log scale).
         if (!transforms::equal(*line->transform, *transData) && (update[0] || update[1])) {
-            if (!transData->isAffine() || !line->transform->isAffine())
-                unsupported_ = "lines in axes coordinates on log scales are not supported yet";
-            const auto m = transforms::subtract(line->transform, transData)->matrix();
-            for (std::size_t k = 0; k + 1 < v.size(); k += 2) {
-                const auto q = transforms::apply(m, v[k], v[k + 1]);
-                v[k] = q[0], v[k + 1] = q[1];
+            const auto toData = transforms::subtract(line->transform, transData);
+            if (transData->isAffine()) {
+                const auto m = toData->matrix();
+                for (std::size_t k = 0; k + 1 < v.size(); k += 2) {
+                    const auto q = transforms::apply(m, v[k], v[k + 1]);
+                    v[k] = q[0], v[k + 1] = q[1];
+                }
+            } else {
+                for (std::size_t k = 0; k + 1 < v.size(); k += 2) {
+                    const auto q = toData->transform(v[k], v[k + 1]);
+                    v[k] = q[0], v[k + 1] = q[1];
+                }
             }
         }
         updateFromPath(v, update[0], update[1]);
@@ -990,8 +997,6 @@ Patch& Axes::addPatch(std::unique_ptr<Rectangle> p) {
         const auto t = p->fullTransform();
         const auto update = transforms::containsBranchSeparately(t, transData);
         if (update[0] || update[1]) {
-            if (!transData->isAffine() || !t->isAffine())
-                unsupported_ = "patches on log scales are not supported yet";
             const auto toData = transforms::subtract(t, transData);
             std::vector<std::array<double, 2>> xys;
             const double corners[8][2] = {{0, 0}, {1, 0}, {1, 0}, {1, 1}, {1, 1}, {0, 1}, {0, 1}, {0, 0}};

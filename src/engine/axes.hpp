@@ -188,7 +188,6 @@ public:
     Line2D& addLine(std::unique_ptr<Line2D> line, bool keepTransform = false);
     Patch& addPatch(std::unique_ptr<Rectangle> patch);  // Axes.add_patch
     Text& addText(std::unique_ptr<Text> text);          // Axes._add_text, as Axes.text does it
-    const std::string& unsupportedFeature() const { return unsupported_; }
     // What a new line takes from the property cycle (_get_lines' _PropCycle.getdefaults): the properties
     // of the next entry that are not among those given. With all of them given the cycle stays.
     std::vector<std::pair<std::string, support::Json>> lineDefaults(const std::vector<std::string>& given);
@@ -236,7 +235,6 @@ private:
     std::size_t cycleIndex_ = 0, patchCycleIndex_ = 0;
     void updateDatalim(const std::vector<std::array<double, 2>>& xys, bool updatex = true, bool updatey = true);
     void updateFromPath(const std::vector<double>& xy, bool updatex, bool updatey);
-    std::string unsupported_;
 };
 
 }  // namespace calculate_plot::engine
