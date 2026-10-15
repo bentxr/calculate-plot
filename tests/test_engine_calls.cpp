@@ -1350,3 +1350,22 @@ TEST(LineCalls, DashTuplesAreReadAsMatplotlibReadsThem) {
     EXPECT_EQ(plot(R"({"$tuple": [0, {"$tuple": [4, -2]}]})"), "All values in the dash list must be non-negative");
     EXPECT_EQ(plot(R"({"$tuple": [0, {"$tuple": [0, 0]}]})"), "At least one value in the dash list must be positive");
 }
+
+// Markers 0 to 11 (TICKLEFT ... CARETDOWNBASE) are numbers, as markers.py's dict finds them (a bool or a
+// float of the same value too); their names are no marker a figure file can give.
+TEST(MarkerCalls, IntegerMarkersAreMatplotlibs) {
+    const auto error = [](const std::string& call, const std::string& marker) {
+        return draw(kSubplots + R"({"on": "axs[0]", "call": ")" + call + R"(", "args": [[0, 1], [0, 1]], "kwargs": {"marker": )" +
+                    marker + "}}")
+            .error;
+    };
+    for (const char* call : {"plot", "scatter"}) {
+        for (const char* ok : {"0", "4", "11", "true", "false", "4.0"}) EXPECT_EQ(error(call, ok), "") << call << " " << ok;
+        const std::string where = std::string("axs[0].") + call + ": ";
+        EXPECT_EQ(error(call, "12"), where + "Unrecognized marker style 12");
+        EXPECT_EQ(error(call, "-1"), where + "Unrecognized marker style -1");
+        EXPECT_EQ(error(call, "4.5"), where + "Unrecognized marker style 4.5");
+        EXPECT_EQ(error(call, R"("tickleft")"), where + "Unrecognized marker style 'tickleft'");
+        EXPECT_EQ(error(call, R"("caretdownbase")"), where + "Unrecognized marker style 'caretdownbase'");
+    }
+}

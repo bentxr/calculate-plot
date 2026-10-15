@@ -5,6 +5,7 @@
 #pragma once
 
 #include "engine/artist.hpp"
+#include "support/json.hpp"
 
 #include <optional>
 #include <string>
@@ -13,6 +14,12 @@
 namespace calculate_plot::engine {
 
 class Axes;
+
+// A marker as a figure file or the rcParams give it, as MarkerStyle::set takes it: a string, or one of
+// the numbers 0 to 11 (markers.py's TICKLEFT ... CARETDOWNBASE, which its dict also finds as a bool or an
+// equal float). The names MarkerStyle gives those numbers are no marker to matplotlib. false, with
+// matplotlib's message, for what it does not recognise.
+bool markerFromJson(const support::Json& value, std::string* marker, std::string* error);
 
 // Path.unit_circle() and Path.unit_regular_star(5) (inner circle 0.5), as hatches take them.
 const Path& unitCirclePath();

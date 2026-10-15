@@ -743,7 +743,8 @@ private:
         std::optional<std::vector<colors::Spec>> facecolors, edgecolors, kwcolor;
         std::optional<colors::Spec> edgeSingle;
         bool edgeFace = false, edgeNone = false;
-        std::string marker = rc_.text("scatter.marker");
+        std::string marker;
+        if (!markerFromJson(rc_.value("scatter.marker"), &marker, error)) return *error = where + ": " + *error, false;
         std::optional<double> alpha;
         std::vector<double> linewidths;
         bool linewidthsGiven = false;
@@ -785,8 +786,7 @@ private:
                 if (!colorList(value, &l)) return *error = where + ": bad color", false;
                 kwcolor = l;
             } else if (name == "marker") {
-                if (!value.isString()) return *error = where + ": marker must be a string", false;
-                marker = value.asString();
+                if (!markerFromJson(value, &marker, error)) return *error = where + ": " + *error, false;
             } else if (name == "alpha") {
                 double a = 0;
                 if (!value.isNull()) {
@@ -1970,8 +1970,9 @@ private:
             if (!readFinite(v, &n)) return *error = where + ": linewidth must be a finite number", false;
             line.setLinewidth(n);
         } else if (name == "marker") {
-            if (!v.isString()) return *error = where + ": marker must be a string", false;
-            if (!line.setMarker(v.asString(), error)) return false;
+            std::string m;
+            if (!markerFromJson(v, &m, error)) return *error = where + ": " + *error, false;
+            if (!line.setMarker(m, error)) return false;
         } else if (name == "markersize") {
             if (!readNumber(v, &n)) return *error = where + ": markersize must be a number", false;
             line.markersize = n;
@@ -2047,8 +2048,9 @@ std::string runFigure(const model::Figure& model, const DrawOptions& options, Dr
     // not one (or the engine, if it is one it does not draw yet): no figure is drawn with such a setting.
     {
         MarkerStyle probe;
-        std::string error;
-        if (!probe.set(rc.text("lines.marker"), std::string("full"), rc, &error)) return "rc lines.marker: " + error;
+        std::string error, marker;
+        if (!markerFromJson(rc.value("lines.marker"), &marker, &error) || !probe.set(marker, std::string("full"), rc, &error))
+            return "rc lines.marker: " + error;
     }
     // A transform that cannot be inverted (an Axes of no width, say) ends the drawing in matplotlib
     // where its inverse is first asked for ("Singular matrix").

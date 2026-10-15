@@ -7,6 +7,8 @@
 #include "engine/lines.hpp"
 
 #include "engine/axes.hpp"
+#include "support/pyformat.hpp"
+#include "svg/svg_renderer.h"
 #include "rc/rc_params.hpp"
 #include "support/embedded.hpp"
 #include "support/json.hpp"
@@ -121,6 +123,28 @@ const Path& markerData(const std::string& name) {
 }  // namespace
 
 const Path& unitStarPath() { return markerData("star5_hatch"); }
+
+bool markerFromJson(const support::Json& value, std::string* marker, std::string* error) {
+    static const char* const codes[12] = {"tickleft",  "tickright",  "tickup",        "tickdown",
+                                          "caretleft", "caretright", "caretup",       "caretdown",
+                                          "caretleftbase", "caretrightbase", "caretupbase", "caretdownbase"};
+    if (value.isString()) {
+        for (const char* c : codes)
+            if (value.asString() == c) return *error = "Unrecognized marker style " + svg::pythonStrRepr(c), false;
+        *marker = value.asString();
+        return true;
+    }
+    double v = 0;
+    if (value.isBool()) v = value.asBool() ? 1 : 0;
+    else if (value.isNumber()) v = value.asNumber();
+    else return *error = "marker must be a string or a number from 0 to 11", false;
+    if (v == std::floor(v) && v >= 0 && v <= 11) {
+        *marker = codes[static_cast<int>(v)];
+        return true;
+    }
+    *error = "Unrecognized marker style " + (value.isInteger() ? value.numberText() : support::pythonRepr(v));
+    return false;
+}
 
 bool MarkerStyle::set(const std::string& marker, const std::optional<std::string>& fillstyle, const rc::Params& rc,
                       std::string* error) {
