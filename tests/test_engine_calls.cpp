@@ -1334,3 +1334,19 @@ INSTANTIATE_TEST_SUITE_P(
                 "unsupported call: fig.xaxis.set_major_formatter"},
         Refusal{R"({"on": "axs[0]", "call": "plot", "args": [{"$new": "NullFormatter"}]})",
                 "axs[0].plot: y must be a list of numbers"}));
+
+// A line style (offset, on-off sequence) is a tuple; Matplotlib refuses the rest, and dashes that are
+// negative or all zero when the line is drawn.
+TEST(LineCalls, DashTuplesAreReadAsMatplotlibReadsThem) {
+    const auto plot = [](const std::string& style) {
+        return draw(kSubplots + R"({"on": "axs[0]", "call": "plot", "args": [[0, 1], [0, 1]], "kwargs": {"linestyle": )" + style + "}}").error;
+    };
+    EXPECT_EQ(plot(R"({"$tuple": [0, {"$tuple": [4, 2]}]})"), "");
+    EXPECT_EQ(plot(R"({"$tuple": [1, null]})"), "");
+    EXPECT_EQ(plot(R"([0, [4, 2]])"), "axs[0].plot: bad linestyle");
+    EXPECT_EQ(plot(R"({"$tuple": [null, {"$tuple": [4, 2]}]})"), "axs[0].plot: bad linestyle");
+    EXPECT_EQ(plot(R"({"$tuple": [0, {"$tuple": [4, 2]}, 1]})"), "axs[0].plot: bad linestyle");
+    EXPECT_EQ(plot(R"({"$tuple": [0, "4 2"]})"), "axs[0].plot: bad linestyle");
+    EXPECT_EQ(plot(R"({"$tuple": [0, {"$tuple": [4, -2]}]})"), "All values in the dash list must be non-negative");
+    EXPECT_EQ(plot(R"({"$tuple": [0, {"$tuple": [0, 0]}]})"), "At least one value in the dash list must be positive");
+}

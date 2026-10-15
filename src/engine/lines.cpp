@@ -295,8 +295,7 @@ bool Line2D::setLinestyle(const std::string& ls, std::string* error) {
 
 void Line2D::setDashPattern(double offset, std::optional<std::vector<double>> onoff) {
     linestyle_ = "--";
-    // (_get_dash_pattern brings the offset within one cycle of the dashes; the patterns that come
-    // here are those of the named styles, whose offset is 0)
+    // (the offset comes within one cycle of the dashes, as _get_dash_pattern brings it)
     unscaledDashes_ = {offset, std::move(onoff)};
     dashes_ = scaleDashes(unscaledDashes_, linewidth_, rc_);
 }

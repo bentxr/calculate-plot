@@ -1938,7 +1938,34 @@ private:
             if (v.isNull()) return true;
             if (!color(v, &line.color)) return *error = where + ": bad color", false;
         } else if (name == "linestyle") {
-            if (!v.isString() || !line.setLinestyle(v.asString(), error)) return *error = where + ": bad linestyle", false;
+            if (v.isObject() && v.members()[0].first == "$tuple") {
+                // _get_dash_pattern of (offset, on-off sequence or None): the line counts as '--'; the
+                // offset is brought within one cycle of the dashes (Python's %)
+                const Json& t = v.members()[0].second;
+                if (t.size() != 2 || !t[0].isNumber()) return *error = where + ": bad linestyle", false;
+                double offset = t[0].asNumber();
+                std::optional<std::vector<double>> dashes;
+                if (!t[1].isNull()) {
+                    std::vector<double> d;
+                    const Json* seq = sequence(t[1]);
+                    if (!seq) return *error = where + ": bad linestyle", false;
+                    for (const Json& x : seq->items()) {
+                        if (!x.isNumber()) return *error = where + ": bad linestyle", false;
+                        d.push_back(x.asNumber());
+                    }
+                    double sum = 0;
+                    for (double x : d) sum += x;
+                    if (sum != 0) {
+                        double r = std::fmod(offset, sum);
+                        if (r != 0 && ((r < 0) != (sum < 0))) r += sum;
+                        offset = r;
+                    }
+                    dashes = d;
+                }
+                line.setDashPattern(offset, dashes);
+            } else if (!v.isString() || !line.setLinestyle(v.asString(), error)) {
+                return *error = where + ": bad linestyle", false;
+            }
         } else if (name == "linewidth") {
             if (!readFinite(v, &n)) return *error = where + ": linewidth must be a finite number", false;
             line.setLinewidth(n);
