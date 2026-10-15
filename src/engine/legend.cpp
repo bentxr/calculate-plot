@@ -359,9 +359,22 @@ Legend::Legend(const rc::Params& rc, Axes& parent, const std::vector<Artist*>& h
     const int numpoints = int(rc.number("legend.numpoints"));
     const int scatterpoints = int(rc.number("legend.scatterpoints"));
     const double markerscale = rc.number("legend.markerscale");
-    if (numpoints != 1 || scatterpoints != 1 || markerscale != 1)
-        *error = "legend.numpoints, scatterpoints and markerscale other than 1 are not supported yet";
-    const double scatterYOffset = 3. / 8.;  // scatteryoffsets[:1]
+    if (numpoints <= 0) *error = "numpoints must be > 0; it was " + std::to_string(numpoints);
+    if (scatterpoints <= 0) *error = "legend.scatterpoints below 1 is not supported yet";
+    // scatteryoffsets: [3/8, 4/8, 2.5/8] over and over, one for each scatter point
+    std::vector<double> scatterYOffsets;
+    for (int k = 0; k < scatterpoints; ++k) scatterYOffsets.push_back(std::array<double, 3>{3. / 8., 4. / 8., 2.5 / 8.}[std::size_t(k % 3)]);
+    // HandlerNpoints.get_xdata: where the line of an entry goes and where its markers; one marker is
+    // in the middle of a line from end to end, several are spread with a pad at both ends
+    const auto xdataOf = [&](int points, double xdescent, double width, std::vector<double>* markers) {
+        if (points > 1) {
+            const double pad = 0.3 * fontsize_;
+            *markers = linspace(-xdescent + pad, -xdescent + width - pad, points);
+            return *markers;
+        }
+        *markers = {-xdescent + 0.5 * width};
+        return std::vector<double>{-xdescent, -xdescent + width};
+    };
 
     // the frame
     colors::Spec face = o.facecolor ? *o.facecolor : colors::Spec(rc.text("legend.facecolor"));
@@ -404,14 +417,14 @@ Legend::Legend(const rc::Params& rc, Axes& parent, const std::vector<Artist*>& h
         auto handlebox = std::make_unique<DrawingArea>(handlelength_ * fontsize, height, 0., descent);
         const double xd = handlebox->xdescent, yd = handlebox->ydescent, w = handlebox->width, h = handlebox->height;
         const transforms::TransformPtr trans = handlebox->transform();
-        if (const ErrorbarContainer* bars = containers[i]) {  // HandlerErrorbar, one point
-            // get_xdata: the line from end to end, the marker in the middle
-            const std::vector<double> xdata{-xd, -xd + w}, ydata(2, (h - yd) / 2);
-            const double x = -xd + 0.5 * w, y = ydata[0];
+        if (const ErrorbarContainer* bars = containers[i]) {  // HandlerErrorbar
+            std::vector<double> xmarker;
+            const std::vector<double> xdata = xdataOf(numpoints, xd, w, &xmarker), ydata(xdata.size(), (h - yd) / 2);
+            const std::vector<double> ymarker(xmarker.size(), ydata[0]);
             const double errSize = 0.5 * fontsize;  // xerr_size, and yerr_size with it
             std::string ignored;
             auto legline = std::make_unique<Line2D>(rc, xdata, ydata);
-            auto marker = std::make_unique<Line2D>(rc, std::vector<double>{x}, std::vector<double>{y});
+            auto marker = std::make_unique<Line2D>(rc, xmarker, ymarker);
             if (!bars->dataLine) {
                 legline->visible = false;
                 marker->visible = false;
@@ -424,13 +437,16 @@ Legend::Legend(const rc::Params& rc, Axes& parent, const std::vector<Artist*>& h
                 // (and set_drawstyle('default'): no line has another draw style yet)
                 legline->setMarker("none", &ignored);
                 marker->setLinestyle("None", &ignored);
+                if (markerscale != 1) marker->markersize = marker->markersize * markerscale;
             }
             std::vector<std::unique_ptr<Artist>> made;
             const auto side = [&](bool horizontal) {
-                // the bar of the first collection, and two caps like the first cap line
+                // a bar at each marker like those of the first collection, and two lines of caps like the first
                 const double dx = horizontal ? errSize : 0, dy = horizontal ? 0 : errSize;
-                auto bar = std::make_unique<LineCollection>(
-                    rc, std::vector<std::vector<std::array<double, 2>>>{{{x - dx, y - dy}, {x + dx, y + dy}}});
+                std::vector<std::vector<std::array<double, 2>>> verts;
+                for (std::size_t k = 0; k < xmarker.size(); ++k)
+                    verts.push_back({{xmarker[k] - dx, ymarker[k] - dy}, {xmarker[k] + dx, ymarker[k] + dy}});
+                auto bar = std::make_unique<LineCollection>(rc, verts);
                 bar->updateFrom(*bars->barlinecols[0]);
                 bar->figure = &parent.figure;  // (_set_artist_props; a bar this short never asks for it)
                 bar->clipBox.reset();
@@ -440,7 +456,9 @@ Legend::Legend(const rc::Params& rc, Axes& parent, const std::vector<Artist*>& h
                 handlebox->addArtist(std::move(bar));
                 if (bars->caplines.empty()) return;
                 for (const double sign : {-1.0, 1.0}) {
-                    auto cap = std::make_unique<Line2D>(rc, std::vector<double>{x + sign * dx}, std::vector<double>{y + sign * dy});
+                    std::vector<double> capx, capy;
+                    for (std::size_t k = 0; k < xmarker.size(); ++k) capx.push_back(xmarker[k] + sign * dx), capy.push_back(ymarker[k] + sign * dy);
+                    auto cap = std::make_unique<Line2D>(rc, capx, capy);
                     cap->updateFrom(*bars->caplines[0]);
                     cap->clipBox.reset();
                     cap->clipPath.reset();
@@ -457,19 +475,26 @@ Legend::Legend(const rc::Params& rc, Axes& parent, const std::vector<Artist*>& h
             marker->transform = trans;
             handlebox->addArtist(std::move(legline));
             handlebox->addArtist(std::move(marker));
-        } else if (auto* line = dynamic_cast<Line2D*>(handles[i])) {  // HandlerLine2D, one point
-            auto xdata = linspace(-xd, -xd + w, 3);
+        } else if (auto* line = dynamic_cast<Line2D*>(handles[i])) {  // HandlerLine2D
+            // one point: three along the line, the marker on the middle one; several: a marker on each
+            std::vector<double> xmarker;
+            auto xdata = xdataOf(numpoints, xd, w, &xmarker);
+            if (numpoints == 1) xdata = linspace(xdata.front(), xdata.back(), 3);
             std::vector<double> ydata(xdata.size(), (h - yd) / 2);
             auto legline = std::make_unique<Line2D>(rc, xdata, ydata);
-            legline->markevery = std::vector<long long>{1};
+            if (numpoints == 1) legline->markevery = std::vector<long long>{1};
             legline->updateFrom(*line);
+            if (markerscale != 1) legline->markersize = legline->markersize * markerscale;
             legline->clipBox.reset();
             legline->clipPath.reset();
             legline->transform = trans;
             handleColors.push_back(colorsOf(*legline));
             handlebox->addArtist(std::move(legline));
-        } else if (auto* lines = dynamic_cast<LineCollection*>(handles[i])) {  // HandlerLineCollection, one point
-            auto legline = std::make_unique<Line2D>(rc, std::vector<double>{-xd, -xd + w}, std::vector<double>(2, (h - yd) / 2));
+        } else if (auto* lines = dynamic_cast<LineCollection*>(handles[i])) {  // HandlerLineCollection
+            // (its points are the scatter points: the line is shorter with several)
+            std::vector<double> xmarker;
+            const auto xdata = xdataOf(scatterpoints, xd, w, &xmarker);
+            auto legline = std::make_unique<Line2D>(rc, xdata, std::vector<double>(xdata.size(), (h - yd) / 2));
             // _default_update_prop: the colour, the dashes and the width of the first line
             const auto edges = lines->edgecolors();
             if (edges.empty()) {
@@ -489,9 +514,18 @@ Legend::Legend(const rc::Params& rc, Axes& parent, const std::vector<Artist*>& h
             double smax = sizesOf.empty() ? 1 : sizesOf[0], smin = smax;
             for (double s : sizesOf) smax = pyMax(smax, s), smin = s < smin ? s : smin;
             smax = smax * std::pow(markerscale, 2), smin = smin * std::pow(markerscale, 2);
-            auto handle = std::make_unique<PathCollection>(rc, std::vector<Path>{pc->paths[0]},
-                                                           std::vector<double>{.5 * (smax + smin)});
-            handle->offsets = {{-xd + 0.5 * w, h * scatterYOffset}};
+            // get_sizes: the mean, the largest and the smallest for up to three points; evenly from the
+            // smallest to the largest for more
+            std::vector<double> sizes{.5 * (smax + smin), smax, smin};
+            sizes.resize(std::size_t(std::min(scatterpoints, 3)));
+            if (scatterpoints >= 4) {
+                sizes.clear();
+                for (double t : linspace(0, 1, scatterpoints)) sizes.push_back((smax - smin) * t + smin);
+            }
+            std::vector<double> xmarker;
+            xdataOf(scatterpoints, xd, w, &xmarker);
+            auto handle = std::make_unique<PathCollection>(rc, std::vector<Path>{pc->paths[0]}, sizes);
+            for (std::size_t k = 0; k < xmarker.size(); ++k) handle->offsets.push_back({xmarker[k], h * scatterYOffsets[k]});
             handle->updateFrom(*pc);
             handle->figure = &parent.figure;
             handle->clipBox.reset();

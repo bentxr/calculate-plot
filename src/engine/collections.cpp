@@ -94,9 +94,15 @@ bool Collection::setLinestyles(const std::vector<std::string>& styles) {
 }
 
 void Collection::broadcastLinestyles() {
-    // _bcast_lwls: both lists repeated to a common length, the dashes scaled by the widths
+    // _bcast_lwls: both lists repeated to a common length, the dashes scaled by the widths; in the
+    // classic style they stay as they are
     std::vector<double> widths = unscaledLinewidths_;
     auto dashes = unscaledLinestyles_;
+    if (rc_.boolean("_internal.classic_mode")) {
+        linewidths_ = widths;
+        linestyles_ = dashes;
+        return;
+    }
     if (dashes.size() != widths.size()) {
         std::size_t a = dashes.size(), b = widths.size(), g = a;
         for (std::size_t r = b; r;) std::tie(g, r) = std::make_pair(r, g % r);  // gcd

@@ -169,6 +169,9 @@ FORMS = [
     "cycler(color=['C10'])", "cycler(color=['C'])", "cycler(color=['CC'])", "cycler(color=['C1', 'C2'])", "cycler(color='C1, C2')",
     "cycler(color='C12')", "cycler(mec=['C0', 'C1'])", "cycler(color=['c0'])", "cycler(color='tab30')", "cycler(color='TAB10')",
     "cycler(color=' tab10')", "cycler(color=['tab10'])", "cycler(mfc='tab10')", "cycler(ec='Set1')", "cycler(lw='tab10')",
+    "cycler(lw=[1]) * (2.0 * 1)", "cycler(lw=[1]) * (1.5 + 1.5)", "cycler(lw=[1]) * (1 * 2.0)", "1.5 + 2", "1e400 + 1", "1e400 * 2",
+    "cycler(lw=1 + 1.5)", "cycler(lw=2 * 1.5)", "cycler(lw=[1]) * (True + True)", "cycler(lw=[1]) * (True * 2)", "cycler(lw=[1]) * (None + 1)",
+    "cycler(lw=[1]) * (1 + None)", "cycler(lw=[1]) * ('a' + 1)", "cycler(lw=[1]) * (None * 2)",
 ] + ["cycler(color='%s')" % name for name in sorted(matplotlib.color_sequences)]
 
 

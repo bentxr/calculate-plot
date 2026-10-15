@@ -195,7 +195,7 @@ const std::vector<std::string>& Params::inertKeys() {
 
 const std::vector<std::string>& Params::unsupportedKeys() {
     static const std::vector<std::string> keys = {
-        "_internal.classic_mode", "agg.path.chunksize", "axes.formatter.use_locale", "backend",
+        "agg.path.chunksize", "axes.formatter.use_locale", "backend",
         "figure.autolayout", "figure.constrained_layout.use", "figure.hooks", "font.enable_last_resort",
         "path.effects", "path.sketch", "path.snap", "text.hinting_factor", "text.kerning_factor", "text.usetex"};
     return keys;

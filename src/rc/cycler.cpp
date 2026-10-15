@@ -106,20 +106,16 @@ std::optional<std::vector<std::size_t>> sliceIndices(std::size_t length, std::op
     // PySlice_Unpack and PySlice_AdjustIndices
     const long long n = static_cast<long long>(length), by = step ? *step : 1;
     if (by == 0) return std::nullopt;
+    // going backwards the bounds are one place lower: from the last item down to before the first
+    const bool backwards = by < 0;
+    const long long lowest = backwards ? -1 : 0, highest = backwards ? n - 1 : n;
     const auto bound = [&](std::optional<long long> given, long long whenNone) {
         if (!given) return whenNone;
-        long long i = *given;
-        if (i < 0) {
-            i += n;
-            if (i < 0) i = by < 0 ? -1 : 0;
-        } else if (i >= n) {
-            i = by < 0 ? n - 1 : n;
-        }
-        return i;
+        return std::clamp(*given < 0 ? *given + n : *given, lowest, highest);  // a negative index counts from the end
     };
-    const long long start = bound(lower, by < 0 ? n - 1 : 0), stop = bound(upper, by < 0 ? -1 : n);
+    const long long start = bound(lower, backwards ? highest : lowest), stop = bound(upper, backwards ? lowest : highest);
     std::vector<std::size_t> out;
-    for (long long i = start; by > 0 ? i < stop : i > stop; i += by) out.push_back(static_cast<std::size_t>(i));
+    for (long long i = start; backwards ? i > stop : i < stop; i += by) out.push_back(static_cast<std::size_t>(i));
     return out;
 }
 

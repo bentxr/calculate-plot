@@ -182,6 +182,28 @@ TEST(Cycler, ASliceIsThatSliceOfEveryProperty) {
     EXPECT_EQ(sliced(-9, 2, {}), R"(["r","g"])");
     EXPECT_EQ(sliced(2, 99, {}), R"(["b","k","w"])");
     EXPECT_EQ(sliced(99, {}, -1), R"(["w","k","b","g","r"])");
+    EXPECT_EQ(sliced(5, {}, -1), R"(["w","k","b","g","r"])");
+    EXPECT_EQ(sliced(4, {}, -1), R"(["w","k","b","g","r"])");
+    EXPECT_EQ(sliced({}, 5, -1), "[]");
+    EXPECT_EQ(sliced({}, 4, -1), "[]");
+    EXPECT_EQ(sliced({}, 3, -1), R"(["w"])");
+    EXPECT_EQ(sliced({}, 0, -1), R"(["w","k","b","g"])");
+    EXPECT_EQ(sliced({}, -5, -1), R"(["w","k","b","g"])");
+    EXPECT_EQ(sliced({}, -6, -1), R"(["w","k","b","g","r"])");
+    EXPECT_EQ(sliced(-6, {}, -1), "[]");
+    EXPECT_EQ(sliced(-5, {}, -1), R"(["r"])");
+    EXPECT_EQ(sliced(5, {}, {}), "[]");
+    EXPECT_EQ(sliced(4, {}, {}), R"(["w"])");
+    EXPECT_EQ(sliced({}, 5, {}), R"(["r","g","b","k","w"])");
+    EXPECT_EQ(sliced({}, 4, {}), R"(["r","g","b","k"])");
+    EXPECT_EQ(sliced(-5, {}, {}), R"(["r","g","b","k","w"])");
+    EXPECT_EQ(sliced(-6, 1, {}), R"(["r"])");
+    EXPECT_EQ(sliced({}, -5, {}), "[]");
+    EXPECT_EQ(sliced({}, -4, {}), R"(["r"])");
+    EXPECT_EQ(sliced(1, {}, 3), R"(["g","w"])");
+    EXPECT_EQ(sliced({}, {}, 5), R"(["r"])");
+    EXPECT_EQ(sliced({}, {}, -5), R"(["w"])");
+    EXPECT_EQ(sliced({}, {}, 4), R"(["r","w"])");
     EXPECT_EQ(sliced({}, -99, -1), R"(["w","k","b","g","r"])");
     EXPECT_EQ(sliced(0, 0, {}), "[]");
     EXPECT_EQ(sliced(3, 1, {}), "[]");
@@ -213,14 +235,14 @@ TEST(Cycler, ConcatChainsTheValues) {
     EXPECT_EQ(values(*chained, "linewidth"), "[1.0,2.0,3.0]");
 }
 
-// rcsetup.validate_cycler over 572 texts: the cycles of matplotlib's style sheets and every form.
+// rcsetup.validate_cycler over 586 texts: the cycles of matplotlib's style sheets and every form.
 TEST(Cycler, TextIsReadAsMatplotlibReadsIt) {
     std::ifstream in(fs::path(CALCULATE_PLOT_SOURCE_DIR) / "tests/oracle/cycler.json", std::ios::binary);
     std::ostringstream content;
     content << in.rdbuf();
     const Json oracle = parse(content.str());
     const auto& cases = oracle.find("cases")->items();
-    ASSERT_EQ(cases.size(), 572u);
+    ASSERT_EQ(cases.size(), 586u);
     int taken = 0, refused = 0, unsupported = 0, unsupportedTaken = 0;
     std::vector<std::string> wrong, notRead;
     for (const Json& c : cases) {
@@ -256,12 +278,12 @@ TEST(Cycler, TextIsReadAsMatplotlibReadsIt) {
     std::string all;
     for (const std::string& t : notRead) all += t + "\n";
     EXPECT_EQ(taken, 246) << all;
-    EXPECT_EQ(refused, 246);
+    EXPECT_EQ(refused, 258);
     // the six properties not held in a cycle yet (13), named colour sequences (18), and Python's other
     // spellings: string prefixes and escapes, 0x10, sets, bytes, arithmetic, characters outside ASCII
-    EXPECT_EQ(unsupported, 80);
-    EXPECT_EQ(unsupportedTaken, 44);
-    EXPECT_EQ(taken + refused + unsupported, 572);
+    EXPECT_EQ(unsupported, 82);
+    EXPECT_EQ(unsupportedTaken, 46);
+    EXPECT_EQ(taken + refused + unsupported, 586);
 }
 
 // Why a text is no cycle, in words.

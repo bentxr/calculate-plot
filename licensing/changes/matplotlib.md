@@ -167,6 +167,12 @@ it comes from in its first lines. The changes, as a whole:
   Python would read and they do not (string prefixes and escapes, sets, bytes, arithmetic between numbers,
   characters outside ASCII) is reported as not supported rather than refused. validate_cycler's second
   validation of the values is left out (they were validated when the cycle was made).
+  The classic style: what rcParams["_internal.classic_mode"] changes in ticker.py (AutoLocator's bins and steps,
+  LogLocator's number of ticks and choice of decades, LogFormatter's thresholds for minor labels), lines.py
+  (Line2D.get_markeredgecolor), collections.py (Collection._bcast_lwls) and axes/_axes.py (the defaults of
+  scatter and its margins, fill_between without normalised keywords or a colour from the cycle);
+  Axes.set_axisbelow; legend_handler.py's HandlerNpoints.get_xdata, the handlers' use of numpoints,
+  scatterpoints, scatteryoffsets and markerscale, and HandlerRegularPolyCollection.get_sizes, translated to C++.
 - File names drop the leading underscore (e.g. src/_backend_agg.h is src/agg/backend_agg.h); includes follow.
 - RendererAgg's rasterizer takes Matplotlib's 32 768 blocks of cells on 64-bit targets and 4 096 on 32-bit ones
   (WebAssembly), which have no memory for more: a path that needs more is refused there with the same

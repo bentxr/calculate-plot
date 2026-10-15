@@ -367,8 +367,13 @@ bool isAuto(const colors::Spec& c, bool anyCase) {
 }  // namespace
 
 colors::Spec Line2D::markerEdgeColor() const {
-    if (isAuto(markeredgecolor, false)) return color;  // (classic mode is not supported)
-    return markeredgecolor;
+    if (!isAuto(markeredgecolor, false)) return markeredgecolor;
+    // 'auto' is the line's colour; in the classic style it is black for a filled marker, except the
+    // point and the pixel
+    if (rc_.boolean("_internal.classic_mode") && markerStyle.marker() != "." && markerStyle.marker() != "," && markerStyle.filled() &&
+        markerStyle.fillstyle() != "none")
+        return std::string("k");
+    return color;
 }
 
 colors::Spec Line2D::markerFaceColor(bool alt) const {

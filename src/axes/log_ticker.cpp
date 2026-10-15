@@ -92,9 +92,12 @@ std::vector<double> LogLocator::tickValues(double vmin, double vmax) const {
     }
     long long stride = nAvail / (nRequest + 1) + 1;
     const long long nr = (long long)std::ceil(double(nAvail) / double(stride));
-    if (nr <= nRequest) nRequest = int(nr);
+    if (nr <= nRequest && !classic) nRequest = int(nr);
     std::vector<long long> decades;
-    if (nRequest == 0) {  // No tick in bounds; two ticks just outside.
+    if (classic) {  // keep historic formulas
+        stride = std::max((long long)std::ceil(double(nAvail - 1) / double(nRequest - 1)), 1LL);
+        for (long long d = emin - stride; d < emax + stride + 1; d += stride) decades.push_back(d);
+    } else if (nRequest == 0) {  // No tick in bounds; two ticks just outside.
         decades = {emin - 1, emax + 1};
         stride = decades[1] - decades[0];
     } else if (nRequest == 1) {  // A single tick close to center.

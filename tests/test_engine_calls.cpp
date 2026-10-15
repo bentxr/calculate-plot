@@ -754,6 +754,29 @@ TEST(RcCalls, APropertyCycleWithWhatALineDoesNotTakeStopsPlot) {
     EXPECT_EQ(error("cycler(color='rg', lw=[1, 2])", "plot"), "");
 }
 
+// The number of points of a legend entry: at least one (matplotlib raises for less along a line;
+// what it draws with no scatter point is not ported).
+TEST(RcCalls, ALegendEntryHasAtLeastOnePoint) {
+    const auto error = [](const std::string& rc) {
+        std::string parseError;
+        const auto figure = calculate_plot::model::parseFigure(
+            R"({"version": 1, "rc": )" + rc + R"(, "calls": [{"call": "subplots", "as": ["fig", "ax"]},
+                {"on": "ax", "call": "plot", "args": [[1, 2], [1, 2]], "kwargs": {"label": "a"}}, {"on": "ax", "call": "legend"}]})",
+            &parseError);
+        EXPECT_TRUE(figure.has_value()) << parseError;
+        if (!figure) return std::string("?");
+        calculate_plot::engine::DrawOptions options;
+        options.fontDirectory = std::string(CALCULATE_PLOT_SOURCE_DIR) + "/fonts/ttf";
+        return calculate_plot::engine::drawAgg(*figure, options).error;
+    };
+    EXPECT_EQ(error(R"({"legend.numpoints": 0})"), "ax.legend: numpoints must be > 0; it was 0");
+    EXPECT_EQ(error(R"({"legend.numpoints": -2})"), "ax.legend: numpoints must be > 0; it was -2");
+    EXPECT_EQ(error(R"({"legend.scatterpoints": 0})"), "ax.legend: legend.scatterpoints below 1 is not supported yet");
+    EXPECT_EQ(error(R"({"legend.scatterpoints": -1})"), "ax.legend: legend.scatterpoints below 1 is not supported yet");
+    EXPECT_EQ(error(R"({"legend.numpoints": 1, "legend.scatterpoints": 1, "legend.markerscale": 0.5})"), "");
+    EXPECT_EQ(error(R"({"legend.numpoints": 4, "legend.scatterpoints": 7})"), "");
+}
+
 TEST(RcCalls, ATransformThatCannotBeInvertedStopsTheDrawing) {
     const auto error = [](const std::string& calls) {
         std::string parseError;

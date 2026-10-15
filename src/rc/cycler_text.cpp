@@ -68,7 +68,6 @@ bool isList(const Json& v) { return v.isArray(); }
 // (a bool is an int to Python)
 bool isInt(const Json& v) { return v.isBool() || (v.isNumber() && v.isInteger()); }
 long long intOf(const Json& v) { return v.isBool() ? (v.asBool() ? 1 : 0) : v.asInteger(); }
-bool isNumber(const Json& v) { return v.isBool() || v.isNumber() || (v.isObject() && v.members().size() == 1 && v.members()[0].first == "$float"); }
 const std::vector<Json>& elements(const Json& v) { return isTuple(v) ? v.members()[0].second.items() : v.items(); }
 Json sequenceLike(const Json& like, std::vector<Json> items) {
     return isTuple(like) ? Json::object({{"$tuple", Json::array(std::move(items))}}) : Json::array(std::move(items));
@@ -216,7 +215,8 @@ Result added(const Result& a, const Result& b) {
         out.insert(out.end(), elements(y).begin(), elements(y).end());
         return literalOf(sequenceLike(x, std::move(out)));
     }
-    if (isNumber(x) && isNumber(y)) return notYet("arithmetic in a cycler");
+    // (integers add up to an integer, which a cycler may be multiplied by; no other sum is of use)
+    if (isInt(x) && isInt(y)) return notYet("arithmetic in a cycler");
     return refusal("these values cannot be added");
 }
 
@@ -253,7 +253,7 @@ Result multiplied(const Result& a, const Result& b) {
         for (long long i = 0; i < times; ++i) out.insert(out.end(), elements(sequence).begin(), elements(sequence).end());
         return literalOf(sequenceLike(sequence, std::move(out)));
     }
-    if (isNumber(a.literal) && isNumber(b.literal)) return notYet("arithmetic in a cycler");
+    if (isInt(a.literal) && isInt(b.literal)) return notYet("arithmetic in a cycler");
     if ((sequence.isString() || isList(sequence) || isTuple(sequence)) && n.isBool()) return notYet("arithmetic in a cycler");
     return refusal("these values cannot be multiplied");
 }

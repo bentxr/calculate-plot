@@ -383,16 +383,25 @@ void Axis::setLabelsOn(bool first, bool on) {
 
 void Axis::setScale(const std::string& name) {
     scale_ = name;
+    // The locators and formatters keep their settings of before matplotlib 2 in the classic style
+    const bool classic = rc_.boolean("_internal.classic_mode");
     if (name == "log") {  // LogScale.set_default_locators_and_formatters
         logLocator = axes::LogLocator();
-        logMinorLocator = axes::LogLocator();
+        logLocator.classic = classic;
+        if (classic) logLocator.numticks = 15;
+        logMinorLocator = logLocator;
         logMinorLocator.subs.clear();
         logMinorLocator.autoSubs = true;
         logFormatter = axes::LogFormatterSciNotation();
         logFormatter.minExponent = int(rc_.number("axes.formatter.min_exponent"));
+        if (classic) logFormatter.minorThresholds = {0, 0};
         logMinorFormatter = logFormatter;
     } else {
         locator = axes::MaxNLocator::autoLocator();
+        if (classic) {
+            locator.nbins = 9;
+            locator.setSteps({1, 2, 5, 10});
+        }
         locator.roundNumbers = rc_.text("axes.autolimit_mode") == "round_numbers";
         // ScalarFormatter()
         axes::ScalarFormatter::Settings settings;

@@ -705,7 +705,8 @@ private:
                 return *error = where + ": non-finite points are not supported yet", false;
         // s: lines.markersize ** 2 by default; one size or one per point
         std::vector<double> sizes;
-        if (!s || s->isNull()) sizes = {std::pow(rc_.number("lines.markersize"), 2.0)};
+        const bool classic = rc_.boolean("_internal.classic_mode");
+        if (!s || s->isNull()) sizes = {classic ? 20.0 : std::pow(rc_.number("lines.markersize"), 2.0)};
         else {
             double one = 0;
             if (readNumber(*s, &one)) sizes = {one};
@@ -789,7 +790,8 @@ private:
             if (!edgecolors && !edgeFace && !edgeNone) edgecolors = kwcolor;
             if (!facecolors) facecolors = kwcolor;
         }
-        if (!edgecolors && !edgeFace && !edgeNone) {
+        // (in the classic style the edges stay unset: the collection's own default, black)
+        if (!edgecolors && !edgeFace && !edgeNone && !classic) {
             const std::string e = rc_.text("scatter.edgecolors");
             if (e == "face") edgeFace = true;
             else if (e == "none") edgeNone = true;
@@ -805,6 +807,8 @@ private:
             else if (!colorList(*c, &faces)) return *error = where + ": 'c' must be a color or a sequence of colors", false;
         } else if (facecolors) {
             faces = *facecolors;
+        } else if (classic) {
+            faces = {colors::Spec(std::string("b"))};
         } else {
             faces = {ax.nextPatchColor()};
         }
@@ -831,7 +835,7 @@ private:
         ColorArg faceArg = mappedValues ? ColorArg{} : argOf(faces), edgeArg;
         if (edgeFace) edgeArg.kind = ColorArg::Face;
         else if (edgeNone) edgeArg.kind = ColorArg::None;
-        else edgeArg = argOf(*edgecolors);
+        else if (edgecolors) edgeArg = argOf(*edgecolors);
         bool mapped = mappedValues.has_value();
         if (!style.filled()) {
             if (style.fillstyle() == "none") {
@@ -868,6 +872,11 @@ private:
         collection->transformSet = true;
         if (zorder) collection->zorder = *zorder;
         collection->label = label;
+        // Classic mode only: margins to allow for the finite size of the symbols
+        if (classic && !xs.empty()) {
+            if (ax.xmargin < 0.05) ax.xmargin = 0.05, ax.requestAutoscaleView(true, false);
+            if (ax.ymargin < 0.05) ax.ymargin = 0.05, ax.requestAutoscaleView(false, true);
+        }
         ax.addCollection(std::move(collection));
         return true;
     }
@@ -898,7 +907,10 @@ private:
         std::optional<double> alpha, zorder;
         std::vector<double> linewidths;
         std::string label;
-        if (!givenOnce(call, collectionAliases(), where, error)) return false;
+        // (the classic style neither normalises the keywords nor takes a colour from the property
+        // cycle: the collection gets them as they come, and its own default colour)
+        const bool classic = rc_.boolean("_internal.classic_mode");
+        if (!classic && !givenOnce(call, collectionAliases(), where, error)) return false;
         for (const auto& [name, value] : call.kwargs) {
             if (name == "x" || name == "y1" || name == "y2") continue;
             if (name == "where") {
@@ -945,7 +957,7 @@ private:
                 return *error = where + ": unsupported keyword " + name, false;
             }
         }
-        if (!faceGiven) face = ColorArg::of(ax.nextPatchColor());
+        if (!faceGiven && !classic) face = ColorArg::of(ax.nextPatchColor());
         auto collection = std::make_unique<FillBetweenPolyCollection>(rc_, t, f1, f2, mask);
         // the keyword arguments are set after the defaults (_internal_update)
         collection->setFacecolor(face);

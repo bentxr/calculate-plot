@@ -289,6 +289,18 @@ TEST(RcParams, ValuesTheEngineDoesNotReadYetAreRefused) {
     EXPECT_EQ(p.number("lines.linewidth"), 1.5);
 }
 
+// The classic style sets _internal.classic_mode, which a few defaults look at.
+TEST(RcParams, TheClassicModeIsABool) {
+    Params p = Params::defaults();
+    std::string error;
+    EXPECT_FALSE(p.boolean("_internal.classic_mode"));
+    EXPECT_TRUE(p.set("_internal.classic_mode", json("true"), &error)) << error;
+    EXPECT_TRUE(p.boolean("_internal.classic_mode"));
+    EXPECT_TRUE(p.set("_internal.classic_mode", json("\"no\""), &error)) << error;
+    EXPECT_FALSE(p.boolean("_internal.classic_mode"));
+    EXPECT_FALSE(p.set("_internal.classic_mode", json("\"classic\""), &error));
+}
+
 // legend.framealpha may be None: the frame keeps the alpha of its colours.
 TEST(RcParams, TheLegendsFrameAlphaMayBeNone) {
     Params p = Params::defaults();
@@ -327,7 +339,6 @@ TEST(RcParams, AxisbelowIsABoolOrLine) {
 // The keys of what the engine does not do yet take their default value and no other.
 TEST(RcParams, KeysThatAreNotHonouredYetTakeOnlyTheirDefault) {
     const std::pair<const char*, const char*> other[] = {
-        {"_internal.classic_mode", "true"},
         {"agg.path.chunksize", "100"},
         {"axes.formatter.use_locale", "true"},
         {"figure.autolayout", "true"},

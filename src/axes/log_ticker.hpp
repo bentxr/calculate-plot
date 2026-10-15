@@ -19,6 +19,7 @@ struct LogLocator {
     std::vector<double> subs{1.0};
     bool autoSubs = false;
     std::optional<int> numticks;     // nullopt: 'auto' (from the axis' tick space)
+    bool classic = false;            // rcParams["_internal.classic_mode"]: the historic choice of decades
     std::optional<int> tickSpace;    // the axis' get_tick_space(), when the locator has an axis
     double minpos = std::numeric_limits<double>::infinity();  // the axis' get_minpos()
 
