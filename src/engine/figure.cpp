@@ -90,6 +90,11 @@ Axes* Figure::addSubplot(int nrows, int ncols, int num1, int num2) {
     return axes.back().get();
 }
 
+Axes* Figure::addAxes(double left, double bottom, double width, double height) {
+    axes.push_back(std::make_unique<Axes>(rc_, *this, transforms::Bbox::fromBounds(left, bottom, width, height), std::nullopt));
+    return axes.back().get();
+}
+
 void Figure::draw(Renderer& renderer) {
     if (!visible) return;
     // _get_draw_artists: the children but the patch, sorted by zorder (stable)

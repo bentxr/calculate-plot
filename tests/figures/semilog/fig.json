@@ -1,0 +1,5 @@
+{"version": 1, "calls": [
+ {"call": "subplots", "args": [1, 2], "as": ["fig", "axs"]},
+ {"on": "axs[0]", "call": "semilogx", "args": [[1, 10, 100, 1000], [1, 2, 3, 4], "o-"], "kwargs": {"label": "semilogx"}},
+ {"on": "axs[1]", "call": "semilogy", "args": [[1, 2, 3, 4], [1, 10, 100, 1000]], "kwargs": {"color": "C2"}},
+ {"on": "axs[0]", "call": "legend"}]}

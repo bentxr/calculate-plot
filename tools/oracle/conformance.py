@@ -451,6 +451,8 @@ def same(expected, actual):
         return "equal" if compare_images(str(expected), str(actual), 0) is None else "differs"
     except ImageComparisonFailure as e:
         return "differs: " + str(e)[:200]
+    except Exception as e:  # noqa: BLE001: an empty or unreadable image
+        return "fails: " + str(e)[:200]
 
 
 def draw(entry, cplot, baselines):

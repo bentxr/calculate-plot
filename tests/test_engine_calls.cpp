@@ -1402,3 +1402,18 @@ TEST(AxesCalls, SetGoesThroughTheSetters) {
     EXPECT_EQ(error(R"({"on": "axs[0]", "call": "set", "kwargs": {"aspect": "equal"}})"), "axs[0].set: set(aspect=...) is not supported yet");
     EXPECT_EQ(error(R"({"on": "axs[0]", "call": "set", "kwargs": {"xlim": [0, {"$float": "nan"}]}})").find("axs[0].set_xlim"), 0u);
 }
+
+// fig.add_axes(rect) and plt.axes(rect): four finite numbers, not negative in size.
+TEST(SubplotCalls, AxesAtARect) {
+    const auto error = [](const std::string& call) { return draw(R"({"call": "figure", "as": "fig"}, )" + call).error; };
+    EXPECT_EQ(error(R"({"on": "fig", "call": "add_axes", "args": [[0.1, 0.1, 0.5, 0.5]]})"), "");
+    EXPECT_EQ(error(R"({"on": "fig", "call": "add_axes", "args": [[0.1, 0.1, 0.5]]})"), "fig.add_axes: rect must be (left, bottom, width, height)");
+    EXPECT_EQ(error(R"({"on": "fig", "call": "add_axes", "args": [[0.1, 0.1, -0.5, 0.5]]})"), "fig.add_axes: Width and height specified must be non-negative");
+    EXPECT_EQ(error(R"({"on": "fig", "call": "add_axes", "args": [[0.1, {"$float": "inf"}, 0.5, 0.5]]})"),
+              "fig.add_axes: all entries in rect must be finite not [0.1, inf, 0.5, 0.5]");
+    EXPECT_EQ(error(R"({"call": "axes", "args": [[0.1, 0.1, 0.5, 0.5]], "kwargs": {"facecolor": "r"}})"),
+              "plt.axes: keyword arguments are not supported yet");
+    EXPECT_EQ(error(R"({"call": "plot", "args": [[1, 2]]}, {"call": "loglog", "args": [[1, 2]]})"), "unsupported call: plt.loglog");
+    EXPECT_EQ(draw(kSubplots + R"({"on": "axs[0]", "call": "loglog", "args": [[1, 2]], "kwargs": {"base": 2}})").error,
+              "axs[0].loglog: the keywords of the log scale are not supported yet");
+}

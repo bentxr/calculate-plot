@@ -156,7 +156,10 @@ struct SharedAxes {
 
 class Axes : public Artist {
 public:
-    Axes(const rc::Params& rc, Figure& figure, const SubplotSpec& spec);
+    Axes(const rc::Params& rc, Figure& figure, const SubplotSpec& spec);  // a subplot: its cells' position
+    // Axes(fig, rect): at a position of its own (Figure.add_axes), with no subplot spec when `spec` is unset
+    Axes(const rc::Params& rc, Figure& figure, std::shared_ptr<transforms::Bbox> position,
+         const std::optional<SubplotSpec>& spec);
     void draw(Renderer& renderer) override;
 
     Figure& figure;

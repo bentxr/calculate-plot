@@ -733,10 +733,12 @@ std::optional<transforms::Bbox> Axis::tightbbox(Renderer& renderer, bool forLayo
 
 // --- Axes ----------------------------------------------------------------------------------------
 
-Axes::Axes(const rc::Params& rc, Figure& fig, const SubplotSpec& spec)
+Axes::Axes(const rc::Params& rc, Figure& fig, const SubplotSpec& spec) : Axes(rc, fig, spec.position(fig.subplotpars), spec) {}
+
+Axes::Axes(const rc::Params& rc, Figure& fig, std::shared_ptr<transforms::Bbox> pos, const std::optional<SubplotSpec>& spec)
     : Artist(rc), figure(fig), xmargin(rc.number("axes.xmargin")), ymargin(rc.number("axes.ymargin")) {
     subplotSpec = spec;
-    position = spec.position(fig.subplotpars);
+    position = std::move(pos);
     // set_figure
     bbox = std::make_shared<transforms::TransformedBbox>(position, fig.transSubfigure);
     dataLim = std::make_shared<transforms::Bbox>(std::array<double, 4>{

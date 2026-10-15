@@ -1,0 +1,8 @@
+{"version": 1, "calls": [
+ {"call": "axes", "args": [{"$tuple": [0.1, 0.1, 0.5, 0.5]}]},
+ {"call": "plot", "args": [[0, 1, 2], [1, 0, 1]]},
+ {"call": "axes", "kwargs": {"position": [0.6, 0.6, 0.3, 0.3]}},
+ {"call": "plot", "args": [[0, 1, 2], [0, 1, 0]], "kwargs": {"color": "C3"}},
+ {"call": "title", "args": ["inset"]},
+ {"call": "gca", "as": "ax"},
+ {"on": "ax", "call": "set_axis_off"}]}

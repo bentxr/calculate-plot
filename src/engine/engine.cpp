@@ -79,6 +79,21 @@ public:
             }
             if (call.method == "gca") return noArguments(call, error) && nameResult(call, &gca(), error);
             if (call.method == "subplot") return subplot(call, error);
+            if (call.method == "axes") {
+                // plt.axes(arg=None, **kwargs): add_subplot() without a rect, else add_axes(rect)
+                if (call.args.size() > 1) return *error = "plt.axes: too many positional arguments", false;
+                const Json* rect = call.args.empty() ? keyword(call, "arg") : &call.args[0];
+                if (!rect || rect->isNull()) rect = keyword(call, "position");
+                for (const auto& kw : call.kwargs)
+                    if (kw.first != "arg" && kw.first != "position") return *error = "plt.axes: keyword arguments are not supported yet", false;
+                if (!rect || rect->isNull()) {
+                    gcf();
+                    current_ = figure_->addSubplot(1, 1, 0, 0);
+                    return nameResult(call, current_, error);
+                }
+                gcf();
+                return addAxes(call, rect, error);
+            }
             // the pyplot functions of the current Axes and of the current figure
             static const std::map<std::string, std::string> ofAxes = {
                 {"plot", "plot"}, {"scatter", "scatter"}, {"fill_between", "fill_between"}, {"errorbar", "errorbar"},
@@ -391,6 +406,7 @@ private:
         if (v.isNumber()) return v.isInteger() ? v.numberText() : support::pythonRepr(v.asNumber());
         if (v.isString()) return svg::pythonStrRepr(v.asString());
         if (v.isNull()) return "None";
+        if (v.isObject() && v.members()[0].first == "$float") return v.members()[0].second.asString();
         const Json* seq = sequence(v);
         if (!seq) return "?";
         const bool tuple = v.isObject();
@@ -444,6 +460,23 @@ private:
         return true;
     }
 
+    // Figure.add_axes(rect): (left, bottom, width, height), finite, not negative in size; the new Axes is current
+    bool addAxes(const model::Call& call, const Json* rect, std::string* error) {
+        const std::string where = (call.on.empty() ? "plt" : call.on) + "." + call.method + ": ";
+        if (call.method == "add_axes" && (call.args.size() != 1 || !call.kwargs.empty()))
+            return *error = where + "a rect (left, bottom, width, height) and no keywords are supported so far", false;
+        const Json* seq = rect ? sequence(*rect) : nullptr;
+        double r[4];
+        if (!seq || seq->size() != 4) return *error = where + "rect must be (left, bottom, width, height)", false;
+        for (int i = 0; i < 4; ++i)
+            if (!readNumber((*seq)[std::size_t(i)], &r[i])) return *error = where + "rect must be (left, bottom, width, height)", false;
+        for (double v : r)
+            if (!std::isfinite(v)) return *error = where + "all entries in rect must be finite not " + repr(*rect), false;
+        if (r[2] < 0 || r[3] < 0) return *error = where + "Width and height specified must be non-negative", false;
+        current_ = gcf().addAxes(r[0], r[1], r[2], r[3]);
+        return nameResult(call, current_, error);
+    }
+
     // plt.subplot(*args): the figure's Axes of that grid and cells, else a new one; either is current
     bool subplot(const model::Call& call, std::string* error) {
         if (!call.kwargs.empty()) return *error = "plt.subplot: keyword arguments are not supported yet", false;
@@ -480,6 +513,7 @@ private:
             return nameResult(call, current_, error);
         }
         if (call.method == "gca") return noArguments(call, error) && nameResult(call, &gca(), error);
+        if (call.method == "add_axes") return addAxes(call, call.args.empty() ? nullptr : &call.args[0], error);
         if (call.method == "text") return figureText(call, error);
         if (call.method == "suptitle") {
             // FigureBase._suplabels with suptitle's info: (0.5, 0.98), centred, top, figure.titlesize/titleweight
@@ -604,6 +638,30 @@ private:
 
     bool axesCall(Axes& ax, const model::Call& call, std::string* error) {
         const std::string where = call.on + "." + call.method;
+        if (call.method == "loglog" || call.method == "semilogx" || call.method == "semilogy") {
+            // set_xscale('log') and / or set_yscale('log') with the scale's keywords, then plot with the rest
+            static const char* const scaleKeywords[] = {"base", "subs", "nonpositive", "basex", "subsx", "nonposx",
+                                                        "basey", "subsy", "nonposy"};
+            for (const auto& kw : call.kwargs)
+                if (std::find(std::begin(scaleKeywords), std::end(scaleKeywords), kw.first) != std::end(scaleKeywords))
+                    return *error = where + ": the keywords of the log scale are not supported yet", false;
+            for (const char* scale : {"set_xscale", "set_yscale"}) {
+                if ((call.method == "semilogx" && scale[4] == 'y') || (call.method == "semilogy" && scale[4] == 'x')) continue;
+                model::Call c;
+                c.on = call.on;
+                c.method = scale;
+                c.args = {Json::string("log")};
+                if (!axesCall(ax, c, error)) return false;
+            }
+            model::Call c = call;
+            c.method = "plot";
+            return axesCall(ax, c, error);
+        }
+        if (call.method == "set_axis_off" || call.method == "set_axis_on") {
+            if (!noArguments(call, error)) return false;
+            ax.axisOn = call.method == "set_axis_on";
+            return true;
+        }
         if (call.method == "set") {
             // Artist.set: set_<name>(value) for each keyword, in the order given
             if (!call.args.empty())
