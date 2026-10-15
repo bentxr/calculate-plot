@@ -4,6 +4,7 @@
 // Licence: LICENSES/Matplotlib.txt. Changes: licensing/changes/matplotlib.md
 #include "rc/rc_validate.hpp"
 
+#include "colors/colors.hpp"
 #include "rc/cycler_text.hpp"
 
 #include <charconv>
@@ -577,11 +578,9 @@ Validated validateColorForCycle(const Json& s) {
 Validated colorList(const Json& s, const Validator& scalar) {
     Validated list = listify(s, scalar, std::nullopt);
     if (!s.isString() || list.state != State::Refused) return list;
-    static const char* const sequences[] = {"Accent", "Dark2",     "Paired",   "Pastel1",  "Pastel2", "Set1",  "Set2",   "Set3",
-                                            "okabe_ito", "petroff10", "petroff6", "petroff8", "tab10",   "tab20", "tab20b", "tab20c"};
     const std::string& text = s.asString();
-    for (const char* name : sequences)
-        if (text == name) return unsupported("a named colour sequence in a cycle");
+    // mpl.color_sequences[s]: its colours as they are, not validated
+    if (const std::vector<Json>* sequence = colors::colorSequence(text)) return taken(Json::array(*sequence));
     std::vector<Json> out;
     for (const char c : text) {
         if (support::pythonStrip(std::string(1, c)).empty()) continue;

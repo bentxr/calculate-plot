@@ -277,13 +277,30 @@ TEST(Cycler, TextIsReadAsMatplotlibReadsIt) {
     // What is not read here is counted, so that it cannot grow unseen.
     std::string all;
     for (const std::string& t : notRead) all += t + "\n";
-    EXPECT_EQ(taken, 246) << all;
+    EXPECT_EQ(taken, 264) << all;
     EXPECT_EQ(refused, 258);
-    // the six properties not held in a cycle yet (13), named colour sequences (18), and Python's other
-    // spellings: string prefixes and escapes, 0x10, sets, bytes, arithmetic, characters outside ASCII
-    EXPECT_EQ(unsupported, 82);
-    EXPECT_EQ(unsupportedTaken, 46);
+    // the six properties not held in a cycle yet (13), and Python's other spellings: string prefixes and
+    // escapes, 0x10, sets, bytes, arithmetic, characters outside ASCII
+    EXPECT_EQ(unsupported, 64);
+    EXPECT_EQ(unsupportedTaken, 28);
     EXPECT_EQ(taken + refused + unsupported, 586);
+}
+
+// matplotlib.color_sequences: a colour property given one text that names a sequence takes its colours,
+// as RGB numbers (not validated again).
+TEST(Cycler, ANamedColourSequenceIsItsColours) {
+    const Validated set1 = read("cycler(color='Set1')");
+    ASSERT_EQ(set1.state, Validated::State::Taken) << set1.error;
+    const Json& colors = *set1.value.find("$cycler")->find("color");
+    ASSERT_EQ(colors.size(), 9u);
+    ASSERT_EQ(colors[0].size(), 3u);
+    EXPECT_EQ(colors[0][0].asNumber(), 0.8941176470588236);
+    EXPECT_EQ(colors[0][1].asNumber(), 0.10196078431372549);
+    EXPECT_EQ(colors[0][2].asNumber(), 0.10980392156862745);
+    const Validated tab10 = read("cycler(markeredgecolor='tab10')");
+    ASSERT_EQ(tab10.state, Validated::State::Taken) << tab10.error;
+    EXPECT_EQ(tab10.value.find("$cycler")->find("markeredgecolor")->size(), 10u);
+    EXPECT_EQ(read("cycler(color='Tab10')").state, Validated::State::Refused);  // names are case-sensitive
 }
 
 // Why a text is no cycle, in words.
@@ -360,7 +377,6 @@ TEST(Cycler, RefusalsSayWhy) {
     EXPECT_EQ(read("cycler(lw=[1] * 100) * cycler(color='r' * 100)").state, Validated::State::Taken);
     EXPECT_EQ(read("concat(cycler(color='r' * 6000), cycler(color='r' * 4000))").state, Validated::State::Taken);
     EXPECT_EQ(read("cycler(lw=[1] * -5 + [2])").state, Validated::State::Taken);
-    EXPECT_EQ(why("cycler(color='tab10')"), "a named colour sequence in a cycle is not supported yet");
     EXPECT_EQ(why("cycler(hatch=['/', 'x'])"), "the hatch of a cycle is not supported yet");
     EXPECT_EQ(why("cycler(color=['réd'])"), "a cycler with characters outside ASCII is not supported yet");
 }

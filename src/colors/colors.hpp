@@ -32,4 +32,8 @@ bool isNone(const Spec& spec);
 // _has_alpha_channel: '#rgba' and '#rrggbbaa' strings, and tuples of four (for a valid colour).
 bool hasAlphaChannel(const Spec& spec);
 
+// matplotlib.color_sequences[name]: the colours of a built-in colour sequence (data/color_sequences.json
+// and data/color_sequences_colorbrewer.json) as RGB(A) numbers; nullptr for another name.
+const std::vector<support::Json>* colorSequence(const std::string& name);
+
 }  // namespace calculate_plot::colors

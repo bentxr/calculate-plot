@@ -180,6 +180,9 @@ it comes from in its first lines. The changes, as a whole:
   read as _rc_params_in_file reads a line, by tools/oracle/make_styles.py; the comments are left out.
   backend_agg.py's RendererAgg.draw_path: the chunks of rcParams["agg.path.chunksize"] (src/engine/path.cpp).
   The MOVETO codes matplotlib writes into the original path are written into the chunks only.
+  Colour sequences: colors.py's ColorSequenceRegistry (the built-in sequences only) with _cm.py's data
+  (data/color_sequences.json; ColorBrewer's schemes in data/color_sequences_colorbrewer.json), written as JSON
+  numbers by tools/oracle/make_color_sequences.py; rcsetup.py's _single_string_color_list takes them in cycles.
 - File names drop the leading underscore (e.g. src/_backend_agg.h is src/agg/backend_agg.h); includes follow.
 - RendererAgg's rasterizer takes Matplotlib's 32 768 blocks of cells on 64-bit targets and 4 096 on 32-bit ones
   (WebAssembly), which have no memory for more: a path that needs more is refused there with the same

@@ -45,7 +45,8 @@
     "tools/oracle/make_unicode_letters.py",
     "tests/oracle/mathtext.json",
     "tests/oracle/mathtext_glyphs.json",
-    "tools/oracle/make_styles.py"
+    "tools/oracle/make_styles.py",
+    "tools/oracle/make_color_sequences.py"
   ],
   "notice": "NOTICE",
   "components": [
@@ -522,7 +523,8 @@
         "src/rc/cycler_text.cpp",
         "src/rc/styles.hpp",
         "src/rc/styles.cpp",
-        "data/styles.json"
+        "data/styles.json",
+        "data/color_sequences.json"
       ],
       "header": [
         "Copyright (c) 2012- Matplotlib Development Team; All Rights Reserved",
@@ -623,6 +625,40 @@
       ],
       "changes": "licensing/changes/solarized.md",
       "remarks": "The colours of Matplotlib's Solarize_Light2 style sheet are the Solarized palette; Matplotlib ships that style with Solarized's licence (LICENSE/LICENSE_SOLARIZED), and so does calculate-plot, with the style's settings as data. The style sheet itself is Matplotlib's (LICENSES/Matplotlib.txt)."
+    },
+    {
+      "id": "colorbrewer",
+      "name": "ColorBrewer",
+      "version": "as in Matplotlib 3.11.2",
+      "homepage": "https://colorbrewer2.org/",
+      "use": "runtime",
+      "licence": "Apache-2.0",
+      "licenceFiles": [
+        {
+          "path": "LICENSES/ColorBrewer.txt",
+          "upstream": "https://raw.githubusercontent.com/matplotlib/matplotlib/v3.11.2/LICENSE/LICENSE_COLORBREWER",
+          "sha256": "01173653fe745ce2124ec156d78b460582d2a719d2d9212804267e95fd2c97e7"
+        },
+        {
+          "path": "LICENSES/Apache-2.0.txt",
+          "upstream": "https://www.apache.org/licenses/LICENSE-2.0.txt",
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+        }
+      ],
+      "fetch": [],
+      "vendored": [],
+      "derived": [
+        "data/color_sequences_colorbrewer.json"
+      ],
+      "header": [
+        "Copyright (c) 2002 Cynthia Brewer, Mark Harrower, and The Pennsylvania State University.",
+        "LICENSES/ColorBrewer.txt"
+      ],
+      "notices": [
+        "Copyright (c) 2002 Cynthia Brewer, Mark Harrower, and The Pennsylvania State University."
+      ],
+      "changes": "licensing/changes/colorbrewer.md",
+      "remarks": "The colours of ColorBrewer's qualitative schemes (Accent, Dark2, Paired, Pastel1, Pastel2, Set1, Set2, Set3) as Matplotlib's colour sequences hold them (lib/matplotlib/_cm.py: RGB values from Brewer's spreadsheet divided by 255). Matplotlib includes them under the Apache-style licence in LICENSE/LICENSE_COLORBREWER, which names the Apache License 2.0; its full text is in LICENSES/Apache-2.0.txt."
     },
     {
       "id": "fdlibm",

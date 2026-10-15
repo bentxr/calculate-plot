@@ -40,7 +40,8 @@ add_custom_command(
 
 # Data files compiled into the library.
 set(embedded_files data/rcdefaults.json data/colors.json data/fonts.json data/marker_paths.json data/tex2uni.json data/colormaps.json
-    data/mathtext_data.json data/unicode_letters.json data/styles.json data/styles_solarized.json)
+    data/mathtext_data.json data/unicode_letters.json data/styles.json data/styles_solarized.json
+    data/color_sequences.json data/color_sequences_colorbrewer.json)
 list(TRANSFORM embedded_files PREPEND "${PROJECT_SOURCE_DIR}/" OUTPUT_VARIABLE embedded_paths)
 add_custom_command(
     OUTPUT  ${PROJECT_BINARY_DIR}/generated/embedded.cpp

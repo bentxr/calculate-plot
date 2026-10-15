@@ -112,6 +112,15 @@ Copyright (c) 2011 Ethan Schoonover
 Used under the MIT licence (LICENSES/Solarized.txt; changes: licensing/changes/solarized.md).
 
 
+ColorBrewer as in Matplotlib 3.11.2
+-----------------------------------
+The colour sequences Accent, Dark2, Paired, Pastel1, Pastel2, Set1, Set2 and Set3 are ColorBrewer's
+qualitative colour schemes (https://colorbrewer2.org/):
+Copyright (c) 2002 Cynthia Brewer, Mark Harrower, and The Pennsylvania State University.
+Licensed under the Apache License, Version 2.0 (LICENSES/ColorBrewer.txt, LICENSES/Apache-2.0.txt;
+changes: licensing/changes/colorbrewer.md).
+
+
 FDLIBM 5.3
 ----------
 The base-10 logarithm is derived from FDLIBM's e_log10.c:

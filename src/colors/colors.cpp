@@ -1,4 +1,5 @@
-// Derived from Matplotlib 3.11.2: lib/matplotlib/colors.py (to_rgba, _to_rgba_no_colorcycle).
+// Derived from Matplotlib 3.11.2: lib/matplotlib/colors.py (to_rgba, _to_rgba_no_colorcycle,
+// ColorSequenceRegistry).
 // Copyright (c) 2012- Matplotlib Development Team; All Rights Reserved
 // Licence: LICENSES/Matplotlib.txt. Changes: licensing/changes/matplotlib.md
 
@@ -152,6 +153,21 @@ bool hasAlphaChannel(const Spec& spec) {
     if (const auto* text = std::get_if<std::string>(&spec))
         return !text->empty() && (*text)[0] == '#' && (text->size() == 5 || text->size() == 9);
     return std::get<std::vector<double>>(spec).size() == 4;
+}
+
+const std::vector<Json>* colorSequence(const std::string& name) {
+    static const std::map<std::string, std::vector<Json>> sequences = [] {
+        std::map<std::string, std::vector<Json>> loaded;
+        for (const char* file : {"data/color_sequences.json", "data/color_sequences_colorbrewer.json"}) {
+            const auto doc = support::parseJson(embedded::file(file), nullptr);
+            if (!doc) continue;
+            if (const Json* all = doc->find("sequences"))
+                for (const auto& [key, colours] : all->members()) loaded[key] = colours.items();
+        }
+        return loaded;
+    }();
+    const auto it = sequences.find(name);
+    return it == sequences.end() ? nullptr : &it->second;
 }
 
 }  // namespace calculate_plot::colors
