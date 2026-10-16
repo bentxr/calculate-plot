@@ -508,6 +508,8 @@
     "src/engine/text.cpp",
     "src/engine/annotation.hpp",
     "src/engine/annotation.cpp",
+    "src/engine/violin.hpp",
+    "src/engine/violin.cpp",
     "src/text/font_manager.hpp",
     "src/text/font_manager.cpp",
     "data/fonts.json",

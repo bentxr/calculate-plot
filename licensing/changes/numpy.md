@@ -16,6 +16,8 @@ where the bin rules treat them otherwise):
   _auto) and _ptp, with Python's and NumPy's operations in their order (Python floats' ** as C's pow);
 - _mean, _var and _std from numpy/_core/_methods.py for one-dimensional data (int64 data are cast to float64
   for the sums in buffers of 8192 values, as NumPy's iterator does);
+- median (_median: the mean of the middle values, as np.mean makes it), cov of one row (np.dot of the
+  deviations, times the reciprocal of n - 1), and linalg.det of a 1x1 matrix through slogdet (sign * exp(log|u|));
 - percentile with the 'linear' method from numpy/lib/_function_base_impl.py (_quantile, _get_indexes,
   _get_gamma, _lerp) for one quantile of finite data, sorted instead of partitioned;
 - linspace from numpy/_core/function_base.py, for a scalar start and stop with the endpoint;

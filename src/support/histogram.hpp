@@ -19,6 +19,17 @@ std::vector<double> npLinspace(double start, double stop, long long num);
 double npMean(const std::vector<double>& a, bool integer = false);
 double npStd(const std::vector<double>& a, bool integer = false);
 double npPercentile(std::vector<double> a, double q);  // (NaN when the data have one)
+// np.min and np.max as NumPy's scalar loop reduces (of equal values the later one, which tells -0.0
+// from 0.0; NaN wins). (Long arrays go through NumPy's SIMD loop, whose order may give the other zero.)
+double npMin(const std::vector<double>& a);
+double npMax(const std::vector<double>& a);
+// np.median: the middle value, or the mean of the two middle ones, as np.mean makes it (from 0.0)
+double npMedian(std::vector<double> a, bool integer = false);
+// np.cov of one row of data (bias=False): the deviations from the mean, their dot product with
+// themselves (np.dot), times 1 / (n - 1)
+double npCovRow(const std::vector<double>& a);
+// np.linalg.det of a 1x1 matrix: from slogdet, sign * exp(log|u|)
+double npDet1(double u);
 
 // The bins of np.histogram: a number of equal bins, their edges, or a rule by name ('auto', 'fd',
 // 'doane', 'scott', 'stone', 'rice', 'sturges', 'sqrt'; when `name` is not empty).

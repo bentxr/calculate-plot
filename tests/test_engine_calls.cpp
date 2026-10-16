@@ -1608,6 +1608,24 @@ TEST(BoxplotCalls, ArgumentsAreReadAsMatplotlibReadsThem) {
     EXPECT_EQ(error(two, R"({"label": ["a"]})"), "axs[0].boxplot: List of boxplot statistics and `label` values must have same the length");
 }
 
+// Axes.violinplot: its own parameters only
+TEST(ViolinCalls, ArgumentsAreReadAsMatplotlibReadsThem) {
+    const auto error = [](const std::string& args, const std::string& kwargs) {
+        return draw(kSubplots + R"({"on": "axs[0]", "call": "violinplot", "args": )" + args + R"(, "kwargs": )" + kwargs + "}").error;
+    };
+    const std::string two = "[[[1, 2, 3, 9], [2, 3, 4]]]";
+    EXPECT_EQ(error(two, "{}"), "");
+    EXPECT_EQ(error(two, R"({"color": "r"})"), "axs[0].violinplot: got an unexpected keyword argument 'color'");
+    EXPECT_EQ(error(two, R"({"side": "left"})"),
+              "axs[0].violinplot: 'left' is not a valid value for side; supported values are 'both', 'low', 'high'");
+    EXPECT_EQ(error(two, R"({"bw_method": "wide"})"), "axs[0].violinplot: `bw_method` should be 'scott', 'silverman', a scalar or a callable");
+    EXPECT_EQ(error(two, R"({"quantiles": [0.5]})"),
+              "axs[0].violinplot: List of violinplot statistics and quantiles values must have the same length");
+    EXPECT_EQ(error(two, R"({"positions": [1]})"),
+              "axs[0].violinplot: List of violinplot statistics and `positions` values must have the same length");
+    EXPECT_EQ(error(two, R"({"points": -1})"), "axs[0].violinplot: Number of samples, -1, must be non-negative.");
+}
+
 TEST(HistCalls, ArgumentsAreReadAsMatplotlibReadsThem) {
     const auto error = [](const std::string& args, const std::string& kwargs) {
         return draw(kSubplots + R"({"on": "axs[0]", "call": "hist", "args": )" + args + R"(, "kwargs": )" + kwargs + "}").error;

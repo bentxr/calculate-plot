@@ -173,6 +173,7 @@ void Collection::draw(Renderer& renderer) {
         gc.hatchLinewidth = hatchLinewidth;
     }
     if (sketch) gc.sketch = sketch;
+    if (capstyle) gc.capstyle = *capstyle;  // (only when set: the GC's own default otherwise)
     const std::vector<colors::Rgba> faces = facecolors_, edges = edgecolors();
     bool single = false;
     transforms::Matrix combined = master;

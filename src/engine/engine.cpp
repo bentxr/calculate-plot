@@ -6,6 +6,7 @@
 #include "engine/figure.hpp"
 #include "engine/legend.hpp"
 #include "engine/tight_layout.hpp"
+#include "engine/violin.hpp"
 #include "rc/rc_params.hpp"
 #include "rc/styles.hpp"
 #include "support/histogram.hpp"
@@ -106,7 +107,7 @@ public:
                 {"hlines", "hlines"}, {"vlines", "vlines"}, {"grid", "grid"}, {"legend", "legend"}, {"text", "text"},
                 {"title", "set_title"}, {"xlabel", "set_xlabel"}, {"ylabel", "set_ylabel"}, {"xlim", "set_xlim"},
                 {"ylim", "set_ylim"}, {"xscale", "set_xscale"}, {"yscale", "set_yscale"}, {"bar", "bar"}, {"barh", "barh"},
-                {"hist", "hist"}, {"fill", "fill"}, {"step", "step"}, {"stairs", "stairs"}, {"stem", "stem"}, {"boxplot", "boxplot"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}};
+                {"hist", "hist"}, {"fill", "fill"}, {"step", "step"}, {"stairs", "stairs"}, {"stem", "stem"}, {"boxplot", "boxplot"}, {"violinplot", "violinplot"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}};
             static const std::map<std::string, std::string> ofFigure = {
                 {"suptitle", "suptitle"}, {"figtext", "text"}, {"subplots_adjust", "subplots_adjust"}, {"tight_layout", "tight_layout"}};
             const auto a = ofAxes.find(call.method);
@@ -809,6 +810,7 @@ private:
         if (call.method == "step") return step(ax, call, error);
         if (call.method == "stem") return stem(ax, call, error);
         if (call.method == "boxplot") return boxplot(ax, call, error);
+        if (call.method == "violinplot") return violinplot(ax, call, error);
         if (call.method == "stairs") return stairs(ax, call, error);
         if (call.method == "add_patch") return addPatch(ax, call, error);
         if (call.method == "hist") return hist(ax, call, error);
@@ -2698,6 +2700,185 @@ private:
         return true;
     }
 
+    // Axes.violinplot(dataset, positions=None, vert=None, orientation='vertical', widths=0.5,
+    // showmeans=False, showextrema=True, showmedians=False, quantiles=None, points=100,
+    // bw_method=None, side='both', facecolor=None, linecolor=None): cbook.violin_stats, then
+    // Axes.violin: the bodies by fill_betweenx (fill_between), the lines by hlines and vlines
+    bool violinplot(Axes& ax, const model::Call& call, std::string* error) {
+        const std::string where = call.on + ".violinplot";
+        static const char* const names[] = {"dataset", "positions", "vert", "orientation", "widths", "showmeans", "showextrema",
+                                            "showmedians", "quantiles", "points", "bw_method", "side", "facecolor", "linecolor"};
+        constexpr std::size_t count = sizeof names / sizeof names[0];
+        if (call.args.size() > count) return *error = where + ": too many positional arguments", false;
+        for (const auto& kw : call.kwargs)
+            if (kw.first != "data" && std::find(std::begin(names), std::end(names), kw.first) == std::end(names))
+                return *error = where + ": got an unexpected keyword argument '" + kw.first + "'", false;
+        if (const Json* d = keyword(call, "data"); d && !d->isNull()) return *error = where + ": data is not supported yet", false;
+        const auto arg = [&](const char* name) -> const Json* {
+            for (std::size_t i = 0; i < count; ++i)
+                if (std::string(names[i]) == name) {
+                    const Json* v = argument(call, i, name);
+                    return v && !v->isNull() ? v : nullptr;
+                }
+            return nullptr;
+        };
+        double one = 0;
+        const auto flag = [&](const char* name, bool fallback, bool* out) {
+            const Json* v = arg(name);
+            if (!v) return *out = fallback, true;
+            if (v->isBool()) return *out = v->asBool(), true;
+            if (readNumber(*v, &one)) return *out = one != 0, true;
+            return *error = where + ": " + name + " must be True or False", false;
+        };
+        const Json* dataset = arg("dataset");
+        if (!dataset) return *error = where + ": dataset is required", false;
+        std::vector<std::vector<double>> sets;
+        std::vector<bool> setInts;
+        if (!reshape2D(*dataset, &sets, &setInts)) return *error = where + ": dataset must be lists of numbers", false;
+        const std::size_t n = sets.size();
+        // quantiles: one list per data set (_reshape_2D), or none
+        std::vector<std::vector<double>> quantiles(n);
+        if (const Json* q = arg("quantiles"); q && !(sequence(*q) && sequence(*q)->items().empty())) {
+            std::vector<bool> unused;
+            if (!reshape2D(*q, &quantiles, &unused)) return *error = where + ": quantiles must be lists of numbers", false;
+            if (quantiles.size() != n)
+                return *error = where + ": List of violinplot statistics and quantiles values must have the same length", false;
+        }
+        Bandwidth bw;
+        if (const Json* b = arg("bw_method")) {
+            if (b->isString() && (b->asString() == "scott" || b->asString() == "silverman")) bw.rule = b->asString();
+            else if (b->isNumber() && readNumber(*b, &one)) bw.factor = one;
+            else return *error = where + ": `bw_method` should be 'scott', 'silverman', a scalar or a callable", false;
+        }
+        long long points = 100;
+        if (const Json* p = arg("points")) {
+            if (!p->isNumber() || !p->isInteger()) return *error = where + ": points must be an integer", false;
+            points = static_cast<long long>(p->asNumber());
+        }
+        std::vector<ViolinStats> stats(n);
+        for (std::size_t i = 0; i < n; ++i)
+            if (!violinStats(sets[i], setInts[i], bw, points, quantiles[i], &stats[i], error)) return *error = where + ": " + *error, false;
+        // --- violin
+        bool vertical = true;
+        if (arg("vert")) {
+            bool b = true;
+            if (!flag("vert", true, &b)) return false;
+            vertical = b;  // ('vertical' if vert else 'horizontal')
+        } else if (const Json* o = arg("orientation")) {
+            if (!o->isString() || (o->asString() != "horizontal" && o->asString() != "vertical"))
+                return *error = where + ": " + (o->isString() ? "'" + o->asString() + "'" : std::string("that")) +
+                                " is not a valid value for orientation; supported values are 'horizontal', 'vertical'",
+                       false;
+            vertical = o->asString() == "vertical";
+        }
+        std::vector<double> positions, widths;
+        if (const Json* p = arg("positions")) {
+            if (!numbers(*p, &positions)) return *error = where + ": positions must be numbers", false;
+            if (positions.size() != n) return *error = where + ": List of violinplot statistics and `positions` values must have the same length", false;
+        } else {
+            for (std::size_t i = 0; i < n; ++i) positions.push_back(double(i + 1));
+        }
+        if (const Json* w = arg("widths")) {
+            if (readNumber(*w, &one)) widths.assign(n, one);
+            else if (!numbers(*w, &widths)) return *error = where + ": widths must be numbers", false;
+            else if (widths.size() != n) return *error = where + ": List of violinplot statistics and `widths` values must have the same length", false;
+        } else {
+            widths.assign(n, 0.5);
+        }
+        std::string side = "both";
+        if (const Json* s = arg("side")) {
+            if (!s->isString() || (s->asString() != "both" && s->asString() != "low" && s->asString() != "high"))
+                return *error = where + ": " + (s->isString() ? "'" + s->asString() + "'" : std::string("that")) +
+                                " is not a valid value for side; supported values are 'both', 'low', 'high'",
+                       false;
+            side = s->asString();
+        }
+        const bool lowSide = side == "both" || side == "low", highSide = side == "both" || side == "high";
+        std::vector<double> lineLow(n), lineHigh(n);
+        for (std::size_t i = 0; i < n; ++i) {
+            lineLow[i] = (lowSide ? -0.25 : 0.0) * widths[i] + positions[i];
+            lineHigh[i] = (highSide ? 0.25 : 0.0) * widths[i] + positions[i];
+        }
+        // cycle_color: the rows of to_rgba_array(color) over and over (or 'none' without any), one per violin
+        const auto cycleColor = [&](const Json& c, std::vector<Json>* out) {
+            std::vector<colors::Spec> list;
+            colors::Spec single;
+            if (color(c, &single)) list = {single};
+            else if (!colorList(c, &list)) return *error = where + ": that is not a colour or a list of colours", false;
+            std::vector<Json> rows;
+            for (const auto& item : list) {
+                if (colors::isNone(item) && list.size() == 1) break;  // ('none': no rows)
+                const auto rgba = colors::toRgba(item, std::nullopt, rc_, nullptr);
+                if (!rgba) return *error = where + ": that is not a colour or a list of colours", false;
+                rows.push_back(colorJson(std::vector<double>(rgba->begin(), rgba->end())));
+            }
+            out->clear();
+            for (std::size_t i = 0; i < n; ++i) out->push_back(rows.empty() ? Json::string("none") : rows[i % rows.size()]);
+            return true;
+        };
+        const bool classic = rc_.boolean("_internal.classic_mode");
+        const Json* facecolor = arg("facecolor");
+        const Json* linecolor = arg("linecolor");
+        Json nextColor;
+        if ((!facecolor || !linecolor) && !classic) nextColor = colorJson(ax.nextLineColor());
+        std::vector<Json> faces, lineColors;
+        std::optional<double> bodyAlpha;
+        if (facecolor) {
+            if (!cycleColor(*facecolor, &faces)) return false;
+        } else {
+            bodyAlpha = 0.3;
+            if (!cycleColor(classic ? Json::string("y") : nextColor, &faces)) return false;
+        }
+        // (the classic style edges the bodies with ("k", 0.3), a colour and an alpha: not supported yet)
+        if (classic) return *error = where + ": violin plots in the classic style are not supported yet", false;
+        const Json bodyEdge;  // None
+        if (!cycleColor(linecolor ? *linecolor : classic ? Json::string("r") : nextColor, &lineColors)) return false;
+        std::vector<Json> colorsList(lineColors.begin(), lineColors.end());
+        const Json lineColorsJson = Json::array(colorsList);
+        // the bodies
+        for (std::size_t i = 0; i < n; ++i) {
+            std::vector<double> vals = stats[i].vals;
+            if (!vals.empty()) {
+                double top = vals[0];  // vals.max(): NaN wins
+                for (double v : vals) top = std::isnan(top) || std::isnan(v) ? std::nan("") : std::max(top, v);
+                for (double& v : vals) v = 0.5 * widths[i] * v / top;
+            }
+            std::vector<double> lo, hi;
+            for (double v : vals) lo.push_back(-v + positions[i]), hi.push_back(v + positions[i]);
+            model::Call f;
+            f.on = call.on;
+            f.method = vertical ? "fill_betweenx" : "fill_between";
+            f.args = {numbersJson(stats[i].coords), lowSide ? numbersJson(lo) : Json::real(positions[i]),
+                      highSide ? numbersJson(hi) : Json::real(positions[i])};
+            f.kwargs = {{"facecolor", faces[i]}, {"edgecolor", bodyEdge}, {"alpha", bodyAlpha ? Json::real(*bodyAlpha) : Json()}};
+            if (!fillBetween(ax, f, error)) return false;
+        }
+        // the lines across (perp_lines) and along (par_lines)
+        const auto lines = [&](bool across, const std::vector<double>& at, const std::vector<double>& from, const std::vector<double>& to) {
+            model::Call l;
+            l.on = call.on;
+            l.method = (across == vertical) ? "hlines" : "vlines";
+            l.args = {numbersJson(at), numbersJson(from), numbersJson(to)};
+            l.kwargs = {{"colors", lineColorsJson}};
+            if (side != "both") l.kwargs.emplace_back("capstyle", Json::string("projecting"));
+            return this->lines(ax, l, error);
+        };
+        std::vector<double> means, mins, maxes, medians, qs, qLow, qHigh;
+        for (std::size_t i = 0; i < n; ++i) {
+            means.push_back(stats[i].mean), mins.push_back(stats[i].min), maxes.push_back(stats[i].max), medians.push_back(stats[i].median);
+            for (double q : stats[i].quantiles) qs.push_back(q), qLow.push_back(lineLow[i]), qHigh.push_back(lineHigh[i]);
+        }
+        bool showmeans = false, showextrema = true, showmedians = false;
+        if (!flag("showmeans", false, &showmeans) || !flag("showextrema", true, &showextrema) || !flag("showmedians", false, &showmedians))
+            return false;
+        if (showmeans && !lines(true, means, lineLow, lineHigh)) return false;
+        if (showextrema && (!lines(true, maxes, lineLow, lineHigh) || !lines(true, mins, lineLow, lineHigh) || !lines(false, positions, mins, maxes)))
+            return false;
+        if (showmedians && !lines(true, medians, lineLow, lineHigh)) return false;
+        if (!qs.empty() && !lines(true, qs, qLow, qHigh)) return false;
+        return true;
+    }
+
     // Axes.step(x, y, *args, where='pre', data=None, **kwargs): plot with drawstyle 'steps-<where>'
     bool step(Axes& ax, const model::Call& call, std::string* error) {
         const std::string where = call.on + ".step";
@@ -3943,6 +4124,10 @@ private:
             } else if (name == "label") {
                 if (!value.isString()) return *error = where + ": label must be a string", false;
                 lc->label = value.asString();
+            } else if (name == "capstyle") {
+                if (!value.isString() || (value.asString() != "butt" && value.asString() != "projecting" && value.asString() != "round"))
+                    return *error = where + ": that is not a valid value for CapStyle; supported values are 'butt', 'projecting', 'round'", false;
+                lc->capstyle = value.asString();
             } else {
                 return *error = where + ": unsupported keyword " + name, false;
             }

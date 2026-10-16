@@ -4448,6 +4448,130 @@
   },
   {
    "on": "axes",
+   "call": "violinplot",
+   "parameters": [
+    {
+     "name": "dataset",
+     "positional": true,
+     "valid": "1D array or sequence of 1D arrays or 2D array",
+     "kind": "other",
+     "required": true
+    },
+    {
+     "name": "positions",
+     "positional": true,
+     "valid": "array-like, default: [1, 2, ..., n]",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "vert",
+     "positional": false,
+     "valid": "bool, optional",
+     "kind": "bool",
+     "default": null
+    },
+    {
+     "name": "orientation",
+     "positional": false,
+     "valid": "{'vertical', 'horizontal'}, default: 'vertical'",
+     "kind": "choice",
+     "choices": [
+      "vertical",
+      "horizontal"
+     ],
+     "default": "vertical"
+    },
+    {
+     "name": "widths",
+     "positional": false,
+     "valid": "float or array-like, default: 0.5",
+     "kind": "number",
+     "default": 0.5
+    },
+    {
+     "name": "showmeans",
+     "positional": false,
+     "valid": "bool, default: False",
+     "kind": "bool",
+     "default": false
+    },
+    {
+     "name": "showextrema",
+     "positional": false,
+     "valid": "bool, default: True",
+     "kind": "bool",
+     "default": true
+    },
+    {
+     "name": "showmedians",
+     "positional": false,
+     "valid": "bool, default: False",
+     "kind": "bool",
+     "default": false
+    },
+    {
+     "name": "quantiles",
+     "positional": false,
+     "valid": "array-like, default: None",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "points",
+     "positional": false,
+     "valid": "int, default: 100",
+     "kind": "other",
+     "default": 100
+    },
+    {
+     "name": "bw_method",
+     "positional": false,
+     "valid": "{'scott', 'silverman'} or float or callable, default: 'scott'",
+     "kind": "choice",
+     "choices": [
+      "scott",
+      "silverman"
+     ],
+     "default": null
+    },
+    {
+     "name": "side",
+     "positional": false,
+     "valid": "{'both', 'low', 'high'}, default: 'both'",
+     "kind": "choice",
+     "choices": [
+      "both",
+      "low",
+      "high"
+     ],
+     "default": "both"
+    },
+    {
+     "name": "facecolor",
+     "positional": false,
+     "valid": ":mpltype:`color` or list of :mpltype:`color`, optional",
+     "kind": "colour",
+     "default": null
+    },
+    {
+     "name": "linecolor",
+     "positional": false,
+     "valid": ":mpltype:`color` or list of :mpltype:`color`, optional",
+     "kind": "colour",
+     "default": null
+    },
+    {
+     "name": "data",
+     "positional": false,
+     "valid": "indexable object, optional",
+     "kind": "other",
+     "default": null
+    }
+   ]
+  },
+  {
+   "on": "axes",
    "call": "hlines",
    "parameters": [
     {

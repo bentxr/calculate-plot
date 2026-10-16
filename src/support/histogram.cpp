@@ -1,7 +1,8 @@
 // Derived from NumPy 2.5.3: numpy/lib/_histograms_impl.py (histogram, histogram_bin_edges, the bin
 // rules of _hist_bin_selectors and their helpers), numpy/_core/function_base.py (linspace),
 // numpy/_core/_methods.py (_mean, _var, _std), numpy/lib/_function_base_impl.py (percentile with the
-// 'linear' method: _quantile, _get_indexes, _lerp) and numpy/_core/src/umath/loops_utils.h.src
+// 'linear' method: _quantile, _get_indexes, _lerp; median: _median; cov),
+// numpy/linalg/umath_linalg.cpp (det through slogdet) and numpy/_core/src/umath/loops_utils.h.src
 // (pairwise_sum).
 // Copyright (c) 2005-2025, NumPy Developers. All rights reserved.
 // Licence: LICENSES/NumPy.txt (BSD-3-Clause). Changes: licensing/changes/numpy.md
@@ -262,6 +263,43 @@ std::vector<double> npLinspace(double start, double stop, long long num) {
     for (double& v : y) v += start;
     if (num > 1) y.back() = stop;
     return y;
+}
+
+double npMin(const std::vector<double>& a) {
+    double m = a.empty() ? std::nan("") : a[0];
+    for (std::size_t i = 1; i < a.size(); ++i) m = (m < a[i] || std::isnan(m)) ? m : a[i];  // scalar_min_f
+    return m;
+}
+
+double npMax(const std::vector<double>& a) {
+    double m = a.empty() ? std::nan("") : a[0];
+    for (std::size_t i = 1; i < a.size(); ++i) m = (m > a[i] || std::isnan(m)) ? m : a[i];  // scalar_max_f
+    return m;
+}
+
+double npMedian(std::vector<double> a, bool integer) {
+    if (a.empty()) return std::nan("");
+    if (std::any_of(a.begin(), a.end(), [](double x) { return std::isnan(x); })) return std::nan("");
+    std::sort(a.begin(), a.end());
+    const std::size_t n = a.size(), half = n / 2;
+    // mean(part[index - 1:index + 1]) or mean(part[index:index + 1])
+    const std::vector<double> middle = n % 2 ? std::vector<double>{a[half]} : std::vector<double>{a[half - 1], a[half]};
+    return npMean(middle, integer);
+}
+
+double npCovRow(const std::vector<double>& a) {
+    const double avg = npMean(a);  // np.average(X, axis=1)
+    std::vector<double> d;
+    for (double x : a) d.push_back(x - avg);
+    const double fact = double(a.size()) - 1;
+    return blasDot(d, d) * (1 / fact);  // c *= np.true_divide(1, fact)
+}
+
+double npDet1(double u) {
+    // slogdet of [[u]]: the LU factor is u; sign and log|u|, then sign * exp(logdet)
+    if (u == 0) return 0.0;
+    const double sign = u < 0 ? -1.0 : 1.0;
+    return sign * std::exp(std::log(std::fabs(u)));
 }
 
 bool histogramBinEdges(const std::vector<double>& a, const Bins& bins, std::optional<std::pair<double, double>> range,

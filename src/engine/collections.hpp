@@ -77,6 +77,7 @@ public:
     // set_hatch: the pattern, or None; an empty one draws no hatch (but is not None)
     std::optional<std::string> hatch;
     double hatchLinewidth;  // rcParams["hatch.linewidth"] when made
+    std::optional<std::string> capstyle;  // set_capstyle: 'butt', 'projecting' or 'round'; unset: the GC's
 
 protected:
     virtual void beforeDraw() {}
