@@ -29,6 +29,9 @@ struct Path {
     // Path(vertices, codes, closed=...): `closed` sets MOVETO, LINETO..., CLOSEPOLY when codes are not given.
     static Path make(std::vector<double> vertices, std::vector<unsigned char> codes, const rc::Params& rc,
                      bool closed = false);
+    // Path.arc(theta1, theta2): the unit circle's arc from theta1 to theta2 degrees, as cubic Bezier
+    // curves (n = 2 ** ceil(sweep / (pi/2)) of them)
+    static Path arc(double theta1, double theta2, const rc::Params& rc);
     // Path.unit_rectangle(): (0, 0), (1, 0), (1, 1), (0, 1), closed.
     static Path unitRectangle(const rc::Params& rc);
     // The same path made under other rcParams (its simplification settings are theirs).

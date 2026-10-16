@@ -1,0 +1,6 @@
+{"version": 1, "calls": [{"call": "subplots", "args": [2, 2], "kwargs": {"figsize": {"$tuple": [7.2, 6]}}, "as": ["fig", "axs"]},
+ {"on": "axs[0, 0]", "call": "pie", "args": [[15, 30, 45, 10]], "kwargs": {"labels": ["Frogs", "Hogs", "Dogs", "Logs"], "autopct": "%1.1f%%", "explode": [0, 0.1, 0, 0], "shadow": true, "startangle": 90}},
+ {"on": "axs[0, 1]", "call": "pie", "args": [[3, 2, 1]], "kwargs": {"colors": ["C3", "gold", [0.2, 0.4, 0.6]], "counterclock": false, "radius": 0.8, "labeldistance": null, "hatch": ["/", ".", ""], "frame": true, "center": {"$tuple": [0.5, 0.2]}}},
+ {"on": "axs[1, 0]", "call": "pie", "args": [[0.2, 0.3]], "kwargs": {"normalize": false, "rotatelabels": true, "labels": ["a", "b"], "pctdistance": 0.8, "autopct": "%.0f"}},
+ {"on": "axs[1, 1]", "call": "pie", "args": [[1, 1, 1, 1]], "kwargs": {"labels": ["w", "x", "y", "z"]}},
+ {"on": "axs[1, 1]", "call": "legend"}]}

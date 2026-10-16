@@ -1647,6 +1647,20 @@ TEST(TickCalls, ArgumentsAreReadAsMatplotlibReadsThem) {
     EXPECT_EQ(error(R"({"on": "axs[0]", "call": "set_frame_on", "args": [0]})"), "");
 }
 
+// Axes.pie: its own parameters only; the property dictionaries are not supported yet
+TEST(PieCalls, ArgumentsAreReadAsMatplotlibReadsThem) {
+    const auto error = [](const std::string& args, const std::string& kwargs) {
+        return draw(kSubplots + R"({"on": "axs[0]", "call": "pie", "args": )" + args + R"(, "kwargs": )" + kwargs + "}").error;
+    };
+    EXPECT_EQ(error("[[1, 2, 3]]", "{}"), "");
+    EXPECT_EQ(error("[[1, -2]]", "{}"), "axs[0].pie: Wedge sizes 'x' must be non negative values");
+    EXPECT_EQ(error("[[0, 0]]", "{}"), "axs[0].pie: All wedge sizes are zero");
+    EXPECT_EQ(error("[[1, 2]]", R"({"normalize": false})"), "axs[0].pie: Cannot plot an unnormalized pie with sum(x) > 1");
+    EXPECT_EQ(error("[[1, 2]]", R"({"labels": ["a"]})"), "axs[0].pie: 'labels' must be of length 'x', not 1");
+    EXPECT_EQ(error("[[1, 2]]", R"({"radius": 0})"), "axs[0].pie: 'radius' must be a positive number, not 0.0");
+    EXPECT_EQ(error("[[1, 2]]", R"({"color": "r"})"), "axs[0].pie: got an unexpected keyword argument 'color'");
+}
+
 TEST(HistCalls, ArgumentsAreReadAsMatplotlibReadsThem) {
     const auto error = [](const std::string& args, const std::string& kwargs) {
         return draw(kSubplots + R"({"on": "axs[0]", "call": "hist", "args": )" + args + R"(, "kwargs": )" + kwargs + "}").error;

@@ -192,12 +192,12 @@ TEST(Cli, DrawRefusesAnotherKindOfFile) {
 
 TEST(Cli, DrawSaysWhatItCannotDraw) {
     const std::string in = tempFile(".json");
-    std::ofstream(in) << R"({"version":1,"calls":[{"call":"subplots","as":["fig","ax"]},{"on":"ax","call":"pie","args":[[1,2]]}]})";
+    std::ofstream(in) << R"({"version":1,"calls":[{"call":"subplots","as":["fig","ax"]},{"on":"ax","call":"plot_surface","args":[[1,2]]}]})";
     for (const char* ending : {".png", ".svg", ".json"}) {
         const std::string out = tempFile(ending);
         const Outcome r = cplot({"draw", in, out, "--fonts", kFontDir});
         EXPECT_EQ(r.status, 1);
-        EXPECT_NE(r.err.find("ax.pie"), std::string::npos) << r.err;
+        EXPECT_NE(r.err.find("ax.plot_surface"), std::string::npos) << r.err;
         EXPECT_FALSE(std::filesystem::exists(out)) << "nothing is written for a figure that cannot be drawn";
     }
     std::filesystem::remove(in);

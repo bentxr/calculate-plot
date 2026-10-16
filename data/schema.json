@@ -4572,6 +4572,148 @@
   },
   {
    "on": "axes",
+   "call": "pie",
+   "parameters": [
+    {
+     "name": "x",
+     "positional": true,
+     "valid": "1D array-like",
+     "kind": "other",
+     "required": true
+    },
+    {
+     "name": "explode",
+     "positional": false,
+     "valid": "array-like, default: None",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "labels",
+     "positional": false,
+     "valid": "list, default: None",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "colors",
+     "positional": false,
+     "valid": ":mpltype:`color` or list of :mpltype:`color`, default: None",
+     "kind": "colour",
+     "default": null
+    },
+    {
+     "name": "autopct",
+     "positional": false,
+     "valid": "None or str or callable, default: None",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "pctdistance",
+     "positional": false,
+     "valid": "float, default: 0.6",
+     "kind": "number",
+     "default": 0.6
+    },
+    {
+     "name": "shadow",
+     "positional": false,
+     "valid": "bool or dict, default: False",
+     "kind": "bool",
+     "default": false
+    },
+    {
+     "name": "labeldistance",
+     "positional": false,
+     "valid": "float or None, default: 1.1",
+     "kind": "number",
+     "default": 1.1
+    },
+    {
+     "name": "startangle",
+     "positional": false,
+     "valid": "float, default: 0 degrees",
+     "kind": "number",
+     "default": 0
+    },
+    {
+     "name": "radius",
+     "positional": false,
+     "valid": "float, default: 1",
+     "kind": "number",
+     "default": 1
+    },
+    {
+     "name": "counterclock",
+     "positional": false,
+     "valid": "bool, default: True",
+     "kind": "bool",
+     "default": true
+    },
+    {
+     "name": "wedgeprops",
+     "positional": false,
+     "valid": "dict, default: None",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "textprops",
+     "positional": false,
+     "valid": "dict, default: None",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "center",
+     "positional": false,
+     "valid": "(float, float), default: (0, 0)",
+     "kind": "other",
+     "default": [
+      0,
+      0
+     ]
+    },
+    {
+     "name": "frame",
+     "positional": false,
+     "valid": "bool, default: False",
+     "kind": "bool",
+     "default": false
+    },
+    {
+     "name": "rotatelabels",
+     "positional": false,
+     "valid": "bool, default: False",
+     "kind": "bool",
+     "default": false
+    },
+    {
+     "name": "normalize",
+     "positional": false,
+     "valid": "bool, default: True",
+     "kind": "bool",
+     "default": true
+    },
+    {
+     "name": "hatch",
+     "positional": false,
+     "valid": "str or list, default: None",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "data",
+     "positional": false,
+     "valid": "indexable object, optional",
+     "kind": "other",
+     "default": null
+    }
+   ]
+  },
+  {
+   "on": "axes",
    "call": "hlines",
    "parameters": [
     {

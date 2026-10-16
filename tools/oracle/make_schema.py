@@ -56,6 +56,7 @@ CALLS = [
     ("axes", "stem", Axes.stem, None),
     ("axes", "boxplot", Axes.boxplot, None),
     ("axes", "violinplot", Axes.violinplot, None),
+    ("axes", "pie", Axes.pie, None),
     ("axes", "hlines", Axes.hlines, collections.LineCollection),
     ("axes", "vlines", Axes.vlines, collections.LineCollection),
     ("axes", "text", Axes.text, text.Text),

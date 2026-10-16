@@ -107,7 +107,7 @@ public:
                 {"hlines", "hlines"}, {"vlines", "vlines"}, {"grid", "grid"}, {"legend", "legend"}, {"text", "text"},
                 {"title", "set_title"}, {"xlabel", "set_xlabel"}, {"ylabel", "set_ylabel"}, {"xlim", "set_xlim"},
                 {"ylim", "set_ylim"}, {"xscale", "set_xscale"}, {"yscale", "set_yscale"}, {"bar", "bar"}, {"barh", "barh"},
-                {"hist", "hist"}, {"fill", "fill"}, {"step", "step"}, {"stairs", "stairs"}, {"stem", "stem"}, {"boxplot", "boxplot"}, {"violinplot", "violinplot"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}};
+                {"hist", "hist"}, {"fill", "fill"}, {"step", "step"}, {"stairs", "stairs"}, {"stem", "stem"}, {"boxplot", "boxplot"}, {"violinplot", "violinplot"}, {"pie", "pie"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}};
             static const std::map<std::string, std::string> ofFigure = {
                 {"suptitle", "suptitle"}, {"figtext", "text"}, {"subplots_adjust", "subplots_adjust"}, {"tight_layout", "tight_layout"}};
             const auto a = ofAxes.find(call.method);
@@ -896,6 +896,7 @@ private:
         if (call.method == "stem") return stem(ax, call, error);
         if (call.method == "boxplot") return boxplot(ax, call, error);
         if (call.method == "violinplot") return violinplot(ax, call, error);
+        if (call.method == "pie") return pie(ax, call, error);
         if (call.method == "stairs") return stairs(ax, call, error);
         if (call.method == "add_patch") return addPatch(ax, call, error);
         if (call.method == "hist") return hist(ax, call, error);
@@ -2961,6 +2962,197 @@ private:
             return false;
         if (showmedians && !lines(true, medians, lineLow, lineHigh)) return false;
         if (!qs.empty() && !lines(true, qs, qLow, qHigh)) return false;
+        return true;
+    }
+
+    // Axes.pie(x, explode=None, labels=None, colors=None, autopct=None, pctdistance=0.6, shadow=False,
+    // labeldistance=1.1, startangle=0, radius=1, counterclock=True, wedgeprops=None, textprops=None,
+    // center=(0, 0), frame=False, rotatelabels=False, *, normalize=True, hatch=None): an equal aspect,
+    // one Wedge per value (and its Shadow), the labels and percentages by pie_label, and without a frame
+    // no ticks and limits of 1.25 around the centre
+    bool pie(Axes& ax, const model::Call& call, std::string* error) {
+        const std::string where = call.on + ".pie";
+        static const char* const names[] = {"x", "explode", "labels", "colors", "autopct", "pctdistance", "shadow", "labeldistance",
+                                            "startangle", "radius", "counterclock", "wedgeprops", "textprops", "center", "frame",
+                                            "rotatelabels", "normalize", "hatch"};
+        constexpr std::size_t count = sizeof names / sizeof names[0];
+        if (call.args.size() > 16) return *error = where + ": too many positional arguments", false;
+        for (const auto& kw : call.kwargs)
+            if (kw.first != "data" && std::find(std::begin(names), std::end(names), kw.first) == std::end(names))
+                return *error = where + ": got an unexpected keyword argument '" + kw.first + "'", false;
+        if (const Json* d = keyword(call, "data"); d && !d->isNull()) return *error = where + ": data is not supported yet", false;
+        const auto arg = [&](const char* name) -> const Json* {
+            for (std::size_t i = 0; i < count; ++i)
+                if (std::string(names[i]) == name) {
+                    const Json* v = argument(call, i, name);
+                    return v && !v->isNull() ? v : nullptr;
+                }
+            return nullptr;
+        };
+        double one = 0;
+        const auto number = [&](const char* name, double fallback, double* out) {
+            const Json* v = arg(name);
+            if (!v) return *out = fallback, true;
+            if (!v->isNumber() || !readNumber(*v, out)) return *error = where + ": " + name + " must be a number", false;
+            return true;
+        };
+        const auto flag = [&](const char* name, bool fallback, bool* out) {
+            const Json* v = arg(name);
+            if (!v) return *out = fallback, true;
+            if (v->isBool()) return *out = v->asBool(), true;
+            if (readNumber(*v, &one)) return *out = one != 0, true;
+            return *error = where + ": " + name + " must be True or False", false;
+        };
+        for (const char* props : {"wedgeprops", "textprops"})
+            if (arg(props)) return *error = where + ": " + props + " is not supported yet", false;
+        // set_aspect('equal')
+        ax.aspect = 1.0;
+        const Json* xJson = arg("x");
+        std::vector<double> x;
+        if (!xJson || !numbers(*xJson, &x)) return *error = where + ": x must be a list of numbers", false;
+        for (double v : x)
+            if (v < 0) return *error = where + ": Wedge sizes 'x' must be non negative values", false;
+        for (double v : x)
+            if (!std::isfinite(v)) return *error = where + ": Wedge sizes must be finite numbers", false;
+        const double sx = support::npSum(x);  // (exact for integers too)
+        if (sx == 0) return *error = where + ": All wedge sizes are zero", false;
+        bool normalize = true;
+        if (!flag("normalize", true, &normalize)) return false;
+        std::vector<double> fracs;
+        if (normalize) {
+            for (double v : x) fracs.push_back(v / sx);
+        } else if (sx > 1) {
+            return *error = where + ": Cannot plot an unnormalized pie with sum(x) > 1", false;
+        } else {
+            fracs = x;
+        }
+        std::vector<std::string> labels(x.size());
+        if (const Json* l = arg("labels")) {
+            const Json* seq = sequence(*l);
+            if (!seq) return *error = where + ": labels must be a list of strings", false;
+            labels.clear();
+            for (const Json& s : seq->items()) {
+                if (!s.isString()) return *error = where + ": labels must be strings (others are not supported yet)", false;
+                labels.push_back(s.asString());
+            }
+        }
+        std::vector<double> explode(x.size(), 0.0);
+        if (const Json* e = arg("explode"); e && !numbers(*e, &explode)) return *error = where + ": explode must be numbers", false;
+        if (x.size() != labels.size())
+            return *error = where + ": 'labels' must be of length 'x', not " + std::to_string(labels.size()), false;
+        if (x.size() != explode.size())
+            return *error = where + ": 'explode' must be of length 'x', not " + std::to_string(explode.size()), false;
+        std::vector<Json> colorCycle;
+        if (const Json* cs = arg("colors")) {
+            const Json* seq = sequence(*cs);
+            if (!seq || seq->items().empty()) return *error = where + ": colors must be a list of colours", false;
+            colorCycle = seq->items();
+        }
+        // hatch: itertools.cycle(np.atleast_1d(hatch))
+        std::vector<Json> hatches{Json()};
+        if (const Json* h = arg("hatch")) {
+            if (h->isString()) hatches = {*h};
+            else if (const Json* seq = sequence(*h); seq && !seq->items().empty()) hatches = seq->items();
+            else return *error = where + ": hatch must be a string or a list of them", false;
+        }
+        double radius = 1, startangle = 0, pctdistance = 0.6, labeldistance = 1.1;
+        if (!number("radius", 1, &radius) || !number("startangle", 0, &startangle) || !number("pctdistance", 0.6, &pctdistance))
+            return false;
+        if (!(radius > 0)) return *error = where + ": 'radius' must be a positive number, not " + support::pythonRepr(radius), false;
+        bool counterclock = true, frame = false, rotatelabels = false;
+        if (!flag("counterclock", true, &counterclock) || !flag("frame", false, &frame) || !flag("rotatelabels", false, &rotatelabels))
+            return false;
+        std::array<double, 2> center{0, 0};
+        if (const Json* c = arg("center")) {
+            const Json* seq = sequence(*c);
+            if (!seq || seq->size() != 2 || !readNumber((*seq)[0], &center[0]) || !readNumber((*seq)[1], &center[1]))
+                return *error = where + ": center must be (x, y)", false;
+        }
+        bool shadow = false;
+        if (!flag("shadow", false, &shadow)) return false;
+        // the wedges
+        double theta1 = startangle / 360;
+        std::vector<Wedge*> wedges;
+        for (std::size_t i = 0; i < x.size(); ++i) {
+            const double frac = fracs[i];
+            double xPos = center[0], yPos = center[1];
+            const double theta2 = counterclock ? theta1 + frac : theta1 - frac;
+            const double thetam = 2 * M_PI * 0.5 * (theta1 + theta2);
+            xPos += explode[i] * std::cos(thetam);
+            yPos += explode[i] * std::sin(thetam);
+            auto w = std::make_unique<Wedge>(rc_, xPos, yPos, radius, 360. * std::min(theta1, theta2), 360. * std::max(theta1, theta2));
+            // Wedge(..., facecolor=get_next_color(), hatch=next(hatch_cycle), clip_on=False, label=label)
+            const Json face = colorCycle.empty() ? colorJson(ax.nextPatchColor()) : colorCycle[i % colorCycle.size()];
+            const Json hatch = hatches[i % hatches.size()];
+            const Json label = Json::string(labels[i]);
+            if (!patchConstructor(*w, {{"facecolor", &face}}, where, error)) return false;
+            if (hatch.isString()) w->setHatch(hatch.asString(), true);  // (np.atleast_1d of a str: np.str_)
+            w->clipOn = false;
+            w->label = labels[i];
+            Wedge& added = static_cast<Wedge&>(ax.addPatch(std::move(w)));
+            wedges.push_back(&added);
+            if (shadow) {
+                auto s = std::make_unique<Shadow>(rc_, added, -0.02, -0.02);
+                s->label = "_nolegend_";
+                ax.addPatch(std::move(s));
+            }
+            theta1 = theta2;
+        }
+        // pie_label: a text per wedge at `distance` radii along its middle
+        const auto pieLabel = [&](const std::vector<std::string>& texts, double distance, bool outer, bool rotate, const Json* fontsize) {
+            for (std::size_t i = 0; i < wedges.size(); ++i) {
+                const Wedge& w = *wedges[i];
+                const double thetam = 2 * M_PI * 0.5 * (w.theta1 + w.theta2) / 360;
+                const double xt = w.cx + distance * w.r * std::cos(thetam);
+                const double yt = w.cy + distance * w.r * std::sin(thetam);
+                std::string ha = outer ? (xt > 0 ? "left" : "right") : "center", va = "center";
+                Json rotation = Json::string("horizontal");
+                if (rotate) {
+                    if (outer) va = yt > 0 ? "bottom" : "top";
+                    rotation = Json::real(thetam * (180.0 / M_PI) + (xt > 0 ? 0 : 180));  // np.rad2deg
+                }
+                model::Call tc;
+                tc.on = call.on;
+                tc.method = "text";
+                tc.args = {Json::real(xt), Json::real(yt), Json::string(texts[i])};
+                tc.kwargs = {{"clip_on", Json::boolean(false)}, {"rotation", rotation}, {"horizontalalignment", Json::string(ha)},
+                             {"verticalalignment", Json::string(va)}};
+                if (fontsize) tc.kwargs.emplace_back("fontsize", *fontsize);  // t.set(**textprops)
+                if (!axesText(ax, tc, error)) return false;
+            }
+            return true;
+        };
+        // labeldistance None: no labels
+        const Json* ld = argument(call, 7, "labeldistance");
+        if (!(ld && ld->isNull())) {
+            if (!number("labeldistance", 1.1, &labeldistance)) return false;
+            if (!pieLabel(labels, labeldistance, true, rotatelabels, &rc_.value("xtick.labelsize"))) return false;
+        }
+        if (const Json* autopct = arg("autopct")) {
+            if (!autopct->isString()) return *error = where + ": autopct must be a format string (a callable is not supported)", false;
+            std::vector<std::string> texts;
+            for (double frac : fracs) {
+                const auto f = support::percentFormat(autopct->asString(), 100. * frac, false);
+                if (f.kind != support::Formatted::Text)
+                    return *error = where + ": " + (f.kind == support::Formatted::Raised ? f.text : "this autopct is not supported yet"), false;
+                texts.push_back(f.text);
+            }
+            if (!pieLabel(texts, pctdistance, false, false, nullptr)) return false;
+        }
+        if (frame) {
+            ax.requestAutoscaleView(true, true);
+        } else {
+            // set(frame_on=False, xticks=[], yticks=[], xlim=..., ylim=...)
+            ax.frameOn = false;
+            if (!ax.xaxis->setTicks({}, std::nullopt, error) || !ax.yaxis->setTicks({}, std::nullopt, error)) return false;
+            for (int k = 0; k < 2; ++k) {
+                model::Call lim;
+                lim.on = call.on;
+                lim.method = k == 0 ? "set_xlim" : "set_ylim";
+                lim.args = {Json::array({Json::real(-1.25 + center[std::size_t(k)]), Json::real(1.25 + center[std::size_t(k)])})};
+                if (!axesCall(ax, lim, error)) return false;
+            }
+        }
         return true;
     }
 

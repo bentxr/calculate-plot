@@ -1067,9 +1067,83 @@ bool Axes::containsPoint(double x, double y) const {
 
 namespace {
 
-// Path.iter_bezier(simplify=False) of a path of lines (what the patches added so far have): the path
-// as Path.cleaned leaves it (non-finite vertices removed, the next one a MOVETO), each segment evaluated
-// at its ends (curve([0, 1]); lines have no extrema between) as NumPy's matmul does, from +0.0.
+// The real roots in [0, 1] of the polynomial c0 + c1 t + c2 t^2 (bezier._real_roots_in_01 for a degree of
+// at most 2, which is all a cubic curve's derivative has), sorted
+std::vector<double> realRootsIn01(std::vector<double> coeffs) {
+    std::size_t deg = coeffs.size() - 1;
+    while (deg > 0 && std::fabs(coeffs[deg]) < 1e-12) --deg;  // trailing near-zeros
+    std::vector<double> roots;
+    if (deg == 0) return roots;
+    if (deg == 1) {
+        const double root = -coeffs[0] / coeffs[1];
+        if (0 <= root && root <= 1) roots.push_back(root);
+        return roots;
+    }
+    // _quadratic_roots_in_01
+    const double c0 = coeffs[0], c1 = coeffs[1], c2 = coeffs[2];
+    if (std::fabs(c2) < 1e-12) {
+        if (std::fabs(c1) < 1e-12) return roots;
+        const double root = -c0 / c1;
+        if (0 <= root && root <= 1) roots.push_back(root);
+        return roots;
+    }
+    const double disc = c1 * c1 - 4 * c2 * c0;
+    if (disc < 0) return roots;
+    const double sqrtDisc = std::sqrt(disc);
+    const double q = c1 >= 0 ? -0.5 * (c1 + sqrtDisc) : -0.5 * (c1 - sqrtDisc);
+    std::vector<double> all;
+    if (std::fabs(q) > 1e-12) all.push_back(c0 / q);
+    if (std::fabs(c2) > 1e-12) all.push_back(q / c2);
+    for (double r : all)
+        if (r >= 0 && r <= 1) roots.push_back(r);
+    std::sort(roots.begin(), roots.end());
+    return roots;
+}
+
+// BezierSegment(control points): its points at the start, at its axis-aligned extrema and at the end
+// (curve([0, *dzeros, 1])), each a matrix product as NumPy's BLAS makes it (fused, from +0.0)
+void bezierPoints(const std::vector<std::array<double, 2>>& p, std::vector<std::array<double, 2>>* out) {
+    const std::size_t N = p.size(), n = N - 1;
+    static const double binom[4][4] = {{1, 0, 0, 0}, {1, 1, 0, 0}, {1, 2, 1, 0}, {1, 3, 3, 1}};
+    std::vector<double> ts{0.0};
+    if (n > 1) {
+        // polynomial_coefficients: _get_coeff_matrix(n) @ control points
+        std::vector<std::array<double, 2>> C(N);
+        for (std::size_t j = 0; j < N; ++j)
+            for (int d = 0; d < 2; ++d) {
+                double acc = 0.0;
+                for (std::size_t i = 0; i < N; ++i) {
+                    const double m = i <= j ? binom[n][j] * (((i + j) % 2) ? -1.0 : 1.0) * binom[j][i] : 0.0;
+                    acc = std::fma(m, p[i][std::size_t(d)], acc);
+                }
+                C[j][std::size_t(d)] = acc;
+            }
+        // dCj = arange(1, n + 1)[:, None] * Cj[1:]; the roots of each dimension's derivative, x then y
+        for (int d = 0; d < 2; ++d) {
+            std::vector<double> coeffs;
+            for (std::size_t k = 1; k < N; ++k) coeffs.push_back(double(k) * C[k][std::size_t(d)]);
+            for (double r : realRootsIn01(coeffs)) ts.push_back(r);
+        }
+    }
+    ts.push_back(1.0);
+    for (double tt : ts) {
+        std::array<double, 2> q{};
+        for (int d = 0; d < 2; ++d) {
+            double acc = 0.0;
+            for (std::size_t k = 0; k < N; ++k) {
+                // np.power.outer(1 - t, orders[::-1]) * np.power.outer(t, orders), times _px (binomial weights)
+                const double w = std::pow(1 - tt, double(n - k)) * std::pow(tt, double(k));
+                acc = std::fma(w, p[k][std::size_t(d)] * binom[n][k], acc);
+            }
+            q[std::size_t(d)] = acc;
+        }
+        out->push_back(q);
+    }
+}
+
+// Path.iter_bezier(simplify=False): the path as Path.cleaned leaves it (non-finite vertices removed, the
+// next one a MOVETO), each segment a Bezier curve of its start and control points (a MOVETO a point,
+// CLOSEPOLY a line back to the subpath's start), and of each the points _update_patch_limits takes
 std::vector<std::array<double, 2>> bezierEnds(const Path& path) {
     mpl::PathIterator it(path.vertices, path.codes, false, path.simplifyThreshold);
     agg::trans_affine identity;
@@ -1079,21 +1153,27 @@ std::vector<std::array<double, 2>> bezierEnds(const Path& path) {
                  SketchParams{0.0, 0.0, 0.0}, v, codes);
     std::vector<std::array<double, 2>> out;
     std::array<double, 2> first{}, prev{};
-    const auto at = [](const std::array<double, 2>& p) { return std::array<double, 2>{0.0 + p[0], 0.0 + p[1]}; };
     for (std::size_t i = 0; i < codes.size(); ++i) {
         const unsigned code = codes[i];
         if (code == agg::path_cmd_stop) break;
-        const std::array<double, 2> p{v[2 * i], v[2 * i + 1]};
-        if (code == MOVETO) {  // a point: a curve of order 0
-            first = p;
-            out.push_back(at(p));
-            out.push_back(at(p));
+        const auto at = [&](std::size_t k) { return std::array<double, 2>{v[2 * k], v[2 * k + 1]}; };
+        std::vector<std::array<double, 2>> control;
+        if (code == MOVETO) {
+            first = at(i);
+            control = {first};
+            prev = first;
+        } else if (code == CURVE3 || code == CURVE4) {
+            const std::size_t extra = code == CURVE3 ? 1 : 2;
+            control = {prev};
+            for (std::size_t k = i; k <= i + extra && k < codes.size(); ++k) control.push_back(at(k));
+            i += extra;
+            prev = control.back();
         } else {  // LINETO, or CLOSEPOLY: the line back to the first vertex
-            const std::array<double, 2> end = (code & 0x7f) == CLOSEPOLY ? first : p;
-            out.push_back(at(prev));
-            out.push_back(at(end));
+            const std::array<double, 2> end = (code & 0x7f) == CLOSEPOLY ? first : at(i);
+            control = {prev, end};
+            prev = at(i);
         }
-        prev = p;
+        bezierPoints(control, &out);
     }
     return out;
 }

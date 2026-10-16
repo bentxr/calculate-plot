@@ -1,5 +1,5 @@
 // Derived from Matplotlib 3.11.2: lib/matplotlib/artist.py, lib/matplotlib/patches.py (Patch,
-// Rectangle, Polygon, StepPatch), lib/matplotlib/lines.py (dash patterns), lib/matplotlib/cbook.py
+// Rectangle, Polygon, StepPatch, Wedge, Shadow), lib/matplotlib/lines.py (dash patterns), lib/matplotlib/cbook.py
 // (contiguous_regions).
 // Copyright (c) 2012- Matplotlib Development Team; All Rights Reserved
 // Licence: LICENSES/Matplotlib.txt. Changes: licensing/changes/matplotlib.md
@@ -234,6 +234,7 @@ Shadow::Shadow(const rc::Params& rc, const Patch& patch, double ox, double oy, d
     setFacecolor(color);
     setEdgecolor(color);
     setAlpha(0.5);
+    zorder = std::nextafter(patch.zorder, -std::numeric_limits<double>::infinity());
 }
 
 transforms::TransformPtr Shadow::patchTransform() const {
@@ -346,6 +347,20 @@ bool stepPatchPath(const std::vector<double>& values, const std::vector<double>&
     *out = Path::make(vertices, codes, rc);
     if (!out->codes) out->codes = std::make_shared<const std::vector<unsigned char>>();  // (an empty array, not None)
     return true;
+}
+
+Wedge::Wedge(const rc::Params& rc, double x, double y, double radius, double t1, double t2)
+    : Patch(rc), cx(x), cy(y), r(radius), theta1(t1), theta2(t2) {
+    // _recompute_path: the arc, then the centre and back (no inner ring)
+    const bool full = std::fabs((theta2 - theta1) - 360) <= 1e-12;
+    const Path arc = full ? Path::arc(0, 360, rc) : Path::arc(theta1, theta2, rc);
+    std::vector<double> v = *arc.vertices;
+    std::vector<unsigned char> codes = *arc.codes;
+    v.insert(v.end(), {0, 0, 0, 0});
+    codes.push_back(full ? MOVETO : LINETO);
+    codes.push_back(CLOSEPOLY);
+    for (std::size_t k = 0; k + 1 < v.size(); k += 2) v[k] = v[k] * r + cx, v[k + 1] = v[k + 1] * r + cy;  // v * r + center
+    path_ = Path::make(std::move(v), std::move(codes), rc);
 }
 
 FancyBboxPatch::FancyBboxPatch(const rc::Params& rc, double x, double y, double width, double height,

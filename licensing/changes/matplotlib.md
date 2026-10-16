@@ -236,6 +236,9 @@ it comes from in its first lines. The changes, as a whole:
   anchored) at the start of draw and get_tightbbox; the original and the active position kept apart.
   Ticks: Axis.set_ticks (FixedLocator, set_view_interval without ignore on the shared axes) and set_ticklabels
   (NullFormatter, or a FuncFormatter of a dict of labels); set_frame_on.
+  Pies: Path.arc, patches.Wedge, Shadow's zorder, Axes.pie and Axes.pie_label; the data limits of curved
+  paths (bezier.BezierSegment: polynomial coefficients, axis-aligned extrema by _real_roots_in_01 and
+  _quadratic_roots_in_01, evaluation as NumPy's matrix product makes it).
   Colour sequences: colors.py's ColorSequenceRegistry (the built-in sequences only) with _cm.py's data
   (data/color_sequences.json; ColorBrewer's schemes in data/color_sequences_colorbrewer.json), written as JSON
   numbers by tools/oracle/make_color_sequences.py; rcsetup.py's _single_string_color_list takes them in cycles.

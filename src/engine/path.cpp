@@ -1,4 +1,4 @@
-// Derived from Matplotlib 3.11.2: lib/matplotlib/path.py (Path) and lib/matplotlib/backends/backend_agg.py
+// Derived from Matplotlib 3.11.2: lib/matplotlib/path.py (Path, Path.arc) and lib/matplotlib/backends/backend_agg.py
 // (RendererAgg.draw_path: chunks).
 // Copyright (c) 2012- Matplotlib Development Team; All Rights Reserved
 // Licence: LICENSES/Matplotlib.txt. Changes: licensing/changes/matplotlib.md
@@ -6,11 +6,41 @@
 #include "engine/path.hpp"
 
 #include "rc/rc_params.hpp"
+#include "support/histogram.hpp"
 
 #include <algorithm>
 #include <cmath>
 
 namespace calculate_plot::engine {
+
+Path Path::arc(double theta1, double theta2, const rc::Params& rc) {
+    const double halfpi = M_PI * 0.5;
+    double eta1 = theta1;
+    const double nTurns = (theta2 - theta1) / 360;
+    const double nearest = std::nearbyint(nTurns);  // np.rint
+    const bool fullCircle = nearest != 0 && std::fabs(nTurns - nearest) <= 1e-12;
+    double eta2 = fullCircle ? theta1 + 360 : theta2 - 360 * std::floor(nTurns);
+    // np.deg2rad: x * (pi / 180)
+    eta1 = eta1 * (M_PI / 180.0);
+    eta2 = eta2 * (M_PI / 180.0);
+    const long long n = static_cast<long long>(std::pow(2.0, std::ceil((eta2 - eta1) / halfpi)));
+    const double deta = (eta2 - eta1) / double(n);
+    const double t = std::tan(0.5 * deta);
+    const double alpha = std::sin(deta) * (std::sqrt(4.0 + 3.0 * t * t) - 1) / 3.0;
+    const std::vector<double> steps = support::npLinspace(eta1, eta2, n + 1);
+    std::vector<double> cosEta, sinEta;
+    for (double s : steps) cosEta.push_back(std::cos(s)), sinEta.push_back(std::sin(s));
+    std::vector<double> v{cosEta[0], sinEta[0]};
+    std::vector<unsigned char> codes{MOVETO};
+    for (long long i = 0; i < n; ++i) {
+        const double xA = cosEta[std::size_t(i)], yA = sinEta[std::size_t(i)];
+        const double xB = cosEta[std::size_t(i + 1)], yB = sinEta[std::size_t(i + 1)];
+        const double xAdot = -yA, yAdot = xA, xBdot = -yB, yBdot = xB;
+        v.insert(v.end(), {xA + alpha * xAdot, yA + alpha * yAdot, xB - alpha * xBdot, yB - alpha * yBdot, xB, yB});
+        codes.insert(codes.end(), {CURVE4, CURVE4, CURVE4});
+    }
+    return make(std::move(v), std::move(codes), rc);
+}
 
 Path Path::make(std::vector<double> vertices, std::vector<unsigned char> codes, const rc::Params& rc, bool closed) {
     Path p;

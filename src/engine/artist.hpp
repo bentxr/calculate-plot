@@ -1,5 +1,5 @@
 // Derived from Matplotlib 3.11.2: lib/matplotlib/artist.py, lib/matplotlib/patches.py (Patch,
-// Rectangle, Polygon, StepPatch), lib/matplotlib/lines.py (dash patterns), lib/matplotlib/cbook.py
+// Rectangle, Polygon, StepPatch, Wedge, Shadow), lib/matplotlib/lines.py (dash patterns), lib/matplotlib/cbook.py
 // (contiguous_regions).
 // Copyright (c) 2012- Matplotlib Development Team; All Rights Reserved
 // Licence: LICENSES/Matplotlib.txt. Changes: licensing/changes/matplotlib.md
@@ -207,6 +207,18 @@ class PathPatch : public Patch {
 public:
     PathPatch(const rc::Params& rc, Path path) : Patch(rc), path_(std::move(path)) {}
     Path path() const override { return path_; }
+
+private:
+    Path path_;
+};
+
+// patches.Wedge(center, r, theta1, theta2): the arc of the circle from theta1 to theta2 degrees,
+// closed through the centre (a full circle when they are 360 apart).
+class Wedge : public Patch {
+public:
+    Wedge(const rc::Params& rc, double cx, double cy, double r, double theta1, double theta2);
+    Path path() const override { return path_; }
+    double cx, cy, r, theta1, theta2;
 
 private:
     Path path_;
