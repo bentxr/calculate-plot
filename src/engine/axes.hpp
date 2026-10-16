@@ -239,6 +239,13 @@ public:
     // when the Axes is invisible.
     std::optional<transforms::Bbox> tightbbox(Renderer& renderer, bool forLayoutOnly);
     void setPosition(const transforms::BboxBase& pos);  // _set_position(pos, which='both')
+    // set_aspect: a number (height of one data unit over its width), or unset for 'auto'; adjustable
+    // 'box' (the Axes' box shrinks); anchor: where the shrunk box sits in the original (Bbox.coefs)
+    std::optional<double> aspect;
+    std::array<double, 2> anchor{0.5, 0.5};
+    // apply_aspect(): the active position from the original one and the aspect
+    void applyAspect();
+    std::shared_ptr<transforms::Bbox> originalPosition;  // get_position(original=True)
 
     // Axes.set_title(label, loc=, pad=, y=)
     Text& setTitle(const std::string& label, const std::string& loc, std::optional<double> pad, std::optional<double> y);

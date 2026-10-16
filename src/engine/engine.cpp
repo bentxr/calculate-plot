@@ -674,6 +674,46 @@ private:
             c.method = "plot";
             return axesCall(ax, c, error);
         }
+        if (call.method == "set_aspect") {
+            // set_aspect(aspect, adjustable=None, anchor=None, share=False)
+            const Json* a = argument(call, 0, "aspect");
+            double value = 0;
+            if (!a) return *error = where + ": aspect is required", false;
+            if (a->isString() && a->asString() == "auto") {
+                ax.aspect.reset();
+            } else if (a->isString() && a->asString() == "equal") {
+                ax.aspect = 1.0;
+            } else if (readNumber(*a, &value)) {
+                if (!(value > 0) || !std::isfinite(value)) return *error = where + ": aspect must be finite and positive ", false;
+                ax.aspect = value;
+            } else {
+                return *error = where + ": could not convert that to float", false;
+            }
+            if (const Json* adj = argument(call, 1, "adjustable"); adj && !adj->isNull()) {
+                if (adj->isString() && adj->asString() == "datalim") return *error = where + ": adjustable 'datalim' is not supported yet", false;
+                if (!adj->isString() || adj->asString() != "box")
+                    return *error = where + ": that is not a valid value for adjustable; supported values are 'box', 'datalim'", false;
+            }
+            if (const Json* anc = argument(call, 2, "anchor"); anc && !anc->isNull()) {
+                // Bbox.coefs, or a pair
+                static const std::pair<const char*, std::array<double, 2>> coefs[] = {
+                    {"C", {0.5, 0.5}}, {"SW", {0, 0}}, {"S", {0.5, 0}}, {"SE", {1.0, 0}}, {"E", {1.0, 0.5}},
+                    {"NE", {1.0, 1.0}}, {"N", {0.5, 1.0}}, {"NW", {0, 1.0}}, {"W", {0, 0.5}}};
+                const Json* pair = sequence(*anc);
+                bool found = false;
+                for (const auto& [name, at] : coefs)
+                    if (anc->isString() && anc->asString() == name) ax.anchor = at, found = true;
+                if (!found) {
+                    double px = 0, py = 0;
+                    if (!pair || pair->size() != 2 || !readNumber((*pair)[0], &px) || !readNumber((*pair)[1], &py))
+                        return *error = where + ": argument must be among C, SW, S, SE, E, NE, N, NW, W", false;
+                    ax.anchor = {px, py};
+                }
+            }
+            if (const Json* share = argument(call, 3, "share"); share && share->isBool() && share->asBool())
+                return *error = where + ": share=True is not supported yet", false;
+            return true;
+        }
         if (call.method == "set_axis_off" || call.method == "set_axis_on") {
             if (!noArguments(call, error)) return false;
             ax.axisOn = call.method == "set_axis_on";
@@ -683,7 +723,7 @@ private:
             // Artist.set: set_<name>(value) for each keyword, in the order given
             if (!call.args.empty())
                 return *error = where + ": set() takes 1 positional argument but " + std::to_string(call.args.size() + 1) + " were given", false;
-            static const char* const setters[] = {"title", "xlabel", "ylabel", "xlim", "ylim", "xscale", "yscale"};
+            static const char* const setters[] = {"title", "xlabel", "ylabel", "xlim", "ylim", "xscale", "yscale", "aspect"};
             for (const auto& [name, value] : call.kwargs) {
                 if (std::find(std::begin(setters), std::end(setters), name) == std::end(setters))
                     return *error = where + ": set(" + name + "=...) is not supported yet", false;

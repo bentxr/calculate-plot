@@ -1,0 +1,13 @@
+{"version": 1, "calls": [{"call": "subplots", "args": [2, 2], "kwargs": {"figsize": {"$tuple": [7.2, 4.8]}}, "as": ["fig", "axs"]},
+ {"on": "axs[0, 0]", "call": "plot", "args": [[0, 1, 2], [0, 1, 4]]},
+ {"on": "axs[0, 0]", "call": "set_aspect", "args": ["equal"]},
+ {"on": "axs[0, 1]", "call": "plot", "args": [[0, 10], [0, 1]]},
+ {"on": "axs[0, 1]", "call": "set_aspect", "args": [2], "kwargs": {"anchor": "SW"}},
+ {"on": "axs[0, 1]", "call": "set_title", "args": ["aspect 2, SW"]},
+ {"on": "axs[1, 0]", "call": "plot", "args": [[1, 10, 100], [1, 5, 2]]},
+ {"on": "axs[1, 0]", "call": "set_xscale", "args": ["log"]},
+ {"on": "axs[1, 0]", "call": "set", "kwargs": {"aspect": 0.5}},
+ {"on": "axs[1, 1]", "call": "plot", "args": [[0, 1], [0, 3]]},
+ {"on": "axs[1, 1]", "call": "set_aspect", "args": ["auto"]},
+ {"on": "axs[1, 1]", "call": "set_aspect", "args": [1], "kwargs": {"anchor": {"$tuple": [0.2, 0.8]}}},
+ {"on": "fig", "call": "tight_layout"}]}
