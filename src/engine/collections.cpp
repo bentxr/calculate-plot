@@ -86,7 +86,8 @@ void Collection::setLinewidths(std::vector<double> lw) {
 bool Collection::setLinestyles(const std::vector<std::string>& styles) {
     unscaledLinestyles_.clear();
     for (const std::string& st : styles) {
-        const std::string named = st == "-" ? "solid" : st == "--" ? "dashed" : st == "-." ? "dashdot" : st == ":" ? "dotted" : st;
+        std::string named = st == "-" ? "solid" : st == "--" ? "dashed" : st == "-." ? "dashdot" : st == ":" ? "dotted" : st;
+        if (named == "None" || named == "none" || named.empty() || named == " ") named = "solid";  // (undashed, still drawn)
         if (named != "solid" && named != "dashed" && named != "dashdot" && named != "dotted") return false;
         unscaledLinestyles_.push_back(dashPattern(named, rc_));  // mlines._get_dash_patterns
     }

@@ -1,0 +1,10 @@
+{"version": 1, "calls": [{"call": "subplots", "args": [2, 2], "kwargs": {"figsize": {"$tuple": [7.2, 5.4]}}, "as": ["fig", "axs"]},
+ {"on": "axs[0, 0]", "call": "stem", "args": [[1, 2, 3, 4], [1, -2, 3, 0.5]], "kwargs": {"label": "stem"}},
+ {"on": "axs[0, 0]", "call": "legend"},
+ {"on": "axs[0, 1]", "call": "stem", "args": [[3, 1, 2]], "kwargs": {"linefmt": "r--", "markerfmt": "gs", "basefmt": "k:", "bottom": 0.5, "label": "dashed"}},
+ {"on": "axs[0, 1]", "call": "legend", "kwargs": {"numpoints": 2}},
+ {"on": "axs[1, 0]", "call": "stem", "args": [[0, 1, 2], [1, 2, 1.5], "C2-."], "kwargs": {"orientation": "horizontal", "markerfmt": "", "label": "h"}},
+ {"on": "axs[1, 0]", "call": "legend"},
+ {"on": "axs[1, 1]", "call": "stem", "args": [[1, 2], [3, 4], "o"]},
+ {"on": "axs[1, 1]", "call": "stem", "args": [[3, 4], [2, 1]], "kwargs": {"markerfmt": "D", "basefmt": " ", "linefmt": "m"}},
+ {"on": "axs[1, 1]", "call": "stem", "args": [[5, 6], [1, 2]], "kwargs": {"linefmt": "r", "markerfmt": "k^:"}}]}

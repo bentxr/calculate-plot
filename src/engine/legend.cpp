@@ -426,6 +426,48 @@ Legend::Legend(const rc::Params& rc, Axes& parent, const std::vector<Artist*>& h
             rect->transform = trans;
             handleColors.push_back(colorsOf(*rect));
             handlebox->addArtist(std::move(rect));
+        } else if (const ErrorbarContainer* stem = containers[i]; stem && stem->isStem) {  // HandlerStem
+            // the markers where HandlerNpoints puts them, at the heights of the scatter offsets; a stem up to
+            // each (as many as there are both); the baseline across
+            std::vector<double> xmarker;
+            const std::vector<double> xdata = xdataOf(numpoints, xd, w, &xmarker);
+            std::vector<double> ydata;
+            for (double off : scatterYOffsets) ydata.push_back(h * (0.5 * off + 0.5));
+            const double bottom = 0.;
+            std::vector<double> ymarker(ydata.begin(), ydata.begin() + long(std::min(xmarker.size(), ydata.size())));
+            if (ymarker.size() == 1 && xmarker.size() > 1) {  // (broadcast; assign must not read from the vector it replaces)
+                const double y = ymarker[0];
+                ymarker.assign(xmarker.size(), y);
+            }
+            if (ymarker.size() != xmarker.size()) *error = "this legend entry of stems is not supported yet";
+            auto legMarker = std::make_unique<Line2D>(rc, xmarker, ymarker);
+            legMarker->updateFrom(*stem->stemMarker);
+            legMarker->clipBox.reset(), legMarker->clipPath.reset();
+            std::vector<std::unique_ptr<Line2D>> stems;
+            const auto stemColors = stem->stemLines->edgecolors();
+            const auto& stemStyles = stem->stemLines->linestyles();
+            for (std::size_t k = 0; k < std::min(xmarker.size(), ydata.size()); ++k) {
+                auto s = std::make_unique<Line2D>(rc, std::vector<double>{xmarker[k], xmarker[k]}, std::vector<double>{bottom, ydata[k]});
+                // _copy_collection_props: the collection's first colour and (scaled) dash pattern
+                if (!stemColors.empty()) s->color = std::vector<double>(stemColors[0].begin(), stemColors[0].end());
+                if (!stemStyles.empty()) s->setDashPattern(stemStyles[0].first, stemStyles[0].second);
+                s->clipBox.reset(), s->clipPath.reset();
+                stems.push_back(std::move(s));
+            }
+            double lo = xdata[0], hi = xdata[0];
+            for (double v : xdata) lo = std::min(lo, v), hi = std::max(hi, v);
+            auto legBase = std::make_unique<Line2D>(rc, std::vector<double>{lo, hi}, std::vector<double>{bottom, bottom});
+            legBase->updateFrom(*stem->stemBaseline);
+            legBase->clipBox.reset(), legBase->clipPath.reset();
+            handleColors.push_back(stems.empty() ? colorsOf(*legBase) : colorsOf(*stems[0]));
+            for (auto& s : stems) {
+                s->transform = trans;
+                handlebox->addArtist(std::move(s));
+            }
+            legBase->transform = trans;
+            legMarker->transform = trans;
+            handlebox->addArtist(std::move(legBase));
+            handlebox->addArtist(std::move(legMarker));
         } else if (const ErrorbarContainer* bars = containers[i]) {  // HandlerErrorbar
             std::vector<double> xmarker;
             const std::vector<double> xdata = xdataOf(numpoints, xd, w, &xmarker), ydata(xdata.size(), (h - yd) / 2);

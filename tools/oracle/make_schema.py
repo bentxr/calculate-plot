@@ -52,6 +52,7 @@ CALLS = [
     ("axes", "bar_label", Axes.bar_label, text.Annotation),
     ("axes", "step", Axes.step, lines.Line2D),
     ("axes", "stairs", Axes.stairs, patches.StepPatch),
+    ("axes", "stem", Axes.stem, None),
     ("axes", "hlines", Axes.hlines, collections.LineCollection),
     ("axes", "vlines", Axes.vlines, collections.LineCollection),
     ("axes", "text", Axes.text, text.Text),

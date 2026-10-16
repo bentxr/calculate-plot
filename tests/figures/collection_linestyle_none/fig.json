@@ -1,0 +1,5 @@
+{"version": 1, "calls": [{"call": "subplots", "as": ["fig", "ax"]},
+ {"on": "ax", "call": "vlines", "args": [[1, 2, 3], 0, [1, 2, 3]], "kwargs": {"linestyles": "None", "colors": "C1", "linewidths": 3, "label": "v"}},
+ {"on": "ax", "call": "hlines", "args": [[0.5, 1.5], 0, 4], "kwargs": {"linestyles": ["none", " "]}},
+ {"on": "ax", "call": "hlines", "args": [[2.5], 0, 4], "kwargs": {"linestyles": "", "colors": "k"}},
+ {"on": "ax", "call": "legend"}]}

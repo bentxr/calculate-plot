@@ -1447,7 +1447,7 @@ TEST(SubplotCalls, AxesAtARect) {
               "fig.add_axes: all entries in rect must be finite not [0.1, inf, 0.5, 0.5]");
     EXPECT_EQ(error(R"({"call": "axes", "args": [[0.1, 0.1, 0.5, 0.5]], "kwargs": {"facecolor": "r"}})"),
               "plt.axes: keyword arguments are not supported yet");
-    EXPECT_EQ(error(R"({"call": "plot", "args": [[1, 2]]}, {"call": "stem", "args": [[1, 2]]})"), "unsupported call: plt.stem");
+    EXPECT_EQ(error(R"({"call": "plot", "args": [[1, 2]]}, {"call": "waitforbuttonpress"})"), "unsupported call: plt.waitforbuttonpress");
     EXPECT_EQ(draw(kSubplots + R"({"on": "axs[0]", "call": "loglog", "args": [[1, 2]], "kwargs": {"base": 2}})").error,
               "axs[0].loglog: the keywords of the log scale are not supported yet");
 }
@@ -1571,6 +1571,21 @@ TEST(StepCalls, ArgumentsAreReadAsMatplotlibReadsThem) {
     EXPECT_EQ(error("stairs", "[[1, 2]]", R"({"edges": [0, {"$float": "nan"}, 2]})"), "axs[0].stairs: Nan values in \"edges\" are disallowed");
     EXPECT_EQ(error("stairs", "[[1, 2]]", R"({"baseline": [0, 1, 2]})").find("axs[0].stairs: operands could not be broadcast"), 0u);
     EXPECT_EQ(error("stairs", "[[1, 2]]", R"({"capstyle": "round"})"), "axs[0].stairs: unsupported keyword capstyle");
+}
+
+// Axes.stem(*args, linefmt, markerfmt, basefmt, bottom, label, orientation): no other keywords
+TEST(StemCalls, ArgumentsAreReadAsMatplotlibReadsThem) {
+    const auto error = [](const std::string& args, const std::string& kwargs) {
+        return draw(kSubplots + R"({"on": "axs[0]", "call": "stem", "args": )" + args + R"(, "kwargs": )" + kwargs + "}").error;
+    };
+    EXPECT_EQ(error("[[1, 2]]", "{}"), "");
+    EXPECT_EQ(error(R"([[1, 2], [3, 4], "r-"])", R"({"basefmt": "k:", "bottom": 1, "orientation": "horizontal"})"), "");
+    EXPECT_EQ(error("[]", "{}"), "axs[0].stem: stem() takes from 1 to 3 positional arguments but 0 were given");
+    EXPECT_EQ(error(R"([[1], [2], "r", "b"])", "{}"), "axs[0].stem: stem() takes from 1 to 3 positional arguments but 4 were given");
+    EXPECT_EQ(error("[[1, 2]]", R"({"color": "r"})"), "axs[0].stem: got an unexpected keyword argument 'color'");
+    EXPECT_EQ(error("[[1, 2]]", R"({"orientation": "up"})"),
+              "axs[0].stem: 'up' is not a valid value for orientation; supported values are 'horizontal', 'vertical'");
+    EXPECT_EQ(error("[[]]", "{}"), "axs[0].stem: zero-size array to reduction operation minimum which has no identity");
 }
 
 TEST(HistCalls, ArgumentsAreReadAsMatplotlibReadsThem) {

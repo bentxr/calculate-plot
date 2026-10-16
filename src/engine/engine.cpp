@@ -106,7 +106,7 @@ public:
                 {"hlines", "hlines"}, {"vlines", "vlines"}, {"grid", "grid"}, {"legend", "legend"}, {"text", "text"},
                 {"title", "set_title"}, {"xlabel", "set_xlabel"}, {"ylabel", "set_ylabel"}, {"xlim", "set_xlim"},
                 {"ylim", "set_ylim"}, {"xscale", "set_xscale"}, {"yscale", "set_yscale"}, {"bar", "bar"}, {"barh", "barh"},
-                {"hist", "hist"}, {"fill", "fill"}, {"step", "step"}, {"stairs", "stairs"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}};
+                {"hist", "hist"}, {"fill", "fill"}, {"step", "step"}, {"stairs", "stairs"}, {"stem", "stem"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}};
             static const std::map<std::string, std::string> ofFigure = {
                 {"suptitle", "suptitle"}, {"figtext", "text"}, {"subplots_adjust", "subplots_adjust"}, {"tight_layout", "tight_layout"}};
             const auto a = ofAxes.find(call.method);
@@ -806,6 +806,7 @@ private:
         if (call.method == "bar" || call.method == "barh") return bar(ax, call, error);
         if (call.method == "fill") return fill(ax, call, error);
         if (call.method == "step") return step(ax, call, error);
+        if (call.method == "stem") return stem(ax, call, error);
         if (call.method == "stairs") return stairs(ax, call, error);
         if (call.method == "add_patch") return addPatch(ax, call, error);
         if (call.method == "hist") return hist(ax, call, error);
@@ -2201,6 +2202,122 @@ private:
             if (std::find(std::begin(own), std::end(own), name) != std::end(own)) continue;
             if (!patchProperty(p, name, *v, where, error)) return false;
         }
+        return true;
+    }
+
+    // Axes.stem(*args, linefmt=None, markerfmt=None, basefmt=None, bottom=0, label=None,
+    // orientation='vertical'): stems by vlines (hlines), markers and a baseline by plot, kept together
+    // in a StemContainer with the label
+    bool stem(Axes& ax, const model::Call& call, std::string* error) {
+        const std::string where = call.on + ".stem";
+        if (call.args.empty() || call.args.size() > 3)
+            return *error = where + ": stem() takes from 1 to 3 positional arguments but " + std::to_string(call.args.size()) +
+                            " were given",
+                   false;
+        const Json* linefmt = nullptr;
+        const Json* markerfmt = nullptr;
+        const Json* basefmt = nullptr;
+        const Json* bottomJson = nullptr;
+        const Json* label = nullptr;
+        bool vertical = true;
+        for (const auto& [name, value] : call.kwargs) {
+            if (name == "linefmt") linefmt = &value;
+            else if (name == "markerfmt") markerfmt = &value;
+            else if (name == "basefmt") basefmt = &value;
+            else if (name == "bottom") bottomJson = &value;
+            else if (name == "label") label = &value;
+            else if (name == "orientation") {
+                if (!value.isString() || (value.asString() != "horizontal" && value.asString() != "vertical"))
+                    return *error = where + ": " + (value.isString() ? "'" + value.asString() + "'" : std::string("that")) +
+                                    " is not a valid value for orientation; supported values are 'horizontal', 'vertical'",
+                           false;
+                vertical = value.asString() == "vertical";
+            } else {
+                return *error = where + ": got an unexpected keyword argument '" + name + "'", false;
+            }
+        }
+        // heads alone, heads and a format, or locs and heads (then a format)
+        std::vector<double> locs, heads;
+        std::size_t rest = 0;
+        if (call.args.size() == 1 || call.args[1].isString()) {
+            if (!numbers(call.args[0], &heads)) return *error = where + ": the heads must be numbers", false;
+            for (std::size_t i = 0; i < heads.size(); ++i) locs.push_back(double(i));
+            rest = 1;
+        } else {
+            if (!numbers(call.args[0], &locs) || !numbers(call.args[1], &heads)) return *error = where + ": locs and heads must be numbers", false;
+            rest = 2;
+        }
+        const auto fmtOf = [&](const Json* given, const char* fallback, std::string* out) {
+            if (given && !given->isNull()) {
+                if (!given->isString()) return *error = where + ": a format must be a string", false;
+                *out = given->asString();
+            } else {
+                *out = fallback;
+            }
+            return true;
+        };
+        std::string lineFmt, markerFmt, baseFmt;
+        if (!linefmt && call.args.size() > rest) linefmt = &call.args[rest];
+        if (!fmtOf(linefmt, "C0-", &lineFmt)) return false;
+        std::optional<std::string> linestyle, linemarker, markerstyle, markermarker, basestyle, basemarker;
+        std::optional<colors::Spec> linecolor, markercolor, basecolor;
+        if (!plotFormat(lineFmt, &linestyle, &linemarker, &linecolor, error)) return *error = where + ": " + *error, false;
+        if (!fmtOf(markerfmt, "o", &markerFmt)) return false;
+        if (markerFmt.empty()) markerFmt = " ";  // (an empty line style; '' would take the rcParams)
+        if (!plotFormat(markerFmt, &markerstyle, &markermarker, &markercolor, error)) return *error = where + ": " + *error, false;
+        if (!markermarker) markermarker = "o";
+        if (!markerstyle) markerstyle = "None";
+        if (!markercolor) markercolor = linecolor;
+        if (!fmtOf(basefmt, rc_.boolean("_internal.classic_mode") ? "C2-" : "C3-", &baseFmt)) return false;
+        if (!plotFormat(baseFmt, &basestyle, &basemarker, &basecolor, error)) return *error = where + ": " + *error, false;
+        if (!linestyle) linestyle = rc_.text("lines.linestyle");
+        double bottom = 0;
+        if (bottomJson && !readNumber(*bottomJson, &bottom)) return *error = where + ": bottom must be a number (others are not supported yet)", false;
+        if (locs.size() != heads.size()) return *error = where + ": locs and heads must have the same length", false;
+        if (locs.empty()) return *error = where + ": zero-size array to reduction operation minimum which has no identity", false;
+        const Json bottomValue = bottomJson ? *bottomJson : Json::integer(0);
+        const auto optColor = [&](const std::optional<colors::Spec>& c) { return c ? colorJson(*c) : Json(); };
+        const auto optText = [](const std::optional<std::string>& s) { return s ? Json::string(*s) : Json(); };
+        // the stems
+        model::Call lines;
+        lines.on = call.on;
+        lines.method = vertical ? "vlines" : "hlines";
+        lines.args = {numbersJson(locs), bottomValue, numbersJson(heads)};
+        lines.kwargs = {{"colors", optColor(linecolor)}, {"linestyles", Json::string(*linestyle)}, {"label", Json::string("_nolegend_")}};
+        if (!this->lines(ax, lines, error)) return false;
+        Collection* stemLines = dynamic_cast<Collection*>(ax.children.back().get());
+        // np.min(locs), np.max(locs): NaN wins
+        double lo = locs[0], hi = locs[0];
+        for (double v : locs) {
+            lo = std::isnan(lo) || std::isnan(v) ? std::nan("") : std::min(lo, v);
+            hi = std::isnan(hi) || std::isnan(v) ? std::nan("") : std::max(hi, v);
+        }
+        const auto plotLine = [&](const std::vector<double>& x, const std::vector<double>& y, const Json& color, const Json& style,
+                                  const Json& marker) -> Line2D* {
+            model::Call p;
+            p.on = call.on;
+            p.method = "plot";
+            p.args = {numbersJson(x), numbersJson(y)};
+            p.kwargs = {{"color", color}, {"linestyle", style}, {"marker", marker}, {"label", Json::string("_nolegend_")}};
+            if (!plot(ax, p, error)) return nullptr;
+            return dynamic_cast<Line2D*>(ax.children.back().get());
+        };
+        Line2D* marker = vertical ? plotLine(locs, heads, optColor(markercolor), optText(markerstyle), optText(markermarker))
+                                  : plotLine(heads, locs, optColor(markercolor), optText(markerstyle), optText(markermarker));
+        if (!marker) return false;
+        Line2D* base = vertical ? plotLine({lo, hi}, {bottom, bottom}, optColor(basecolor), optText(basestyle), optText(basemarker))
+                                : plotLine({bottom, bottom}, {lo, hi}, optColor(basecolor), optText(basestyle), optText(basemarker));
+        if (!base) return false;
+        ErrorbarContainer container;
+        container.isStem = true;
+        container.stemMarker = marker;
+        container.stemLines = stemLines;
+        container.stemBaseline = base;
+        if (label && !label->isNull()) {
+            if (!label->isString()) return *error = where + ": label must be a string", false;
+            container.label = label->asString();
+        }
+        ax.containers.push_back(container);
         return true;
     }
 

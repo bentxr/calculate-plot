@@ -53,6 +53,8 @@ public:
     // Collection.update_from: colours (originals, resolved, mapped), widths, styles and the Artist part
     void updateFrom(const Collection& other);
     const std::vector<double>& linewidths() const { return linewidths_; }
+    // get_linestyle: (offset, on-off sequence) of each line style, scaled by the widths
+    const std::vector<std::pair<double, std::optional<std::vector<double>>>>& linestyles() const { return linestyles_; }
     // _us_linestyles: (offset, on-off sequence) of each line style, before the widths scale them
     const std::vector<std::pair<double, std::optional<std::vector<double>>>>& unscaledLinestyles() const { return unscaledLinestyles_; }
 
@@ -159,6 +161,11 @@ struct ErrorbarContainer {
     std::vector<double> datavalues;
     bool datavaluesInt = false, horizontal = false;
     std::optional<std::size_t> errorbar;
+    // StemContainer: the marker line, the stem lines and the baseline
+    bool isStem = false;
+    Line2D* stemMarker = nullptr;
+    Collection* stemLines = nullptr;
+    Line2D* stemBaseline = nullptr;
 };
 
 }  // namespace calculate_plot::engine

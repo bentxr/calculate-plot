@@ -3985,6 +3985,65 @@
   },
   {
    "on": "axes",
+   "call": "stem",
+   "parameters": [
+    {
+     "name": "linefmt",
+     "positional": false,
+     "valid": "str, optional",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "markerfmt",
+     "positional": false,
+     "valid": "str, optional",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "basefmt",
+     "positional": false,
+     "valid": "str, default: 'C3-' ('C2-' in classic mode)",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "bottom",
+     "positional": false,
+     "valid": "float, default: 0",
+     "kind": "number",
+     "default": 0
+    },
+    {
+     "name": "label",
+     "positional": false,
+     "valid": "str, optional",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "orientation",
+     "positional": false,
+     "valid": "{'vertical', 'horizontal'}, default: 'vertical'",
+     "kind": "choice",
+     "choices": [
+      "vertical",
+      "horizontal"
+     ],
+     "default": "vertical"
+    },
+    {
+     "name": "data",
+     "positional": false,
+     "valid": "indexable object, optional",
+     "kind": "other",
+     "default": null
+    }
+   ]
+  },
+  {
+   "on": "axes",
    "call": "hlines",
    "parameters": [
     {
