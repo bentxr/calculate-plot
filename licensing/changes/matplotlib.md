@@ -206,7 +206,8 @@ it comes from in its first lines. The changes, as a whole:
   Bar widths through Axes._convert_dx (cbook._safe_first_finite).
   Histograms: Axes.hist for histtype 'bar' and 'barstacked' (cbook._reshape_2D for lists, the shared bin
   edges, stacking, density, cumulative, rwidth, align, orientation, bottom) and _style_helpers.style_generator
-  (named line styles only); 'step' and 'stepfilled' are refused for now.
+  (named line styles only), and for 'step' and 'stepfilled' the polygons' perimeters drawn by fill (in
+  reverse order, sticky at 0, the step edges in the data sets' colours).
   Polygons: patches.py's Polygon (set_xy, set_closed), Axes.fill through _process_plot_var_args('Polygon')
   (_plot_args, _make_polygon, the patches' _PropCycle.getdefaults with ignored properties), pyplot.Polygon,
   Axes.add_patch with _update_patch_limits for paths (Path.iter_bezier over Path.cleaned, the segment ends

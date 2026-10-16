@@ -1513,7 +1513,10 @@ TEST(HistCalls, ArgumentsAreReadAsMatplotlibReadsThem) {
     EXPECT_EQ(error(one, "{}"), "");
     EXPECT_EQ(error("[2.5]", "{}"), "");  // (a number is one value)
     EXPECT_EQ(error(two, R"({"bins": [0, 2, 6], "stacked": true, "density": true, "cumulative": -1})"), "");
-    EXPECT_EQ(error(one, R"({"histtype": "step"})"), "axs[0].hist: histtype 'step' is not supported yet");
+    EXPECT_EQ(error(one, R"({"histtype": "step"})"), "");
+    EXPECT_EQ(error(two, R"({"histtype": "stepfilled", "stacked": true, "bins": 2, "bottom": [1, 2]})"), "");
+    EXPECT_EQ(error(one, R"({"histtype": "step", "bins": 3, "bottom": [1, 2]})"),
+              "axs[0].hist: bottom cannot be broadcast to the bins");
     EXPECT_EQ(error(one, R"({"histtype": "steps"})"),
               "axs[0].hist: 'steps' is not a valid value for histtype; supported values are 'bar', 'barstacked', 'step', 'stepfilled'");
     EXPECT_EQ(error(one, R"({"histtype": null})").find("axs[0].hist: that is not a valid value for histtype"), 0u);

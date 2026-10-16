@@ -2577,8 +2577,8 @@ private:
 
     // Axes.hist(x, bins=None, range=None, density=False, weights=None, cumulative=False, bottom=None,
     // histtype='bar', align='mid', orientation='vertical', rwidth=None, log=False, color=None,
-    // label=None, stacked=False, **kwargs): np.histogram of each data set, drawn by bar or barh.
-    // (histtype 'step' and 'stepfilled', drawn by fill, and bins given by name are not supported yet.)
+    // label=None, stacked=False, **kwargs): np.histogram of each data set, drawn by bar or barh, or for
+    // histtype 'step' and 'stepfilled' by fill. (Bins given by name are not supported yet.)
     bool hist(Axes& ax, const model::Call& call, std::string* error) {
         const std::string where = call.on + ".hist";
         static const Aliases patchAliases = {{"aa", "antialiased"}, {"ec", "edgecolor"}, {"fc", "facecolor"},
@@ -2619,8 +2619,6 @@ private:
         if (!choice(7, {"bar", "barstacked", "step", "stepfilled"}, &histtype) || !choice(8, {"mid", "left", "right"}, &align) ||
             !choice(9, {"vertical", "horizontal"}, &orientation))
             return false;
-        if (histtype == "step" || histtype == "stepfilled")
-            return *error = where + ": histtype '" + histtype + "' is not supported yet", false;
         if (histtype == "barstacked") stacked = true;
         // the data sets (np.isscalar(x): [x])
         std::vector<std::vector<double>> x, w;
@@ -2831,6 +2829,72 @@ private:
             }
         }
 
+        const bool horizontal = orientation == "horizontal";
+        std::vector<std::vector<Patch*>> patches;  // one list per data set
+        if (histtype == "step" || histtype == "stepfilled") {
+            // the perimeter of each polygon: the steps along the tops, then back along the bottom
+            const std::size_t L = edges.size(), n = 4 * L - 3;
+            std::vector<double> px(n, 0.0), py(n, 0.0);
+            for (std::size_t k = 0; k < L; ++k) px[2 * k] = edges[k];
+            for (std::size_t k = 0; k + 1 < L; ++k) px[2 * k + 1] = edges[k];
+            for (std::size_t j = 0; j + 2 * L - 1 < n; ++j) px[2 * L - 1 + j] = px[2 * L - 2 - j];  // x[1:2L-1][::-1]
+            // bottom: None is 0; a number, or one per bin
+            std::vector<double> bottomValues{0.0};
+            if (given[6]) {
+                if (readNumber(*given[6], &one)) bottomValues = {one};
+                else if (!numbers(*given[6], &bottomValues)) return *error = where + ": bottom must be numbers", false;
+                if (bottomValues.size() != 1 && bottomValues.size() != nb)
+                    return *error = where + ": bottom cannot be broadcast to the bins", false;
+            }
+            const auto bottomAt = [&](std::size_t b) { return bottomValues[bottomValues.size() == 1 ? 0 : b]; };
+            for (std::size_t b = 0; b < nb; ++b) py[2 * b + 1] = py[2 * b + 2] = bottomAt(b);
+            for (std::size_t j = 0; j + 2 * L - 1 < n; ++j) py[2 * L - 1 + j] = py[2 * L - 2 - j];
+            if (log) ax.setScale(horizontal, "log");  // set_xscale / set_yscale('log', nonpositive='clip')
+            if (align == "left" || align == "right") {
+                const double shift = 0.5 * (edges[1] - edges[0]);
+                for (double& v : px) v = align == "left" ? v - shift : v + shift;
+            }
+            const bool filled = histtype == "stepfilled";
+            std::vector<std::vector<double>> xvals, yvals;
+            for (std::size_t i = 0; i < nx; ++i) {
+                if (stacked)  // the top of the previous polygon becomes the bottom
+                    for (std::size_t j = 0; j + 2 * L - 1 < n; ++j) py[2 * L - 1 + j] = py[2 * L - 2 - j];
+                for (std::size_t b = 0; b < nb; ++b) py[2 * b + 1] = py[2 * b + 2] = tops[i][b] + bottomAt(b);
+                py[0] = py[n - 1];  // (closes the polygon; the end vertex is dropped below)
+                xvals.push_back(horizontal ? py : px);
+                yvals.push_back(horizontal ? px : py);
+            }
+            // stepfilled is closed, step is not; the polygons are made in reverse order (lower ones of a
+            // stack drawn over higher ones), each fill taking the next entry of the patches' cycle
+            const std::size_t split = filled ? n - 1 : 2 * L;
+            for (std::size_t i = nx; i-- > 0;) {
+                model::Call c;
+                c.on = call.on;
+                c.method = "fill";
+                c.args = {numbersJson({xvals[i].begin(), xvals[i].begin() + long(split)}),
+                          numbersJson({yvals[i].begin(), yvals[i].begin() + long(split)})};
+                c.kwargs.emplace_back("closed", filled ? Json::boolean(true) : Json());
+                c.kwargs.emplace_back("facecolor", colorJson(setColors[i]));
+                c.kwargs.emplace_back("edgecolor", filled ? Json() : colorJson(setColors[i]));
+                c.kwargs.emplace_back("fill", filled ? Json::boolean(true) : Json());
+                c.kwargs.emplace_back("zorder", filled ? Json() : Json::integer(2));  // (Line2D.zorder)
+                std::vector<Polygon*> made;
+                if (!fill(ax, c, error, &made)) return false;
+                for (Polygon* p : made) (horizontal ? p->stickyX : p->stickyY).push_back(0);
+                patches.emplace_back(made.begin(), made.end());
+            }
+            std::reverse(patches.begin(), patches.end());
+            if (histtype == "step" && std::none_of(styles.begin(), styles.end(), [](const Style& s) { return s.name == "edgecolor"; })) {
+                // kwargs.setdefault('edgecolor', colors): the data sets' colours as rows
+                Style s;
+                s.name = "edgecolor";
+                for (const auto& sc : setColors) {
+                    const auto rgba = colors::toRgba(sc, std::nullopt, rc_, nullptr);
+                    s.colours.push_back(std::vector<double>(rgba->begin(), rgba->end()));
+                }
+                styles.push_back(std::move(s));
+            }
+        } else {
         // the bars: one bar() call per data set, side by side or stacked
         double dr = 1.0;
         if (given[10]) {
@@ -2853,7 +2917,6 @@ private:
             for (std::size_t b = 0; b < nb; ++b) boffset[b] += 0.5 * totwidth[b];
         else if (align == "right")
             for (std::size_t b = 0; b < nb; ++b) boffset[b] += totwidth[b];
-        const bool horizontal = orientation == "horizontal";
         // bottom: None (zeros), a number or one per bin
         std::optional<Json> bottom;
         std::vector<double> bottomValues;
@@ -2862,7 +2925,6 @@ private:
             else if (!numbers(*given[6], &bottomValues)) return *error = where + ": bottom must be numbers", false;
             bottom = *given[6];
         }
-        std::vector<std::vector<Rectangle*>> patches;
         for (std::size_t i = 0; i < nx; ++i) {
             if (!bottom) {
                 bottomValues.assign(nb, 0.0);
@@ -2884,7 +2946,7 @@ private:
             c.kwargs.emplace_back("color", colorJson(setColors[i]));
             c.kwargs.emplace_back(horizontal ? "left" : "bottom", *bottom);
             if (!bar(ax, c, error)) return false;
-            patches.push_back(ax.containers.back().bars);
+            patches.emplace_back(ax.containers.back().bars.begin(), ax.containers.back().bars.end());
             if (stacked) {
                 bottomValues = tops[i];
                 bottom = numbersJson(bottomValues);
@@ -2892,11 +2954,12 @@ private:
             for (std::size_t b = 0; b < nb; ++b) boffset[b] += dw[b];
         }
         for (std::size_t i = 1; i < patches.size(); ++i)
-            for (Rectangle* r : patches[i]) r->stickyX.clear(), r->stickyY.clear();
+            for (Patch* r : patches[i]) r->stickyX.clear(), r->stickyY.clear();
+        }
         // the keywords on every bar, the cycling ones last (kwargs.update(next(style_gen)))
         for (std::size_t i = 0; i < patches.size(); ++i) {
             for (std::size_t k = 0; k < patches[i].size(); ++k) {
-                Rectangle& r = *patches[i][k];
+                Patch& r = *patches[i][k];
                 for (const auto& [name, value] : rest)
                     if (!patchProperty(r, name, *value, where, error)) return false;
                 for (const Style& s : styles) {
