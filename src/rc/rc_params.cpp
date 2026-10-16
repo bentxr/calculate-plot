@@ -84,6 +84,7 @@ bool readable(const std::string& key, Kind want, Kind got) {
     if (got == Kind::Null) return key == "mathtext.fallback" || key == "legend.framealpha";
     if (key == "xtick.minor.ndivs" || key == "ytick.minor.ndivs") return true;  // 'auto' or a number
     if (key == "axes.axisbelow") return true;                                    // 'line', True or False
+    if (key == "hist.bins") return true;                                         // a count, a rule by name, edges
     // (their validators give a name or a number, nothing else)
     for (const char* k : kNumberOrName)
         if (key == k) return true;

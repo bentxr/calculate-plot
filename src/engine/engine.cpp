@@ -2551,19 +2551,35 @@ private:
         return Json::array(items);
     }
 
+    // Whether NumPy makes an int64 array of a number or a list of them: every value written as an
+    // integer (as a Python int), and at least one
+    static bool integers(const Json& v) {
+        if (v.isNumber()) return v.isInteger() && fitsIn64Bits(v.numberText());
+        const Json* seq = sequence(v);
+        if (!seq || seq->items().empty()) return false;
+        for (const Json& item : seq->items())
+            if (!item.isNumber() || !item.isInteger() || !fitsIn64Bits(item.numberText())) return false;
+        return true;
+    }
+
     // cbook._reshape_2D for lists: a list of numbers is one data set, otherwise each item is one (a
-    // number being a set of one value)
-    bool reshape2D(const Json& v, std::vector<std::vector<double>>* out) {
+    // number being a set of one value). `integer`: which data sets NumPy holds as int64.
+    bool reshape2D(const Json& v, std::vector<std::vector<double>>* out, std::vector<bool>* integer = nullptr) {
         out->clear();
+        if (integer) integer->clear();
         const Json* seq = sequence(v);
         if (!seq) return false;
-        if (seq->items().empty()) return out->emplace_back(), true;
+        if (seq->items().empty()) {
+            if (integer) integer->push_back(false);
+            return out->emplace_back(), true;
+        }
         bool flat = true;
         for (const Json& item : seq->items()) flat = flat && !sequence(item);
         std::vector<double> one;
         if (flat) {
             if (!numbers(v, &one)) return false;
             out->push_back(one);
+            if (integer) integer->push_back(integers(v));
             return true;
         }
         for (const Json& item : seq->items()) {
@@ -2571,6 +2587,7 @@ private:
             if (readNumber(item, &n)) out->push_back({n});
             else if (numbers(item, &one)) out->push_back(one);
             else return false;
+            if (integer) integer->push_back(integers(item));
         }
         return true;
     }
@@ -2578,7 +2595,7 @@ private:
     // Axes.hist(x, bins=None, range=None, density=False, weights=None, cumulative=False, bottom=None,
     // histtype='bar', align='mid', orientation='vertical', rwidth=None, log=False, color=None,
     // label=None, stacked=False, **kwargs): np.histogram of each data set, drawn by bar or barh, or for
-    // histtype 'step' and 'stepfilled' by fill. (Bins given by name are not supported yet.)
+    // histtype 'step' and 'stepfilled' by fill.
     bool hist(Axes& ax, const model::Call& call, std::string* error) {
         const std::string where = call.on + ".hist";
         static const Aliases patchAliases = {{"aa", "antialiased"}, {"ec", "edgecolor"}, {"fc", "facecolor"},
@@ -2622,15 +2639,17 @@ private:
         if (histtype == "barstacked") stacked = true;
         // the data sets (np.isscalar(x): [x])
         std::vector<std::vector<double>> x, w;
+        std::vector<bool> xIntegers;  // (the data sets NumPy holds as int64: the bin rules by name see it)
         double one = 0;
-        if (readNumber(*given[0], &one)) x = {{one}};
-        else if (!reshape2D(*given[0], &x)) return *error = where + ": x must be numbers or lists of numbers", false;
+        if (readNumber(*given[0], &one)) x = {{one}}, xIntegers = {integers(*given[0])};
+        else if (!reshape2D(*given[0], &x, &xIntegers)) return *error = where + ": x must be numbers or lists of numbers", false;
         const std::size_t nx = x.size();
         // bins: rcParams["hist.bins"] when None; a count or the edges
         support::Bins bins;
         const Json& binsValue = given[1] ? *given[1] : rc_.value("hist.bins");
-        if (binsValue.isString()) return *error = where + ": bins given by name are not supported yet", false;
-        if (binsValue.isBool()) {
+        if (binsValue.isString()) {
+            bins.name = binsValue.asString();
+        } else if (binsValue.isBool()) {
             bins.count = binsValue.asBool() ? 1 : 0;  // (operator.index(True) is 1)
         } else if (binsValue.isNumber()) {
             if (!binsValue.isInteger()) return *error = where + ": `bins` must be an integer, a string, or an array", false;
@@ -2792,17 +2811,20 @@ private:
                 all.insert(all.end(), x[i].begin(), x[i].end());
                 if (!w.empty()) allWeights.insert(allWeights.end(), w[i].begin(), w[i].end());
             }
-            if (!support::histogramBinEdges(all, bins, binRange, w.empty() ? nullptr : &allWeights, &edges, &why))
+            // (np.concatenate: int64 only if every data set is)
+            const bool allIntegers = std::all_of(xIntegers.begin(), xIntegers.end(), [](bool b) { return b; });
+            if (!support::histogramBinEdges(all, bins, binRange, w.empty() ? nullptr : &allWeights, &edges, &why, allIntegers))
                 return *error = where + ": " + why, false;
-            bins = support::Bins{std::nullopt, edges};
+            bins = support::Bins{std::nullopt, edges, {}};
         } else {
             histRange = binRange;
         }
         std::vector<std::vector<double>> tops(nx);
         for (std::size_t i = 0; i < nx; ++i) {
-            if (!support::histogram(x[i], bins, histRange, density && !stacked, w.empty() ? nullptr : &w[i], &tops[i], &edges, &why))
+            if (!support::histogram(x[i], bins, histRange, density && !stacked, w.empty() ? nullptr : &w[i], &tops[i], &edges, &why,
+                                    xIntegers[i]))
                 return *error = where + ": " + why, false;
-            bins = support::Bins{std::nullopt, edges};
+            bins = support::Bins{std::nullopt, edges, {}};
         }
         const std::size_t nb = edges.empty() ? 0 : edges.size() - 1;
         std::vector<double> totwidth(nb);  // np.diff(bins)

@@ -1520,7 +1520,11 @@ TEST(HistCalls, ArgumentsAreReadAsMatplotlibReadsThem) {
     EXPECT_EQ(error(one, R"({"histtype": "steps"})"),
               "axs[0].hist: 'steps' is not a valid value for histtype; supported values are 'bar', 'barstacked', 'step', 'stepfilled'");
     EXPECT_EQ(error(one, R"({"histtype": null})").find("axs[0].hist: that is not a valid value for histtype"), 0u);
-    EXPECT_EQ(error(one, R"({"bins": "auto"})"), "axs[0].hist: bins given by name are not supported yet");
+    EXPECT_EQ(error(one, R"({"bins": "auto"})"), "");
+    EXPECT_EQ(error(two, R"({"bins": "stone"})"), "");
+    EXPECT_EQ(error(one, R"({"bins": "bogus"})"), "axs[0].hist: 'bogus' is not a valid estimator for `bins`");
+    EXPECT_EQ(error(one, R"({"bins": "fd", "weights": [1, 1, 1, 1]})"),
+              "axs[0].hist: Automated estimation of the number of bins is not supported for weighted data");
     EXPECT_EQ(error(one, R"({"bins": 2.5})"), "axs[0].hist: `bins` must be an integer, a string, or an array");
     EXPECT_EQ(error(one, R"({"bins": 0})"), "axs[0].hist: `bins` must be positive, when an integer");
     EXPECT_EQ(error(one, R"({"bins": [3, 1]})"), "axs[0].hist: `bins` must increase monotonically, when an array");

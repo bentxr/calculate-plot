@@ -156,22 +156,6 @@ std::string pyColour(const std::optional<std::vector<double>>& c, bool numpy, bo
 
 }  // namespace
 
-std::string pythonStrRepr(const std::string& s) {
-    const bool single = s.find('\'') != std::string::npos && s.find('"') == std::string::npos;
-    const char q = single ? '"' : '\'';
-    std::string out(1, q);
-    for (unsigned char c : s) {
-        if (c == '\\') out += "\\\\";
-        else if (c == q) out += std::string("\\") + char(q);
-        else if (c == '\n') out += "\\n";
-        else if (c == '\r') out += "\\r";
-        else if (c == '\t') out += "\\t";
-        else if (c < 0x20 || c == 0x7f) out += "\\x" + hex2(c);
-        else out.push_back(char(c));  // UTF-8 bytes of printable characters pass through
-    }
-    return out + char(q);
-}
-
 std::string pythonBytesRepr(const std::string& bytes) {
     const bool single = bytes.find('\'') != std::string::npos && bytes.find('"') == std::string::npos;
     const char q = single ? '"' : '\'';

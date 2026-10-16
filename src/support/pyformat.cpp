@@ -6,6 +6,7 @@
 #include <locale.h>
 #endif
 #include <cmath>
+#include <cstdio>
 #include <cstdlib>
 
 namespace calculate_plot::support {
@@ -68,6 +69,27 @@ std::string shortFloat(double x) {
     while (!text.empty() && text.back() == '0') text.pop_back();
     if (!text.empty() && text.back() == '.') text.pop_back();
     return text;
+}
+
+std::string pythonStrRepr(const std::string& s) {
+    const bool single = s.find('\'') != std::string::npos && s.find('"') == std::string::npos;
+    const char q = single ? '"' : '\'';
+    std::string out(1, q);
+    for (unsigned char c : s) {
+        if (c == '\\') out += "\\\\";
+        else if (c == q) out += std::string("\\") + char(q);
+        else if (c == '\n') out += "\\n";
+        else if (c == '\r') out += "\\r";
+        else if (c == '\t') out += "\\t";
+        else if (c < 0x20 || c == 0x7f) {
+            char buffer[8];
+            std::snprintf(buffer, sizeof buffer, "\\x%02x", unsigned(c));
+            out += buffer;
+        } else {
+            out.push_back(char(c));  // UTF-8 bytes of printable characters pass through
+        }
+    }
+    return out + char(q);
 }
 
 }  // namespace calculate_plot::support

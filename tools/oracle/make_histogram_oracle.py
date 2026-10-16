@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Write tests/oracle/histogram.json: NumPy 2.5.3's np.sum of float64 arrays, np.histogram_bin_edges and
-np.histogram (bins, range, density, weights), as float.hex; or the error NumPy raises. The data are
-given by a generator both sides compute exactly ((i * p) % q / q * scale + offset), so that long
-arrays need not be stored.
+np.histogram (bins, range, density, weights; bins by name: the rules of _hist_bin_selectors, on float64
+and on int64 data), and the routines those rules use (np.dot of float64 vectors, np.mean, np.std,
+np.percentile(x, [75, 25])), as float.hex; or the error NumPy raises. The data are given by a generator
+both sides compute exactly ((i * p) % q / q * scale + offset, or for integers (i * p) % q + offset), so
+that long arrays need not be stored.
 
   tools/oracle/.venv/bin/python -I tools/oracle/make_histogram_oracle.py
 """
@@ -25,8 +27,14 @@ def generated(spec):
 def data(spec):
     """A spec is a list of numbers (with "nan", "inf", "-inf" as strings) or a generator."""
     if isinstance(spec, dict):
+        if spec.get("int"):
+            return [(i * spec["p"]) % spec["q"] + spec["offset"] for i in range(spec["n"])]
         return generated(spec)
     return [float(v) if isinstance(v, str) else v for v in spec]
+
+
+def array(spec, integer=False):
+    return np.asarray(data(spec), np.int64 if integer else float)
 
 
 def hexes(values):
@@ -35,6 +43,10 @@ def hexes(values):
 
 def gen(n, p=7919, q=10007, scale=2.0, offset=-1.0):
     return {"n": n, "p": p, "q": q, "scale": scale, "offset": offset}
+
+
+def igen(n, p=7919, q=101, offset=-50):
+    return {"n": n, "p": p, "q": q, "offset": offset, "int": True}
 
 
 sums = []
@@ -104,7 +116,65 @@ for a, bins, rng, density, weights in HIST:
         case["bin_edges_error"] = str(e)
     histograms.append(case)
 
+# np.dot of float64 vectors (BLAS ddot), as the 'stone' rule takes it of the bin probabilities
+dots = []
+for n in list(range(1, 70)) + [100, 127, 128, 129, 255, 300, 1000]:
+    for spec, other in ((gen(n), None), (gen(n, 31, 97, 0.1, 0.0), gen(n)), (gen(n, 104729, 1000003, 1e6, -3.3), None)):
+        a = array(spec)
+        b = a if other is None else array(other)
+        dots.append({"a": spec, "b": other, "dot": float.hex(float(a.dot(b)))})
+    p = np.histogram(array(gen(n * 3 + 1)), bins=n, range=(-1.0, 1.0))[0] / (n * 3 + 1)
+    dots.append({"a": hexes(p), "b": None, "dot": float.hex(float(p.dot(p))), "hex": True})
+
+# np.mean, np.std and np.percentile(x, [75, 25]) of float64 and int64 data
+stats = []
+STATS = [([1.0], False), ([1, 2], False), ([1, 2, 3], False), ([3, 1, 2, 2], False), ([0.1 * i for i in range(30)], False),
+         ([1e300, -1e300, 5.0], False), ([5, 5, 5, 5], False), ([1, 2, 2, 3, 3, 3, 4, 4, 4, 4], True), ([7], True)]
+for n in [2, 3, 4, 5, 7, 8, 9, 10, 16, 17, 100, 129, 1000, 8191, 8192, 8193, 20000]:
+    STATS += [(gen(n), False), (gen(n, 104729, 1000003, 1e6, -3.3), False), (igen(n), True),
+              (igen(n, 104729, 1000003, -500000), True)]
+for spec, integer in STATS:
+    a = array(spec, integer)
+    p75, p25 = np.percentile(a, [75, 25])
+    stats.append({"data": spec, "int": integer, "mean": float.hex(float(np.mean(a))), "std": float.hex(float(np.std(a))),
+                  "p75": float.hex(float(p75)), "p25": float.hex(float(p25))})
+
+# bins by name: histogram_bin_edges and histogram, with and without a range
+NAMES = ["auto", "fd", "doane", "scott", "stone", "rice", "sturges", "sqrt"]
+NAMED = [([1.5], False, None), ([2, 2, 2], False, None), ([1, 2], False, None), ([1, 2, 3], False, None),
+         ([0.1 * i for i in range(30)], False, None), ([0.1 * i for i in range(30)], False, [0.5, 2.0]),
+         ([0.0, 1.0, NAN, 0.5, 0.25], False, [0.0, 1.0]), ([float(i * i) for i in range(40)], False, None),
+         ([1, 2, 2, 3, 3, 3, 4, 4, 4, 4], True, None), ([1, 2, 2, 3, 3, 3, 4, 4, 4, 4], True, [1, 4]),
+         ([3, 3, 3], True, [3, 3]), ([1, 2, 3], False, [2.5, 2.5]), ([1, 2, 3], False, [5, 6]),
+         (gen(100), False, None), (gen(1000), False, None), (gen(1000), False, [-0.5, 0.75]),
+         (gen(1000, 31, 97, 0.1, 0.0), False, None), (gen(500, 104729, 1000003, 1e6, -3.3), False, None),
+         (igen(1000, 7919, 4, 0), True, None), (igen(1000), True, [-50, 50]), (igen(20000), True, None),
+         (gen(20000), False, None), (gen(3), False, None), (gen(9), False, None), (gen(60), False, None)]
+named = []
+for spec, integer, rng in NAMED:
+    a = array(spec, integer)
+    r = None if rng is None else tuple(rng)
+    for name in NAMES:
+        case = {"data": spec, "int": integer, "bins": name, "range": rng}
+        try:
+            case["edges"] = hexes(np.histogram_bin_edges(a, name, r))
+            n, _ = np.histogram(a, name, r)
+            case["counts"] = hexes(n)
+        except (ValueError, TypeError) as e:
+            case["error"] = str(e)
+        named.append(case)
+for spec, integer, rng, name, weights in [([1, 2, 3], False, None, "bogus", None), ([1, 2, 3], False, None, "auto", [1, 1, 1]),
+                                          ([NAN, 1.0], False, None, "auto", None), ([], False, None, "fd", None),
+                                          ([], False, [0, 1], "sturges", None)]:
+    case = {"data": spec, "int": integer, "bins": name, "range": rng, "weights": weights}
+    try:
+        case["edges"] = hexes(np.histogram_bin_edges(array(spec, integer), name, rng, weights))
+    except (ValueError, TypeError) as e:
+        case["error"] = str(e)
+    named.append(case)
+
 out = {"_note": "NumPy 2.5.3 (BSD-3-Clause), tools/oracle/make_histogram_oracle.py", "sums": sums,
-       "histograms": histograms}
+       "histograms": histograms, "dots": dots, "stats": stats, "named": named}
 (ROOT / "tests" / "oracle" / "histogram.json").write_text(json.dumps(out, indent=None) + "\n")
-print(len(sums), "sums,", len(histograms), "histograms;", sum("error" in h for h in histograms), "errors")
+print(len(sums), "sums,", len(histograms), "histograms;", sum("error" in h for h in histograms), "errors;", len(dots), "dots,",
+      len(stats), "stats,", len(named), "named;", sum("error" in h for h in named), "errors")

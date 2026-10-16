@@ -8,6 +8,10 @@ namespace calculate_plot::support {
 // exponents from -4 to 15 and scientific otherwise ("1e-05", "1e+16", "100000.0").
 std::string pythonRepr(double x);
 
+// repr(s) of a Python str: single quotes unless the text has some and no double; backslashes, the
+// quote, \n, \r, \t and other control characters escaped; other UTF-8 bytes as they are.
+std::string pythonStrRepr(const std::string& s);
+
 // repr(np.float64(x)) in NumPy 2: "np.float64(...)".
 std::string numpyRepr(double x);
 

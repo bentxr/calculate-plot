@@ -5,6 +5,7 @@
 // Licence: LICENSES/Matplotlib.txt. Changes: licensing/changes/matplotlib.md
 #pragma once
 
+#include "support/pyformat.hpp"
 #include "svg/xml_writer.h"
 
 #include <array>
@@ -169,8 +170,9 @@ private:
     std::vector<std::string> glyphMap_;  // glyph ids already defined
 };
 
-// Python's repr() of a str and of bytes (single quotes unless the text has some and no double).
-std::string pythonStrRepr(const std::string& s);
+// Python's repr() of a str (support::pythonStrRepr) and of bytes (single quotes unless the text has
+// some and no double).
+using support::pythonStrRepr;
 std::string pythonBytesRepr(const std::string& bytes);
 // matplotlib.colors.rgb2hex for an RGB(A) tuple.
 std::string rgb2hex(const std::vector<double>& c);

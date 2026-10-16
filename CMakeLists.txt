@@ -101,6 +101,7 @@ add_library(calculate-plot STATIC
     src/support/json.cpp
     src/support/json_writer.cpp
     src/support/pyformat.cpp
+    src/support/blas_dot.cpp
     src/support/histogram.cpp
     src/support/pynum.cpp
     src/support/log10.cpp
