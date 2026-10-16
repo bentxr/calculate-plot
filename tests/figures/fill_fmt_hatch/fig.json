@@ -1,0 +1,5 @@
+{"version": 1, "calls": [{"call": "subplots", "as": ["fig", "ax"]},
+ {"on": "ax", "call": "fill", "args": [[0, 1, 2], [0, 1, 0], "r"], "kwargs": {"hatch": "/"}},
+ {"on": "ax", "call": "fill", "args": [[2, 3, 4], [0, 1, 0], "C2"], "kwargs": {"hatch": "o"}},
+ {"on": "ax", "call": "fill", "args": [[4.5], "k"], "kwargs": {"hatch": "|"}},
+ {"on": "ax", "call": "fill", "args": [[0, 2, 4], [1.5, 2, 1.5]], "kwargs": {"hatch": "x", "facecolor": "r"}}]}

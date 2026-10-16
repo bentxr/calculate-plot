@@ -85,6 +85,12 @@ std::vector<double> LogLocator::tickValues(double vmin, double vmax) const {
     }
     if (vmax < vmin) std::swap(vmin, vmax);
     const double efmin = logB(vmin, b), efmax = logB(vmax, b);
+    // math.ceil(efmin), math.floor(efmax): of a NaN (a negative limit after the swap) or of an infinity
+    // (a limit of 0) Python raises
+    for (double e : {efmin, efmax}) {
+        if (std::isnan(e)) return support::noteRaised("cannot convert float NaN to integer"), std::vector<double>{};
+        if (std::isinf(e)) return support::noteRaised("cannot convert float infinity to integer"), std::vector<double>{};
+    }
     const long long emin = (long long)std::ceil(efmin);
     const long long emax = (long long)std::floor(efmax);
     const long long nAvail = emax - emin + 1;

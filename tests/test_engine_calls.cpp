@@ -850,6 +850,12 @@ TEST(RcCalls, ALogAxisWithNothingPositiveStopsTheDrawing) {
     EXPECT_EQ(error(xlim + R"(, {"on": "ax", "call": "set_xscale", "args": ["log"]})"), raised);
     EXPECT_EQ(error(ylim + R"(, {"on": "ax", "call": "semilogy"})"), raised);
     EXPECT_EQ(error(plot + xlim + R"(, {"on": "ax", "call": "set_xscale", "args": ["log"]})"), "");
+    // limits the other way round: tick_values swaps them after that test, and math.ceil of the logarithm
+    // of a negative value (NaN) or of 0 (-inf) raises
+    EXPECT_EQ(error(R"(, {"on": "ax", "call": "set_xlim", "args": [0.333, -1.667]}, {"on": "ax", "call": "loglog"})"),
+              "cannot convert float NaN to integer");
+    EXPECT_EQ(error(R"(, {"on": "ax", "call": "set_xlim", "args": [0.5, 0]}, {"on": "ax", "call": "semilogx"})"),
+              "cannot convert float infinity to integer");
     // and the next figure starts clean
     EXPECT_EQ(error(plot), "");
 }

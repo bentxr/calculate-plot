@@ -2302,7 +2302,13 @@ private:
             if (marker) kw.push_back("marker");
             if (fmtColor) kw.push_back("color");
             if (!closedValue->isNull()) kw.push_back("closed");
-            std::optional<colors::Spec> face = fmtColor;
+            // the format's colour is to_rgba(fmt), and Polygon's set_facecolor makes every part of a tuple a
+            // float (its alpha too: an SVG hatch id hashes its repr)
+            std::optional<colors::Spec> face;
+            if (fmtColor) {
+                const auto rgba = colors::toRgba(*fmtColor, std::nullopt, rc_, nullptr);
+                face = colors::Spec(std::vector<double>(rgba->begin(), rgba->end()));
+            }
             // kwargs = {**kwargs, 'label': label}, then the defaults but the colour where kwargs say nothing
             auto polyProps = props;
             if (!label) polyProps.emplace_back("label", &none);
