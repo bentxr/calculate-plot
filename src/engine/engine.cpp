@@ -2105,9 +2105,8 @@ private:
                 (name == "which" ? which : axisName) = value.asString();
             } else if (name == "color" || name == "c") {
                 colors::Spec checked;
-                if (!value.isString()) return *error = where + ": grid colours must be strings so far", false;
                 if (!color(value, &checked)) return *error = where + ": bad " + name, false;
-                style.gridColor = colors::Spec(value.asString()), styled = true;
+                style.gridColor = checked, styled = true;
                 colorByItsName = name == "color";
             } else if (name == "linestyle" || name == "ls") {
                 // Line2D.set_linestyle, when the grid lines take it
@@ -2762,7 +2761,6 @@ private:
         if (!flag("manage_ticks", nullptr, true, &manageTicks)) return false;
         if (manageTicks && n) {
             Axis& axis = vertical ? *ax.xaxis : *ax.yaxis;
-            if (axis.scale() == "log") return *error = where + ": boxplot ticks on a log axis are not supported yet", false;
             // dataLim.intervalx (y) reaches half a unit past the positions
             const auto [lo, hi] = std::minmax_element(positions.begin(), positions.end());
             auto p = ax.dataLim->points();
@@ -4394,8 +4392,9 @@ private:
                 if (!finiteWidths(w)) return *error = where + ": bad linewidths", false;
                 lc->setLinewidths(w);
             } else if (name == "alpha") {
-                if (!readAlpha(value, &num)) return *error = where + ": alpha must be a number from 0 to 1", false;
-                lc->setAlpha(num);
+                if (value.isNull()) lc->setAlpha(std::nullopt);  // set_alpha(None)
+                else if (!readAlpha(value, &num)) return *error = where + ": alpha must be a number from 0 to 1", false;
+                else lc->setAlpha(num);
             } else if (name == "zorder") {
                 if (!readFinite(value, &num)) return *error = where + ": zorder must be a finite number", false;
                 lc->zorder = num;
