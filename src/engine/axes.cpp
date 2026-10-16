@@ -341,6 +341,52 @@ Axis::Axis(const rc::Params& rc, Axes& axes, bool isX)
     setScale("linear");
 }
 
+void Axis::widenViewInterval(double vmin, double vmax) {
+    const auto old = viewInterval();
+    // min(vmin, vmax, oldmin) and the like: the first of equal values
+    const auto least = [](std::initializer_list<double> v) {
+        double m = *v.begin();
+        for (double x : v) if (x < m) m = x;
+        return m;
+    };
+    const auto most = [](std::initializer_list<double> v) {
+        double m = *v.begin();
+        for (double x : v) if (x > m) m = x;
+        return m;
+    };
+    if (old[0] < old[1]) setViewInterval(least({vmin, vmax, old[0]}), most({vmin, vmax, old[1]}));
+    else setViewInterval(most({vmin, vmax, old[0]}), least({vmin, vmax, old[1]}));
+}
+
+bool Axis::setTicks(const std::vector<double>& ticks, const std::optional<std::vector<std::string>>& labels, std::string* error) {
+    Axis& owner = tickerAxis();
+    if (!ticks.empty()) {
+        double lo = ticks[0], hi = ticks[0];  // min(ticks), max(ticks)
+        for (double v : ticks) {
+            if (v < lo) lo = v;
+            if (v > hi) hi = v;
+        }
+        for (Axes* sibling : axes_.shared(isX_).members) (isX_ ? *sibling->xaxis : *sibling->yaxis).widenViewInterval(lo, hi);
+    }
+    owner.fixedLocs = ticks;
+    if (!labels) return true;
+    if (labels->empty()) {  // NullFormatter
+        owner.nullMajorFormatter = true;
+        owner.fixedLabels.reset();
+        owner.dictLabels.reset();
+        return true;
+    }
+    if (labels->size() != ticks.size())
+        return *error = "The number of FixedLocator locations (" + std::to_string(ticks.size()) +
+                        "), usually from a call to set_ticks, does not match the number of labels (" + std::to_string(labels->size()) + ").",
+               false;
+    owner.nullMajorFormatter = false;
+    owner.fixedLabels.reset();
+    owner.dictLabels = std::vector<std::pair<double, std::string>>{};
+    for (std::size_t i = 0; i < ticks.size(); ++i) owner.dictLabels->emplace_back(ticks[i], (*labels)[i]);
+    return true;
+}
+
 void Axis::setViewInterval(double vmin, double vmax) {
     // (self.axes.viewLim: asking for it brings any pending autoscaling up to date first, of both directions)
     axes_.unstaleViewLim();
@@ -389,6 +435,7 @@ void Axis::setScale(const std::string& name) {
     nullMajorFormatter = nullMinorFormatter = false;
     fixedLocs.reset();
     fixedLabels.reset();
+    dictLabels.reset();
     // The locators and formatters keep their settings of before matplotlib 2 in the classic style
     const bool classic = rc_.boolean("_internal.classic_mode");
     if (name == "log") {  // LogScale.set_default_locators_and_formatters
@@ -492,7 +539,8 @@ std::vector<Tick*> Axis::minorTicks(std::size_t count) {
 
 std::string Axis::offsetString() const {
     // NullFormatter.get_offset() is '' (a log scale's formatters have none either)
-    if (scale_ == "log" || tickerAxis().nullMajorFormatter || tickerAxis().fixedLabels) return std::string();
+    const Axis& owner = tickerAxis();
+    if (scale_ == "log" || owner.nullMajorFormatter || owner.fixedLabels || owner.dictLabels) return std::string();
     return formatter.offsetText();
 }
 
@@ -620,29 +668,34 @@ std::vector<Tick*> Axis::updateTicks() {
     };
     std::vector<Tick*> ticks;
     if (groupVisible(majorTickKw_)) {
+        // the major locator's locations, then its formatter's labels
         std::vector<double> locs;
-        std::vector<std::string> labels;
         if (owner.fixedLocs) {
             locs = *owner.fixedLocs;
-            for (std::size_t i = 0; i < locs.size(); ++i)
-                labels.push_back(owner.fixedLabels && i < owner.fixedLabels->size() ? (*owner.fixedLabels)[i] : "");
         } else if (scale_ == "log") {
             logLocator.tickSpace = owner.tickSpace();
             logLocator.minpos = owner.minpos();
             locs = logLocator.tickValues(ownerView[0], ownerView[1]);
-            if (owner.nullMajorFormatter) {
-                labels.assign(locs.size(), "");
-            } else {
-                logFormatter.setLocs(ownerView[0], ownerView[1]);
-                for (double v : locs) labels.push_back(logFormatter(v));
-            }
-        } else if (owner.nullMajorFormatter) {
-            locator.tickSpace = owner.tickSpace();
-            locs = locator.tickValues(ownerView[0], ownerView[1]);
-            labels.assign(locs.size(), "");
         } else {
             locator.tickSpace = owner.tickSpace();
             locs = locator.tickValues(ownerView[0], ownerView[1]);
+        }
+        std::vector<std::string> labels;
+        if (owner.nullMajorFormatter) {
+            labels.assign(locs.size(), "");
+        } else if (owner.fixedLabels) {  // FixedFormatter: the i-th label, '' past its end
+            for (std::size_t i = 0; i < locs.size(); ++i) labels.push_back(i < owner.fixedLabels->size() ? (*owner.fixedLabels)[i] : "");
+        } else if (owner.dictLabels) {  // tickd.get(x, ''): the last label given for an equal location
+            for (double v : locs) {
+                std::string found;
+                for (const auto& [at, text] : *owner.dictLabels)
+                    if (at == v) found = text;
+                labels.push_back(found);
+            }
+        } else if (scale_ == "log") {
+            logFormatter.setLocs(ownerView[0], ownerView[1]);
+            for (double v : locs) labels.push_back(logFormatter(v));
+        } else {
             formatter.setViewInterval(ownerView[0], ownerView[1]);
             formatter.setLocs(locs);
             for (double v : locs) labels.push_back(formatter(v));
@@ -662,7 +715,8 @@ std::vector<Tick*> Axis::updateTicks() {
         logLocator.minpos = owner.minpos();
         // get_minorticklocs: the minor locations a major one covers go (within this axis' limits)
         const auto locs = axes::withoutMajorTicks(logMinorLocator.tickValues(ownerView[0], ownerView[1]),
-                                                  logLocator.tickValues(ownerView[0], ownerView[1]), view[0], view[1], 10.0);
+                                                  owner.fixedLocs ? *owner.fixedLocs : logLocator.tickValues(ownerView[0], ownerView[1]),
+                                                  view[0], view[1], 10.0);
         logMinorFormatter.setLocs(ownerView[0], ownerView[1]);
         const std::vector<Tick*> minor = minorTicks(locs.size());
         for (std::size_t i = 0; i < locs.size(); ++i) {

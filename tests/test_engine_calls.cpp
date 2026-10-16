@@ -1632,6 +1632,21 @@ TEST(ViolinCalls, ArgumentsAreReadAsMatplotlibReadsThem) {
     EXPECT_EQ(error(two, R"({"points": -1})"), "axs[0].violinplot: Number of samples, -1, must be non-negative.");
 }
 
+// Axes.set_xticks / set_yticks (Axis.set_ticks) and set_frame_on
+TEST(TickCalls, ArgumentsAreReadAsMatplotlibReadsThem) {
+    const auto error = [](const std::string& call) { return draw(kSubplots + call).error; };
+    EXPECT_EQ(error(R"({"on": "axs[0]", "call": "set_xticks", "args": [[1, 2], ["a", "b"]]})"), "");
+    EXPECT_EQ(error(R"({"on": "axs[0]", "call": "set_xticks", "args": [[1, 2], ["a"]]})"),
+              "axs[0].set_xticks: The number of FixedLocator locations (2), usually from a call to set_ticks, does not match the "
+              "number of labels (1).");
+    EXPECT_EQ(error(R"({"on": "axs[0]", "call": "set_yticks", "args": [[1, 2]], "kwargs": {"fontsize": 8}})"),
+              "axs[0].set_yticks: Incorrect use of keyword argument 'fontsize'. Keyword arguments other than 'minor' modify the text "
+              "labels and can only be used if 'labels' are passed as well.");
+    EXPECT_EQ(error(R"({"on": "axs[0]", "call": "set_yticks", "args": [[1, 2]], "kwargs": {"minor": true}})"),
+              "axs[0].set_yticks: minor ticks are not supported yet");
+    EXPECT_EQ(error(R"({"on": "axs[0]", "call": "set_frame_on", "args": [0]})"), "");
+}
+
 TEST(HistCalls, ArgumentsAreReadAsMatplotlibReadsThem) {
     const auto error = [](const std::string& args, const std::string& kwargs) {
         return draw(kSubplots + R"({"on": "axs[0]", "call": "hist", "args": )" + args + R"(, "kwargs": )" + kwargs + "}").error;

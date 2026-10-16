@@ -234,6 +234,8 @@ it comes from in its first lines. The changes, as a whole:
   Axes.violinplot and Axes.violin (the classic style is refused); Collection.set_capstyle for LineCollections.
   Aspect: Axes.set_aspect with adjustable 'box' and apply_aspect (get_data_ratio, Bbox.shrunk_to_aspect and
   anchored) at the start of draw and get_tightbbox; the original and the active position kept apart.
+  Ticks: Axis.set_ticks (FixedLocator, set_view_interval without ignore on the shared axes) and set_ticklabels
+  (NullFormatter, or a FuncFormatter of a dict of labels); set_frame_on.
   Colour sequences: colors.py's ColorSequenceRegistry (the built-in sequences only) with _cm.py's data
   (data/color_sequences.json; ColorBrewer's schemes in data/color_sequences_colorbrewer.json), written as JSON
   numbers by tools/oracle/make_color_sequences.py; rcsetup.py's _single_string_color_list takes them in cycles.

@@ -1,0 +1,13 @@
+{"version": 1, "calls": [{"call": "subplots", "args": [2, 2], "kwargs": {"figsize": {"$tuple": [7.2, 5.4]}}, "as": ["fig", "axs"]},
+ {"on": "axs[0, 0]", "call": "plot", "args": [[0, 1, 2], [1, 3, 2]]},
+ {"on": "axs[0, 0]", "call": "set_xticks", "args": [[0, 0.5, 2.5]]},
+ {"on": "axs[0, 0]", "call": "set_yticks", "args": [[1, 2, 3], ["one", "two", "three"]]},
+ {"on": "axs[0, 1]", "call": "plot", "args": [[0, 1], [100000, 100002]]},
+ {"on": "axs[0, 1]", "call": "set_yticks", "args": [[100000, 100001, 100002]]},
+ {"on": "axs[0, 1]", "call": "set_xticks", "args": [[]]},
+ {"on": "axs[1, 0]", "call": "plot", "args": [[1, 10, 100], [1, 2, 3]]},
+ {"on": "axs[1, 0]", "call": "set", "kwargs": {"xscale": "log", "xticks": [1, 30, 100], "frame_on": false}},
+ {"on": "axs[1, 1]", "call": "plot", "args": [[0, 1], [0, 1]]},
+ {"on": "axs[1, 1]", "call": "set_xticks", "args": [[0.2, 0.4]], "kwargs": {"labels": []}},
+ {"on": "axs[1, 1]", "call": "set_frame_on", "args": [false]},
+ {"on": "axs[1, 1]", "call": "plot", "args": [[0, 2], [0, 2]]}]}

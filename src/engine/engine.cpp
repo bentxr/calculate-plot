@@ -195,6 +195,9 @@ private:
                       "rwidth", "log", "color", "label", "stacked"}, 15},
             {"set_major_formatter", {"formatter"}, 1},
             {"set_minor_formatter", {"formatter"}, 1},
+            {"set_xticks", {"ticks", "labels"}, 2},
+            {"set_yticks", {"ticks", "labels"}, 2},
+            {"set_frame_on", {"b"}, 1},
             {"Polygon", {"xy"}, 1},
             {"annotate", {"text", "xy", "xytext", "xycoords", "textcoords", "arrowprops", "annotation_clip"}, 7},
             {"bar_label", {"container", "labels"}, 2},
@@ -674,6 +677,47 @@ private:
             c.method = "plot";
             return axesCall(ax, c, error);
         }
+        if (call.method == "set_xticks" || call.method == "set_yticks") {
+            // set_ticks(ticks, labels=None, *, minor=False, **kwargs)
+            const Json* ticksJson = argument(call, 0, "ticks");
+            std::vector<double> ticks;
+            if (!ticksJson || !numbers(*ticksJson, &ticks)) return *error = where + ": ticks must be a list of numbers", false;
+            std::optional<std::vector<std::string>> labels;
+            if (const Json* l = argument(call, 1, "labels"); l && !l->isNull()) {
+                const Json* seq = sequence(*l);
+                if (!seq) return *error = where + ": labels must be a list of strings", false;
+                labels = std::vector<std::string>{};
+                for (const Json& s : seq->items()) {
+                    if (!s.isString()) return *error = where + ": labels must be strings (others are not supported yet)", false;
+                    labels->push_back(s.asString());
+                }
+            }
+            for (const auto& [name, value] : call.kwargs) {
+                if (name == "ticks" || name == "labels") continue;
+                if (name == "minor") {
+                    if (!value.isBool() || value.asBool()) return *error = where + ": minor ticks are not supported yet", false;
+                    continue;
+                }
+                if (!labels)
+                    return *error = where + ": Incorrect use of keyword argument '" + name +
+                                    "'. Keyword arguments other than 'minor' modify the text labels and can only be used if 'labels' are passed as well.",
+                           false;
+                return *error = where + ": keywords for the tick labels are not supported yet", false;
+            }
+            Axis& axis = call.method == "set_xticks" ? *ax.xaxis : *ax.yaxis;
+            if (!axis.setTicks(ticks, labels, error)) return *error = where + ": " + *error, false;
+            return true;
+        }
+        if (call.method == "set_frame_on") {
+            const Json* b = argument(call, 0, "b");
+            double n = 0;
+            if (!b) return *error = where + ": b is required", false;
+            if (b->isBool()) ax.frameOn = b->asBool();
+            else if (b->isNull()) ax.frameOn = false;
+            else if (readNumber(*b, &n)) ax.frameOn = n != 0;
+            else return *error = where + ": b must be True or False", false;
+            return true;
+        }
         if (call.method == "set_aspect") {
             // set_aspect(aspect, adjustable=None, anchor=None, share=False)
             const Json* a = argument(call, 0, "aspect");
@@ -723,7 +767,8 @@ private:
             // Artist.set: set_<name>(value) for each keyword, in the order given
             if (!call.args.empty())
                 return *error = where + ": set() takes 1 positional argument but " + std::to_string(call.args.size() + 1) + " were given", false;
-            static const char* const setters[] = {"title", "xlabel", "ylabel", "xlim", "ylim", "xscale", "yscale", "aspect"};
+            static const char* const setters[] = {"title", "xlabel", "ylabel", "xlim", "ylim", "xscale", "yscale", "aspect",
+                                                  "xticks", "yticks", "frame_on"};
             for (const auto& [name, value] : call.kwargs) {
                 if (std::find(std::begin(setters), std::end(setters), name) == std::end(setters))
                     return *error = where + ": set(" + name + "=...) is not supported yet", false;

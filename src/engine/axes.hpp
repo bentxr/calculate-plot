@@ -134,6 +134,14 @@ public:
     // replace them when the scale is set.
     std::optional<std::vector<double>> fixedLocs;
     std::optional<std::vector<std::string>> fixedLabels;
+    // set_ticklabels(labels) with a FixedLocator: a FuncFormatter of {location: label} ('' elsewhere)
+    std::optional<std::vector<std::pair<double, std::string>>> dictLabels;
+    // Axis.set_ticks(ticks, labels=None): a FixedLocator (the view widened to the ticks, on every axis
+    // sharing this one), and with labels their formatter (none: NullFormatter); false and why if the
+    // labels do not match the ticks
+    bool setTicks(const std::vector<double>& ticks, const std::optional<std::vector<std::string>>& labels, std::string* error);
+    // set_view_interval(vmin, vmax) without ignore: the view only grows, keeping its direction
+    void widenViewInterval(double vmin, double vmax);
     double labelpad;
     std::string labelPosition;  // bottom/top, left/right
     bool autoscaleOn = true;
