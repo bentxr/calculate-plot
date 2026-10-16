@@ -125,6 +125,13 @@ public:
     void setMinorTickSwitches(const TickSwitches& switches);  // tick_params(which='minor')
     // set_tick_params(which, reset, **kwargs) with the keywords translated
     void setTickParams(const std::string& which, bool reset, const TickParams& params);
+    // set_ticks_position(position) and tick_top / tick_bottom / tick_left / tick_right (`tickSide`: labels
+    // kept on when there were any); false and matplotlib's message for a position this axis has not
+    bool setTicksPosition(const std::string& position, std::string* error);
+    bool tickSide(const std::string& side, std::string* error);
+    bool setLabelPosition(const std::string& position, std::string* error);   // set_label_position
+    bool setOffsetPosition(const std::string& position, std::string* error);  // YAxis.set_offset_position
+    bool isX() const { return isX_; }
     const TickSwitches& tickSwitches(bool major) const { return major ? majorTickKw_ : minorTickKw_; }
     // Axis.grid(visible, which, **line properties): None toggles; properties turn the grid on
     void grid(std::optional<bool> on, const std::string& which, const TickSwitches& style, bool styled);
@@ -180,6 +187,7 @@ private:
     Axes& axes_;
     bool isX_;
     std::string scale_ = "linear";
+    std::string tickPosition_ = "bottom";  // XAxis._tick_position: where the offset text goes
     TickSwitches majorTickKw_, minorTickKw_;
     std::vector<std::unique_ptr<Tick>> majorTicks_, minorTicks_;
 };
@@ -258,6 +266,13 @@ public:
     void clearStale(bool x) { (x ? staleX_ : staleY_) = false; }
     // Axes.sharex / sharey: this Axes joins `other`'s group, uses its tickers and takes its limits.
     void share(bool x, Axes& other);
+    // twinx() (`x`: the twin shares x) / twiny(): an Axes in the same cells sharing that axis, its other one on
+    // the right (top), with no patch of its own; false and why when this Axes has no subplot spec
+    Axes* twin(bool x, std::string* error);
+    // _update_twinned_axes_patch_visibility: of the twinned Axes only the lowest (zorder, then the order
+    // made) draws its patch, if its frame is on
+    void updateTwinnedPatchVisibility();
+    std::shared_ptr<std::vector<Axes*>> twinned;  // _twinned_axes' group (none: not twinned)
     const SharedAxes& shared(bool x) const { return *shared_[x ? 0 : 1]; }
     // _label_outer_xaxis / _label_outer_yaxis: the tick labels and offset texts of the inner sides go.
     void labelOuter(bool x);

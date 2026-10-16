@@ -90,6 +90,11 @@ Axes* Figure::addSubplot(int nrows, int ncols, int num1, int num2) {
     return axes.back().get();
 }
 
+Axes* Figure::addSubplot(const SubplotSpec& spec) {
+    axes.push_back(std::make_unique<Axes>(rc_, *this, spec));
+    return axes.back().get();
+}
+
 Axes* Figure::addAxes(double left, double bottom, double width, double height) {
     axes.push_back(std::make_unique<Axes>(rc_, *this, transforms::Bbox::fromBounds(left, bottom, width, height), std::nullopt));
     return axes.back().get();

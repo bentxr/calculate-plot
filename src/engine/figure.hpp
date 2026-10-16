@@ -62,6 +62,7 @@ public:
     // grid of that shape: the one an Axes of the figure already uses (GridSpec._check_gridspec_exists),
     // or a new one.
     Axes* addSubplot(int nrows, int ncols, int num1, int num2);
+    Axes* addSubplot(const SubplotSpec& spec);  // add_subplot(ss): another Axes in those cells
     // Figure.add_axes((left, bottom, width, height)): an Axes at that position, in figure fractions
     Axes* addAxes(double left, double bottom, double width, double height);
 };

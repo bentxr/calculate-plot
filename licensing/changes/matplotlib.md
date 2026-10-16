@@ -229,6 +229,9 @@ it comes from in its first lines. The changes, as a whole:
   _update_clip_properties (the text's clipping copied when drawn); an annotation's box is its arrow's patchA.
   Tick parameters: axis.py's Tick.__init__ keywords, Tick._apply_params, _apply_tickdir, Axis.set_tick_params
   (reset included), _translate_tick_params, _get_tick_label_size for the tick space, and Axes.tick_params.
+  Twin axes: Axes.twinx / twiny and pyplot's, _make_twin_axes (add_subplot of the same cells, sharex/sharey with
+  the other's limits and scale), _update_twinned_axes_patch_visibility; XAxis/YAxis set_ticks_position,
+  tick_top/bottom/left/right, set_label_position, set_offset_position and the x offset text on top.
   Bar labels: Axes.bar_label (BarContainer.datavalues, orientation and errorbar kept with the container,
   LineCollection.get_segments, Patch.get_window_extent, Bbox.intersection) and cbook._auto_format_str, with
   Python's % formatting and str.format of one number ported in src/support/pyformat.cpp (our own code: the

@@ -73,6 +73,8 @@ CALLS = [
     ("axes", "semilogx", Axes.semilogx, lines.Line2D),
     ("axes", "semilogy", Axes.semilogy, lines.Line2D),
     ("axes", "tick_params", Axes.tick_params, None),
+    ("axes", "twinx", Axes.twinx, None),
+    ("axes", "twiny", Axes.twiny, None),
     ("axis", "set_major_formatter", axis.Axis.set_major_formatter, None),
     ("axis", "set_minor_formatter", axis.Axis.set_minor_formatter, None),
     ("axis", "set_tick_params", axis.Axis.set_tick_params, None),

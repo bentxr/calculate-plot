@@ -84,6 +84,15 @@ public:
                 return nameResult(call, nullptr, error);
             }
             if (call.method == "gca") return noArguments(call, error) && nameResult(call, &gca(), error);
+            if (call.method == "twinx" || call.method == "twiny") {  // pyplot: of the current Axes (ax=None)
+                const Json* a = call.args.empty() ? keyword(call, "ax") : &call.args[0];
+                if ((a && !a->isNull()) || call.args.size() > 1 || call.kwargs.size() > (call.args.empty() && a ? 1u : 0u))
+                    return *error = "plt." + call.method + ": only ax=None is supported yet", false;
+                Axes* t = gca().twin(call.method == "twinx", error);
+                if (!t) return *error = "plt." + call.method + ": " + *error, false;
+                current_ = t;
+                return nameResult(call, t, error);
+            }
             if (call.method == "subplot") return subplot(call, error);
             if (call.method == "Polygon") return polygon(call, error);
             if (call.method == "axes") {
@@ -144,6 +153,31 @@ public:
     bool axisCall(Axis& axis, const model::Call& call, std::string* error) {
         const std::string where = call.on + "." + call.method;
         if (call.method == "set_tick_params") return tickParams(nullptr, &axis, call, error);
+        // tick_top / tick_bottom (x), tick_left / tick_right (y); set_ticks_position, set_label_position,
+        // set_offset_position (y) of one position
+        const bool sideCall = call.method == "tick_top" || call.method == "tick_bottom" || call.method == "tick_left" || call.method == "tick_right";
+        if (sideCall || call.method == "set_ticks_position" || call.method == "set_label_position" || call.method == "set_offset_position") {
+            const std::string side = sideCall ? call.method.substr(5) : "";
+            if (sideCall && (axis.isX() != (side == "top" || side == "bottom")))
+                return *error = where + ": '" + (axis.isX() ? "XAxis" : "YAxis") + "' object has no attribute '" + call.method + "'", false;
+            if (call.method == "set_offset_position" && axis.isX())
+                return *error = where + ": 'XAxis' object has no attribute 'set_offset_position'", false;
+            if (sideCall) {
+                if (!call.args.empty() || !call.kwargs.empty()) return *error = where + ": takes no arguments", false;
+                if (!axis.tickSide(side, error)) return *error = where + ": " + *error, false;
+                return true;
+            }
+            const Json* position = call.args.empty() ? keyword(call, "position") : &call.args[0];
+            if (!position || call.args.size() > 1 || call.kwargs.size() > (call.args.empty() ? 1u : 0u))
+                return *error = where + ": takes one position", false;
+            if (!position->isString()) return *error = where + ": " + repr(*position) + " is not a valid value for position", false;
+            const std::string& pos = position->asString();
+            const bool ok = call.method == "set_ticks_position" ? axis.setTicksPosition(pos, error)
+                            : call.method == "set_label_position" ? axis.setLabelPosition(pos, error)
+                                                                  : axis.setOffsetPosition(pos, error);
+            if (!ok) return *error = where + ": " + *error, false;
+            return true;
+        }
         const bool major = call.method == "set_major_formatter";
         if (!major && call.method != "set_minor_formatter") return *error = "unsupported call: " + where, false;
         const Json* formatter = call.args.empty() ? keyword(call, "formatter") : &call.args[0];
@@ -922,13 +956,26 @@ private:
             else if (b->isNull()) ax.frameOn = false;
             else if (readNumber(*b, &n)) ax.frameOn = n != 0;
             else return *error = where + ": b must be True or False", false;
+            ax.updateTwinnedPatchVisibility();
             return true;
+        }
+        if (call.method == "twinx" || call.method == "twiny") {
+            for (const auto& [name, value] : call.kwargs)
+                if (!(name == "delta_zorder" && value.isNumber() && value.asNumber() == 0) && !(name == "axes_class" && value.isNull()))
+                    return *error = where + ": " + name + " is not supported yet", false;
+            if (!call.args.empty()) return *error = where + ": axes_class is not supported yet", false;
+            Axes* t = ax.twin(call.method == "twinx", error);
+            if (!t) return *error = where + ": " + *error, false;
+            current_ = t;
+            return nameResult(call, t, error);
         }
         if (call.method == "set_aspect") {
             // set_aspect(aspect, adjustable=None, anchor=None, share=False)
             const Json* a = argument(call, 0, "aspect");
             double value = 0;
             if (!a) return *error = where + ": aspect is required", false;
+            if (ax.twinned && !(a->isString() && a->asString() == "auto"))
+                return *error = where + ": aspects of twinned Axes (adjustable 'datalim') are not supported yet", false;
             if (a->isString() && a->asString() == "auto") {
                 ax.aspect.reset();
             } else if (a->isString() && a->asString() == "equal") {

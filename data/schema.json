@@ -7189,6 +7189,46 @@
    ]
   },
   {
+   "on": "axes",
+   "call": "twinx",
+   "parameters": [
+    {
+     "name": "axes_class",
+     "positional": true,
+     "valid": "subclass type of `~.axes.Axes`, optional",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "delta_zorder",
+     "positional": false,
+     "valid": "float, default: 0",
+     "kind": "number",
+     "default": 0.0
+    }
+   ]
+  },
+  {
+   "on": "axes",
+   "call": "twiny",
+   "parameters": [
+    {
+     "name": "axes_class",
+     "positional": true,
+     "valid": "subclass type of `~.axes.Axes`, optional",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "delta_zorder",
+     "positional": false,
+     "valid": "float, default: 0",
+     "kind": "number",
+     "default": 0.0
+    }
+   ]
+  },
+  {
    "on": "axis",
    "call": "set_major_formatter",
    "parameters": [

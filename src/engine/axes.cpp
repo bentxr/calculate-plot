@@ -11,6 +11,7 @@
 #include "engine/figure.hpp"
 #include "engine/legend.hpp"
 #include "rc/rc_params.hpp"
+#include "support/pyformat.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -629,6 +630,67 @@ void Axis::setTickParams(const std::string& which, bool reset, const TickParams&
     }
 }
 
+bool Axis::setTicksPosition(const std::string& position, std::string* error) {
+    const std::string one = isX_ ? "bottom" : "left", two = isX_ ? "top" : "right";
+    TickParams p;
+    if (position == two) {
+        p.tick2On = p.label2On = true, p.tick1On = p.label1On = false;
+    } else if (position == one) {
+        p.tick2On = p.label2On = false, p.tick1On = p.label1On = true;
+    } else if (position == "both") {
+        p.tick2On = p.tick1On = true;
+    } else if (position == "none") {
+        p.tick2On = p.tick1On = false;
+    } else if (position == "default") {
+        p.tick2On = true, p.label2On = false, p.tick1On = p.label1On = true;
+    } else {
+        return *error = support::pythonStrRepr(position) + " is not a valid value for position; supported values are '" + one + "', '" + two +
+                        "', 'both', 'default', 'none'",
+               false;
+    }
+    setTickParams("both", false, p);
+    if (isX_) {
+        if (position == two) tickPosition_ = "top", offsetText.verticalAlignment = "bottom";
+        else if (position == one || position == "default") tickPosition_ = "bottom", offsetText.verticalAlignment = "top";
+    } else if (position == one || position == two) {
+        setOffsetPosition(position, error);
+    }
+    return true;
+}
+
+bool Axis::tickSide(const std::string& side, std::string* error) {
+    // labels stay off when they were off before
+    const bool labelled = majorTickKw_.label1On || majorTickKw_.label2On;
+    if (!setTicksPosition(side, error)) return false;
+    TickParams p;
+    (side == "top" || side == "right" ? p.label2On : p.label1On) = labelled;
+    setTickParams("both", false, p);
+    return true;
+}
+
+bool Axis::setLabelPosition(const std::string& position, std::string* error) {
+    if (isX_) {
+        if (position != "top" && position != "bottom")
+            return *error = support::pythonStrRepr(position) + " is not a valid value for position; supported values are 'top', 'bottom'", false;
+        label.verticalAlignment = position == "top" ? "baseline" : "top";
+    } else {
+        if (position != "left" && position != "right")
+            return *error = support::pythonStrRepr(position) + " is not a valid value for position; supported values are 'left', 'right'", false;
+        label.rotationMode = "anchor";
+        label.verticalAlignment = position == "left" ? "bottom" : "top";
+    }
+    labelPosition = position;
+    return true;
+}
+
+bool Axis::setOffsetPosition(const std::string& position, std::string* error) {
+    if (position != "left" && position != "right")
+        return *error = support::pythonStrRepr(position) + " is not a valid value for position; supported values are 'left', 'right'", false;
+    offsetText.x = position == "left" ? 0 : 1;
+    offsetText.horizontalAlignment = position;
+    return true;
+}
+
 void Axis::setMinorTickSwitches(const TickSwitches& sw) {
     minorTickKw_ = sw;
     for (auto& t : minorTicks_) t->applySwitches(sw);
@@ -721,10 +783,13 @@ void Axis::updateOffsetTextPosition(const std::vector<transforms::Bbox>& bboxes,
     const double dpi = axes_.figure.dpi;
     const auto box = axes_.bbox->points();
     if (isX_) {
-        // _tick_position stays 'bottom' unless the ticks are moved (set_ticks_position)
-        const double bottom = bboxes.empty() ? std::min(box[1], box[3]) : unionOf(bboxes).points()[1];
-        offsetText.y = bottom - kOffsetTextPad * dpi / 72;
-        (void)bboxes2;
+        if (tickPosition_ == "bottom") {
+            const double bottom = bboxes.empty() ? std::min(box[1], box[3]) : unionOf(bboxes).points()[1];
+            offsetText.y = bottom - kOffsetTextPad * dpi / 72;
+        } else {
+            const double top = bboxes2.empty() ? std::max(box[1], box[3]) : unionOf(bboxes2).points()[3];
+            offsetText.y = top + kOffsetTextPad * dpi / 72;
+        }
     } else {
         offsetText.y = std::max(box[1], box[3]) + kOffsetTextPad * dpi / 72;
     }
@@ -1386,6 +1451,56 @@ void Axes::share(bool x, Axes& other) {
     // needs set_xlim(*other.get_xlim(), emit=False, auto=other.get_autoscalex_on()) and the scale here.
 }
 
+Axes* Axes::twin(bool x, std::string* error) {
+    if (!subplotSpec) return *error = "a twin of an Axes without a subplot spec is not supported yet", nullptr;
+    // _make_twin_axes: add_subplot(ss, sharex=self) (or sharey)
+    Axes* t = figure.addSubplot(*subplotSpec);
+    Axis& mine = x ? *xaxis : *yaxis;
+    Axis& theirs = x ? *t->xaxis : *t->yaxis;
+    t->share(x, *this);
+    // sharex: other's limits (emit=False, auto=other's), then other's scale
+    const auto lim = mine.viewInterval();
+    theirs.setScale(mine.scale());
+    t->updateTransScale();
+    theirs.setLim(lim[0], lim[1], mine.autoscaleOn, false);
+    // (set_adjustable('datalim') on both: what an aspect would change is refused for twins)
+    t->zorder = zorder;
+    if (!twinned) twinned = std::make_shared<std::vector<Axes*>>(std::vector<Axes*>{this});
+    twinned->push_back(t);
+    t->twinned = twinned;
+    updateTwinnedPatchVisibility();
+    std::string ignored;
+    if (x) {  // twinx
+        t->yaxis->tickSide("right", &ignored);
+        t->yaxis->setLabelPosition("right", &ignored);
+        t->yaxis->setOffsetPosition("right", &ignored);
+        t->xaxis->autoscaleOn = xaxis->autoscaleOn;
+        yaxis->tickSide("left", &ignored);
+        t->xaxis->visible = false;
+    } else {  // twiny
+        t->xaxis->tickSide("top", &ignored);
+        t->xaxis->setLabelPosition("top", &ignored);
+        t->yaxis->autoscaleOn = yaxis->autoscaleOn;
+        xaxis->tickSide("bottom", &ignored);
+        t->yaxis->visible = false;
+    }
+    return t;
+}
+
+void Axes::updateTwinnedPatchVisibility() {
+    if (!twinned) return;
+    std::vector<Axes*> order = *twinned;
+    const auto made = [&](const Axes* a) {
+        for (std::size_t i = 0; i < figure.axes.size(); ++i)
+            if (figure.axes[i].get() == a) return i;
+        return figure.axes.size();
+    };
+    std::stable_sort(order.begin(), order.end(), [&](const Axes* a, const Axes* b) {
+        return a->zorder < b->zorder || (a->zorder == b->zorder && made(a) < made(b));
+    });
+    for (Axes* a : order) a->patch->visible = a == order.front() && a->frameOn;
+}
+
 void Axes::labelOuter(bool x) {
     if (!subplotSpec) return;
     const GridSpec& gs = *subplotSpec->gridspec;
@@ -1536,6 +1651,8 @@ std::optional<transforms::Bbox> Axes::tightbbox(Renderer& renderer, bool forLayo
         // clip box. That lies inside the clip box, which is the patch's window extent, added below:
         // the union is the same either way.
         if (c->clipOn && c->clipBox && !c->clipPath && patch->visible) continue;
+        // (without a patch drawn: left out when the clip box is the Axes' box, _fully_clipped_to_axes)
+        if (c->clipOn && c->clipBox && !c->clipPath && c->clipBox->points() == bbox->points()) continue;
         // (clip_on without a clip box or path, as an annotation's, clips nothing)
         if (auto* t = dynamic_cast<Text*>(c.get()); t && (!c->clipOn || (!c->clipBox && !c->clipPath))) {
             // Annotation.get_tightbbox: nothing where _check_xy says it is not drawn
