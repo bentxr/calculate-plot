@@ -9,6 +9,7 @@
 #include "support/log10.hpp"
 #include "support/pyformat.hpp"
 #include "support/pynum.hpp"
+#include "support/raised.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -77,7 +78,10 @@ std::vector<double> LogLocator::tickValues(double vmin, double vmax) const {
     const double b = base;
     if (vmin <= 0.0) {
         vmin = minpos;
-        if (vmin <= 0.0 || !std::isfinite(vmin)) return {};  // matplotlib raises ValueError
+        if (vmin <= 0.0 || !std::isfinite(vmin)) {
+            support::noteRaised("Data cannot be log-scaled because all values are <= 0.");
+            return {};
+        }
     }
     if (vmax < vmin) std::swap(vmin, vmax);
     const double efmin = logB(vmin, b), efmax = logB(vmax, b);

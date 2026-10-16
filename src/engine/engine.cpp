@@ -8,6 +8,7 @@
 #include "rc/styles.hpp"
 #include "support/histogram.hpp"
 #include "support/pyformat.hpp"
+#include "support/raised.hpp"
 #include "svg/svg_renderer.h"
 #include "support/pyparse.hpp"
 
@@ -842,7 +843,9 @@ private:
     bool plotFormat(const std::string& fmt, std::optional<std::string>* linestyle, std::optional<std::string>* marker,
                     std::optional<colors::Spec>* colorOut, std::string* error) {
         if (fmt != "0" && fmt != "1" && colors::toRgba(fmt, std::nullopt, rc_, nullptr)) {
-            *colorOut = colors::Spec(fmt);
+            // the colour is to_rgba(fmt): for 'none' the tuple (0, 0, 0, 0), which takes the line's alpha
+            // as any tuple does (the name 'none' would ignore it)
+            *colorOut = colors::isNone(fmt) ? colors::Spec(std::vector<double>{0, 0, 0, 0}) : colors::Spec(fmt);
             return true;
         }
         static const char* const kMarkers = ".,ov^<>12348spP*hH+xXDd|_";
@@ -2911,18 +2914,24 @@ std::string runFigure(const model::Figure& model, const DrawOptions& options, Dr
     }
     // A transform that cannot be inverted (an Axes of no width, say) ends the drawing in matplotlib
     // where its inverse is first asked for ("Singular matrix").
+    // The same for what else matplotlib raises while it draws (support::raised).
     transforms::singularMatrixSeen() = false;
+    support::raised().clear();
     const char* const singular = "Singular matrix";
     Executor executor(std::move(rc), options);
     for (const auto& call : model.calls) {
         std::string error;
         if (!executor.run(call, &error)) return error;
-        if (transforms::singularMatrixSeen()) return (call.on.empty() ? "plt" : call.on) + "." + call.method + ": " + singular;
+        const std::string where = (call.on.empty() ? "plt" : call.on) + "." + call.method + ": ";
+        if (transforms::singularMatrixSeen()) return where + singular;
+        if (!support::raised().empty()) return where + support::raised();
     }
     Figure* figure = executor.currentFigure();
     if (!figure) return "the figure file makes no figure";
     const std::string error = draw(*figure);
-    return error.empty() && transforms::singularMatrixSeen() ? singular : error;
+    if (!error.empty()) return error;
+    if (transforms::singularMatrixSeen()) return singular;
+    return support::raised();
 }
 
 AggDrawing drawAgg(const model::Figure& model, const DrawOptions& options) {

@@ -826,6 +826,33 @@ TEST(RcCalls, ATransformThatCannotBeInvertedStopsTheDrawing) {
     EXPECT_EQ(error(plot), "");
 }
 
+// A log axis whose view reaches zero or below, with no positive data to stand in (minpos), has no
+// ticks: LogLocator.tick_values raises "Data cannot be log-scaled because all values are <= 0." and
+// the drawing ends there.
+TEST(RcCalls, ALogAxisWithNothingPositiveStopsTheDrawing) {
+    const auto error = [](const std::string& calls) {
+        std::string parseError;
+        const auto figure = calculate_plot::model::parseFigure(
+            R"({"version": 1, "calls": [{"call": "subplots", "as": ["fig", "ax"]})" + calls + "]}", &parseError);
+        EXPECT_TRUE(figure.has_value()) << parseError;
+        if (!figure) return std::string("?");
+        calculate_plot::engine::DrawOptions options;
+        options.fontDirectory = std::string(CALCULATE_PLOT_SOURCE_DIR) + "/fonts/ttf";
+        const std::string agg = calculate_plot::engine::drawAgg(*figure, options).error;
+        EXPECT_EQ(calculate_plot::engine::drawSvg(*figure, options).error, agg);
+        return agg;
+    };
+    const std::string raised = "Data cannot be log-scaled because all values are <= 0.";
+    const std::string xlim = R"(, {"on": "ax", "call": "set_xlim", "args": [-4.2, 5.8]})";
+    const std::string ylim = R"(, {"on": "ax", "call": "set_ylim", "args": [-2.9, -2.8]})";
+    const std::string plot = R"(, {"on": "ax", "call": "plot", "args": [[1, 2], [1, 2]]})";
+    EXPECT_EQ(error(xlim + R"(, {"on": "ax", "call": "set_xscale", "args": ["log"]})"), raised);
+    EXPECT_EQ(error(ylim + R"(, {"on": "ax", "call": "semilogy"})"), raised);
+    EXPECT_EQ(error(plot + xlim + R"(, {"on": "ax", "call": "set_xscale", "args": ["log"]})"), "");
+    // and the next figure starts clean
+    EXPECT_EQ(error(plot), "");
+}
+
 // One round marker with a size that is negative, nan or infinite: matplotlib takes the extents of
 // the marker's curves, finds none and breaks ("need at least one array to concatenate").
 TEST(CollectionCalls, OneCurvedMarkerOfNoFiniteSizeIsRefused) {

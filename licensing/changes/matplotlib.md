@@ -39,7 +39,9 @@ it comes from in its first lines. The changes, as a whole:
   divmod, rounding, %-formatting) reproduced exactly; the axis' view interval is passed in.
 - **Log ticks** (src/axes/log_ticker): ticker.py's LogLocator (tick_values, nonsingular, view_limits, the decade
   helpers), LogFormatter.set_locs and LogFormatterMathtext/LogFormatterSciNotation.__call__, and the overlap removal
-  of Axis.get_minorticklocs, translated to C++ (the locator's axis is given as its tick space and minpos).
+  of Axis.get_minorticklocs, translated to C++ (the locator's axis is given as its tick space and minpos). Where
+  tick_values raises (a view at or below zero with no positive data), the port notes Matplotlib's message
+  (src/support/raised.hpp) and the drawing ends with it as an error.
 - **Transforms** (src/transforms): transforms.py's Bbox, TransformedBbox, Affine2D, IdentityTransform,
   BboxTransformTo/From, BboxTransform, BlendedAffine2D, ScaledTranslation and the composite transforms, translated
   to C++ (matrices computed on demand rather than cached and invalidated; the same values). np.dot is reproduced
