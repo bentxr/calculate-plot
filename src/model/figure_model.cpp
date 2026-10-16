@@ -42,10 +42,11 @@ bool isObjectReference(const std::string& s, std::string& name) {
     return true;
 }
 
-bool validValue(const Json& v, std::string* error) {
+// `known`: the names earlier calls gave their results, which {"$ref": name} may use
+bool validValue(const Json& v, const std::set<std::string>& known, std::string* error) {
     if (v.isArray()) {
         for (const Json& item : v.items())
-            if (!validValue(item, error)) return false;
+            if (!validValue(item, known, error)) return false;
         return true;
     }
     if (v.isObject()) {
@@ -61,13 +62,20 @@ bool validValue(const Json& v, std::string* error) {
             if (error) *error = "{\"$new\": ...} must name a class pyplot holds, and nothing else";
             return false;
         }
+        if (v.members()[0].first == "$ref") {
+            const Json& name = v.members()[0].second;
+            if (v.members().size() == 1 && name.isString() && isIdentifier(name.asString()) && known.count(name.asString()))
+                return true;
+            if (error) *error = "{\"$ref\": ...} must name the result of an earlier call, and nothing else";
+            return false;
+        }
         if (v.members().size() != 1 || v.members()[0].first != "$tuple" || !v.members()[0].second.isArray()) {
             if (error)
-                *error = "an object value must be {\"$tuple\": [...]}, {\"$float\": ...} or {\"$new\": ...}, not " +
+                *error = "an object value must be {\"$tuple\": [...]}, {\"$float\": ...}, {\"$new\": ...} or {\"$ref\": ...}, not " +
                          (v.members().empty() ? std::string("{}") : v.members()[0].first);
             return false;
         }
-        return validValue(v.members()[0].second, error);
+        return validValue(v.members()[0].second, known, error);
     }
     return true;
 }
@@ -90,6 +98,7 @@ std::string python(const Json& v) {
     case Json::Type::Object: {
         if (v.members()[0].first == "$float") return "float('" + v.members()[0].second.asString() + "')";
         if (v.members()[0].first == "$new") return "plt." + v.members()[0].second.asString() + "()";
+        if (v.members()[0].first == "$ref") return v.members()[0].second.asString();
         const Json& items = v.members()[0].second;
         std::string out = "(";
         for (std::size_t i = 0; i < items.size(); ++i) out += (i ? ", " : "") + python(items[i]);
@@ -124,7 +133,7 @@ std::optional<Figure> parseFigure(std::string_view json, std::string* error) {
         if (!rc->isObject()) return fail("\"rc\" must be an object");
         for (const auto& [key, value] : rc->members()) {
             std::string valueError;
-            if (!validValue(value, &valueError)) return fail("rc " + key + ": " + valueError);
+            if (!validValue(value, {}, &valueError)) return fail("rc " + key + ": " + valueError);
             figure.rc.emplace_back(key, value);
         }
     }
@@ -150,7 +159,7 @@ std::optional<Figure> parseFigure(std::string_view json, std::string* error) {
             if (!args->isArray()) return fail("\"args\" must be a list");
             for (const Json& a : args->items()) {
                 std::string valueError;
-                if (!validValue(a, &valueError)) return fail(call.method + ": " + valueError);
+                if (!validValue(a, known, &valueError)) return fail(call.method + ": " + valueError);
                 call.args.push_back(a);
             }
         }
@@ -159,7 +168,7 @@ std::optional<Figure> parseFigure(std::string_view json, std::string* error) {
             for (const auto& [key, value] : kwargs->members()) {
                 if (!isIdentifier(key)) return fail("a keyword argument needs a plain name, not " + key);
                 std::string valueError;
-                if (!validValue(value, &valueError)) return fail(call.method + " " + key + ": " + valueError);
+                if (!validValue(value, known, &valueError)) return fail(call.method + " " + key + ": " + valueError);
                 call.kwargs.emplace_back(key, value);
             }
         }

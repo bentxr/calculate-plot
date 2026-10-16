@@ -1,0 +1,7 @@
+{"version": 1, "calls": [{"call": "subplots", "args": [1, 2], "kwargs": {"figsize": {"$tuple": [7.2, 3.2]}}, "as": ["fig", "axs"]},
+ {"on": "axs[0]", "call": "axvspan", "args": [0, 1], "kwargs": {"ec": null, "facecolor": "C1"}},
+ {"on": "axs[0]", "call": "axhspan", "args": [0.2, 0.4], "kwargs": {"fc": null, "lw": null, "ls": null, "zorder": null, "hatch": null, "label": null}},
+ {"on": "axs[0]", "call": "axvspan", "args": [2, 3], "kwargs": {"color": "C2", "fill": null, "linewidth": 3}},
+ {"on": "axs[0]", "call": "axvspan", "args": [4, 5], "kwargs": {"color": "C3", "fill": 0, "edgecolor": "k", "alpha": null}},
+ {"on": "axs[1]", "call": "bar", "args": [[1, 2, 3], [3, 1, 2]], "kwargs": {"ls": null, "zorder": null, "fill": 1, "label": null}},
+ {"on": "axs[1]", "call": "hist", "args": [[1, 2, 2, 3, 3, 3]], "kwargs": {"bins": 3, "zorder": null, "fill": null, "edgecolor": "k"}}]}

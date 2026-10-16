@@ -115,6 +115,24 @@ TEST(FigureModel, ANewObjectIsAPyplotClassWithoutArguments) {
     }
 }
 
+// {"$ref": "name"} is an object an earlier call named (a patch made by plt.Polygon, say), exported as
+// the bare name; only names made before the call may be used.
+TEST(FigureModel, AReferenceNamesAnEarlierResult) {
+    const auto f = parsed(R"({"version":1,"calls":[
+        {"call":"subplots","as":["fig","ax"]},
+        {"call":"Polygon","args":[[[0,0],[1,1],[1,0]]],"as":"tri"},
+        {"on":"ax","call":"add_patch","args":[{"$ref":"tri"}]}]})");
+    EXPECT_NE(m::exportPython(f, "x").find("tri = plt.Polygon([[0, 0], [1, 1], [1, 0]])\nax.add_patch(tri)\n"), std::string::npos)
+        << m::exportPython(f, "x");
+    for (const char* bad : {R"({"$ref":"later"})", R"({"$ref":"nobody"})", R"({"$ref":"__import__"})", R"({"$ref":3})",
+                            R"({"$ref":"tri","x":1})", R"({"$ref":"ax.figure"})"}) {
+        const std::string json = std::string(R"({"version":1,"calls":[{"call":"subplots","as":["fig","ax"]},)") +
+                                 R"({"call":"Polygon","args":[[[0,0]]],"as":"tri"},{"on":"ax","call":"add_patch","args":[)" + bad +
+                                 R"(]},{"call":"Polygon","args":[[[0,0]]],"as":"later"}]})";
+        EXPECT_NE(refused(json).find("$ref"), std::string::npos) << bad;
+    }
+}
+
 TEST(FigureModel, IntegersStayIntegersAndFloatsStayExact) {
     const auto f = parsed(R"({"version":1,"calls":[{"call":"figure","args":[1, 1.0, 2.5e-300, -0.0, 123456789012345678]}]})");
     EXPECT_NE(m::exportPython(f, "x").find("plt.figure(1, 1.0, 2.5e-300, -0.0, 123456789012345678)"), std::string::npos)

@@ -81,6 +81,7 @@ public:
             }
             if (call.method == "gca") return noArguments(call, error) && nameResult(call, &gca(), error);
             if (call.method == "subplot") return subplot(call, error);
+            if (call.method == "Polygon") return polygon(call, error);
             if (call.method == "axes") {
                 // plt.axes(arg=None, **kwargs): add_subplot() without a rect, else add_axes(rect)
                 if (call.args.size() > 1) return *error = "plt.axes: too many positional arguments", false;
@@ -103,7 +104,7 @@ public:
                 {"hlines", "hlines"}, {"vlines", "vlines"}, {"grid", "grid"}, {"legend", "legend"}, {"text", "text"},
                 {"title", "set_title"}, {"xlabel", "set_xlabel"}, {"ylabel", "set_ylabel"}, {"xlim", "set_xlim"},
                 {"ylim", "set_ylim"}, {"xscale", "set_xscale"}, {"yscale", "set_yscale"}, {"bar", "bar"}, {"barh", "barh"},
-                {"hist", "hist"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}};
+                {"hist", "hist"}, {"fill", "fill"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}};
             static const std::map<std::string, std::string> ofFigure = {
                 {"suptitle", "suptitle"}, {"figtext", "text"}, {"subplots_adjust", "subplots_adjust"}, {"tight_layout", "tight_layout"}};
             const auto a = ofAxes.find(call.method);
@@ -190,6 +191,8 @@ private:
                       "rwidth", "log", "color", "label", "stacked"}, 15},
             {"set_major_formatter", {"formatter"}, 1},
             {"set_minor_formatter", {"formatter"}, 1},
+            {"Polygon", {"xy"}, 1},
+            {"add_patch", {"p"}, 1},
         };
         const std::string where = (call.on.empty() ? "plt" : call.on) + "." + call.method;
         for (const Signature& signature : signatures) {
@@ -794,6 +797,8 @@ private:
         if (call.method == "axhline" || call.method == "axvline") return axline(ax, call, error);
         if (call.method == "axhspan" || call.method == "axvspan") return axspan(ax, call, error);
         if (call.method == "bar" || call.method == "barh") return bar(ax, call, error);
+        if (call.method == "fill") return fill(ax, call, error);
+        if (call.method == "add_patch") return addPatch(ax, call, error);
         if (call.method == "hist") return hist(ax, call, error);
         if (call.method == "vlines" || call.method == "hlines") return lines(ax, call, error);
         if (call.method == "set_xscale" || call.method == "set_yscale") {
@@ -1991,39 +1996,64 @@ private:
         return true;
     }
 
-    bool patchProperty(Rectangle& p, const std::string& name, const Json& v, const std::string& where, std::string* error) {
+    // A Patch property set as Artist.set does it: through its setter, None included (the setters take
+    // None as their default). `closed` is a Polygon's.
+    bool patchProperty(Patch& p, const std::string& name, const Json& v, const std::string& where, std::string* error) {
         double n = 0;
         const auto text = [&](std::string* out) {
             if (!v.isString()) return false;
             *out = v.asString();
             return true;
         };
+        // bool(v) of a value a figure file holds for a flag
+        const auto truth = [&](bool* out) {
+            if (v.isNull()) return *out = false, true;
+            if (v.isBool()) return *out = v.asBool(), true;
+            if (readNumber(v, &n)) return *out = n != 0, true;
+            return false;
+        };
         std::string str;
+        bool b = false;
         if (name == "color" || name == "facecolor" || name == "fc" || name == "edgecolor" || name == "ec") {
-            // set_color / set_facecolor / set_edgecolor: a colour that to_rgba takes
-            colors::Spec spec;
-            std::string why;
-            if (!color(v, &spec, {}, &why))
-                return *error = where + ": " + name + " is not a colour" + (why.empty() ? "" : ": " + why), false;
-            if (name == "color") p.setColor(spec);
-            else if (name[0] == 'f') p.setFacecolor(spec);
-            else p.setEdgecolor(spec);
+            // set_color / set_facecolor / set_edgecolor: a colour that to_rgba takes, or None for the default
+            std::optional<colors::Spec> spec;
+            if (!v.isNull()) {
+                colors::Spec c;
+                std::string why;
+                if (!color(v, &c, {}, &why))
+                    return *error = where + ": " + name + " is not a colour" + (why.empty() ? "" : ": " + why), false;
+                spec = c;
+            }
+            if (name == "color") {
+                p.setEdgecolor(spec);
+                p.setHatchcolor(spec);
+                p.setFacecolor(spec);
+            } else if (name[0] == 'f') {
+                p.setFacecolor(spec);
+            } else {
+                p.setEdgecolor(spec);
+            }
         } else if (name == "alpha") {
             if (v.isNull()) p.setAlpha(std::nullopt);  // set_alpha(None)
             else if (!readAlpha(v, &n)) return *error = where + ": alpha must be a number from 0 to 1", false;
             else p.setAlpha(n, v.isNumber() && v.isInteger());
         } else if (name == "linewidth" || name == "lw") {
-            if (!readFinite(v, &n)) return *error = where + ": linewidth must be a finite number", false;
-            p.setLinewidth(n);
+            if (v.isNull()) p.setLinewidth(std::nullopt);  // rcParams["patch.linewidth"]
+            else if (!readFinite(v, &n)) return *error = where + ": linewidth must be a finite number", false;
+            else p.setLinewidth(n);
         } else if (name == "linestyle" || name == "ls") {
-            // Patch.set_linestyle: a name of mlines._get_dash_pattern ('None', ' ' and '' draw no edge)
+            // Patch.set_linestyle: a name of mlines._get_dash_pattern ('None', ' ' and '' draw no edge); None: solid
             static const char* const styles[] = {"-", "--", "-.", ":", "solid", "dashed", "dashdot", "dotted", "None", "none", " ", ""};
-            if (!text(&str) || std::find_if(std::begin(styles), std::end(styles), [&](const char* s) { return str == s; }) == std::end(styles))
+            if (v.isNull()) str = "solid";
+            else if (!text(&str) || std::find_if(std::begin(styles), std::end(styles), [&](const char* s) { return str == s; }) == std::end(styles))
                 return *error = where + ": bad linestyle", false;
             p.setLinestyle(str == "-" ? "solid" : str == "--" ? "dashed" : str == "-." ? "dashdot" : str == ":" ? "dotted" : str);
         } else if (name == "fill") {
-            if (!v.isBool()) return *error = where + ": fill must be True or False", false;
-            p.setFill(v.asBool());
+            if (!truth(&b)) return *error = where + ": fill must be True or False", false;
+            p.setFill(b);
+        } else if (name == "closed" && dynamic_cast<Polygon*>(&p)) {
+            if (!truth(&b)) return *error = where + ": closed must be True, False or None", false;
+            static_cast<Polygon&>(p).setClosed(b);
         } else if (name == "hatch") {
             // set_hatch: a pattern, or None
             if (!v.isNull() && !v.isString()) return *error = where + ": hatch must be a string", false;
@@ -2038,14 +2068,200 @@ private:
                 p.setHatchcolor(spec);
             }
         } else if (name == "zorder") {
-            if (!readFinite(v, &n)) return *error = where + ": zorder must be a finite number", false;
-            p.zorder = n;
+            if (v.isNull()) p.zorder = 1;  // set_zorder(None): the class's, Patch.zorder
+            else if (!readFinite(v, &n)) return *error = where + ": zorder must be a finite number", false;
+            else p.zorder = n;
         } else if (name == "label") {
-            if (!text(&str)) return *error = where + ": label must be a string", false;
-            p.label = str;
+            if (v.isNull()) p.label.clear();  // (None: no label)
+            else if (!text(&str)) return *error = where + ": label must be a string", false;
+            else p.label = str;
         } else {
             return *error = where + ": unsupported keyword " + name, false;
         }
+        return true;
+    }
+
+    // A list of (x, y) points: the vertices x0, y0, x1, y1, ...
+    bool points(const Json& v, std::vector<double>* out) {
+        const Json* seq = sequence(v);
+        if (!seq || seq->items().empty()) return false;
+        for (const Json& item : seq->items()) {
+            const Json* xy = sequence(item);
+            double x = 0, y = 0;
+            if (!xy || xy->size() != 2 || !readNumber((*xy)[0], &x) || !readNumber((*xy)[1], &y)) return false;
+            out->push_back(x), out->push_back(y);
+        }
+        return true;
+    }
+
+    // plt.Polygon(xy, *, closed=True, **kwargs): Patch.__init__'s own parameters in its order (a colour
+    // replaces edgecolor, hatchcolor and facecolor, which are then not read), then the other keywords
+    // through their setters as given (aliases included: no normalize_kwargs here).
+    bool polygon(const model::Call& call, std::string* error) {
+        const std::string where = "plt.Polygon";
+        if (call.as.size() > 1) return *error = where + " returns one object: name it once", false;
+        const Json* xyValue = argument(call, 0, "xy");
+        if (!xyValue) return *error = where + ": xy is required", false;
+        std::vector<double> xy;
+        if (!points(*xyValue, &xy)) return *error = where + ": xy must be a list of (x, y) points", false;
+        std::optional<bool> closed = true;
+        if (const Json* v = keyword(call, "closed")) {
+            double n = 0;
+            if (v->isNull()) closed.reset();
+            else if (v->isBool()) closed = v->asBool();
+            else if (readNumber(*v, &n)) closed = n != 0;
+            else return *error = where + ": closed must be True, False or None", false;
+        }
+        auto poly = std::make_unique<Polygon>(rc_, std::move(xy), closed);
+        static const char* const own[] = {"edgecolor", "facecolor", "color", "linewidth", "linestyle", "antialiased", "hatch",
+                                          "fill", "capstyle", "joinstyle", "hatchcolor", "edgegapcolor"};
+        const auto value = [&](const char* name) {
+            const Json* v = keyword(call, name);
+            return v && !v->isNull() ? v : nullptr;
+        };
+        if (const Json* v = keyword(call, "fill"); v && !patchProperty(*poly, "fill", *v, where, error)) return false;
+        if (const Json* c = value("color")) {
+            if (!patchProperty(*poly, "color", *c, where, error)) return false;
+        } else {
+            for (const char* name : {"edgecolor", "hatchcolor", "facecolor"})
+                if (const Json* v = value(name); v && !patchProperty(*poly, name, *v, where, error)) return false;
+        }
+        for (const char* name : {"linestyle", "linewidth", "hatch"})
+            if (const Json* v = value(name); v && !patchProperty(*poly, name, *v, where, error)) return false;
+        for (const char* name : {"antialiased", "capstyle", "joinstyle", "edgegapcolor"})
+            if (value(name)) return *error = where + ": unsupported keyword " + name, false;
+        for (const auto& [name, v] : call.kwargs) {
+            if (name == "xy" || name == "closed" || std::find(std::begin(own), std::end(own), name) != std::end(own)) continue;
+            if (!patchProperty(*poly, name, v, where, error)) return false;
+        }
+        if (!call.as.empty()) {
+            patches_[call.as[0]] = std::move(poly);
+            addedPatches_.erase(call.as[0]);
+        }
+        return true;
+    }
+
+    // Axes.add_patch(p): a patch the figure file made, into the Axes (its data limits grow by it; no
+    // autoscale is asked for)
+    bool addPatch(Axes& ax, const model::Call& call, std::string* error) {
+        const std::string where = call.on + ".add_patch";
+        const Json* p = argument(call, 0, "p");
+        const bool ref = p && p->isObject() && p->members()[0].first == "$ref";
+        const std::string name = ref ? p->members()[0].second.asString() : "";
+        if (ref && addedPatches_.count(name)) return *error = where + ": " + name + " is in an Axes already (not supported yet)", false;
+        const auto it = patches_.find(name);
+        if (!ref || it == patches_.end())
+            return *error = where + ": the patch must be one the figure file made (a {\"$ref\": name})", false;
+        ax.addPatch(std::move(it->second));
+        patches_.erase(it);
+        addedPatches_.insert(name);
+        return true;
+    }
+
+    // Axes.fill(*args, data=None, **kwargs): (x, y[, colour]) groups, as plot reads them
+    // (_process_plot_var_args('Polygon')), one Polygon each (_make_polygon): its face colour is the
+    // group's colour or, when the keywords do not leave every property of the patches' cycle set, the
+    // next entry's; the entry's other properties (markers left out) go with the keywords, which
+    // Polygon.set then sets in their order. `made`: the polygons, for hist.
+    bool fill(Axes& ax, const model::Call& call, std::string* error, std::vector<Polygon*>* made = nullptr) {
+        const std::string where = call.on + ".fill";
+        if (!givenOnce(call, lineAliases(), where, error)) return false;  // (Line2D's aliases, "for compatibility")
+        if (const Json* d = keyword(call, "data"); d && !d->isNull()) return *error = where + ": data is not supported yet", false;
+        std::vector<std::pair<std::string, const Json*>> props;
+        for (const auto& [name, value] : call.kwargs) {
+            if (name == "data") continue;
+            if (name == "x" || name == "y") return *error = where + ": got an unexpected keyword argument '" + name + "'", false;
+            props.emplace_back(fullName(name, lineAliases()), &value);
+        }
+        // Polygon.set's own normalize_kwargs: a patch property by two of its names is refused
+        static const Aliases patchAliases = {{"aa", "antialiased"}, {"ec", "edgecolor"}, {"fc", "facecolor"},
+                                             {"ls", "linestyle"}, {"lw", "linewidth"}};
+        for (std::size_t i = 0; i < props.size(); ++i)
+            for (std::size_t j = 0; j < i; ++j)
+                if (fullName(props[i].first, patchAliases) == fullName(props[j].first, patchAliases))
+                    return *error = where + ": Got both '" + props[j].first + "' and '" + props[i].first +
+                                    "', which are aliases of one another",
+                           false;
+        const auto find = [&](const std::string& name) -> const Json* {
+            for (const auto& [n, v] : props)
+                if (n == name) return v;
+            return nullptr;
+        };
+        const Json* label = find("label");
+        if (call.args.size() >= 4 && label && sequence(*label))
+            return *error = where + ": plot() with multiple groups of data (i.e., pairs of x and y) does not support multiple labels", false;
+        static const Json none;  // (null)
+        static const Json yes = Json::boolean(true);
+        const Json* closedValue = find("closed");
+        if (!closedValue) closedValue = &yes;  // kw['closed'] = kwargs.get('closed', True)
+        std::optional<bool> closed;
+        if (!closedValue->isNull()) {
+            double n = 0;
+            if (closedValue->isBool()) closed = closedValue->asBool();
+            else if (readNumber(*closedValue, &n)) closed = n != 0;
+            else return *error = where + ": closed must be True, False or None", false;
+        }
+        std::size_t i = 0;
+        while (i < call.args.size()) {
+            std::vector<const Json*> group;
+            for (std::size_t k = i; k < std::min(i + 2, call.args.size()); ++k) group.push_back(&call.args[k]);
+            i += group.size();
+            if (i < call.args.size() && call.args[i].isString()) group.push_back(&call.args[i++]);
+            std::optional<std::string> linestyle, marker;
+            std::optional<colors::Spec> fmtColor;
+            if (group.size() > 1 && group.back()->isString()) {
+                if (!plotFormat(group.back()->asString(), &linestyle, &marker, &fmtColor, error)) return false;
+                group.pop_back();
+            } else if (group.size() == 3) {
+                return *error = where + ": third arg must be a format string", false;
+            }
+            std::vector<double> x, y;
+            if (group.size() == 2) {
+                if (!numbers(*group[0], &x) || !numbers(*group[1], &y))
+                    return *error = where + ": x and y must be lists of numbers", false;
+            } else {
+                if (!numbers(*group[0], &y)) return *error = where + ": y must be a list of numbers", false;
+                for (std::size_t k = 0; k < y.size(); ++k) x.push_back(double(k));  // index_of
+            }
+            if (x.size() != y.size()) return *error = where + ": x and y must have same first dimension", false;
+
+            // _make_polygon: the cycle's defaults for kw (the format's properties and closed), leaving out the
+            // markers and whatever the keywords set
+            std::vector<std::string> ignore = {"marker", "markersize", "markeredgecolor", "markerfacecolor", "markeredgewidth"};
+            for (const auto& [name, value] : props)
+                if (!value->isNull()) ignore.push_back(name);
+            if (!label) ignore.erase(std::remove(ignore.begin(), ignore.end(), "label"), ignore.end());
+            std::vector<std::string> kw;
+            if (linestyle) kw.push_back("linestyle");
+            if (marker) kw.push_back("marker");
+            if (fmtColor) kw.push_back("color");
+            if (!closedValue->isNull()) kw.push_back("closed");
+            std::optional<colors::Spec> face = fmtColor;
+            // kwargs = {**kwargs, 'label': label}, then the defaults but the colour where kwargs say nothing
+            auto polyProps = props;
+            if (!label) polyProps.emplace_back("label", &none);
+            const auto defaults = ax.patchDefaults(kw, ignore);
+            for (const auto& d : defaults) {
+                if (d.first == "color") {
+                    if (!face) face = colors::specOf(d.second);
+                    continue;
+                }
+                auto slot = std::find_if(polyProps.begin(), polyProps.end(), [&](const auto& p) { return p.first == d.first; });
+                if (slot == polyProps.end()) polyProps.emplace_back(d.first, &d.second);
+                else if (slot->second->isNull()) slot->second = &d.second;
+            }
+            std::vector<double> xy;
+            for (std::size_t k = 0; k < x.size(); ++k) xy.push_back(x[k]), xy.push_back(y[k]);
+            // Polygon(xy, facecolor=, fill=kwargs.get('fill', True), closed=kw['closed']), then seg.set(**kwargs)
+            auto poly = std::make_unique<Polygon>(rc_, std::move(xy), closed);
+            if (const Json* f = find("fill"); f && !patchProperty(*poly, "fill", *f, where, error)) return false;
+            poly->setFacecolor(face);
+            for (const auto& [name, value] : polyProps)
+                if (!patchProperty(*poly, name, *value, where, error)) return false;
+            Patch& added = ax.addPatch(std::move(poly));
+            if (made) made->push_back(static_cast<Polygon*>(&added));
+        }
+        ax.requestAutoscaleView(true, true);
         return true;
     }
 
@@ -2127,7 +2343,9 @@ private:
                 if (!value.isBool()) return *error = where + ": log must be True or False", false;
                 log = value.asBool();
             } else if (name == "label") {
-                if (value.isString()) {
+                if (value.isNull()) {
+                    label.clear();  // (the container's label None: no legend entry, as '')
+                } else if (value.isString()) {
                     label = value.asString();
                 } else if (const Json* seq = sequence(value)) {
                     labelList = true;
@@ -2886,6 +3104,9 @@ private:
     DrawOptions options_;  // what measuring texts needs before the drawing (tight_layout)
     std::unique_ptr<Figure> figure_;
     std::map<std::string, Axes*> axes_;
+    // The patches plt.Polygon made, by the names the figure file gave them, until add_patch takes them
+    std::map<std::string, std::unique_ptr<Polygon>> patches_;
+    std::set<std::string> addedPatches_;
     std::set<std::string> figureNames_;  // what the figure file calls the figure
     Axes* current_ = nullptr;            // the figure's current Axes (gca), if any
 };

@@ -421,8 +421,6 @@ INSTANTIATE_TEST_SUITE_P(
                 "axs[0].axhspan: facecolor is not a colour"},
         Refusal{R"({"on": "axs[0]", "call": "axhspan", "args": [0, 1], "kwargs": {"edgecolor": [0.1, 0.2, 7]}})",
                 "axs[0].axhspan: edgecolor is not a colour: RGBA values should be within 0-1 range"},
-        Refusal{R"({"on": "axs[0]", "call": "axvspan", "args": [0, 1], "kwargs": {"ec": null}})",
-                "axs[0].axvspan: ec is not a colour"},
         Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"facecolor": "no such colour"}})",
                 "axs[0].legend: bad facecolor"},
         Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"edgecolor": [1, 2]}})", "axs[0].legend: bad edgecolor"}));
@@ -776,6 +774,9 @@ TEST(RcCalls, APropertyCycleWithWhatALineDoesNotTakeStopsPlot) {
     EXPECT_EQ(error("cycler(alpha=[2])", "errorbar"), "ax.errorbar: alpha must be a number from 0 to 1");
     EXPECT_EQ(error("cycler(alpha=[2])", "scatter"), "");
     EXPECT_EQ(error("cycler(color='rg', lw=[1, 2])", "plot"), "");
+    EXPECT_EQ(error("cycler(fc='rg')", "fill"), "");  // (every property a cycle may have is a polygon's, or a marker's)
+    EXPECT_EQ(error("cycler(marker=['o'])", "fill"), "");  // (the markers are left out for a polygon)
+    EXPECT_EQ(error("cycler(color='rg', lw=[1, 2])", "fill"), "");
 }
 
 // The number of points of a legend entry: at least one (matplotlib raises for less along a line;
@@ -1457,6 +1458,51 @@ TEST(BarCalls, ArgumentsAreReadAsMatplotlibReadsThem) {
     EXPECT_EQ(error(R"({"tick_label": ["a", "b", "c"]})"), "axs[0].bar: tick_label is not supported yet");
     EXPECT_EQ(error(R"({"lw": 1, "linewidth": 2})").find("axs[0].bar:"), 0u);
     EXPECT_EQ(draw(kSubplots + R"({"on": "axs[0]", "call": "bar", "args": [[1, 2]]})").error, "axs[0].bar: height is required");
+}
+
+// Axes.fill: (x, y[, colour]) groups as plot reads them; the keywords go to the polygons, whose
+// properties are what Polygon.set takes.
+TEST(FillCalls, ArgumentsAreReadAsMatplotlibReadsThem) {
+    const auto error = [](const std::string& args, const std::string& kwargs) {
+        return draw(kSubplots + R"({"on": "axs[0]", "call": "fill", "args": )" + args + R"(, "kwargs": )" + kwargs + "}").error;
+    };
+    const std::string one = "[[0, 1, 2], [0, 1, 0]]";
+    EXPECT_EQ(error(one, "{}"), "");
+    EXPECT_EQ(error("[]", "{}"), "");  // (no polygon)
+    EXPECT_EQ(error("[[0, 1, 2], [0, 1, 0], [3, 4], [0, 1]]", R"({"label": "a"})"), "");
+    EXPECT_EQ(error(one, R"({"x": [1, 2]})"), "axs[0].fill: got an unexpected keyword argument 'x'");
+    EXPECT_EQ(error(one, R"({"y": [1, 2]})"), "axs[0].fill: got an unexpected keyword argument 'y'");
+    EXPECT_EQ(error("[[0, 1, 2], [0, 1, 0], [3, 4], [0, 1]]", R"({"label": ["a", "b"]})"),
+              "axs[0].fill: plot() with multiple groups of data (i.e., pairs of x and y) does not support multiple labels");
+    EXPECT_EQ(error("[[0, 1], [0, 1], [0, 1]]", "{}"), "");  // (x, y, then y alone: two polygons)
+    EXPECT_EQ(error("[[0, 1, 2], [0, 1]]", "{}"), "axs[0].fill: x and y must have same first dimension");
+    EXPECT_EQ(error(one, R"({"data": [1]})"), "axs[0].fill: data is not supported yet");
+    EXPECT_EQ(error(one, R"({"markevery": 2})"), "axs[0].fill: unsupported keyword markevery");
+    EXPECT_EQ(error(one, R"({"closed": "yes"})"), "axs[0].fill: closed must be True, False or None");
+    EXPECT_EQ(error(one, R"({"c": "r", "color": "g"})").find("axs[0].fill:"), 0u);
+    EXPECT_EQ(error(one, R"({"fc": "r", "facecolor": "g"})").find("axs[0].fill:"), 0u);
+    EXPECT_EQ(error(one, R"({"facecolor": "nonsense"})").find("axs[0].fill: facecolor is not a colour"), 0u);
+    EXPECT_EQ(draw(R"({"call": "fill", "args": [[0, 1, 2], [0, 1, 0]]})").error, "");  // (plt.fill: on the current Axes)
+}
+
+// plt.Polygon(xy, closed=True, **kwargs) makes a patch the figure file names; ax.add_patch adds it.
+TEST(FillCalls, APolygonIsMadeThenAdded) {
+    const std::string tri = R"({"call": "Polygon", "args": [[[0, 0], [1, 1], [1, 0]]], "as": "tri"},)";
+    const std::string add = R"({"on": "axs[0]", "call": "add_patch", "args": [{"$ref": "tri"}]})";
+    EXPECT_EQ(draw(kSubplots + tri + add).error, "");
+    EXPECT_EQ(draw(kSubplots + R"({"call": "Polygon", "args": [[[0, 0], [1, 1]]]})").error, "");  // (made, not added)
+    EXPECT_EQ(draw(kSubplots + tri + add + "," + add).error, "axs[0].add_patch: tri is in an Axes already (not supported yet)");
+    EXPECT_EQ(draw(kSubplots + R"({"call": "Polygon", "args": [[0, 1, 2]], "as": "p"})").error,
+              "plt.Polygon: xy must be a list of (x, y) points");
+    EXPECT_EQ(draw(kSubplots + R"({"call": "Polygon", "args": [], "as": "p"})").error, "plt.Polygon: xy is required");
+    EXPECT_EQ(draw(kSubplots + R"({"call": "Polygon", "args": [[[0, 0]]], "kwargs": {"markevery": 2}, "as": "p"})").error,
+              "plt.Polygon: unsupported keyword markevery");
+    EXPECT_EQ(draw(kSubplots + R"({"call": "Polygon", "args": [[[0, 0]]], "as": ["p", "q"]})").error,
+              "plt.Polygon returns one object: name it once");
+    EXPECT_EQ(draw(kSubplots + R"({"call": "subplots", "as": ["f2", "a2"]},)" + tri +
+                   R"({"on": "a2", "call": "add_patch", "args": [{"$ref": "tri"}]})").error, "");
+    EXPECT_EQ(draw(kSubplots + R"({"on": "axs[0]", "call": "add_patch", "args": [1]})").error,
+              "axs[0].add_patch: the patch must be one the figure file made (a {\"$ref\": name})");
 }
 
 TEST(HistCalls, ArgumentsAreReadAsMatplotlibReadsThem) {

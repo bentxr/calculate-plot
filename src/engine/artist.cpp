@@ -1,5 +1,5 @@
 // Derived from Matplotlib 3.11.2: lib/matplotlib/artist.py, lib/matplotlib/patches.py (Patch,
-// Rectangle), lib/matplotlib/lines.py (dash patterns).
+// Rectangle, Polygon), lib/matplotlib/lines.py (dash patterns).
 // Copyright (c) 2012- Matplotlib Development Team; All Rights Reserved
 // Licence: LICENSES/Matplotlib.txt. Changes: licensing/changes/matplotlib.md
 
@@ -240,6 +240,29 @@ transforms::TransformPtr Rectangle::patchTransform() const {
     rotation->scale(1, 1 / 1.0);
     rotation->translate(rx, ry);
     return transforms::compose(std::make_shared<transforms::BboxTransformTo>(bbox), rotation);
+}
+
+Polygon::Polygon(const rc::Params& rc, std::vector<double> xy, std::optional<bool> closed) : Patch(rc), closed_(closed) {
+    setXY(std::move(xy));
+}
+
+void Polygon::setClosed(bool closed) {
+    if (closed_ && *closed_ == closed) return;  // (None equals neither)
+    closed_ = closed;
+    setXY(xy());
+}
+
+void Polygon::setXY(std::vector<double> xy) {
+    const std::size_t n = xy.size() / 2;
+    const bool closed = closed_.value_or(false);
+    const bool firstIsLast = n > 0 && xy[0] == xy[2 * n - 2] && xy[1] == xy[2 * n - 1];  // (NaN never is)
+    if (closed) {
+        // (xy[0] != xy[-1]).any(): the first vertex again, to be the CLOSEPOLY's
+        if (n == 1 || (n > 1 && !firstIsLast)) xy.insert(xy.end(), {xy[0], xy[1]});
+    } else if (n > 2 && firstIsLast) {
+        xy.resize(xy.size() - 2);
+    }
+    path_ = Path::make(std::move(xy), {}, rc_, closed);
 }
 
 FancyBboxPatch::FancyBboxPatch(const rc::Params& rc, double x, double y, double width, double height,

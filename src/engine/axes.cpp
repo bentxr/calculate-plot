@@ -5,6 +5,7 @@
 
 #include "engine/axes.hpp"
 
+#include "agg/path_text.h"
 #include "engine/figure.hpp"
 #include "engine/legend.hpp"
 #include "rc/rc_params.hpp"
@@ -991,25 +992,81 @@ Text& Axes::addText(std::unique_ptr<Text> t) {
     return static_cast<Text&>(*children.back());
 }
 
-Patch& Axes::addPatch(std::unique_ptr<Rectangle> p) {
+namespace {
+
+// Path.iter_bezier(simplify=False) of a path of lines (what the patches added so far have): the path
+// as Path.cleaned leaves it (non-finite vertices removed, the next one a MOVETO), each segment evaluated
+// at its ends (curve([0, 1]); lines have no extrema between) as NumPy's matmul does, from +0.0.
+std::vector<std::array<double, 2>> bezierEnds(const Path& path) {
+    mpl::PathIterator it(path.vertices, path.codes, false, path.simplifyThreshold);
+    agg::trans_affine identity;
+    std::vector<double> v;
+    std::vector<unsigned char> codes;
+    cleanup_path(it, identity, true, false, agg::rect_d(0.0, 0.0, 0.0, 0.0), SNAP_FALSE, 1.0, false, true,
+                 SketchParams{0.0, 0.0, 0.0}, v, codes);
+    std::vector<std::array<double, 2>> out;
+    std::array<double, 2> first{}, prev{};
+    const auto at = [](const std::array<double, 2>& p) { return std::array<double, 2>{0.0 + p[0], 0.0 + p[1]}; };
+    for (std::size_t i = 0; i < codes.size(); ++i) {
+        const unsigned code = codes[i];
+        if (code == agg::path_cmd_stop) break;
+        const std::array<double, 2> p{v[2 * i], v[2 * i + 1]};
+        if (code == MOVETO) {  // a point: a curve of order 0
+            first = p;
+            out.push_back(at(p));
+            out.push_back(at(p));
+        } else {  // LINETO, or CLOSEPOLY: the line back to the first vertex
+            const std::array<double, 2> end = (code & 0x7f) == CLOSEPOLY ? first : p;
+            out.push_back(at(prev));
+            out.push_back(at(end));
+        }
+        prev = p;
+    }
+    return out;
+}
+
+}  // namespace
+
+Patch& Axes::addPatch(std::unique_ptr<Patch> p) {
     if (!p->transformSet) p->transform = transData;  // _set_artist_props
     p->clipBox = std::make_shared<transforms::TransformedBbox>(
         std::make_shared<transforms::Bbox>(std::array<double, 4>{0, 0, 1, 1}), patch->fullTransform());
-    // _update_patch_limits: the ends of the path's segments (iter_bezier) through patch_trf - transData
-    if (p->width != 0 || p->height != 0) {
+    // _update_patch_limits: the ends of the path's segments (iter_bezier) through patch_trf - transData;
+    // a Rectangle of no width and no height counts for nothing
+    const auto* rect = dynamic_cast<const Rectangle*>(p.get());
+    if (!rect || rect->width != 0 || rect->height != 0) {
         const auto t = p->fullTransform();
         const auto update = transforms::containsBranchSeparately(t, transData);
         if (update[0] || update[1]) {
             const auto toData = transforms::subtract(t, transData);
             std::vector<std::array<double, 2>> xys;
-            const double corners[8][2] = {{0, 0}, {1, 0}, {1, 0}, {1, 1}, {1, 1}, {0, 1}, {0, 1}, {0, 0}};
-            for (const auto& c : corners) xys.push_back(toData->transform(c[0], c[1]));
+            if (rect) {
+                const double corners[8][2] = {{0, 0}, {1, 0}, {1, 0}, {1, 1}, {1, 1}, {0, 1}, {0, 1}, {0, 0}};
+                for (const auto& c : corners) xys.push_back(toData->transform(c[0], c[1]));
+            } else {
+                for (const auto& q : bezierEnds(p->path())) xys.push_back(toData->transform(q[0], q[1]));
+            }
             updateDatalim(xys, update[0], update[1]);
         }
     }
     if (p->label.empty()) p->label = "_child" + std::to_string(children.size());
     children.push_back(std::move(p));
     return static_cast<Patch&>(*children.back());
+}
+
+std::vector<std::pair<std::string, support::Json>> Axes::patchDefaults(const std::vector<std::string>& given,
+                                                                       const std::vector<std::string>& ignore) {
+    const auto cycle = rc_.propCycle();
+    const auto& entry = cycle[patchCycleIndex_];
+    const auto has = [](const std::vector<std::string>& list, const std::string& p) { return std::find(list.begin(), list.end(), p) != list.end(); };
+    bool unset = false;
+    for (const auto& p : entry) unset = unset || (!has(ignore, p.first) && !has(given, p.first));
+    if (!unset) return {};
+    patchCycleIndex_ = (patchCycleIndex_ + 1) % cycle.size();
+    std::vector<std::pair<std::string, support::Json>> out;
+    for (const auto& p : entry)
+        if (!has(ignore, p.first)) out.push_back(p);
+    return out;
 }
 
 std::vector<std::pair<std::string, support::Json>> Axes::lineDefaults(const std::vector<std::string>& given) {

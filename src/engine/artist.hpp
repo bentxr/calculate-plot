@@ -1,5 +1,5 @@
 // Derived from Matplotlib 3.11.2: lib/matplotlib/artist.py, lib/matplotlib/patches.py (Patch,
-// Rectangle), lib/matplotlib/lines.py (dash patterns).
+// Rectangle, Polygon), lib/matplotlib/lines.py (dash patterns).
 // Copyright (c) 2012- Matplotlib Development Team; All Rights Reserved
 // Licence: LICENSES/Matplotlib.txt. Changes: licensing/changes/matplotlib.md
 #pragma once
@@ -92,11 +92,6 @@ public:
     }
     void setFill(bool b);
     void updateFrom(const Patch& other);  // Patch.update_from, for the handle of a legend
-    void setColor(const colors::Spec& c) {  // Patch.set_color: edge, hatch and face
-        setEdgecolor(c);
-        setHatchcolor(c);
-        setFacecolor(c);
-    }
     // set_hatch: the pattern ('/', 'x', 'o'...), or None for none; an empty one draws none either
     // (`numpy`: the pattern is a np.str_, as bar's hatches are: an SVG hatch id prints it so)
     void setHatch(const std::optional<std::string>& hatch, bool numpy = false) {
@@ -159,6 +154,23 @@ public:
     transforms::TransformPtr patchTransform() const override;
 
     double x0, y0, width, height, angle;
+};
+
+// patches.Polygon(xy, closed=): the vertices as given. A closed polygon gets its first vertex again at
+// the end unless it is there already (then the path is closed); an unclosed one loses a last vertex
+// equal to the first. `closed` is the value given: Python's None counts as not closed but is not
+// equal to False (set_closed(None) then makes the vertices again).
+class Polygon : public Patch {
+public:
+    Polygon(const rc::Params& rc, std::vector<double> xy, std::optional<bool> closed);
+    Path path() const override { return path_; }
+    void setClosed(bool closed);              // set_closed(bool(closed))
+    void setXY(std::vector<double> xy);       // set_xy: x0, y0, x1, y1, ...
+    const std::vector<double>& xy() const { return *path_.vertices; }  // get_xy: the path's vertices
+
+private:
+    std::optional<bool> closed_;
+    Path path_;
 };
 
 // FancyBboxPatch with the box styles "round" (pad, rounding_size) and "square" (pad).

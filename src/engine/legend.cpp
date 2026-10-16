@@ -551,7 +551,7 @@ Legend::Legend(const rc::Params& rc, Axes& parent, const std::vector<Artist*>& h
             rect->transform = trans;
             handleColors.push_back(colorsOf(*rect));
             handlebox->addArtist(std::move(rect));
-        } else if (auto* patch = dynamic_cast<Rectangle*>(handles[i])) {  // HandlerPatch
+        } else if (auto* patch = dynamic_cast<Patch*>(handles[i])) {  // HandlerPatch (a Rectangle like the patch)
             auto rect = std::make_unique<Rectangle>(rc, -xd, -yd, w, h);
             rect->updateFrom(*patch);
             rect->transform = trans;
@@ -680,6 +680,16 @@ std::array<double, 2> Legend::findBestPosition(double width, double height, Rend
             const auto ul = rectangle->transform->transform(x0, y1);
             const auto lr = rectangle->transform->transform(x1, y0);
             bboxes.push_back({ll[0], ll[1], lr[0], ul[1]});
+        } else if (auto* other = dynamic_cast<Patch*>(child.get())) {
+            // another Patch: its path through get_transform(), as a line's
+            const Path p = other->path();
+            const auto trans = other->fullTransform();
+            std::vector<double> v = p.vertices ? *p.vertices : std::vector<double>{};
+            for (std::size_t i = 0; i + 1 < v.size(); i += 2) {
+                const auto q = trans->transform(v[i], v[i + 1]);
+                v[i] = q[0], v[i + 1] = q[1];
+            }
+            lines.push_back({v, p.codes ? *p.codes : std::vector<unsigned char>{}});
         } else if (auto* text = dynamic_cast<Text*>(child.get())) {
             bboxes.push_back(text->windowExtent(renderer).points());
         } else {

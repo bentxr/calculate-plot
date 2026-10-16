@@ -189,11 +189,16 @@ public:
     // Axes.add_line: the line in data coordinates, clipped to the Axes, counted in the data limits.
     // Axes.add_line; the line keeps its transform when it was set (axhline, axvline)
     Line2D& addLine(std::unique_ptr<Line2D> line, bool keepTransform = false);
-    Patch& addPatch(std::unique_ptr<Rectangle> patch);  // Axes.add_patch
+    Patch& addPatch(std::unique_ptr<Patch> patch);  // Axes.add_patch
     Text& addText(std::unique_ptr<Text> text);          // Axes._add_text, as Axes.text does it
     // What a new line takes from the property cycle (_get_lines' _PropCycle.getdefaults): the properties
     // of the next entry that are not among those given. With all of them given the cycle stays.
     std::vector<std::pair<std::string, support::Json>> lineDefaults(const std::vector<std::string>& given);
+    // What a new polygon of fill takes from the patches' cycle (_get_patches_for_fill's
+    // _PropCycle.getdefaults(kw, ignore)): the next entry less the `ignore`d properties, when `given`
+    // leaves one of those unset; else nothing, and the cycle stays.
+    std::vector<std::pair<std::string, support::Json>> patchDefaults(const std::vector<std::string>& given,
+                                                                     const std::vector<std::string>& ignore);
     // The patches' own cycle (_get_patches_for_fill.get_next_color), used by scatter and fills.
     colors::Spec nextPatchColor() { return nextColor(&patchCycleIndex_); }
     // The lines' cycle (_get_lines.get_next_color), used by hist.

@@ -207,6 +207,10 @@ it comes from in its first lines. The changes, as a whole:
   Histograms: Axes.hist for histtype 'bar' and 'barstacked' (cbook._reshape_2D for lists, the shared bin
   edges, stacking, density, cumulative, rwidth, align, orientation, bottom) and _style_helpers.style_generator
   (named line styles only); 'step' and 'stepfilled' are refused for now.
+  Polygons: patches.py's Polygon (set_xy, set_closed), Axes.fill through _process_plot_var_args('Polygon')
+  (_plot_args, _make_polygon, the patches' _PropCycle.getdefaults with ignored properties), pyplot.Polygon,
+  Axes.add_patch with _update_patch_limits for paths (Path.iter_bezier over Path.cleaned, the segment ends
+  as BezierSegment evaluates them), HandlerPatch for any patch and the 'best' legend placement around one.
   Colour sequences: colors.py's ColorSequenceRegistry (the built-in sequences only) with _cm.py's data
   (data/color_sequences.json; ColorBrewer's schemes in data/color_sequences_colorbrewer.json), written as JSON
   numbers by tools/oracle/make_color_sequences.py; rcsetup.py's _single_string_color_list takes them in cycles.
