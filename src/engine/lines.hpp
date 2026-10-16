@@ -72,7 +72,18 @@ public:
     void updateFrom(const Line2D& other);
 
     colors::Spec color;
-    std::optional<std::vector<long long>> markevery;  // the indices of the points that get markers
+    // set_markevery: which points get markers (_mark_every_path)
+    struct Markevery {
+        enum class Kind { Slice, Along, Indices, Mask };
+        Kind kind = Kind::Indices;
+        long long start = 0, step = 1;     // Slice: the points [start::step]
+        double startAlong = 0, stepAlong = 0;  // Along: spaced along the line, in Axes diagonals
+        std::vector<long long> indices;    // Indices: the points at these (from the end when negative)
+        std::vector<bool> mask;            // Mask: the points where it is true
+        std::string repr;                  // the value as Python writes it, for messages
+        std::string error;                 // what matplotlib raises when it draws the line, if anything
+    };
+    std::optional<Markevery> markevery;
     colors::Spec markeredgecolor, markerfacecolor, markerfacecoloralt = std::string("none");  // or "auto"
     double markersize, markeredgewidth;
     bool antialiased;
@@ -85,6 +96,7 @@ public:
     const Axes* axes = nullptr;
 
 private:
+    Path markEveryPath(Markevery& every, const Path& tpath, const transforms::Matrix& affine) const;
     bool isDashed() const { return linestyle_ == "--" || linestyle_ == "-." || linestyle_ == ":"; }
     colors::Spec markerEdgeColor() const;
     colors::Spec markerFaceColor(bool alt) const;

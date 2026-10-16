@@ -8,6 +8,7 @@
 
 #include "engine/axes.hpp"
 #include "support/pyformat.hpp"
+#include "support/raised.hpp"
 #include "svg/svg_renderer.h"
 #include "rc/rc_params.hpp"
 #include "support/embedded.hpp"
@@ -508,6 +509,95 @@ colors::Spec Line2D::markerFaceColor(bool alt) const {
     return fc;
 }
 
+// _mark_every_path(markevery, tpath, affine, ax): the points of the (non-affine transformed) path that get
+// markers; an error matplotlib raises goes into markevery.error
+Path Line2D::markEveryPath(Markevery& every, const Path& tpath, const transforms::Matrix& affine) const {
+    const auto& all = *tpath.vertices;
+    const auto n = static_cast<long long>(tpath.size());
+    std::vector<double> v;
+    const auto take = [&](long long k) { v.push_back(all[std::size_t(2 * k)]), v.push_back(all[std::size_t(2 * k + 1)]); };
+    switch (every.kind) {
+    case Markevery::Kind::Slice: {  // verts[slice(start, None, step)]
+        if (every.step == 0) {
+            every.error = "slice step cannot be zero";
+            return tpath;
+        }
+        long long i = every.start;
+        if (every.step > 0) {
+            if (i < 0) i = std::max(i + n, 0LL);
+            for (; i < n; i += every.step) take(i);
+        } else {
+            if (i < 0) i += n;
+            if (i >= n) i = n - 1;
+            for (; i >= 0; i += every.step) take(i);
+        }
+        break;
+    }
+    case Markevery::Kind::Indices:
+        for (long long i : every.indices) {
+            const long long k = i < 0 ? i + n : i;
+            if (k < 0 || k >= n) return every.error = "markevery=" + every.repr + " is iterable but not a valid numpy fancy index", tpath;
+            take(k);
+        }
+        break;
+    case Markevery::Kind::Mask:
+        if ((long long)every.mask.size() != n)
+            return every.error = "markevery=" + every.repr + " is iterable but not a valid numpy fancy index", tpath;
+        for (long long k = 0; k < n; ++k)
+            if (every.mask[std::size_t(k)]) take(k);
+        break;
+    case Markevery::Kind::Along: {
+        // the distance along the path in display coordinates, cumulated, of its finite points
+        std::vector<std::array<double, 2>> fverts, disp;
+        for (long long k = 0; k < n; ++k) {
+            const double x = all[std::size_t(2 * k)], y = all[std::size_t(2 * k + 1)];
+            if (std::isfinite(x) && std::isfinite(y)) fverts.push_back({x, y}), disp.push_back(transforms::apply(affine, x, y));
+        }
+        if (fverts.empty()) break;  // (delta[-1] of nothing: matplotlib's IndexError is not reached, as tpath has points)
+        std::vector<double> delta(disp.size());
+        double sum = 0;
+        for (std::size_t k = 0; k < disp.size(); ++k) {
+            const double d = k == 0 ? 0.0 : std::hypot(disp[k][0] - disp[k - 1][0], disp[k][1] - disp[k - 1][1]);
+            delta[k] = sum += d;  // np.hypot(*delta.T).cumsum()
+        }
+        // the Axes' diagonal is a distance of one
+        const auto m = axes->transAxes->matrix();
+        const auto p0 = transforms::apply(m, 0, 0), p1 = transforms::apply(m, 1, 1);
+        const double scale = std::hypot(p1[0] - p0[0], p1[1] - p0[1]);
+        const double markerStart = every.startAlong * scale, markerStep = every.stepAlong * scale;
+        if (markerStep <= 0) {
+            every.error = "'markevery' step must be positive, but got " + support::pythonRepr(every.stepAlong);
+            return tpath;
+        }
+        // the candidate markers: those just before and after each vertex
+        std::vector<double> md;
+        for (double d : delta) md.push_back(d - support::divmod(d - markerStart, markerStep).second);
+        const std::size_t count = md.size();
+        for (std::size_t k = 0; k < count; ++k) md.push_back(md[k] + markerStep);
+        std::sort(md.begin(), md.end(), [](double a, double b) { return a < b || (std::isnan(b) && !std::isnan(a)); });
+        md.erase(std::unique(md.begin(), md.end(), [](double a, double b) { return a == b || (std::isnan(a) && std::isnan(b)); }), md.end());
+        std::vector<double> kept;
+        for (double d : md)
+            if (d >= markerStart && d < delta.back()) kept.push_back(d);
+        // each candidate's closest point (the first of several at one distance)
+        const auto left = [&](double key) { return std::size_t(std::lower_bound(delta.begin(), delta.end(), key) - delta.begin()); };
+        std::vector<std::size_t> inds;
+        for (double d : kept) {
+            std::size_t right = left(d);
+            const std::size_t lo = right > 0 ? right - 1 : 0;
+            right = std::min(right, delta.size() - 1);
+            const std::size_t k = std::fabs(delta[right] - d) < std::fabs(d - delta[lo]) ? right : lo;
+            inds.push_back(left(delta[k]));
+        }
+        std::sort(inds.begin(), inds.end());
+        inds.erase(std::unique(inds.begin(), inds.end()), inds.end());
+        for (std::size_t k : inds) v.push_back(fverts[k][0]), v.push_back(fverts[k][1]);
+        break;
+    }
+    }
+    return Path::make(std::move(v), {}, rc_);
+}
+
 void Line2D::draw(Renderer& renderer) {
     if (!visible) return;
     if (invalid_) recache();
@@ -573,20 +663,17 @@ void Line2D::draw(Renderer& renderer) {
             if (markerStyle.marker() == ",") gc.linewidth = 0;
             else markerTrans.scale(w);
             Path subsampled = markerPoints;
-            if (markevery) {  // _mark_every_path with a list of indices
-                std::vector<double> v;
-                const auto& all = *markerPoints.vertices;
-                const long long n = (long long)markerPoints.size();
-                for (long long i : *markevery) {
-                    const long long k = i < 0 ? i + n : i;
-                    if (k < 0 || k >= n) {
-                        renderer.unsupported("markevery index out of range");
-                        continue;
-                    }
-                    v.push_back(all[std::size_t(2 * k)]), v.push_back(all[std::size_t(2 * k + 1)]);
+            if (markevery) {
+                if (!markevery->error.empty()) {
+                    support::noteRaised(markevery->error);
+                    return;
                 }
-                subsampled = Path::make(std::move(v), {}, rc_);
                 if (markerPoints.codes) renderer.unsupported("markevery on paths with codes is not supported yet");
+                subsampled = markEveryPath(*markevery, markerPoints, affine);
+                if (!markevery->error.empty()) {
+                    support::noteRaised(markevery->error);
+                    return;
+                }
             }
             renderer.drawMarkers(gc, markerStyle.path(), markerTrans.matrix(), subsampled, affine,
                                  std::vector<double>(fc.begin(), fc.end()));

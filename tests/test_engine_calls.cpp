@@ -1697,3 +1697,26 @@ TEST(HistCalls, ArgumentsAreReadAsMatplotlibReadsThem) {
     EXPECT_EQ(error(one, R"({"capstyle": "round"})"), "axs[0].hist: unsupported keyword capstyle");
     EXPECT_EQ(error(one, R"({"ec": "k", "edgecolor": "r"})").find("axs[0].hist:"), 0u);
 }
+
+// markevery is kept as given; what matplotlib raises when the line is drawn stops the drawing with its message.
+TEST(ArgumentForms, MarkeveryRaisesWhatMatplotlibRaisesWhenTheLineIsDrawn) {
+    const auto plot = [](const std::string& every) {
+        return draw(kSubplots + R"({"on": "axs[0]", "call": "plot", "args": [[1, 2, 3], "o"], "kwargs": {"markevery": )" + every + "}}").error;
+    };
+    EXPECT_EQ(plot("null"), "");
+    EXPECT_EQ(plot(R"({"$tuple": [true, 2]})"), "");
+    EXPECT_EQ(plot("false"), "slice step cannot be zero");
+    EXPECT_EQ(plot("0"), "slice step cannot be zero");
+    EXPECT_EQ(plot(R"({"$tuple": [1, 2, 3]})"), "`markevery` is a tuple but its len is not 2; markevery=(1, 2, 3)");
+    EXPECT_EQ(plot(R"({"$tuple": [0.5, 2]})"),
+              "`markevery` is a tuple with len 2 and second element is an int, but the first element is not an int; markevery=(0.5, 2)");
+    EXPECT_EQ(plot(R"({"$tuple": ["a", 0.5]})"),
+              "`markevery` is a tuple with len 2 and second element is a float, but the first element is not a float or an int; markevery=('a', 0.5)");
+    EXPECT_EQ(plot(R"({"$tuple": [1, -0.1]})"), "'markevery' step must be positive, but got -0.1");
+    EXPECT_EQ(plot(R"({"$tuple": [1, 0.0]})"), "'markevery' step must be positive, but got 0.0");
+    EXPECT_EQ(plot("[0, 5]"), "markevery=[0, 5] is iterable but not a valid numpy fancy index");
+    EXPECT_EQ(plot("[true, false]"), "markevery=[True, False] is iterable but not a valid numpy fancy index");
+    EXPECT_EQ(plot("[0.5]"), "markevery=[0.5] is iterable but not a valid numpy fancy index");
+    EXPECT_EQ(plot(R"({"$tuple": [1, "b"]})"), "markevery=(1, 'b') is a tuple with len 2, but its second element is not an int or a float");
+    EXPECT_EQ(plot(R"("x")"), "markevery='x' is iterable but not a valid numpy fancy index");
+}

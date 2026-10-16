@@ -533,7 +533,10 @@ Legend::Legend(const rc::Params& rc, Axes& parent, const std::vector<Artist*>& h
             if (numpoints == 1) xdata = linspace(xdata.front(), xdata.back(), 3);
             std::vector<double> ydata(xdata.size(), (h - yd) / 2);
             auto legline = std::make_unique<Line2D>(rc, xdata, ydata);
-            if (numpoints == 1) legline->markevery = std::vector<long long>{1};
+            if (numpoints == 1) {
+                legline->markevery = Line2D::Markevery{};
+                legline->markevery->indices = {1};
+            }
             legline->updateFrom(*line);
             if (markerscale != 1) legline->markersize = legline->markersize * markerscale;
             legline->clipBox.reset();

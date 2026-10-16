@@ -420,6 +420,62 @@ private:
         return true;
     }
 
+    // Line2D.set_markevery(every): kept as given; what _mark_every_path makes of it (and raises) when the
+    // line is drawn
+    bool markevery(const Json& v, std::optional<Line2D::Markevery>* out, const std::string& where, std::string* error) {
+        out->reset();
+        if (v.isNull()) return true;
+        Line2D::Markevery every;
+        every.repr = repr(v);
+        const auto integral = [](const Json& j) { return j.isBool() || (j.isNumber() && j.isInteger()); };
+        const auto integer = [](const Json& j) { return j.isBool() ? (long long)j.asBool() : (long long)j.asNumber(); };
+        const auto real = [&](const Json& j) { return integral(j) || j.isNumber() || (j.isObject() && j.members()[0].first == "$float"); };
+        const auto realValue = [&](const Json& j) {
+            if (j.isObject()) return std::strtod(j.members()[0].second.asString().c_str(), nullptr);
+            return j.isBool() ? double(j.asBool()) : j.asNumber();
+        };
+        const bool tuple = v.isObject() && v.members()[0].first == "$tuple";
+        if (integral(v) || (real(v) && !tuple)) {  // N is (0, N); a float f is (0.0, f)
+            if (integral(v)) every.kind = Line2D::Markevery::Kind::Slice, every.start = 0, every.step = integer(v);
+            else every.kind = Line2D::Markevery::Kind::Along, every.startAlong = 0, every.stepAlong = realValue(v);
+        } else if (tuple) {
+            const Json& items = v.members()[0].second;
+            if (items.size() != 2) {
+                every.error = "`markevery` is a tuple but its len is not 2; markevery=" + every.repr;
+            } else if (integral(items[1])) {
+                if (!integral(items[0]))
+                    every.error = "`markevery` is a tuple with len 2 and second element is an int, but the first element is not an int; markevery=" + every.repr;
+                else
+                    every.kind = Line2D::Markevery::Kind::Slice, every.start = integer(items[0]), every.step = integer(items[1]);
+            } else if (real(items[1])) {
+                if (!real(items[0]))
+                    every.error = "`markevery` is a tuple with len 2 and second element is a float, but the first element is not a float or an int; markevery=" + every.repr;
+                else
+                    every.kind = Line2D::Markevery::Kind::Along, every.startAlong = realValue(items[0]), every.stepAlong = realValue(items[1]);
+            } else {
+                every.error = "markevery=" + every.repr + " is a tuple with len 2, but its second element is not an int or a float";
+            }
+        } else if (v.isArray() || v.isString()) {  // a fancy index: integers, or booleans as long as the points
+            const std::string bad = "markevery=" + every.repr + " is iterable but not a valid numpy fancy index";
+            bool allBool = v.isArray(), allIntegral = v.isArray();
+            if (v.isArray())
+                for (const Json& j : v.items()) allBool = allBool && j.isBool(), allIntegral = allIntegral && integral(j);
+            if (v.isArray() && v.size() > 0 && allBool) {
+                every.kind = Line2D::Markevery::Kind::Mask;
+                for (const Json& j : v.items()) every.mask.push_back(j.asBool());
+            } else if (v.isArray() && allIntegral) {  // ([] too: an empty index)
+                every.kind = Line2D::Markevery::Kind::Indices;
+                for (const Json& j : v.items()) every.indices.push_back(integer(j));
+            } else {
+                every.error = bad;
+            }
+        } else {
+            return *error = where + ": markevery must be a number, a tuple or a list", false;
+        }
+        *out = every;
+        return true;
+    }
+
     // A value as Python writes it, for messages
     static std::string repr(const Json& v) {
         if (v.isBool()) return v.asBool() ? "True" : "False";
@@ -4463,6 +4519,8 @@ private:
         } else if (name == "markeredgewidth") {
             if (!readNumber(v, &n)) return *error = where + ": markeredgewidth must be a number", false;
             line.markeredgewidth = n;
+        } else if (name == "markevery") {
+            if (!markevery(v, &line.markevery, where, error)) return false;
         } else if (name == "markerfacecolor" || name == "markeredgecolor" || name == "markerfacecoloralt") {
             colors::Spec c;
             if (!color(v, &c, {"auto"})) return *error = where + ": bad " + name, false;
