@@ -1176,18 +1176,21 @@ TEST(ArgumentForms, NoneForAParameterOfALineIsItsDefault) {
 }
 
 // fill_between draws straight between the points: no interpolation of crossings, no steps.
-TEST(ArgumentForms, FillBetweenTakesNoInterpolationAndStepsByName) {
+TEST(ArgumentForms, FillBetweenTakesInterpolationAndStepsByName) {
     const auto fill = [](const std::string& kwargs) {
         return draw(kSubplots + R"({"on": "axs[0]", "call": "fill_between", "args": [[1, 2], [1, 2]], "kwargs": )" + kwargs + "}");
     };
     const auto plain = fill("{}");
     ASSERT_EQ(plain.error, "");
-    for (const char* kwargs : {R"({"interpolate": false})", R"({"interpolate": null})", R"({"step": null})"}) {
+    for (const char* kwargs : {R"({"interpolate": false})", R"({"interpolate": null})", R"({"interpolate": 0})", R"({"step": null})"}) {
         EXPECT_EQ(fill(kwargs).error, "") << kwargs;
         EXPECT_EQ(fill(kwargs).trace, plain.trace) << kwargs;
     }
-    EXPECT_EQ(fill(R"({"interpolate": true})").error, "axs[0].fill_between: interpolate is not supported yet");
-    EXPECT_EQ(fill(R"({"interpolate": 0})").error, "axs[0].fill_between: interpolate is not supported yet");
+    // (the region then starts and ends on f1: the curves do not cross before the first point)
+    EXPECT_EQ(fill(R"({"interpolate": true})").error, "");
+    EXPECT_NE(fill(R"({"interpolate": true})").trace, plain.trace);
+    EXPECT_EQ(fill(R"({"interpolate": 2})").trace, fill(R"({"interpolate": true})").trace);
+    EXPECT_EQ(fill(R"({"interpolate": "yes"})").error, "axs[0].fill_between: interpolate must be true or false");
     EXPECT_EQ(fill(R"({"step": "pre"})").error, "");
     EXPECT_EQ(fill(R"({"step": "steps"})").error, "axs[0].fill_between: step must be 'pre', 'post' or 'mid'");
     EXPECT_EQ(fill(R"({"step": "Pre"})").error, "axs[0].fill_between: step must be 'pre', 'post' or 'mid'");

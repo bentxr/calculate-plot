@@ -201,3 +201,19 @@ TEST(Histogram, BinsByNameAreNumpys) {
     EXPECT_EQ(checked, 202);
     EXPECT_EQ(refused, 3);
 }
+
+// np.interp(x, xp, fp): binary_search_with_guess, the slopes, NaN tried from the other end
+TEST(Histogram, InterpIsNumpys) {
+    int checked = 0;
+    for (const Json& c : oracle().find("interps")->items()) {
+        const std::vector<double> x = data(*c.find("x")), xp = data(*c.find("xp")), fp = data(*c.find("fp"));
+        const std::vector<double> want = hexData(*c.find("interp"));
+        const std::vector<double> got = support::npInterp(x, xp, fp);
+        ASSERT_EQ(got.size(), want.size()) << checked;
+        for (std::size_t i = 0; i < want.size(); ++i)
+            EXPECT_TRUE((got[i] == want[i] && std::signbit(got[i]) == std::signbit(want[i])) || (std::isnan(got[i]) && std::isnan(want[i])))
+                << "case " << checked << " at " << i << ": " << got[i] << " instead of " << want[i];
+        ++checked;
+    }
+    EXPECT_EQ(checked, 24);
+}

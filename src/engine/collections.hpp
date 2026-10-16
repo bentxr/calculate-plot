@@ -109,10 +109,11 @@ public:
 class FillBetweenPolyCollection : public PolyCollection {
 public:
     // `step`: "", "pre", "post" or "mid" (the regions drawn as steps); `yDirection`: t_direction 'y'
-    // (fill_betweenx: t runs along y, and the points' columns are swapped)
+    // (fill_betweenx: t runs along y, and the points' columns are swapped); `interpolate`: the regions
+    // start and end where the curves cross
     FillBetweenPolyCollection(const rc::Params& rc, const std::vector<double>& t, const std::vector<double>& f1,
                               const std::vector<double>& f2, const std::vector<bool>& where, const std::string& step = "",
-                              bool yDirection = false);
+                              bool yDirection = false, bool interpolate = false);
     DataLim dataLim(const transforms::TransformPtr&) const override { return bbox_; }
 
 private:
@@ -120,7 +121,8 @@ private:
                                                                      const std::vector<double>& f1,
                                                                      const std::vector<double>& f2,
                                                                      const std::vector<bool>& where,
-                                                                     const std::string& step, bool yDirection);
+                                                                     const std::string& step, bool yDirection,
+                                                                     bool interpolate);
     DataLim bbox_;
 };
 

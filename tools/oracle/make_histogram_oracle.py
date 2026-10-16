@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Write tests/oracle/histogram.json: NumPy 2.5.3's np.sum of float64 arrays, np.histogram_bin_edges and
 np.histogram (bins, range, density, weights; bins by name: the rules of _hist_bin_selectors, on float64
-and on int64 data), and the routines those rules use (np.dot of float64 vectors, np.mean, np.std,
-np.percentile(x, [75, 25])), as float.hex; or the error NumPy raises. The data are given by a generator
+and on int64 data), the routines those rules use (np.dot of float64 vectors, np.mean, np.std,
+np.percentile(x, [75, 25])), and np.interp (as fill_between(interpolate=True) takes it), as float.hex; or the error NumPy raises. The data are given by a generator
 both sides compute exactly ((i * p) % q / q * scale + offset, or for integers (i * p) % q + offset), so
 that long arrays need not be stored.
 
@@ -175,8 +175,24 @@ for spec, integer, rng, name, weights in [([1, 2, 3], False, None, "bogus", None
         case["error"] = str(e)
     named.append(case)
 
+# np.interp(x, xp, fp) of float64 arrays
+INTERP = [([0.5], [0, 1], [10, 20]), ([0, 1, -1, 2, 0.25], [0, 1], [10, 20]), ([3.0], [3.0], [7.0]), ([2, 3, 4], [3.0], [7.0]),
+          ([NAN, 0.5], [0, 1], [1, 2]), ([0.5], [0, NAN], [1, 2]), ([0.5], [0, 1], [NAN, 2]), ([0.5], [0, 1], [1, NAN]),
+          ([0.0], [-2.0, 3.0], [1.0, 0.0]), ([0.0], [-2.0, 3.0], [0.1, 0.7]), ([0.0], [0.0, 0.0], [1.0, 2.0]),
+          ([1.0], [1.0, 1.0, 2.0], [5, 6, 7]), ([1.5], [1, 1, 2, 2], [5, 6, 7, 8]), ([2.0], [1, 1, 2, 2], [5, 6, 7, 8]),
+          ([0.5, 1.5, 2.5, 3.5, 4.5, 5.5], [0, 1, 2, 3, 4, 5, 6], [0, 1, 4, 9, 16, 25, 36]),
+          ([0.1 * i for i in range(-5, 120)], [float(i) for i in range(11)], [float(i * i) for i in range(11)]),
+          ([3.3, 0.2, 9.9, 5.5, 5.5, 0.0, 10.0], [float(i) for i in range(11)], [float(i ** 3) for i in range(11)]),
+          ([0.0], [-1e-300, 1e300], [1e300, -1e300]), ([0.0], ["-inf", 1.0], [0.0, 1.0]), ([0.5], [0.0, 1.0], [INF, 1.0]),
+          ([0.5], [0.0, 1.0], [INF, INF]), ([-0.0], [-0.0, 0.0], [3, 4]), ([0.0], [-3.17, 2.25], [-2.0, 4.0]),
+          ([0.25], [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2], [float(i) for i in range(12)])]
+interps = []
+for x, xp, fp in INTERP:
+    got = np.interp(np.asarray(data(x), float), np.asarray(data(xp), float), np.asarray(data(fp), float))
+    interps.append({"x": x, "xp": xp, "fp": fp, "interp": hexes(got)})
+
 out = {"_note": "NumPy 2.5.3 (BSD-3-Clause), tools/oracle/make_histogram_oracle.py", "sums": sums,
-       "histograms": histograms, "dots": dots, "stats": stats, "named": named}
+       "histograms": histograms, "dots": dots, "stats": stats, "named": named, "interps": interps}
 (ROOT / "tests" / "oracle" / "histogram.json").write_text(json.dumps(out, indent=None) + "\n")
 print(len(sums), "sums,", len(histograms), "histograms;", sum("error" in h for h in histograms), "errors;", len(dots), "dots,",
-      len(stats), "stats,", len(named), "named;", sum("error" in h for h in named), "errors")
+      len(stats), "stats,", len(named), "named;", sum("error" in h for h in named), "errors;", len(interps), "interps")

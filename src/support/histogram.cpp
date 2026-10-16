@@ -2,8 +2,8 @@
 // rules of _hist_bin_selectors and their helpers), numpy/_core/function_base.py (linspace),
 // numpy/_core/_methods.py (_mean, _var, _std), numpy/lib/_function_base_impl.py (percentile with the
 // 'linear' method: _quantile, _get_indexes, _lerp; median: _median; cov),
-// numpy/linalg/umath_linalg.cpp (det through slogdet) and numpy/_core/src/umath/loops_utils.h.src
-// (pairwise_sum).
+// numpy/linalg/umath_linalg.cpp (det through slogdet), numpy/_core/src/umath/loops_utils.h.src
+// (pairwise_sum) and numpy/_core/src/multiarray/compiled_base.c (arr_interp, binary_search_with_guess).
 // Copyright (c) 2005-2025, NumPy Developers. All rights reserved.
 // Licence: LICENSES/NumPy.txt (BSD-3-Clause). Changes: licensing/changes/numpy.md
 
@@ -275,6 +275,84 @@ double npMax(const std::vector<double>& a) {
     double m = a.empty() ? std::nan("") : a[0];
     for (std::size_t i = 1; i < a.size(); ++i) m = (m > a[i] || std::isnan(m)) ? m : a[i];  // scalar_max_f
     return m;
+}
+
+namespace {
+
+// binary_search_with_guess: the index i with arr[i] <= key < arr[i + 1]; -1 below, len above
+long long searchWithGuess(double key, const double* arr, long long len, long long guess) {
+    long long imin = 0, imax = len;
+    if (key > arr[len - 1]) return len;
+    if (key < arr[0]) return -1;
+    if (len <= 4) {  // _linear_search(key, arr, len, 1)
+        long long i = 1;
+        for (; i < len && key >= arr[i]; i++) {}
+        return i - 1;
+    }
+    if (guess > len - 3) guess = len - 3;
+    if (guess < 1) guess = 1;
+    const long long cache = 8;  // LIKELY_IN_CACHE_SIZE
+    if (key < arr[guess]) {
+        if (key < arr[guess - 1]) {
+            imax = guess - 1;
+            if (guess > cache && key >= arr[guess - cache]) imin = guess - cache;
+        } else {
+            return guess - 1;
+        }
+    } else {
+        if (key < arr[guess + 1]) return guess;
+        if (key < arr[guess + 2]) return guess + 1;
+        imin = guess + 2;
+        if (guess < len - cache - 1 && key < arr[guess + cache]) imax = guess + cache;
+    }
+    while (imin < imax) {
+        const long long imid = imin + ((imax - imin) >> 1);
+        if (key >= arr[imid]) imin = imid + 1;
+        else imax = imid;
+    }
+    return imin - 1;
+}
+
+}  // namespace
+
+std::vector<double> npInterp(const std::vector<double>& x, const std::vector<double>& xp, const std::vector<double>& fp) {
+    std::vector<double> res(x.size());
+    if (x.empty()) return res;
+    const double* dx = xp.data();
+    const double* dy = fp.data();
+    const auto lenxp = static_cast<long long>(xp.size());
+    const double lval = dy[0], rval = dy[lenxp - 1];
+    if (lenxp == 1) {
+        for (std::size_t i = 0; i < x.size(); ++i) res[i] = x[i] < dx[0] ? lval : x[i] > dx[0] ? rval : dy[0];
+        return res;
+    }
+    long long j = 0;
+    for (std::size_t i = 0; i < x.size(); ++i) {
+        const double v = x[i];
+        if (std::isnan(v)) {
+            res[i] = v;
+            continue;
+        }
+        j = searchWithGuess(v, dx, lenxp, j);
+        if (j == -1) {
+            res[i] = lval;
+        } else if (j == lenxp) {
+            res[i] = rval;
+        } else if (j == lenxp - 1) {
+            res[i] = dy[j];
+        } else if (dx[j] == v) {  // (no non-finite interpolation)
+            res[i] = dy[j];
+        } else {
+            // the slopes, precomputed or not, are the same quotient
+            const double slope = (dy[j + 1] - dy[j]) / (dx[j + 1] - dx[j]);
+            res[i] = slope * (v - dx[j]) + dy[j];
+            if (std::isnan(res[i])) {  // NaN one way: the other way
+                res[i] = slope * (v - dx[j + 1]) + dy[j + 1];
+                if (std::isnan(res[i]) && dy[j] == dy[j + 1]) res[i] = dy[j];
+            }
+        }
+    }
+    return res;
 }
 
 double npMedian(std::vector<double> a, bool integer) {

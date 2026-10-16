@@ -22,3 +22,6 @@ where the bin rules treat them otherwise):
   _get_gamma, _lerp) for one quantile of finite data, sorted instead of partitioned;
 - linspace from numpy/_core/function_base.py, for a scalar start and stop with the endpoint;
 - pairwise_sum from numpy/_core/src/umath/loops_utils.h.src, for np.sum of a contiguous float64 array.
+- arr_interp (np.interp without period, left or right) and binary_search_with_guess from
+  numpy/_core/src/multiarray/compiled_base.c, for float64 arrays; the slopes are computed where they are used
+  (NumPy precomputes them when there are fewer of them than points, with the same quotient).

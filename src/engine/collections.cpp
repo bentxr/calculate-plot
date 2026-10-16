@@ -3,10 +3,12 @@
 // Licence: LICENSES/Matplotlib.txt. Changes: licensing/changes/matplotlib.md
 
 #include "engine/collections.hpp"
+#include "support/histogram.hpp"
 
 #include "engine/figure.hpp"
 #include "rc/rc_params.hpp"
 
+#include <algorithm>
 #include <cmath>
 #include <limits>
 #include <tuple>
@@ -328,8 +330,8 @@ PolyCollection::PolyCollection(const rc::Params& rc, const std::vector<std::vect
 FillBetweenPolyCollection::FillBetweenPolyCollection(const rc::Params& rc, const std::vector<double>& t,
                                                      const std::vector<double>& f1, const std::vector<double>& f2,
                                                      const std::vector<bool>& where, const std::string& step,
-                                                     bool yDirection)
-    : PolyCollection(rc, makeVerts(t, f1, f2, where, step, yDirection)) {
+                                                     bool yDirection, bool interpolate)
+    : PolyCollection(rc, makeVerts(t, f1, f2, where, step, yDirection, interpolate)) {
     groupName = "FillBetweenPolyCollection";
     // _make_verts' box: the points (t, f1) and (t, f2) where drawn, and their minpos
     const double inf = std::numeric_limits<double>::infinity();
@@ -354,9 +356,44 @@ std::vector<std::vector<std::array<double, 2>>> FillBetweenPolyCollection::makeV
                                                                                     const std::vector<double>& f1,
                                                                                     const std::vector<double>& f2,
                                                                                     const std::vector<bool>& where,
-                                                                                    const std::string& step, bool yDirection) {
+                                                                                    const std::string& step, bool yDirection,
+                                                                                    bool interpolate) {
     std::vector<std::vector<std::array<double, 2>>> regions;
-    // cbook.contiguous_regions(where), then _make_verts_for_region without interpolation
+    // _get_interpolating_points(t, f1, f2, idx): where f1 - f2 is 0 between the points idx - 1 and idx
+    // (np.interp of the two, ordered by argsort). t, f1 and f2 are masked where they are not finite: a
+    // masked argument sorts as NaN, np.interp takes its data, and a masked difference holds f1's.
+    const auto interpolatingPoint = [&](std::size_t idx) -> std::array<double, 2> {
+        const std::size_t im1 = idx > 0 ? idx - 1 : 0, end = std::min(idx + 1, t.size());
+        const auto masked = [](double v) { return !std::isfinite(v); };
+        if (end - im1 == 2) {
+            if (masked(f1[idx]) || masked(f2[idx])) return {t[im1], f1[im1]};
+            if (masked(f1[im1]) || masked(f2[im1])) return {t[idx], f1[idx]};
+        }
+        const auto root = [&](double x, const std::vector<double>& xp, const std::vector<bool>& xpMasked,
+                              const std::vector<double>& fp) {
+            // xp.argsort() (MaskedArray: filled with NaN, which sorts last), then np.interp
+            std::vector<std::size_t> order(xp.size());
+            for (std::size_t k = 0; k < order.size(); ++k) order[k] = k;
+            const auto key = [&](std::size_t k) { return xpMasked[k] ? std::nan("") : xp[k]; };
+            std::stable_sort(order.begin(), order.end(), [&](std::size_t a, std::size_t b) {
+                const double ka = key(a), kb = key(b);
+                return std::isnan(kb) ? !std::isnan(ka) : ka < kb;
+            });
+            std::vector<double> xs, fs;
+            for (std::size_t k : order) xs.push_back(xp[k]), fs.push_back(fp[k]);
+            return support::npInterp({x}, xs, fs)[0];
+        };
+        std::vector<double> tv, diff, f1v;
+        std::vector<bool> tMasked, diffMasked;
+        for (std::size_t k = im1; k < end; ++k) {
+            const bool m = masked(f1[k]) || masked(f2[k]);
+            tv.push_back(t[k]), f1v.push_back(f1[k]), diff.push_back(m ? f1[k] : f1[k] - f2[k]);
+            tMasked.push_back(masked(t[k])), diffMasked.push_back(m);
+        }
+        const double rootT = root(0.0, diff, diffMasked, tv);
+        return {rootT, root(rootT, tv, tMasked, f1v)};
+    };
+    // cbook.contiguous_regions(where), then _make_verts_for_region
     std::size_t i = 0;
     while (i < t.size()) {
         if (!where[i]) {
@@ -391,9 +428,10 @@ std::vector<std::vector<std::array<double, 2>>> FillBetweenPolyCollection::makeV
             ts = std::move(st), f1s = std::move(s1), f2s = std::move(s2);
         }
         std::vector<std::array<double, 2>> pts;
-        pts.push_back({ts.front(), f2s.front()});  // start
+        // start and end: where the curves cross, or (f2 down to its first and last points) on f2
+        pts.push_back(interpolate ? interpolatingPoint(i) : std::array<double, 2>{ts.front(), f2s.front()});
         for (std::size_t k = 0; k < ts.size(); ++k) pts.push_back({ts[k], f1s[k]});
-        pts.push_back({ts.back(), f2s.back()});    // end
+        pts.push_back(interpolate ? interpolatingPoint(j) : std::array<double, 2>{ts.back(), f2s.back()});
         for (std::size_t k = ts.size(); k-- > 0;) pts.push_back({ts[k], f2s[k]});
         if (yDirection)  // _fix_pts_xy_order
             for (auto& p : pts) std::swap(p[0], p[1]);

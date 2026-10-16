@@ -1303,6 +1303,7 @@ private:
         std::vector<bool> mask(t.size(), true);
         std::optional<std::string> hatchPattern;
         std::string stepKind;
+        bool interpolate = false;
         ColorArg face, edge, hatch;
         bool faceGiven = false;
         std::optional<double> alpha, zorder;
@@ -1326,7 +1327,9 @@ private:
                 if (!value.isNull() && !value.isString()) return *error = where + ": hatch must be a string", false;
                 if (value.isString()) hatchPattern = value.asString();
             } else if (name == "interpolate") {
-                if (!value.isNull() && !(value.isBool() && !value.asBool())) return *error = where + ": interpolate is not supported yet", false;
+                // (any truth value)
+                if (!value.isNull() && !value.isBool() && !value.isNumber()) return *error = where + ": interpolate must be true or false", false;
+                interpolate = value.isBool() ? value.asBool() : value.isNumber() && value.asNumber() != 0;
             } else if (name == "step") {
                 // STEP_LOOKUP_MAP["steps-" + step]: 'pre', 'post' or 'mid'; None is no steps (False is
                 // not: matplotlib breaks on it)
@@ -1377,7 +1380,7 @@ private:
         // x, y1 and y2 are masked where they are not finite (np.ma.masked_invalid): the regions break there
         for (std::size_t i = 0; i < t.size(); ++i)
             mask[i] = mask[i] && std::isfinite(t[i]) && std::isfinite(f1[i]) && std::isfinite(f2[i]);
-        auto collection = std::make_unique<FillBetweenPolyCollection>(rc_, t, f1, f2, mask, stepKind, alongY);
+        auto collection = std::make_unique<FillBetweenPolyCollection>(rc_, t, f1, f2, mask, stepKind, alongY, interpolate);
         // the keyword arguments are set after the defaults (_internal_update)
         collection->setFacecolor(face);
         if (edge.kind != ColorArg::Default) collection->setEdgecolor(edge);
