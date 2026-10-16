@@ -54,6 +54,24 @@ struct TickSwitches {
     std::optional<colors::Spec> gridColor;
     std::optional<std::string> gridLinestyle;
     std::optional<double> gridLinewidth, gridAlpha;
+    // What set_tick_params has set (Tick.__init__'s keywords; unset: the rcParams)
+    std::optional<double> size, width, pad, zorder, labelsize, labelrotation;
+    std::optional<std::string> tickdir, labelrotationMode;
+    std::optional<colors::Spec> color, labelcolor;
+    std::optional<std::vector<std::string>> labelfontfamily;
+};
+
+// set_tick_params' keywords as _translate_tick_params leaves them, each given or not
+struct TickParams {
+    std::optional<bool> tick1On, tick2On, label1On, label2On, gridOn;
+    std::optional<double> size, width, pad, zorder, labelsize, labelrotation;
+    std::optional<std::string> tickdir, labelrotationMode;
+    std::optional<colors::Spec> color, labelcolor;
+    std::optional<std::vector<std::string>> labelfontfamily;
+    std::optional<colors::Spec> gridColor;
+    std::optional<std::string> gridLinestyle;
+    std::optional<double> gridLinewidth, gridAlpha;
+    void mergeInto(TickSwitches* kw) const;  // _major_tick_kw.update(kwtrans)
 };
 
 // Tick: its two tick marks (markers), grid line and two labels at one location.
@@ -62,6 +80,7 @@ public:
     Tick(const rc::Params& rc, Axes& axes, bool isX, bool major, const TickSwitches& switches);
     void updatePosition(double loc);
     void applySwitches(const TickSwitches& switches);
+    void applyParams(const TickParams& params);  // Tick._apply_params
     void draw(Renderer& renderer) override;
     double loc() const { return loc_; }
     double size() const { return size_; }
@@ -73,6 +92,9 @@ public:
 
 private:
     double pad() const;  // the label pad: base pad plus the part of the tick outside the Axes
+    void applyTickdir(const std::optional<std::string>& tickdir);  // _apply_tickdir: the direction and the markers
+    void placeLabels();  // the labels' transforms (_get_text1_transform, _get_text2_transform) for the pad
+    Axes& axes_;
     bool isX_;
     double loc_ = 0, size_, width_, basePad_;
     std::string tickdir_;
@@ -101,6 +123,8 @@ public:
     std::string ticksPosition() const;  // get_ticks_position: top, bottom, left, right, default, unknown
     int tickSpace() const;              // get_tick_space: how many tick labels fit along the axis
     void setMinorTickSwitches(const TickSwitches& switches);  // tick_params(which='minor')
+    // set_tick_params(which, reset, **kwargs) with the keywords translated
+    void setTickParams(const std::string& which, bool reset, const TickParams& params);
     const TickSwitches& tickSwitches(bool major) const { return major ? majorTickKw_ : minorTickKw_; }
     // Axis.grid(visible, which, **line properties): None toggles; properties turn the grid on
     void grid(std::optional<bool> on, const std::string& which, const TickSwitches& style, bool styled);

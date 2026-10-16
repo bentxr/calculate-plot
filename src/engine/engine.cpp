@@ -143,6 +143,7 @@ public:
     // one of the Ticker the Axes sharing this axis share.
     bool axisCall(Axis& axis, const model::Call& call, std::string* error) {
         const std::string where = call.on + "." + call.method;
+        if (call.method == "set_tick_params") return tickParams(nullptr, &axis, call, error);
         const bool major = call.method == "set_major_formatter";
         if (!major && call.method != "set_minor_formatter") return *error = "unsupported call: " + where, false;
         const Json* formatter = call.args.empty() ? keyword(call, "formatter") : &call.args[0];
@@ -154,6 +155,154 @@ public:
               formatter->members()[0].second.asString() == "NullFormatter"))
             return *error = where + ": a formatter other than NullFormatter() is not supported yet", false;
         (major ? axis.tickerAxis().nullMajorFormatter : axis.tickerAxis().nullMinorFormatter) = true;
+        return true;
+    }
+
+    // Axes.tick_params(axis='both', **kwargs) (`ax`) or Axis.set_tick_params(which='major', reset=False,
+    // **kwargs) (`one`): the keywords translated as _translate_tick_params translates them; for the x axis
+    // of an Axes left, right, labelleft and labelright are dropped (top, bottom... for the y axis)
+    bool tickParams(Axes* ax, Axis* one, const model::Call& call, std::string* error) {
+        const std::string where = call.on + "." + call.method;
+        if (!call.args.empty()) return *error = where + ": takes its parameters as keywords", false;
+        std::string axisName = "both", which = "major";
+        bool reset = false;
+        std::vector<std::pair<std::string, const Json*>> kwargs;
+        for (const auto& [name, value] : call.kwargs) {
+            if (ax && name == "axis") {
+                if (!value.isString() || (value.asString() != "x" && value.asString() != "y" && value.asString() != "both"))
+                    return *error = where + ": axis must be 'x', 'y' or 'both'", false;
+                axisName = value.asString();
+            } else if (name == "which") {
+                if (!value.isString() || (value.asString() != "major" && value.asString() != "minor" && value.asString() != "both"))
+                    return *error = where + ": " + repr(value) + " is not a valid value for which; supported values are 'major', 'minor', 'both'", false;
+                which = value.asString();
+            } else if (name == "reset") {
+                if (!value.isBool()) return *error = where + ": reset must be True or False", false;
+                reset = value.asBool();
+            } else {
+                kwargs.emplace_back(name, &value);
+            }
+        }
+        const auto translate = [&](bool isX, bool dropOther, TickParams* p) {
+            static const char* const yKeys[] = {"left", "right", "labelleft", "labelright"};
+            static const char* const xKeys[] = {"top", "bottom", "labeltop", "labelbottom"};
+            std::vector<std::pair<std::string, const Json*>> kw;
+            for (const auto& entry : kwargs) {
+                const auto& dropped = isX ? yKeys : xKeys;
+                if (dropOther && std::find_if(std::begin(dropped), std::end(dropped), [&](const char* k) { return entry.first == k; }) != std::end(dropped))
+                    continue;
+                kw.push_back(entry);
+            }
+            // keymap: the later of two keys for one parameter wins (bottom over left, ...)
+            static const std::pair<const char*, const char*> keymap[] = {
+                {"length", "size"}, {"direction", "tickdir"}, {"rotation", "labelrotation"}, {"rotation_mode", "labelrotation_mode"},
+                {"left", "tick1On"}, {"bottom", "tick1On"}, {"right", "tick2On"}, {"top", "tick2On"},
+                {"labelleft", "label1On"}, {"labelbottom", "label1On"}, {"labelright", "label2On"}, {"labeltop", "label2On"}};
+            std::vector<std::pair<std::string, const Json*>> trans;
+            const auto put = [&](const std::string& key, const Json* v) {
+                for (auto& t : trans)
+                    if (t.first == key) return void(t.second = v);
+                trans.emplace_back(key, v);
+            };
+            for (const auto& [oldKey, newKey] : keymap)
+                for (const auto& entry : kw)
+                    if (entry.first == oldKey) put(newKey, entry.second);
+            for (const auto& entry : kw)
+                if (entry.first == "colors") put("color", entry.second), put("labelcolor", entry.second);
+            static const char* const allowed[] = {"size", "width", "color", "tickdir", "pad", "labelsize", "labelcolor", "labelfontfamily",
+                                                  "zorder", "gridOn", "tick1On", "tick2On", "label1On", "label2On", "labelrotation",
+                                                  "labelrotation_mode", "grid_color", "grid_c", "grid_linestyle", "grid_ls",
+                                                  "grid_linewidth", "grid_lw", "grid_alpha"};
+            for (const auto& entry : kw) {
+                const std::string& k = entry.first;
+                if (k == "colors" || std::any_of(std::begin(keymap), std::end(keymap), [&](const auto& m) { return k == m.first; })) continue;
+                if (std::find_if(std::begin(allowed), std::end(allowed), [&](const char* a) { return k == a; }) == std::end(allowed))
+                    return *error = where + ": keyword " + k + " is not recognized (or not supported yet)", false;
+                put(k, entry.second);
+            }
+            for (const auto& entry : trans) {
+                const std::string& key = entry.first;
+                const Json& v = *entry.second;
+                double n = 0;
+                const auto number = [&](std::optional<double>* out) {
+                    if (!readFinite(v, &n)) return *error = where + ": " + key + " must be a finite number", false;
+                    return *out = n, true;
+                };
+                const auto flag = [&](std::optional<bool>* out) {
+                    if (!v.isBool()) return *error = where + ": " + key + " must be True or False", false;
+                    return *out = v.asBool(), true;
+                };
+                const auto colour = [&](std::optional<colors::Spec>* out) {
+                    colors::Spec c;
+                    if (!color(v, &c)) return *error = where + ": " + key + " is not a colour", false;
+                    return *out = c, true;
+                };
+                bool ok = true;
+                if (key == "size") ok = number(&p->size);
+                else if (key == "width") ok = number(&p->width);
+                else if (key == "pad") ok = number(&p->pad);
+                else if (key == "zorder") ok = number(&p->zorder);
+                else if (key == "tick1On") ok = flag(&p->tick1On);
+                else if (key == "tick2On") ok = flag(&p->tick2On);
+                else if (key == "label1On") ok = flag(&p->label1On);
+                else if (key == "label2On") ok = flag(&p->label2On);
+                else if (key == "gridOn") ok = flag(&p->gridOn);
+                else if (key == "color") ok = colour(&p->color);
+                else if (key == "labelcolor") ok = colour(&p->labelcolor);
+                else if (key == "grid_color" || key == "grid_c") ok = colour(&p->gridColor);
+                else if (key == "grid_linewidth" || key == "grid_lw") ok = number(&p->gridLinewidth);
+                else if (key == "grid_alpha") {
+                    if (!readAlpha(v, &n)) return *error = where + ": grid_alpha must be a number from 0 to 1", false;
+                    p->gridAlpha = n;
+                } else if (key == "grid_linestyle" || key == "grid_ls") {
+                    Line2D probe(rc_, {}, {});
+                    if (!v.isString() || !probe.setLinestyle(v.asString(), error)) return *error = where + ": bad grid_linestyle", false;
+                    p->gridLinestyle = v.asString();
+                } else if (key == "tickdir") {
+                    if (!v.isString() || (v.asString() != "in" && v.asString() != "out" && v.asString() != "inout"))
+                        return *error = where + ": " + repr(v) + " is not a valid value for tickdir; supported values are 'in', 'out', 'inout'", false;
+                    p->tickdir = v.asString();
+                } else if (key == "labelsize") {
+                    if (readNumber(v, &n)) {
+                        p->labelsize = n < 1.0 ? 1.0 : n;  // (FontProperties.set_size)
+                    } else if (v.isString()) {
+                        const auto parsed = support::pythonFloat(v.asString());
+                        const auto size = parsed ? parsed : text::fontSize(v.asString(), rc_);
+                        if (!size) return *error = where + ": labelsize is not a font size: " + v.asString(), false;
+                        p->labelsize = *size < 1.0 ? 1.0 : *size;
+                    } else {
+                        return *error = where + ": labelsize must be a number or the name of a size", false;
+                    }
+                } else if (key == "labelrotation") {
+                    // _set_labelrotation: a number ('default'); a mode or (mode, angle) only as 'default'
+                    if (readNumber(v, &n)) {
+                        p->labelrotation = n;
+                    } else if (v.isString() && v.asString() == "default") {
+                        p->labelrotation = 0.0;
+                    } else {
+                        return *error = where + ": labelrotation other than a number is not supported yet", false;
+                    }
+                } else if (key == "labelrotation_mode") {
+                    if (v.isNull()) p->labelrotationMode = std::string("default");
+                    else if (v.isString() && (v.asString() == "default" || v.asString() == "anchor" || v.asString() == "xtick" || v.asString() == "ytick"))
+                        p->labelrotationMode = v.asString();
+                    else return *error = where + ": labelrotation_mode must be 'default', 'anchor', 'xtick', 'ytick' or None", false;
+                } else if (key == "labelfontfamily") {
+                    if (v.isString()) p->labelfontfamily = std::vector<std::string>{v.asString()};
+                    else return *error = where + ": labelfontfamily must be a name", false;
+                }
+                if (!ok) return false;
+            }
+            return true;
+        };
+        for (int k = 0; k < 2; ++k) {
+            const bool isX = k == 0;
+            Axis* target = one ? (k == 0 ? one : nullptr) : (isX ? (axisName != "y" ? ax->xaxis.get() : nullptr) : (axisName != "x" ? ax->yaxis.get() : nullptr));
+            if (!target) continue;
+            TickParams p;
+            if (!translate(isX, ax != nullptr, &p)) return false;  // (one Axis: nothing dropped)
+            target->setTickParams(which, reset, p);
+        }
         return true;
     }
 
@@ -945,6 +1094,7 @@ private:
         if (call.method == "errorbar") return errorbar(ax, call, error);
         if (call.method == "legend") return legend(ax, call, error);
         if (call.method == "grid") return grid(ax, call, error);
+        if (call.method == "tick_params") return tickParams(&ax, nullptr, call, error);
         if (call.method == "axhline" || call.method == "axvline") return axline(ax, call, error);
         if (call.method == "axhspan" || call.method == "axvspan") return axspan(ax, call, error);
         if (call.method == "bar" || call.method == "barh") return bar(ax, call, error);

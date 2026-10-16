@@ -70,7 +70,7 @@ either drawn as Matplotlib draws it, or not at all.
 | Areas | `fill`, `fill_between`, `fill_betweenx`, `stairs`, `axhspan`, `axvspan`, `Polygon` |
 | Statistics | `bar`, `barh`, `bar_label`, `hist` (every histogram type and bin rule), `boxplot`, `violinplot`, `stem` |
 | Text | titles, axis labels, `text`, `annotate` (with every arrow and connection style), text boxes (`bbox`), mathtext, legends (including `loc='best'`) |
-| Axes | linear and log scales, limits, grids, minor ticks, `set`, `set_axis_off`, `NullFormatter` |
+| Axes | linear and log scales, limits, grids, minor ticks, `tick_params`, `set`, `set_axis_off`, `NullFormatter` |
 | Styles | the rcParams, Matplotlib's bundled style sheets and colour sequences |
 | Output | PNG and SVG as `savefig` writes them (`bbox_inches='tight'` included), and the `.py` script |
 

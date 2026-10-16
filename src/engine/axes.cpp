@@ -161,17 +161,19 @@ Tick::Tick(const rc::Params& rc, Axes& axes, bool isX, bool major, const TickSwi
       label1(rc, kNan, kNan, ""),
       label2(rc, kNan, kNan, ""),
       isMajor(major),
+      axes_(axes),
       isX_(isX) {
     const std::string name = isX ? "xtick" : "ytick";
     const std::string mm = major ? "major" : "minor";
-    size_ = rc.number(name + "." + mm + ".size");
-    width_ = rc.number(name + "." + mm + ".width");
-    basePad_ = rc.number(name + "." + mm + ".pad");
-    const std::string color = rc.text(name + ".color");
-    std::string labelcolor = rc.text(name + ".labelcolor");
-    if (labelcolor == "inherit") labelcolor = rc.text(name + ".color");
-    const double labelsize = fontSizeOf(rc, (name + ".labelsize").c_str());
-    zorder = major ? 2 + 0.01 : 2;  // Line2D.zorder (+ 0.01)
+    // the keywords set_tick_params has kept, else the rcParams
+    size_ = sw.size ? *sw.size : rc.number(name + "." + mm + ".size");
+    width_ = sw.width ? *sw.width : rc.number(name + "." + mm + ".width");
+    basePad_ = sw.pad ? *sw.pad : rc.number(name + "." + mm + ".pad");
+    const colors::Spec color = sw.color ? *sw.color : colors::Spec(rc.text(name + ".color"));
+    colors::Spec labelcolor = sw.labelcolor ? *sw.labelcolor : colors::Spec(rc.text(name + ".labelcolor"));
+    if (const auto* text = std::get_if<std::string>(&labelcolor); text && *text == "inherit") labelcolor = rc.text(name + ".color");
+    const double labelsize = sw.labelsize ? *sw.labelsize : fontSizeOf(rc, (name + ".labelsize").c_str());
+    zorder = sw.zorder ? *sw.zorder : major ? 2 + 0.01 : 2;  // Line2D.zorder (+ 0.01)
 
     // Tick.__init__ with the rcParams: the alpha of a colour that has an alpha channel, else
     // grid.alpha. What Axis.grid was given comes over it.
@@ -212,22 +214,18 @@ Tick::Tick(const rc::Params& rc, Axes& axes, bool isX, bool major, const TickSwi
     gridline.setLinestyle(gridLinestyle, &error);
     gridline.setLinewidth(gridLinewidth);
     gridline.setMarker("", &error);
+    const auto labelRgba = *colors::toRgba(labelcolor, std::nullopt, rc, nullptr);
     for (Text* tickLabel : {&label1, &label2}) {
         tickLabel->font.size = labelsize;
-        tickLabel->setColor(labelcolor);
+        tickLabel->color = labelRgba;
         tickLabel->figure = &axes.figure;
+        if (sw.labelfontfamily) tickLabel->font.family = *sw.labelfontfamily;
+        tickLabel->setRotation(sw.labelrotation ? *sw.labelrotation : 0.0);
+        if (sw.labelrotationMode) tickLabel->rotationMode = *sw.labelrotationMode;
     }
     label1.visible = sw.label1On;
     label2.visible = sw.label2On;
-    // _apply_tickdir
-    tickdir_ = rc.text(name + ".direction");
-    if (isX) {
-        tick1line.setMarker(tickdir_ == "out" ? "tickdown" : tickdir_ == "in" ? "tickup" : "|", &error);
-        tick2line.setMarker(tickdir_ == "out" ? "tickup" : tickdir_ == "in" ? "tickdown" : "|", &error);
-    } else {
-        tick1line.setMarker(tickdir_ == "out" ? "tickleft" : tickdir_ == "in" ? "tickright" : "_", &error);
-        tick2line.setMarker(tickdir_ == "out" ? "tickright" : tickdir_ == "in" ? "tickleft" : "_", &error);
-    }
+    applyTickdir(sw.tickdir);
     updatePosition(0);
 
     // XTick / YTick
@@ -238,12 +236,8 @@ Tick::Tick(const rc::Params& rc, Axes& axes, bool isX, bool major, const TickSwi
         tick2line.transform = axes.spine("top").spineTransform();
         gridline.setData({0, 0}, {0, 1});
         gridline.transform = axes.xaxisTransform;
-        const auto t1 = axes.xaxisTextTransform(1, pad());
-        label1.x = 0, label1.y = 0, label1.verticalAlignment = t1.va, label1.horizontalAlignment = t1.ha;
-        label1.transform = t1.transform;
-        const auto t2 = axes.xaxisTextTransform(2, pad());
-        label2.x = 0, label2.y = 1, label2.verticalAlignment = t2.va, label2.horizontalAlignment = t2.ha;
-        label2.transform = t2.transform;
+        label1.x = 0, label1.y = 0;
+        label2.x = 0, label2.y = 1;
     } else {
         tick1line.setData({0}, {0});
         tick1line.transform = axes.spine("left").spineTransform();
@@ -251,13 +245,99 @@ Tick::Tick(const rc::Params& rc, Axes& axes, bool isX, bool major, const TickSwi
         tick2line.transform = axes.spine("right").spineTransform();
         gridline.setData({0, 1}, {0, 0});
         gridline.transform = axes.yaxisTransform;
-        const auto t1 = axes.yaxisTextTransform(1, pad());
-        label1.x = 0, label1.y = 0, label1.verticalAlignment = t1.va, label1.horizontalAlignment = t1.ha;
-        label1.transform = t1.transform;
-        const auto t2 = axes.yaxisTextTransform(2, pad());
-        label2.x = 1, label2.y = 0, label2.verticalAlignment = t2.va, label2.horizontalAlignment = t2.ha;
-        label2.transform = t2.transform;
+        label1.x = 0, label1.y = 0;
+        label2.x = 1, label2.y = 0;
     }
+    placeLabels();
+    // (XTick.__init__ sets the alignments with the transforms: _apply_params later sets the transforms only)
+    const auto t1 = isX ? axes.xaxisTextTransform(1, pad()) : axes.yaxisTextTransform(1, pad());
+    const auto t2 = isX ? axes.xaxisTextTransform(2, pad()) : axes.yaxisTextTransform(2, pad());
+    label1.verticalAlignment = t1.va, label1.horizontalAlignment = t1.ha;
+    label2.verticalAlignment = t2.va, label2.horizontalAlignment = t2.ha;
+}
+
+void Tick::applyTickdir(const std::optional<std::string>& tickdir) {
+    std::string error;
+    tickdir_ = tickdir ? *tickdir : rc_.text(isX_ ? "xtick.direction" : "ytick.direction");
+    if (isX_) {
+        tick1line.setMarker(tickdir_ == "out" ? "tickdown" : tickdir_ == "in" ? "tickup" : "|", &error);
+        tick2line.setMarker(tickdir_ == "out" ? "tickup" : tickdir_ == "in" ? "tickdown" : "|", &error);
+    } else {
+        tick1line.setMarker(tickdir_ == "out" ? "tickleft" : tickdir_ == "in" ? "tickright" : "_", &error);
+        tick2line.setMarker(tickdir_ == "out" ? "tickright" : tickdir_ == "in" ? "tickleft" : "_", &error);
+    }
+}
+
+void Tick::placeLabels() {
+    label1.transform = (isX_ ? axes_.xaxisTextTransform(1, pad()) : axes_.yaxisTextTransform(1, pad())).transform;
+    label2.transform = (isX_ ? axes_.xaxisTextTransform(2, pad()) : axes_.yaxisTextTransform(2, pad())).transform;
+}
+
+void Tick::applyParams(const TickParams& p) {
+    if (p.gridOn) gridline.visible = *p.gridOn;
+    if (p.tick1On) tick1line.visible = *p.tick1On;
+    if (p.tick2On) tick2line.visible = *p.tick2On;
+    if (p.label1On) label1.visible = *p.label1On;
+    if (p.label2On) label2.visible = *p.label2On;
+    if (p.size || p.width || p.pad || p.tickdir) {
+        if (p.size) size_ = *p.size;
+        if (p.width) width_ = *p.width;
+        if (p.pad) basePad_ = *p.pad;
+        applyTickdir(p.tickdir ? p.tickdir : std::optional<std::string>(tickdir_));
+        for (Line2D* line : {&tick1line, &tick2line}) {
+            line->markersize = size_;
+            line->markeredgewidth = width_;
+        }
+        placeLabels();
+    }
+    for (Line2D* line : {&tick1line, &tick2line}) {
+        if (p.color) line->color = *p.color, line->markeredgecolor = *p.color;
+        if (p.zorder) line->zorder = *p.zorder;
+    }
+    if (p.zorder) zorder = *p.zorder;
+    for (Text* l : {&label1, &label2}) {
+        if (p.labelrotation) l->setRotation(*p.labelrotation);
+        if (p.labelsize) l->font.size = *p.labelsize;
+        if (p.labelcolor) l->color = *colors::toRgba(*p.labelcolor, std::nullopt, rc_, nullptr);
+        if (p.labelfontfamily) l->font.family = *p.labelfontfamily;
+        if (p.labelrotationMode) l->rotationMode = *p.labelrotationMode;
+    }
+    // the grid line's properties: a colour with an alpha channel and no alpha gives both
+    std::optional<colors::Spec> gridColor = p.gridColor;
+    std::optional<double> gridAlpha = p.gridAlpha;
+    if (gridColor && !gridAlpha && colors::hasAlphaChannel(*gridColor)) {
+        const auto rgba = *colors::toRgba(*gridColor, std::nullopt, rc_, nullptr);
+        gridColor = colors::Spec(std::vector<double>{rgba[0], rgba[1], rgba[2]});
+        gridAlpha = rgba[3];
+    }
+    std::string error;
+    if (gridColor) gridline.color = *gridColor;
+    if (gridAlpha) gridline.alpha = *gridAlpha;
+    if (p.gridLinestyle) gridline.setLinestyle(*p.gridLinestyle, &error);
+    if (p.gridLinewidth) gridline.setLinewidth(*p.gridLinewidth);
+}
+
+void TickParams::mergeInto(TickSwitches* kw) const {
+    if (tick1On) kw->tick1On = *tick1On;
+    if (tick2On) kw->tick2On = *tick2On;
+    if (label1On) kw->label1On = *label1On;
+    if (label2On) kw->label2On = *label2On;
+    if (gridOn) kw->gridOn = *gridOn;
+    if (size) kw->size = size;
+    if (width) kw->width = width;
+    if (pad) kw->pad = pad;
+    if (zorder) kw->zorder = zorder;
+    if (labelsize) kw->labelsize = labelsize;
+    if (labelrotation) kw->labelrotation = labelrotation;
+    if (tickdir) kw->tickdir = tickdir;
+    if (labelrotationMode) kw->labelrotationMode = labelrotationMode;
+    if (color) kw->color = color;
+    if (labelcolor) kw->labelcolor = labelcolor;
+    if (labelfontfamily) kw->labelfontfamily = labelfontfamily;
+    if (gridColor) kw->gridColor = gridColor;
+    if (gridLinestyle) kw->gridLinestyle = gridLinestyle;
+    if (gridLinewidth) kw->gridLinewidth = gridLinewidth;
+    if (gridAlpha) kw->gridAlpha = gridAlpha;
 }
 
 double Tick::pad() const {
@@ -525,6 +605,30 @@ void Axis::grid(std::optional<bool> on, const std::string& which, const TickSwit
     if (which == "major" || which == "both") apply(majorTickKw_, majorTicks_);
 }
 
+void Axis::setTickParams(const std::string& which, bool reset, const TickParams& p) {
+    for (const bool major : {true, false}) {
+        if (which != "both" && which != (major ? "major" : "minor")) continue;
+        TickSwitches& kw = major ? majorTickKw_ : minorTickKw_;
+        auto& ticks = major ? majorTicks_ : minorTicks_;
+        if (reset) {
+            // _reset_major_tick_kw / _reset_minor_tick_kw: only gridOn from the rcParams, then reset_ticks
+            kw = TickSwitches{};
+            const std::string w = rc_.text("axes.grid.which");
+            kw.gridOn = rc_.boolean("axes.grid") && (w == "both" || w == (major ? "major" : "minor"));
+            p.mergeInto(&kw);
+            ticks.clear();
+        } else {
+            p.mergeInto(&kw);
+            for (auto& tick : ticks) tick->applyParams(p);
+        }
+    }
+    if (!reset) {
+        // the labels' switches and colour reach the offset text too
+        if (p.label1On || p.label2On) offsetText.visible = majorTickKw_.label1On || majorTickKw_.label2On;
+        if (p.labelcolor) offsetText.color = *colors::toRgba(*p.labelcolor, std::nullopt, rc_, nullptr);
+    }
+}
+
 void Axis::setMinorTickSwitches(const TickSwitches& sw) {
     minorTickKw_ = sw;
     for (auto& t : minorTicks_) t->applySwitches(sw);
@@ -652,8 +756,9 @@ int Axis::tickSpace() const {
     const auto t = transforms::compose(axes_.transAxes, axes_.figure.dpiScaleTrans->inverted());
     const auto ll = t->transform(0, 0), ul = t->transform(0, 1), lr = t->transform(1, 0);
     const double length = (isX_ ? lr[0] - ll[0] : ul[1] - ll[1]) * 72;
-    // _get_tick_label_size: rcParams[xtick.labelsize] (tick_params(labelsize=) is not supported yet)
-    const double size = fontSizeOf(rc_, isX_ ? "xtick.labelsize" : "ytick.labelsize") * (isX_ ? 3 : 2);
+    // _get_tick_label_size: the major ticks' labelsize keyword, else rcParams[xtick.labelsize]
+    const double labelsize = majorTickKw_.labelsize ? *majorTickKw_.labelsize : fontSizeOf(rc_, isX_ ? "xtick.labelsize" : "ytick.labelsize");
+    const double size = labelsize * (isX_ ? 3 : 2);
     if (size > 0) return int(std::floor(length / size));
     return 2147483647;
 }

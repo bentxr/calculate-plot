@@ -7171,6 +7171,24 @@
    ]
   },
   {
+   "on": "axes",
+   "call": "tick_params",
+   "parameters": [
+    {
+     "name": "axis",
+     "positional": true,
+     "valid": "{'x', 'y', 'both'}, default: 'both'",
+     "kind": "choice",
+     "choices": [
+      "x",
+      "y",
+      "both"
+     ],
+     "default": "both"
+    }
+   ]
+  },
+  {
    "on": "axis",
    "call": "set_major_formatter",
    "parameters": [
@@ -7193,6 +7211,22 @@
      "valid": "`~matplotlib.ticker.Formatter`, ``str``, or function",
      "kind": "other",
      "required": true
+    }
+   ]
+  },
+  {
+   "on": "axis",
+   "call": "set_tick_params",
+   "parameters": [
+    {
+     "name": "which",
+     "positional": true,
+     "default": "major"
+    },
+    {
+     "name": "reset",
+     "positional": true,
+     "default": false
     }
    ]
   }
