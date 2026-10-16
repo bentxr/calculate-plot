@@ -1,5 +1,5 @@
-// Derived from Matplotlib 3.11.2: lib/matplotlib/patches.py (_Style, ConnectionStyle, ArrowStyle,
-// FancyArrowPatch, Path.make_compound_path as it uses it).
+// Derived from Matplotlib 3.11.2: lib/matplotlib/patches.py (_Style, BoxStyle, FancyBboxPatch, ConnectionStyle,
+// ArrowStyle, FancyArrowPatch), lib/matplotlib/path.py (make_compound_path, circle).
 // Copyright (c) 2012- Matplotlib Development Team; All Rights Reserved
 // Licence: LICENSES/Matplotlib.txt. Changes: licensing/changes/matplotlib.md
 #pragma once
@@ -17,6 +17,29 @@ namespace calculate_plot::engine {
 
 // A style's parameters as given: "name,key=value,..." (the values floats) and keywords (numbers or None)
 using StyleArgs = std::map<std::string, std::optional<double>>;
+
+// BoxStyle: the shape around a box (square, circle, ellipse, larrow, rarrow, darrow, round, round4,
+// sawtooth, roundtooth), `pad` times the mutation size outside it.
+struct BoxStyle {
+    enum class Kind { Square, Circle, Ellipse, RArrow, LArrow, DArrow, Round, Round4, Sawtooth, Roundtooth };
+    Kind kind = Kind::Round;
+    double pad = 0.3, headWidth = 1.5, headAngle = 90;
+    std::optional<double> roundingSize, toothSize;
+    static bool make(const std::string& stylename, const StyleArgs& kwargs, BoxStyle* out, std::string* error);
+    // __call__(x0, y0, width, height, mutation_size); false where matplotlib raises
+    bool operator()(double x0, double y0, double width, double height, double mutationSize, const rc::Params& rc, Path* out,
+                    std::string* error) const;
+};
+
+// patches.FancyBboxPatch(xy, width, height, boxstyle): a box drawn in a box style (a text's bbox).
+class FancyBboxPatch : public Patch {
+public:
+    explicit FancyBboxPatch(const rc::Params& rc);
+    Path path() const override;  // get_path: the style's path, the y axis squeezed by the mutation aspect and back
+    void setBounds(double l, double b, double w, double h) { x = l, y = b, width = w, height = h; }
+    double x = 0, y = 0, width = 1, height = 1, mutationScale = 1, mutationAspect = 1;
+    BoxStyle boxStyle;
+};
 
 // ConnectionStyle: how the path from posA to posB is made (arc3, angle3, angle, arc, bar), then cut
 // where it leaves patchA and enters patchB, and shrunk by shrinkA and shrinkB pixels at its ends.

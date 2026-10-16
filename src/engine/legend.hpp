@@ -6,6 +6,7 @@
 #pragma once
 
 #include "support/json.hpp"
+#include "engine/arrows.hpp"
 #include "engine/artist.hpp"
 #include "engine/collections.hpp"
 #include "engine/lines.hpp"

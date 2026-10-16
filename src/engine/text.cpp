@@ -231,6 +231,21 @@ transforms::Bbox Text::windowExtent(Renderer& renderer) {
     return transforms::Bbox({b[0] + tx, b[1] + ty, b[2] + tx, b[3] + ty});
 }
 
+void Text::updateBboxPositionSize(Renderer& renderer) {
+    if (!bboxPatch) return;
+    const auto [posx, posy] = transform->transform(x, y);
+    const Layout l = layout(renderer);
+    bboxPatch->setBounds(0., 0., l.boxWidth, l.boxHeight);
+    auto t = std::make_shared<transforms::Affine2D>();
+    t->rotateDeg(rotation()).translate(posx + l.cornerX, posy + l.cornerY);
+    bboxPatch->transform = t;
+    bboxPatch->mutationScale = renderer.pointsToPixels(font.size);
+    // _update_clip_properties: the text's clipping
+    bboxPatch->clipBox = clipBox;
+    bboxPatch->clipPath = clipPath;
+    bboxPatch->clipOn = clipOn;
+}
+
 void Text::draw(Renderer& renderer) {
     if (!visible || text.empty()) return;
     renderer.openGroup("text", gid);
@@ -240,6 +255,10 @@ void Text::draw(Renderer& renderer) {
     // the enclosing one)
     if (!std::isfinite(posx) || !std::isfinite(posy)) return;
     const double canvash = renderer.height();
+    if (bboxPatch) {
+        updateBboxPositionSize(renderer);
+        bboxPatch->draw(renderer);
+    }
     GC gc = renderer.newGc();
     gc.setForeground(std::vector<double>(color.begin(), color.end()));
     gc.setAlpha(alpha);

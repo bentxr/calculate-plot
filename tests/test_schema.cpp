@@ -88,7 +88,7 @@ TEST(Schema, WhatCannotBeToldIsCounted) {
     }
     std::printf("schema: %d taken, %d not supported yet, %d not told\n", taken, refused, unknown);
     EXPECT_EQ(taken + refused + unknown, 846);
-    EXPECT_EQ(taken, 615);
-    EXPECT_EQ(refused, 157);
+    EXPECT_EQ(taken, 623);
+    EXPECT_EQ(refused, 149);
     EXPECT_EQ(unknown, 74) << unknowns;  // objects and dicts a figure file does not hold (data, fontdict, prop...)
 }

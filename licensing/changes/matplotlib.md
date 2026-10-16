@@ -224,6 +224,9 @@ it comes from in its first lines. The changes, as a whole:
   routines in src/engine/bezier.* (BezierSegment at one parameter with OpenBLAS's order, de Casteljau,
   bisection, split_path_inout, parallel and wedged curves); Annotation's arrow (update_positions, the default
   patchA box, the arrow in its window extent). Figure files hold dicts as {"$dict": {...}}.
+  Text boxes: BoxStyle (every style, with its checks and messages), FancyBboxPatch (also the legend's frame now),
+  Text.set_bbox ("%0.2f" of the pad added to the style), set_backgroundcolor, update_bbox_position_size and
+  _update_clip_properties (the text's clipping copied when drawn); an annotation's box is its arrow's patchA.
   Bar labels: Axes.bar_label (BarContainer.datavalues, orientation and errorbar kept with the container,
   LineCollection.get_segments, Patch.get_window_extent, Bbox.intersection) and cbook._auto_format_str, with
   Python's % formatting and str.format of one number ported in src/support/pyformat.cpp (our own code: the

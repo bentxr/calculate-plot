@@ -409,34 +409,4 @@ Wedge::Wedge(const rc::Params& rc, double x, double y, double radius, double t1,
     path_ = Path::make(std::move(v), std::move(codes), rc);
 }
 
-FancyBboxPatch::FancyBboxPatch(const rc::Params& rc, double x, double y, double width, double height,
-                               std::string boxstyle, double pad, std::optional<double> roundingSize, double scale)
-    : Patch(rc), mutationScale(scale), x_(x), y_(y), width_(width), height_(height), boxstyle_(std::move(boxstyle)),
-      pad_(pad), roundingSize_(roundingSize) {}
-
-Path FancyBboxPatch::path() const {
-    // boxstyle(x, y / aspect, width, height / aspect, mutation_scale), then y * aspect
-    const double mutationSize = mutationScale;
-    const double pad = mutationSize * pad_;
-    double x0 = x_, y0 = y_ / mutationAspect, width = width_, height = height_ / mutationAspect;
-    std::vector<double> v;
-    std::vector<unsigned char> codes;
-    if (boxstyle_ == "round") {  // BoxStyle.Round
-        const double dr = roundingSize_ && *roundingSize_ ? mutationSize * *roundingSize_ : pad;
-        width = width + 2 * pad, height = height + 2 * pad;
-        x0 = x0 - pad, y0 = y0 - pad;
-        const double x1 = x0 + width, y1 = y0 + height;
-        v = {x0 + dr, y0, x1 - dr, y0, x1, y0, x1, y0 + dr, x1, y1 - dr, x1, y1, x1 - dr, y1, x0 + dr, y1,
-             x0, y1, x0, y1 - dr, x0, y0 + dr, x0, y0, x0 + dr, y0, x0 + dr, y0};
-        codes = {MOVETO, LINETO, CURVE3, CURVE3, LINETO, CURVE3, CURVE3, LINETO, CURVE3, CURVE3, LINETO, CURVE3, CURVE3, CLOSEPOLY};
-    } else {  // BoxStyle.Square: Path._create_closed
-        width = width + 2 * pad, height = height + 2 * pad;
-        x0 = x0 - pad, y0 = y0 - pad;
-        const double x1 = x0 + width, y1 = y0 + height;
-        v = {x0, y0, x1, y0, x1, y1, x0, y1, x0, y0};
-    }
-    for (std::size_t i = 1; i < v.size(); i += 2) v[i] = v[i] * mutationAspect;  // * [1, m_aspect]
-    return Path::make(std::move(v), std::move(codes), rc_, codes.empty());
-}
-
 }  // namespace calculate_plot::engine

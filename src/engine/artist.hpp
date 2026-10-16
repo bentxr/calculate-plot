@@ -235,21 +235,4 @@ private:
     Path path_;
 };
 
-// FancyBboxPatch with the box styles "round" (pad, rounding_size) and "square" (pad).
-class FancyBboxPatch : public Patch {
-public:
-    FancyBboxPatch(const rc::Params& rc, double x, double y, double width, double height, std::string boxstyle,
-                   double pad, std::optional<double> roundingSize, double mutationScale);
-    Path path() const override;
-    void setBounds(double l, double b, double w, double h) { x_ = l, y_ = b, width_ = w, height_ = h; }
-    double mutationScale;
-    double mutationAspect = 1;
-
-private:
-    double x_, y_, width_, height_;
-    std::string boxstyle_;
-    double pad_;
-    std::optional<double> roundingSize_;
-};
-
 }  // namespace calculate_plot::engine

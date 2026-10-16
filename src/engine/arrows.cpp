@@ -1,10 +1,11 @@
-// Derived from Matplotlib 3.11.2: lib/matplotlib/patches.py (_Style, ConnectionStyle, ArrowStyle,
-// FancyArrowPatch) and lib/matplotlib/path.py (make_compound_path).
+// Derived from Matplotlib 3.11.2: lib/matplotlib/patches.py (_Style, BoxStyle, FancyBboxPatch, ConnectionStyle,
+// ArrowStyle, FancyArrowPatch) and lib/matplotlib/path.py (make_compound_path, circle).
 // Copyright (c) 2012- Matplotlib Development Team; All Rights Reserved
 // Licence: LICENSES/Matplotlib.txt. Changes: licensing/changes/matplotlib.md
 
 #include "engine/arrows.hpp"
 
+#include "support/histogram.hpp"
 #include "support/pyformat.hpp"
 #include "support/pyparse.hpp"
 #include "support/raised.hpp"
@@ -75,6 +76,262 @@ struct Params {
 };
 
 }  // namespace
+
+bool BoxStyle::make(const std::string& stylename, const StyleArgs& kwargs, BoxStyle* out, std::string* error) {
+    std::string name;
+    StyleArgs args;
+    if (!parseStyle(stylename, &name, &args, error)) return false;
+    for (const auto& [k, v] : kwargs) args[k] = v;
+    // (the qualified name of each style's __init__: the arrows take RArrow's, roundtooth Sawtooth's)
+    static const std::map<std::string, std::pair<Kind, std::string>> styles = {
+        {"square", {Kind::Square, "BoxStyle.Square"}},     {"circle", {Kind::Circle, "BoxStyle.Circle"}},
+        {"ellipse", {Kind::Ellipse, "BoxStyle.Ellipse"}},  {"rarrow", {Kind::RArrow, "BoxStyle.RArrow"}},
+        {"larrow", {Kind::LArrow, "BoxStyle.RArrow"}},     {"darrow", {Kind::DArrow, "BoxStyle.RArrow"}},
+        {"round", {Kind::Round, "BoxStyle.Round"}},        {"round4", {Kind::Round4, "BoxStyle.Round4"}},
+        {"sawtooth", {Kind::Sawtooth, "BoxStyle.Sawtooth"}}, {"roundtooth", {Kind::Roundtooth, "BoxStyle.Sawtooth"}}};
+    const auto it = styles.find(name);
+    if (it == styles.end()) return *error = "Unknown style: " + svg::pythonStrRepr(stylename), false;
+    const Params p{it->second.second, args, error};
+    BoxStyle b;
+    b.kind = it->second.first;
+    switch (b.kind) {
+    case Kind::Square:
+    case Kind::Circle:
+    case Kind::Ellipse:
+        if (!p.check({"pad"}) || !p.number("pad", &b.pad)) return false;
+        break;
+    case Kind::RArrow:
+    case Kind::LArrow:
+    case Kind::DArrow:
+        if (!p.check({"pad", "head_width", "head_angle"}) || !p.number("pad", &b.pad) || !p.number("head_width", &b.headWidth) ||
+            !p.number("head_angle", &b.headAngle))
+            return false;
+        if (b.headWidth < 0) return *error = "'head_width' must be nonnegative", false;
+        if (std::fmod(b.headAngle, 360) == 0) return *error = "'head_angle' must be nonzero", false;
+        break;
+    case Kind::Round:
+    case Kind::Round4:
+        if (!p.check({"pad", "rounding_size"}) || !p.number("pad", &b.pad)) return false;
+        p.optional("rounding_size", &b.roundingSize);
+        break;
+    case Kind::Sawtooth:
+    case Kind::Roundtooth:
+        if (!p.check({"pad", "tooth_size"}) || !p.number("pad", &b.pad)) return false;
+        p.optional("tooth_size", &b.toothSize);
+        break;
+    }
+    *out = b;
+    return true;
+}
+
+namespace {
+
+// Path._create_closed: the points, the first again at the end, closed
+Path closedPath(const std::vector<Point>& points, const rc::Params& rc) {
+    std::vector<double> v;
+    for (const auto& p : points) v.push_back(p[0]), v.push_back(p[1]);
+    v.push_back(points[0][0]), v.push_back(points[0][1]);
+    return Path::make(std::move(v), {}, rc, true);
+}
+
+// The unit circle's vertices (Path.circle, Path.unit_circle)
+std::vector<double> unitCircleVertices() {
+    const double MAGIC = 0.2652031, SQRTHALF = std::sqrt(0.5), MAGIC45 = SQRTHALF * MAGIC;
+    return {0.0, -1.0, MAGIC, -1.0, SQRTHALF - MAGIC45, -SQRTHALF - MAGIC45, SQRTHALF, -SQRTHALF,
+            SQRTHALF + MAGIC45, -SQRTHALF + MAGIC45, 1.0, -MAGIC, 1.0, 0.0, 1.0, MAGIC,
+            SQRTHALF + MAGIC45, SQRTHALF - MAGIC45, SQRTHALF, SQRTHALF, SQRTHALF - MAGIC45, SQRTHALF + MAGIC45,
+            MAGIC, 1.0, 0.0, 1.0, -MAGIC, 1.0, -SQRTHALF + MAGIC45, SQRTHALF + MAGIC45, -SQRTHALF, SQRTHALF,
+            -SQRTHALF - MAGIC45, SQRTHALF - MAGIC45, -1.0, MAGIC, -1.0, 0.0, -1.0, -MAGIC,
+            -SQRTHALF - MAGIC45, -SQRTHALF + MAGIC45, -SQRTHALF, -SQRTHALF, -SQRTHALF + MAGIC45,
+            -SQRTHALF - MAGIC45, -MAGIC, -1.0, 0.0, -1.0, 0.0, -1.0};
+}
+
+std::vector<unsigned char> circleCodes() {
+    std::vector<unsigned char> codes(26, CURVE4);
+    codes.front() = MOVETO;
+    codes.back() = CLOSEPOLY;
+    return codes;
+}
+
+}  // namespace
+
+bool BoxStyle::operator()(double x0, double y0, double width, double height, double mutationSize, const rc::Params& rc,
+                          Path* out, std::string* error) const {
+    const double padding = mutationSize * pad;
+    switch (kind) {
+    case Kind::Square: {
+        const double w = width + 2 * padding, h = height + 2 * padding;
+        const double a = x0 - padding, b = y0 - padding;
+        const double x1 = a + w, y1 = b + h;
+        *out = closedPath({{a, b}, {x1, b}, {x1, y1}, {a, y1}}, rc);
+        return true;
+    }
+    case Kind::Circle: {
+        const double w = width + 2 * padding, h = height + 2 * padding;
+        const double a = x0 - padding, b = y0 - padding;
+        const double cx = a + w / 2, cy = b + h / 2, radius = std::max(w, h) / 2;  // max(width, height): the first of equals
+        std::vector<double> v = unitCircleVertices();
+        for (std::size_t k = 0; k < v.size(); k += 2) v[k] = v[k] * radius + cx, v[k + 1] = v[k + 1] * radius + cy;
+        *out = Path::make(std::move(v), circleCodes(), rc);
+        return true;
+    }
+    case Kind::Ellipse: {
+        const double w = width + 2 * padding, h = height + 2 * padding;
+        const double a0 = x0 - padding, b0 = y0 - padding;
+        const double a = w / std::sqrt(2), b = h / std::sqrt(2);
+        transforms::Affine2D trans;
+        trans.scale(a, b).translate(a0 + w / 2, b0 + h / 2);
+        const auto m = trans.matrix();
+        std::vector<double> v = unitCircleVertices();
+        for (std::size_t k = 0; k < v.size(); k += 2) {
+            const auto q = transforms::apply(m, v[k], v[k + 1]);
+            v[k] = q[0], v[k + 1] = q[1];
+        }
+        *out = Path::make(std::move(v), circleCodes(), rc);
+        return true;
+    }
+    case Kind::RArrow:
+    case Kind::LArrow: {
+        double dx = width + 2 * padding;
+        const double dy = height + 2 * padding;
+        const double a = x0 - padding, b = y0 - padding;
+        const double x1 = a + dx, y1 = b + dy;
+        const double headDy = headWidth * dy;
+        const double midY = (b + y1) / 2;
+        const double shaftY0 = midY - headDy / 2, shaftY1 = midY + headDy / 2;
+        const double cot = 1 / std::tan(radians(headAngle / 2));
+        std::vector<Point> points;
+        if (cot > 0) {
+            const double tipX = x1 + cot * std::min(dy, headDy) / 2;
+            const double shaftX = tipX - cot * headDy / 2;
+            points = {{a, b}, {shaftX, b}, {shaftX, shaftY0}, {tipX, midY}, {shaftX, shaftY1}, {shaftX, y1}, {a, y1}};
+        } else {  // a reversed head
+            dx = std::min(-cot * std::max(headDy - dy, 0.0) / 2, dx);
+            const double midY0 = std::min(shaftY0, b) - dx / cot;
+            const double midY1 = std::max(shaftY1, y1) + dx / cot;
+            points = {{a, b}, {x1 - dx, midY0}, {x1, shaftY0}, {x1, shaftY1}, {x1 - dx, midY1}, {a, y1}};
+        }
+        if (kind == Kind::LArrow)  // mirrored: 2 * x0 + width - x (of every vertex, the repeated first one too)
+            for (auto& q : points) q[0] = 2 * x0 + width - q[0];
+        *out = closedPath(points, rc);
+        return true;
+    }
+    case Kind::DArrow: {
+        double dx = width + 2 * padding;
+        const double dy = height + 2 * padding;
+        const double a = x0 - padding, b = y0 - padding;
+        const double x1 = a + dx, y1 = b + dy;
+        const double headDy = headWidth * dy;
+        const double midY = (b + y1) / 2;
+        const double shaftY0 = midY - headDy / 2, shaftY1 = midY + headDy / 2;
+        const double cot = 1 / std::tan(radians(headAngle / 2));
+        if (cot > 0) {
+            const double tipX0 = a - cot * std::min(dy, headDy) / 2;
+            const double shaftX0 = tipX0 + cot * headDy / 2;
+            const double tipX1 = x1 + cot * std::min(dy, headDy) / 2;
+            const double shaftX1 = tipX1 - cot * headDy / 2;
+            *out = closedPath({{shaftX0, y1}, {shaftX0, shaftY1}, {tipX0, midY}, {shaftX0, shaftY0}, {shaftX0, b}, {shaftX1, b},
+                               {shaftX1, shaftY0}, {tipX1, midY}, {shaftX1, shaftY1}, {shaftX1, y1}},
+                              rc);
+        } else {
+            dx = std::min(-cot * std::max(headDy - dy, 0.0) / 2, dx / 2);
+            const double midY0 = std::min(shaftY0, b) - dx / cot;
+            const double midY1 = std::max(shaftY1, y1) + dx / cot;
+            *out = closedPath({{a, shaftY0}, {a + dx, midY0}, {x1 - dx, midY0}, {x1, shaftY0}, {x1, shaftY1}, {x1 - dx, midY1},
+                               {a + dx, midY1}, {a, shaftY1}},
+                              rc);
+        }
+        return true;
+    }
+    case Kind::Round: {
+        const double dr = roundingSize && *roundingSize != 0 ? mutationSize * *roundingSize : padding;
+        const double w = width + 2 * padding, h = height + 2 * padding;
+        const double a = x0 - padding, b = y0 - padding;
+        const double x1 = a + w, y1 = b + h;
+        const std::vector<double> v{a + dr, b, x1 - dr, b, x1, b, x1, b + dr, x1, y1 - dr, x1, y1, x1 - dr, y1,
+                                    a + dr, y1, a, y1, a, y1 - dr, a, b + dr, a, b, a + dr, b, a + dr, b};
+        *out = Path::make(v, {MOVETO, LINETO, CURVE3, CURVE3, LINETO, CURVE3, CURVE3, LINETO, CURVE3, CURVE3, LINETO, CURVE3, CURVE3, CLOSEPOLY}, rc);
+        return true;
+    }
+    case Kind::Round4: {
+        const double dr = roundingSize && *roundingSize != 0 ? mutationSize * *roundingSize : padding / 2.;
+        const double w = width + 2 * padding - 2 * dr, h = height + 2 * padding - 2 * dr;
+        const double a = x0 - padding + dr, b = y0 - padding + dr;
+        const double x1 = a + w, y1 = b + h;
+        const std::vector<double> v{a, b, a + dr, b - dr, x1 - dr, b - dr, x1, b, x1 + dr, b + dr, x1 + dr, y1 - dr, x1, y1,
+                                    x1 - dr, y1 + dr, a + dr, y1 + dr, a, y1, a - dr, y1 - dr, a - dr, b + dr, a, b, a, b};
+        std::vector<unsigned char> codes(14, CURVE4);
+        codes.front() = MOVETO, codes.back() = CLOSEPOLY;
+        *out = Path::make(v, codes, rc);
+        return true;
+    }
+    case Kind::Sawtooth:
+    case Kind::Roundtooth: {
+        // _get_sawtooth_vertices
+        const double tooth = toothSize ? *toothSize * mutationSize : pad * .5 * mutationSize;
+        const double hsz = tooth / 2;
+        const double w = width + 2 * padding - tooth, h = height + 2 * padding - tooth;
+        const long long dsxN = (long long)std::nearbyint((w - tooth) / (tooth * 2)) * 2;  // round(): half to even
+        const long long dsyN = (long long)std::nearbyint((h - tooth) / (tooth * 2)) * 2;
+        const double a = x0 - padding + hsz, b = y0 - padding + hsz;
+        const double x1 = a + w, y1 = b + h;
+        if (2 * dsxN + 1 < 0 || 2 * dsyN + 1 < 0)
+            return *error = "Number of samples, " + std::to_string(2 * std::min(dsxN, dsyN) + 1) + ", must be non-negative.", false;
+        // ([p, q, r, s] * n)[:2 * n + 2]
+        const auto cycle = [](std::array<double, 4> four, long long n) {
+            std::vector<double> repeated;
+            for (long long i = 0; i < n * 4 && (long long)repeated.size() < 2 * n + 2; ++i) repeated.push_back(four[std::size_t(i % 4)]);
+            return repeated;
+        };
+        std::vector<double> xs{a}, ys;
+        const auto append = [](std::vector<double>* to, const std::vector<double>& from) { to->insert(to->end(), from.begin(), from.end()); };
+        append(&xs, support::npLinspace(a + hsz, x1 - hsz, 2 * dsxN + 1));
+        append(&xs, cycle({x1, x1 + hsz, x1, x1 - hsz}, dsyN));
+        xs.push_back(x1);
+        append(&xs, support::npLinspace(x1 - hsz, a + hsz, 2 * dsxN + 1));
+        append(&xs, cycle({a, a - hsz, a, a + hsz}, dsyN));
+        append(&ys, cycle({b, b - hsz, b, b + hsz}, dsxN));
+        ys.push_back(b);
+        append(&ys, support::npLinspace(b + hsz, y1 - hsz, 2 * dsyN + 1));
+        append(&ys, cycle({y1, y1 + hsz, y1, y1 - hsz}, dsxN));
+        ys.push_back(y1);
+        append(&ys, support::npLinspace(y1 - hsz, b + hsz, 2 * dsyN + 1));
+        std::vector<double> v;
+        const std::size_t n = std::min(xs.size(), ys.size());  // zip
+        for (std::size_t i = 0; i < n; ++i) v.push_back(xs[i]), v.push_back(ys[i]);
+        v.push_back(xs[0]), v.push_back(ys[0]);
+        if (kind == Kind::Sawtooth) {
+            *out = Path::make(std::move(v), {}, rc, true);  // Path(saw_vertices, closed=True)
+        } else {
+            v.push_back(v[0]), v.push_back(v[1]);
+            const std::size_t count = v.size() / 2;
+            std::vector<unsigned char> codes{MOVETO};
+            for (std::size_t i = 0; i < (count - 1) / 2; ++i) codes.push_back(CURVE3), codes.push_back(CURVE3);
+            codes.push_back(CLOSEPOLY);
+            *out = Path::make(std::move(v), std::move(codes), rc);
+        }
+        return true;
+    }
+    }
+    return true;
+}
+
+FancyBboxPatch::FancyBboxPatch(const rc::Params& rc) : Patch(rc) {
+    edgeDefault_ = true;
+    setEdgecolor(std::nullopt);
+}
+
+Path FancyBboxPatch::path() const {
+    Path p;
+    std::string error;
+    if (!boxStyle(x, y / mutationAspect, width, height / mutationAspect, mutationScale, rc_, &p, &error)) {
+        support::noteRaised(error);
+        return Path::make({}, {}, rc_);
+    }
+    std::vector<double> v = *p.vertices;
+    for (std::size_t k = 1; k < v.size(); k += 2) v[k] = v[k] * mutationAspect;  // unsqueeze y
+    return Path::make(std::move(v), p.codes ? *p.codes : std::vector<unsigned char>{}, rc_);
+}
 
 bool ConnectionStyle::make(const std::string& stylename, const StyleArgs& kwargs, ConnectionStyle* out, std::string* error) {
     std::string name;

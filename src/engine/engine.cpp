@@ -1836,6 +1836,13 @@ private:
                 if (v.isNull()) t.snap.reset();
                 else if (v.isBool()) t.snap = v.asBool();
                 else return bad(name, "must be True, False or None");
+            } else if (property == "bbox") {
+                return textBbox(t, v, where, error);
+            } else if (property == "backgroundcolor") {
+                // set_backgroundcolor: a box of that colour (face and edge), or that face for the box there is
+                if (!t.bboxPatch)
+                    return textBbox(t, Json::object({{"$dict", Json::object({{"facecolor", v}, {"edgecolor", v}})}}), where, error);
+                return patchProperty(*t.bboxPatch, "facecolor", v, where, error);
             } else {
                 *error = where + ": unsupported keyword " + name;
                 return false;
@@ -1847,6 +1854,7 @@ private:
                 for (const auto& [name, value] : given)
                     if (name == parameter && !set(name, *value, true)) return false;
         std::vector<std::string> seen;
+        const Json* bbox = nullptr;
         for (const auto& [name, value] : given) {
             if (isOwn(name)) continue;
             const std::string property = canonical(name);
@@ -1855,8 +1863,62 @@ private:
                 return false;
             }
             seen.push_back(property);
+            if (property == "bbox") {  // (Text.update sets the box last: it depends on the font)
+                bbox = value;
+                continue;
+            }
             if (!set(name, *value, false)) return false;
         }
+        if (bbox && !set("bbox", *bbox, false)) return false;
+        return true;
+    }
+
+    // Text.set_bbox(rectprops): None for no box; else a FancyBboxPatch of the box style (square, padded by 4
+    // points, when none is given; a pad of 0.3 else), "%0.2f" of the pad added to a style without one
+    bool textBbox(Text& t, const Json& v, const std::string& where, std::string* error) {
+        if (v.isNull()) return t.bboxPatch.reset(), true;
+        if (!(v.isObject() && v.members()[0].first == "$dict")) return *error = where + ": bbox must be a dict ({\"$dict\": {...}}) or None", false;
+        const Json& props = v.members()[0].second;
+        const Json* boxstyle = props.find("boxstyle");
+        const Json* padValue = props.find("pad");
+        std::optional<double> pad;
+        if (padValue && !padValue->isNull()) {
+            double n = 0;
+            if (!readNumber(*padValue, &n)) return *error = where + ": bbox's pad must be a number", false;
+            pad = n;
+        }
+        std::string style;
+        if (!boxstyle || boxstyle->isNull()) {
+            style = "square";
+            pad = (pad ? *pad : 4) / t.font.size;  // to a fraction of the font size
+        } else {
+            if (!boxstyle->isString()) return *error = where + ": bbox's boxstyle must be a style name", false;
+            style = boxstyle->asString();
+            if (!pad) pad = 0.3;
+        }
+        if (style.find("pad") == std::string::npos) {
+            char text[64];
+            std::snprintf(text, sizeof text, ",pad=%0.2f", *pad);
+            style += text;
+        }
+        auto patch = std::make_unique<FancyBboxPatch>(rc_);
+        if (!BoxStyle::make(style, {}, &patch->boxStyle, error)) return *error = where + ": " + *error, false;
+        patch->transform = std::make_shared<transforms::IdentityTransform>();
+        patch->transformSet = true;
+        std::vector<std::pair<std::string, const Json*>> kwargs;
+        for (const auto& [key, value] : props.members()) {
+            if (key == "boxstyle" || key == "pad") continue;
+            double n = 0;
+            if (key == "mutation_scale" || key == "mutation_aspect") {
+                if (key == "mutation_aspect" && value.isNull()) continue;
+                if (!readFinite(value, &n)) return *error = where + ": bbox's " + key + " must be a finite number", false;
+                (key == "mutation_scale" ? patch->mutationScale : patch->mutationAspect) = n;
+                continue;
+            }
+            kwargs.emplace_back(key, &value);
+        }
+        if (!patchConstructor(*patch, kwargs, where, error)) return false;
+        t.bboxPatch = std::move(patch);
         return true;
     }
 

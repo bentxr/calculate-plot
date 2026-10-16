@@ -382,8 +382,12 @@ Legend::Legend(const rc::Params& rc, Axes& parent, const std::vector<Artist*>& h
     colors::Spec edge = o.edgecolor ? *o.edgecolor : colors::Spec(rc.text("legend.edgecolor"));
     if (const auto* s = std::get_if<std::string>(&edge); s && *s == "inherit") edge = rc.text("axes.edgecolor");
     const bool fancybox = o.fancybox ? *o.fancybox : rc.boolean("legend.fancybox");
-    patch_ = std::make_unique<FancyBboxPatch>(rc, 0, 0, 1, 1, fancybox ? "round" : "square", 0.0,
-                                              fancybox ? std::optional<double>(0.2) : std::nullopt, fontsize_);
+    patch_ = std::make_unique<FancyBboxPatch>(rc);
+    patch_->mutationScale = fontsize_;
+    // BoxStyle("round", pad=0, rounding_size=0.2) or BoxStyle("square", pad=0)
+    StyleArgs boxArgs{{"pad", 0.0}};
+    if (fancybox) boxArgs["rounding_size"] = 0.2;
+    BoxStyle::make(fancybox ? "round" : "square", boxArgs, &patch_->boxStyle, nullptr);
     patch_->setEdgecolor(edge);
     patch_->setFacecolor(face);
     if (!rc.value("legend.linewidth").isNull()) patch_->setLinewidth(rc.number("legend.linewidth"));

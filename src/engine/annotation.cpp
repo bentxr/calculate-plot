@@ -127,9 +127,14 @@ void Annotation::updatePositions(Renderer& renderer) {
     const double w = bbox[2] - bbox[0], h = bbox[3] - bbox[1];
     arrow_->setPositions({bbox[0] + w * arrowRelpos_[0], bbox[1] + h * arrowRelpos_[1]}, {x1, y1});
     // patchA: none when given as None or the text is empty; else a box 4 points larger than the text's
-    if (arrowProps_.patchAGiven || text.empty()) {
+    if (arrowProps_.patchAGiven || (!bboxPatch && text.empty())) {
         patchA_.reset();
         arrow_->patchA = nullptr;
+        return;
+    }
+    if (bboxPatch) {  // the text's box
+        const FancyBboxPatch* box = bboxPatch.get();
+        arrow_->patchA = [box](const bezier::Point& p) { return box->containsPoint(p[0], p[1]); };
         return;
     }
     const double pad = renderer.pointsToPixels(4);
@@ -144,6 +149,7 @@ void Annotation::updatePositions(Renderer& renderer) {
 void Annotation::draw(Renderer& renderer) {
     if (!visible || !checkXY(renderer)) return;
     updatePositions(renderer);
+    updateBboxPositionSize(renderer);
     if (arrow_) arrow_->draw(renderer);
     Text::draw(renderer);
 }

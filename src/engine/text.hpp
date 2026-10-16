@@ -3,10 +3,12 @@
 // Licence: LICENSES/Matplotlib.txt. Changes: licensing/changes/matplotlib.md
 #pragma once
 
+#include "engine/arrows.hpp"
 #include "engine/artist.hpp"
 #include "support/pyformat.hpp"
 #include "text/font_manager.hpp"
 
+#include <memory>
 #include <optional>
 #include <string>
 #include <vector>
@@ -62,6 +64,9 @@ public:
     std::optional<std::vector<std::string>> features;
     std::optional<std::string> language;
     const Figure* figure = nullptr;  // the root figure, whose dpi the layout uses
+    // set_bbox: the box drawn behind the text (FancyBboxPatch), placed around its layout when drawn
+    std::unique_ptr<FancyBboxPatch> bboxPatch;
+    void updateBboxPositionSize(Renderer& renderer);
 
 private:
     double rotation_ = 0;
