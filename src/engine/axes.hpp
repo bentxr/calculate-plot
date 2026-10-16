@@ -253,6 +253,7 @@ public:
     std::array<double, 2> anchor{0.5, 0.5};
     // apply_aspect(): the active position from the original one and the aspect
     void applyAspect();
+    bool aspectFrozen = false;  // (adjust_bbox makes apply_aspect a no-op while a tight save draws)
     std::shared_ptr<transforms::Bbox> originalPosition;  // get_position(original=True)
 
     // Axes.set_title(label, loc=, pad=, y=)

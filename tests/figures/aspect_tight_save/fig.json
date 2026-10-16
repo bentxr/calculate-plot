@@ -1,0 +1,1 @@
+{"version": 1, "rc": {"legend.loc": "upper left", "savefig.bbox": "tight"}, "calls": [{"call": "subplots", "as": ["fig", "ax"]}, {"on": "ax", "call": "set_aspect", "args": [2]}]}

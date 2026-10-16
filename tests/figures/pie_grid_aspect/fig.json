@@ -1,0 +1,1 @@
+{"version": 1, "calls": [{"call": "subplots", "args": [2, 2], "kwargs": {"figsize": {"$tuple": [6.4, 3]}}, "as": ["fig", "axs"]}, {"on": "axs[1, 0]", "call": "pie", "args": [[1000.0]]}]}

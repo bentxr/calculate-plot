@@ -205,6 +205,8 @@ class AdjustedBbox {
 public:
     AdjustedBbox(Figure& figure, const std::array<double, 4>& inches)
         : figure_(figure), bboxInches_(figure.bboxInches), bbox_(figure.bbox), boxout_(figure.transFigure->boxout()) {
+        // every Axes keeps its active position: ax.apply_aspect = lambda pos=None: None
+        for (auto& ax : figure.axes) ax->aspectFrozen = true;
         auto tr = std::make_shared<transforms::Affine2D>();
         tr->scale(figure.dpi);
         figure.bboxInches = transforms::Bbox::fromBounds(0, 0, inches[2] - inches[0], inches[3] - inches[1]);
@@ -218,6 +220,7 @@ public:
         patch.width = figure.bbox->width() / w1, patch.height = figure.bbox->height() / h1;
     }
     ~AdjustedBbox() {  // restore_bbox
+        for (auto& ax : figure_.axes) ax->aspectFrozen = false;
         figure_.bbox = bbox_;
         figure_.bboxInches = bboxInches_;
         figure_.transFigure->setBoxout(boxout_);

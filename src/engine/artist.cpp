@@ -10,6 +10,7 @@
 #include "support/histogram.hpp"
 #include "support/pynum.hpp"
 
+#include <algorithm>
 #include <cmath>
 #include <limits>
 
@@ -200,14 +201,31 @@ void Patch::draw(Renderer& renderer) {
 }
 
 transforms::Bbox Patch::windowExtent() const {
+    // Path.get_extents(transform): the path through the transform, then the ends of its segments (the
+    // MOVETO and LINETO vertices of a path of straight lines; of curves, iter_bezier's extrema too)
     const Path p = path();
     const auto t = fullTransform();
+    std::vector<std::array<double, 2>> xys;
+    const bool curved = p.codes && std::any_of(p.codes->begin(), p.codes->end(),
+                                               [](unsigned char c) { return c == CURVE3 || c == CURVE4; });
+    if (curved) {
+        Path q = p;
+        std::vector<double> v = *p.vertices;
+        for (std::size_t k = 0; k + 1 < v.size(); k += 2) {
+            const auto r = t->transform(v[k], v[k + 1]);
+            v[k] = r[0], v[k + 1] = r[1];
+        }
+        q.vertices = std::make_shared<std::vector<double>>(std::move(v));
+        xys = bezierEnds(q);
+    } else {
+        for (std::size_t k = 0; k < p.size(); ++k)
+            if (!p.codes || (*p.codes)[k] == MOVETO || (*p.codes)[k] == LINETO)
+                xys.push_back(t->transform((*p.vertices)[2 * k], (*p.vertices)[2 * k + 1]));
+    }
     const double inf = std::numeric_limits<double>::infinity();
     std::array<double, 4> box{inf, inf, -inf, -inf};
     bool any = false;
-    for (std::size_t k = 0; k < p.size(); ++k) {
-        if (p.codes && (*p.codes)[k] != MOVETO && (*p.codes)[k] != LINETO) continue;
-        const auto q = t->transform((*p.vertices)[2 * k], (*p.vertices)[2 * k + 1]);
+    for (const auto& q : xys) {
         // xys.min(axis=0), xys.max(axis=0): NaN wins
         for (int d = 0; d < 2; ++d) {
             if (!any || std::isnan(q[d]) || q[d] < box[d]) box[d] = std::isnan(box[d]) ? box[d] : q[d];

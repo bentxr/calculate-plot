@@ -1065,121 +1065,6 @@ bool Axes::containsPoint(double x, double y) const {
     return mpl::point_in_path(x, y, 1.0, it, t);
 }
 
-namespace {
-
-// The real roots in [0, 1] of the polynomial c0 + c1 t + c2 t^2 (bezier._real_roots_in_01 for a degree of
-// at most 2, which is all a cubic curve's derivative has), sorted
-std::vector<double> realRootsIn01(std::vector<double> coeffs) {
-    std::size_t deg = coeffs.size() - 1;
-    while (deg > 0 && std::fabs(coeffs[deg]) < 1e-12) --deg;  // trailing near-zeros
-    std::vector<double> roots;
-    if (deg == 0) return roots;
-    if (deg == 1) {
-        const double root = -coeffs[0] / coeffs[1];
-        if (0 <= root && root <= 1) roots.push_back(root);
-        return roots;
-    }
-    // _quadratic_roots_in_01
-    const double c0 = coeffs[0], c1 = coeffs[1], c2 = coeffs[2];
-    if (std::fabs(c2) < 1e-12) {
-        if (std::fabs(c1) < 1e-12) return roots;
-        const double root = -c0 / c1;
-        if (0 <= root && root <= 1) roots.push_back(root);
-        return roots;
-    }
-    const double disc = c1 * c1 - 4 * c2 * c0;
-    if (disc < 0) return roots;
-    const double sqrtDisc = std::sqrt(disc);
-    const double q = c1 >= 0 ? -0.5 * (c1 + sqrtDisc) : -0.5 * (c1 - sqrtDisc);
-    std::vector<double> all;
-    if (std::fabs(q) > 1e-12) all.push_back(c0 / q);
-    if (std::fabs(c2) > 1e-12) all.push_back(q / c2);
-    for (double r : all)
-        if (r >= 0 && r <= 1) roots.push_back(r);
-    std::sort(roots.begin(), roots.end());
-    return roots;
-}
-
-// BezierSegment(control points): its points at the start, at its axis-aligned extrema and at the end
-// (curve([0, *dzeros, 1])), each a matrix product as NumPy's BLAS makes it (fused, from +0.0)
-void bezierPoints(const std::vector<std::array<double, 2>>& p, std::vector<std::array<double, 2>>* out) {
-    const std::size_t N = p.size(), n = N - 1;
-    static const double binom[4][4] = {{1, 0, 0, 0}, {1, 1, 0, 0}, {1, 2, 1, 0}, {1, 3, 3, 1}};
-    std::vector<double> ts{0.0};
-    if (n > 1) {
-        // polynomial_coefficients: _get_coeff_matrix(n) @ control points
-        std::vector<std::array<double, 2>> C(N);
-        for (std::size_t j = 0; j < N; ++j)
-            for (int d = 0; d < 2; ++d) {
-                double acc = 0.0;
-                for (std::size_t i = 0; i < N; ++i) {
-                    const double m = i <= j ? binom[n][j] * (((i + j) % 2) ? -1.0 : 1.0) * binom[j][i] : 0.0;
-                    acc = std::fma(m, p[i][std::size_t(d)], acc);
-                }
-                C[j][std::size_t(d)] = acc;
-            }
-        // dCj = arange(1, n + 1)[:, None] * Cj[1:]; the roots of each dimension's derivative, x then y
-        for (int d = 0; d < 2; ++d) {
-            std::vector<double> coeffs;
-            for (std::size_t k = 1; k < N; ++k) coeffs.push_back(double(k) * C[k][std::size_t(d)]);
-            for (double r : realRootsIn01(coeffs)) ts.push_back(r);
-        }
-    }
-    ts.push_back(1.0);
-    for (double tt : ts) {
-        std::array<double, 2> q{};
-        for (int d = 0; d < 2; ++d) {
-            double acc = 0.0;
-            for (std::size_t k = 0; k < N; ++k) {
-                // np.power.outer(1 - t, orders[::-1]) * np.power.outer(t, orders), times _px (binomial weights)
-                const double w = std::pow(1 - tt, double(n - k)) * std::pow(tt, double(k));
-                acc = std::fma(w, p[k][std::size_t(d)] * binom[n][k], acc);
-            }
-            q[std::size_t(d)] = acc;
-        }
-        out->push_back(q);
-    }
-}
-
-// Path.iter_bezier(simplify=False): the path as Path.cleaned leaves it (non-finite vertices removed, the
-// next one a MOVETO), each segment a Bezier curve of its start and control points (a MOVETO a point,
-// CLOSEPOLY a line back to the subpath's start), and of each the points _update_patch_limits takes
-std::vector<std::array<double, 2>> bezierEnds(const Path& path) {
-    mpl::PathIterator it(path.vertices, path.codes, false, path.simplifyThreshold);
-    agg::trans_affine identity;
-    std::vector<double> v;
-    std::vector<unsigned char> codes;
-    cleanup_path(it, identity, true, false, agg::rect_d(0.0, 0.0, 0.0, 0.0), SNAP_FALSE, 1.0, false, true,
-                 SketchParams{0.0, 0.0, 0.0}, v, codes);
-    std::vector<std::array<double, 2>> out;
-    std::array<double, 2> first{}, prev{};
-    for (std::size_t i = 0; i < codes.size(); ++i) {
-        const unsigned code = codes[i];
-        if (code == agg::path_cmd_stop) break;
-        const auto at = [&](std::size_t k) { return std::array<double, 2>{v[2 * k], v[2 * k + 1]}; };
-        std::vector<std::array<double, 2>> control;
-        if (code == MOVETO) {
-            first = at(i);
-            control = {first};
-            prev = first;
-        } else if (code == CURVE3 || code == CURVE4) {
-            const std::size_t extra = code == CURVE3 ? 1 : 2;
-            control = {prev};
-            for (std::size_t k = i; k <= i + extra && k < codes.size(); ++k) control.push_back(at(k));
-            i += extra;
-            prev = control.back();
-        } else {  // LINETO, or CLOSEPOLY: the line back to the first vertex
-            const std::array<double, 2> end = (code & 0x7f) == CLOSEPOLY ? first : at(i);
-            control = {prev, end};
-            prev = at(i);
-        }
-        bezierPoints(control, &out);
-    }
-    return out;
-}
-
-}  // namespace
-
 Patch& Axes::addPatch(std::unique_ptr<Patch> p) {
     if (!p->transformSet) p->transform = transData;  // _set_artist_props
     p->clipBox = std::make_shared<transforms::TransformedBbox>(
@@ -1484,6 +1369,7 @@ void Axes::setPosition(const transforms::BboxBase& pos) {
 }
 
 void Axes::applyAspect() {
+    if (aspectFrozen) return;
     const auto original = originalPosition->points();
     if (!aspect) {  // 'auto': the original position
         position->setPoints(original);
@@ -1505,9 +1391,11 @@ void Axes::applyAspect() {
     const double w = original[2] - original[0], h = original[3] - original[1];
     double H = w * boxAspect / figAspect, W = w;
     if (!(H <= h)) W = h * figAspect / boxAspect, H = h;
-    const double dx = (original[0] + anchor[0] * (w - W)) - original[0];
-    const double dy = (original[1] + anchor[1] * (h - H)) - original[1];
-    position->setPoints({original[0] + dx, original[1] + dy, (original[0] + W) + dx, (original[1] + H) + dy});
+    // the shrunk box holds its corners; anchored reads its bounds back from them
+    const double x1 = original[0] + W, y1 = original[1] + H;
+    const double dx = (original[0] + anchor[0] * (w - (x1 - original[0]))) - original[0];
+    const double dy = (original[1] + anchor[1] * (h - (y1 - original[1]))) - original[1];
+    position->setPoints({original[0] + dx, original[1] + dy, x1 + dx, y1 + dy});
 }
 
 std::optional<transforms::Bbox> Axes::tightbbox(Renderer& renderer, bool forLayoutOnly) {
@@ -1552,6 +1440,10 @@ std::optional<transforms::Bbox> Axes::tightbbox(Renderer& renderer, bool forLayo
             if (t->text.empty()) continue;
             if (transforms::equal(*t->transform, *transData) && !(inDomain(*xaxis, t->x) && inDomain(*yaxis, t->y))) continue;
             extra(t->windowExtent(renderer));  // Artist.get_tightbbox of an artist that is not clipped
+            continue;
+        }
+        if (auto* p = dynamic_cast<Patch*>(c.get()); p && (!c->clipOn || (!c->clipBox && !c->clipPath))) {
+            extra(p->windowExtent());  // Artist.get_tightbbox: Patch.get_window_extent
             continue;
         }
         renderer.unsupported("tight boxes of artists not clipped to the Axes are not supported yet");

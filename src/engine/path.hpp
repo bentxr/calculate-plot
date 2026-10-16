@@ -6,6 +6,7 @@
 
 #include "transforms/transforms.hpp"
 
+#include <array>
 #include <memory>
 #include <vector>
 
@@ -49,5 +50,10 @@ std::vector<Path> aggChunks(const Path& path, bool filled, bool hatched, const r
 // Transform.transform_path_non_affine: the vertices through the transform's non-affine part, the
 // codes and simplification settings kept (_fast_from_codes_and_verts); the path itself when affine.
 Path transformPathNonAffine(const Path& path, const transforms::Transform& transform);
+
+// Path.iter_bezier(simplify=False): the path as Path.cleaned leaves it (non-finite vertices removed, the
+// next one a MOVETO), each segment a Bezier curve; of each, its ends and the points where its derivative
+// is zero (axis_aligned_extrema), as Path.get_extents and _update_patch_limits take them
+std::vector<std::array<double, 2>> bezierEnds(const Path& path);
 
 }  // namespace calculate_plot::engine
