@@ -48,6 +48,7 @@ CALLS = [
     ("axes", "barh", Axes.barh, patches.Rectangle),
     ("axes", "hist", Axes.hist, patches.Rectangle),
     ("axes", "fill", Axes.fill, patches.Polygon),
+    ("axes", "annotate", Axes.annotate, text.Annotation),
     ("axes", "hlines", Axes.hlines, collections.LineCollection),
     ("axes", "vlines", Axes.vlines, collections.LineCollection),
     ("axes", "text", Axes.text, text.Text),

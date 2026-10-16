@@ -1505,6 +1505,27 @@ TEST(FillCalls, APolygonIsMadeThenAdded) {
               "axs[0].add_patch: the patch must be one the figure file made (a {\"$ref\": name})");
 }
 
+// Axes.annotate(text, xy, xytext=None, xycoords='data', textcoords=None, arrowprops=None,
+// annotation_clip=None, **Text properties); arrows are not drawn yet.
+TEST(AnnotateCalls, ArgumentsAreReadAsMatplotlibReadsThem) {
+    const auto error = [](const std::string& args, const std::string& kwargs) {
+        return draw(kSubplots + R"({"on": "axs[0]", "call": "annotate", "args": )" + args + R"(, "kwargs": )" + kwargs + "}").error;
+    };
+    EXPECT_EQ(error(R"(["a", [1, 2]])", "{}"), "");
+    EXPECT_EQ(error(R"(["a"])", R"({"xy": [1, 2], "xytext": [3, 4], "textcoords": "offset points"})"), "");
+    EXPECT_EQ(error(R"(["a", [1, 2]])", R"({"xycoords": {"$tuple": ["data", "axes fraction"]}})"), "");
+    EXPECT_EQ(error(R"(["a"])", "{}"), "axs[0].annotate: xy is required");
+    EXPECT_EQ(error(R"(["a", [1, 2, 3]])", "{}"), "axs[0].annotate: xy must be a pair of numbers");
+    EXPECT_EQ(error(R"(["a", [1, 2]])", R"({"arrowprops": {"$tuple": []}})"), "axs[0].annotate: arrowprops is not supported yet");
+    EXPECT_EQ(error(R"(["a", [1, 2]])", R"({"xycoords": "offset points"})"), "axs[0].annotate: xycoords cannot be an offset coordinate");
+    EXPECT_EQ(error(R"(["a", [1, 2]])", R"({"textcoords": "axes"})"), "axs[0].annotate: 'axes' is not a valid coordinate");
+    EXPECT_EQ(error(R"(["a", [1, 2]])", R"({"textcoords": "figure inches"})"), "axs[0].annotate: 'inches' is not a recognized unit");
+    EXPECT_EQ(error(R"(["a", [1, 2]])", R"({"xycoords": "polar"})"), "axs[0].annotate: polar coordinates are not supported yet");
+    EXPECT_EQ(error(R"(["a", [1, 2]])", R"({"annotation_clip": "yes"})"), "axs[0].annotate: annotation_clip must be True, False or None");
+    EXPECT_EQ(error(R"(["a", [1, 2]])", R"({"fontsize": "huge"})").find("axs[0].annotate:"), 0u);
+    EXPECT_EQ(draw(kSubplots + R"({"call": "annotate", "args": ["a", [1, 2]]})").error, "");  // (plt.annotate)
+}
+
 TEST(HistCalls, ArgumentsAreReadAsMatplotlibReadsThem) {
     const auto error = [](const std::string& args, const std::string& kwargs) {
         return draw(kSubplots + R"({"on": "axs[0]", "call": "hist", "args": )" + args + R"(, "kwargs": )" + kwargs + "}").error;

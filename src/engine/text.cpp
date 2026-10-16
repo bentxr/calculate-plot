@@ -222,7 +222,7 @@ Text::Layout Text::layout(Renderer& renderer) const {
     return out;
 }
 
-transforms::Bbox Text::windowExtent(Renderer& renderer) const {
+transforms::Bbox Text::windowExtent(Renderer& renderer) {
     if (!visible) return transforms::Bbox({0, 0, 1, 1});  // Bbox.unit()
     const auto [tx, ty] = transform->transform(x, y);
     if (text.empty()) return transforms::Bbox({tx, ty, tx + 0.0, ty + 0.0});

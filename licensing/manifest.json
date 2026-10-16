@@ -506,6 +506,8 @@
     "src/engine/gridspec.cpp",
     "src/engine/text.hpp",
     "src/engine/text.cpp",
+    "src/engine/annotation.hpp",
+    "src/engine/annotation.cpp",
     "src/text/font_manager.hpp",
     "src/text/font_manager.cpp",
     "data/fonts.json",

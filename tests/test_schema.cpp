@@ -38,7 +38,7 @@ std::map<std::string, Json> flags() {
 
 TEST(Schema, EveryCallIsOneTheEngineMakes) {
     const auto& calls = schemaJson().find("calls")->items();
-    EXPECT_EQ(calls.size(), 37u);
+    EXPECT_EQ(calls.size(), 38u);
     for (const Json& call : calls)
         for (const Json& p : call.find("parameters")->items()) {
             if (p.find("required")) {
@@ -69,6 +69,8 @@ TEST(Schema, PropertiesSayWhetherTheyAreTaken) {
     is("axes.fill.closed", true);
     is("axes.fill.hatch", true);
     is("axes.fill.capstyle", false);
+    is("axes.annotate.textcoords", true);
+    is("axes.annotate.annotation_clip", true);
 }
 
 TEST(Schema, WhatCannotBeToldIsCounted) {
@@ -81,8 +83,8 @@ TEST(Schema, WhatCannotBeToldIsCounted) {
         else ++refused;
     }
     std::printf("schema: %d taken, %d not supported yet, %d not told\n", taken, refused, unknown);
-    EXPECT_EQ(taken + refused + unknown, 650);
-    EXPECT_EQ(taken, 477);
-    EXPECT_EQ(refused, 140);
-    EXPECT_EQ(unknown, 33) << unknowns;  // objects and dicts a figure file does not hold (data, fontdict, prop...)
+    EXPECT_EQ(taken + refused + unknown, 678);
+    EXPECT_EQ(taken, 500);
+    EXPECT_EQ(refused, 142);
+    EXPECT_EQ(unknown, 36) << unknowns;  // objects and dicts a figure file does not hold (data, fontdict, prop...)
 }

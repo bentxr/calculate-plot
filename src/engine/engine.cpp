@@ -1,5 +1,6 @@
 #include "engine/engine.hpp"
 
+#include "engine/annotation.hpp"
 #include "engine/axes.hpp"
 #include "engine/figure.hpp"
 #include "engine/legend.hpp"
@@ -104,7 +105,7 @@ public:
                 {"hlines", "hlines"}, {"vlines", "vlines"}, {"grid", "grid"}, {"legend", "legend"}, {"text", "text"},
                 {"title", "set_title"}, {"xlabel", "set_xlabel"}, {"ylabel", "set_ylabel"}, {"xlim", "set_xlim"},
                 {"ylim", "set_ylim"}, {"xscale", "set_xscale"}, {"yscale", "set_yscale"}, {"bar", "bar"}, {"barh", "barh"},
-                {"hist", "hist"}, {"fill", "fill"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}};
+                {"hist", "hist"}, {"fill", "fill"}, {"annotate", "annotate"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}};
             static const std::map<std::string, std::string> ofFigure = {
                 {"suptitle", "suptitle"}, {"figtext", "text"}, {"subplots_adjust", "subplots_adjust"}, {"tight_layout", "tight_layout"}};
             const auto a = ofAxes.find(call.method);
@@ -192,6 +193,7 @@ private:
             {"set_major_formatter", {"formatter"}, 1},
             {"set_minor_formatter", {"formatter"}, 1},
             {"Polygon", {"xy"}, 1},
+            {"annotate", {"text", "xy", "xytext", "xycoords", "textcoords", "arrowprops", "annotation_clip"}, 7},
             {"add_patch", {"p"}, 1},
         };
         const std::string where = (call.on.empty() ? "plt" : call.on) + "." + call.method;
@@ -788,6 +790,7 @@ private:
             return true;
         }
         if (call.method == "text") return axesText(ax, call, error);
+        if (call.method == "annotate") return annotate(ax, call, error);
         if (call.method == "plot") return plot(ax, call, error);
         if (call.method == "scatter") return scatter(ax, call, error);
         if (call.method == "fill_between") return fillBetween(ax, call, error);
@@ -1715,6 +1718,69 @@ private:
         auto t = std::make_unique<Text>(rc_, x, y, values[2]->asString());
         if (!textProperties(*t, given, TextKeywords::Construct, where, error)) return false;
         ax.addText(std::move(t));
+        return true;
+    }
+
+    // A coordinate system of annotate: a name, or a pair of names
+    bool annotationCoords(const Json& v, bool offset, AnnotationCoords* out, const std::string& where, std::string* error) {
+        std::vector<std::string> names;
+        if (v.isString()) {
+            names = {v.asString()};
+        } else if (const Json* pair = v.isObject() ? sequence(v) : nullptr; pair && pair->size() == 2 && (*pair)[0].isString() &&
+                                                                            (*pair)[1].isString()) {
+            names = {(*pair)[0].asString(), (*pair)[1].asString()};
+        } else {
+            return *error = where + ": coordinates must be a name or a tuple of two names (not supported yet otherwise)", false;
+        }
+        // (xycoords: no 'offset ...' even inside a tuple)
+        for (const auto& n : names)
+            if (std::string why = annotationCoordsError(n, offset); !why.empty()) return *error = where + ": " + why, false;
+        out->names = names;
+        return true;
+    }
+
+    // Axes.annotate(text, xy, xytext=None, xycoords='data', textcoords=None, arrowprops=None,
+    // annotation_clip=None, **kwargs): an Annotation (Text properties as keywords) placed at draw time
+    // in its coordinates; its transform is the identity until then. No arrows yet.
+    bool annotate(Axes& ax, const model::Call& call, std::string* error) {
+        const std::string where = call.on + ".annotate";
+        static const char* const names[] = {"text", "xy", "xytext", "xycoords", "textcoords", "arrowprops", "annotation_clip"};
+        const Json* v[7];
+        for (std::size_t i = 0; i < 7; ++i) v[i] = argument(call, i, names[i]);
+        if (!v[0] || !v[0]->isString()) return *error = where + ": the text must be a string", false;
+        const auto pair = [&](const Json* j, std::array<double, 2>* out) {
+            const Json* s = j ? sequence(*j) : nullptr;
+            return s && s->size() == 2 && readNumber((*s)[0], &(*out)[0]) && readNumber((*s)[1], &(*out)[1]);
+        };
+        std::array<double, 2> xy{}, xytext{};
+        if (!v[1]) return *error = where + ": xy is required", false;
+        if (!pair(v[1], &xy)) return *error = where + ": xy must be a pair of numbers", false;
+        AnnotationCoords xycoords, textcoords;
+        xycoords.names = {"data"};
+        if (v[3] && !annotationCoords(*v[3], false, &xycoords, where, error)) return false;
+        // textcoords None: the xycoords; xytext None: xy
+        textcoords = xycoords;
+        if (v[4] && !v[4]->isNull() && !annotationCoords(*v[4], true, &textcoords, where, error)) return false;
+        xytext = xy;
+        if (v[2] && !v[2]->isNull() && !pair(v[2], &xytext)) return *error = where + ": xytext must be a pair of numbers", false;
+        if (v[5] && !v[5]->isNull()) return *error = where + ": arrowprops is not supported yet", false;
+        std::optional<bool> clip;
+        if (v[6] && !v[6]->isNull()) {
+            if (!v[6]->isBool()) return *error = where + ": annotation_clip must be True, False or None", false;
+            clip = v[6]->asBool();
+        }
+        auto a = std::make_unique<Annotation>(rc_, ax, v[0]->asString(), xy, xytext, xycoords, textcoords, clip);
+        std::vector<std::pair<std::string, const Json*>> given;
+        for (const auto& [name, value] : call.kwargs)
+            if (std::find(std::begin(names), std::end(names), name) == std::end(names)) given.emplace_back(name, &value);
+        if (!textProperties(*a, given, TextKeywords::Construct, where, error)) return false;
+        // clip_on=True: clipped by the Axes' patch (a box); _add_text: the figure
+        const Json* clipOn = keyword(call, "clip_on");
+        if (clipOn && clipOn->isBool() && clipOn->asBool())
+            a->clipBox = std::make_shared<transforms::TransformedBbox>(
+                std::make_shared<transforms::Bbox>(std::array<double, 4>{0, 0, 1, 1}), ax.patch->fullTransform());
+        a->figure = &ax.figure;
+        ax.children.push_back(std::move(a));
         return true;
     }
 

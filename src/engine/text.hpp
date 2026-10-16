@@ -38,7 +38,8 @@ public:
         double cornerX = 0, cornerY = 0, boxWidth = 0, boxHeight = 0;
     };
     Layout layout(Renderer& renderer) const;
-    transforms::Bbox windowExtent(Renderer& renderer) const;
+    // get_window_extent (an Annotation first places itself, hence not const)
+    virtual transforms::Bbox windowExtent(Renderer& renderer);
     void draw(Renderer& renderer) override;
 
     double x, y;

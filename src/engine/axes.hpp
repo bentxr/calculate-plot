@@ -191,6 +191,8 @@ public:
     Line2D& addLine(std::unique_ptr<Line2D> line, bool keepTransform = false);
     Patch& addPatch(std::unique_ptr<Patch> patch);  // Axes.add_patch
     Text& addText(std::unique_ptr<Text> text);          // Axes._add_text, as Axes.text does it
+    // Axes.contains_point(point): the pixel point in the patch's path, grown by a contour of 1 pixel
+    bool containsPoint(double x, double y) const;
     // What a new line takes from the property cycle (_get_lines' _PropCycle.getdefaults): the properties
     // of the next entry that are not among those given. With all of them given the cycle stays.
     std::vector<std::pair<std::string, support::Json>> lineDefaults(const std::vector<std::string>& given);

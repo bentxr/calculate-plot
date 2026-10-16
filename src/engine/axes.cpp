@@ -5,7 +5,9 @@
 
 #include "engine/axes.hpp"
 
+#include "agg/path_queries.h"
 #include "agg/path_text.h"
+#include "engine/annotation.hpp"
 #include "engine/figure.hpp"
 #include "engine/legend.hpp"
 #include "rc/rc_params.hpp"
@@ -992,6 +994,15 @@ Text& Axes::addText(std::unique_ptr<Text> t) {
     return static_cast<Text&>(*children.back());
 }
 
+bool Axes::containsPoint(double x, double y) const {
+    // Patch.contains_point(point, radius=1.0): Path.contains_point through the patch's (affine) transform
+    const Path p = patch->path();
+    mpl::PathIterator it(p.vertices, p.codes, p.shouldSimplify, p.simplifyThreshold);
+    const auto m = patch->fullTransform()->matrix();
+    agg::trans_affine t(m.sx, m.shy, m.shx, m.sy, m.tx, m.ty);
+    return mpl::point_in_path(x, y, 1.0, it, t);
+}
+
 namespace {
 
 // Path.iter_bezier(simplify=False) of a path of lines (what the patches added so far have): the path
@@ -1351,7 +1362,10 @@ std::optional<transforms::Bbox> Axes::tightbbox(Renderer& renderer, bool forLayo
         // clip box. That lies inside the clip box, which is the patch's window extent, added below:
         // the union is the same either way.
         if (c->clipOn && c->clipBox && !c->clipPath && patch->visible) continue;
-        if (const Text* t = dynamic_cast<const Text*>(c.get()); t && !c->clipOn) {
+        // (clip_on without a clip box or path, as an annotation's, clips nothing)
+        if (auto* t = dynamic_cast<Text*>(c.get()); t && (!c->clipOn || (!c->clipBox && !c->clipPath))) {
+            // Annotation.get_tightbbox: nothing where _check_xy says it is not drawn
+            if (auto* a = dynamic_cast<Annotation*>(t); a && !a->checkXY(renderer)) continue;
             // Text.get_tightbbox: nothing for an empty text, nor for one in data coordinates outside the
             // domain of the scales (_point_in_data_domain: val_in_range is finite, and > 0 on a log scale)
             const auto inDomain = [](const Axis& axis, double v) { return std::isfinite(v) && (axis.scale() != "log" || v > 0); };

@@ -3085,6 +3085,260 @@
   },
   {
    "on": "axes",
+   "call": "annotate",
+   "parameters": [
+    {
+     "name": "text",
+     "positional": true,
+     "valid": "str",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "xy",
+     "positional": true,
+     "valid": "(float, float)",
+     "kind": "other",
+     "required": true
+    },
+    {
+     "name": "xytext",
+     "positional": true,
+     "valid": "(float, float), default: *xy*",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "xycoords",
+     "positional": true,
+     "valid": "single or two-tuple of str or `.Artist` or `.Transform` or callable, default: 'data'",
+     "kind": "other",
+     "default": "data"
+    },
+    {
+     "name": "textcoords",
+     "positional": true,
+     "valid": "single or two-tuple of str or `.Artist` or `.Transform` or callable, default: value of *xycoords*",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "arrowprops",
+     "positional": true,
+     "valid": "dict, optional",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "annotation_clip",
+     "positional": true,
+     "valid": "bool or None, default: None",
+     "kind": "bool",
+     "default": null
+    }
+   ],
+   "artist": "Annotation",
+   "properties": [
+    {
+     "name": "alpha",
+     "valid": "float or None",
+     "kind": "number"
+    },
+    {
+     "name": "anncoords",
+     "valid": "unknown",
+     "kind": "other"
+    },
+    {
+     "name": "backgroundcolor",
+     "valid": ":mpltype:`color`",
+     "kind": "colour"
+    },
+    {
+     "name": "clip_on",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "color",
+     "valid": ":mpltype:`color`",
+     "kind": "colour",
+     "aliases": [
+      "c"
+     ]
+    },
+    {
+     "name": "fontfamily",
+     "valid": "{FONTNAME, 'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace'}",
+     "kind": "choice",
+     "choices": [
+      "serif",
+      "sans-serif",
+      "cursive",
+      "fantasy",
+      "monospace"
+     ],
+     "aliases": [
+      "family",
+      "fontname"
+     ]
+    },
+    {
+     "name": "fontfeatures",
+     "valid": "list of str, or tuple of str, or None",
+     "kind": "other"
+    },
+    {
+     "name": "fontsize",
+     "valid": "float or {'xx-small', 'x-small', 'small', 'medium', 'large', 'x-large', 'xx-large'}",
+     "kind": "number",
+     "aliases": [
+      "size"
+     ]
+    },
+    {
+     "name": "fontstretch",
+     "valid": "{a numeric value in range 0-1000, 'ultra-condensed', 'extra-condensed', 'condensed', 'semi-condensed', 'normal', 'semi-expanded', 'expanded', 'extra-expanded', 'ultra-expanded'}",
+     "kind": "choice",
+     "choices": [
+      "ultra-condensed",
+      "extra-condensed",
+      "condensed",
+      "semi-condensed",
+      "normal",
+      "semi-expanded",
+      "expanded",
+      "extra-expanded",
+      "ultra-expanded"
+     ],
+     "aliases": [
+      "stretch"
+     ]
+    },
+    {
+     "name": "fontstyle",
+     "valid": "{'normal', 'italic', 'oblique'}",
+     "kind": "choice",
+     "choices": [
+      "normal",
+      "italic",
+      "oblique"
+     ],
+     "aliases": [
+      "style"
+     ]
+    },
+    {
+     "name": "fontvariant",
+     "valid": "{'normal', 'small-caps'}",
+     "kind": "choice",
+     "choices": [
+      "normal",
+      "small-caps"
+     ],
+     "aliases": [
+      "variant"
+     ]
+    },
+    {
+     "name": "fontweight",
+     "valid": "{a numeric value in range 0-1000, 'ultralight', 'light', 'normal', 'regular', 'book', 'medium', 'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy', 'extra bold', 'black'}",
+     "kind": "choice",
+     "choices": [
+      "ultralight",
+      "light",
+      "normal",
+      "regular",
+      "book",
+      "medium",
+      "roman",
+      "semibold",
+      "demibold",
+      "demi",
+      "bold",
+      "heavy",
+      "extra bold",
+      "black"
+     ],
+     "aliases": [
+      "weight"
+     ]
+    },
+    {
+     "name": "horizontalalignment",
+     "valid": "{'left', 'center', 'right'}",
+     "kind": "choice",
+     "choices": [
+      "left",
+      "center",
+      "right"
+     ],
+     "aliases": [
+      "ha"
+     ]
+    },
+    {
+     "name": "label",
+     "valid": "object",
+     "kind": "text"
+    },
+    {
+     "name": "language",
+     "valid": "str or None",
+     "kind": "other"
+    },
+    {
+     "name": "linespacing",
+     "valid": "'normal' or float, default: 'normal'",
+     "kind": "other"
+    },
+    {
+     "name": "multialignment",
+     "valid": "{'left', 'right', 'center'}",
+     "kind": "choice",
+     "choices": [
+      "left",
+      "right",
+      "center"
+     ],
+     "aliases": [
+      "ma"
+     ]
+    },
+    {
+     "name": "rotation",
+     "valid": "float or {'vertical', 'horizontal'}",
+     "kind": "number"
+    },
+    {
+     "name": "verticalalignment",
+     "valid": "{'baseline', 'bottom', 'center', 'center_baseline', 'top'}",
+     "kind": "choice",
+     "choices": [
+      "baseline",
+      "bottom",
+      "center",
+      "center_baseline",
+      "top"
+     ],
+     "aliases": [
+      "va"
+     ]
+    },
+    {
+     "name": "visible",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "zorder",
+     "valid": "float",
+     "kind": "number"
+    }
+   ]
+  },
+  {
+   "on": "axes",
    "call": "hlines",
    "parameters": [
     {

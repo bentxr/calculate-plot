@@ -212,6 +212,10 @@ it comes from in its first lines. The changes, as a whole:
   (_plot_args, _make_polygon, the patches' _PropCycle.getdefaults with ignored properties), pyplot.Polygon,
   Axes.add_patch with _update_patch_limits for paths (Path.iter_bezier over Path.cleaned, the segment ends
   as BezierSegment evaluates them), HandlerPatch for any patch and the 'best' legend placement around one.
+  Annotations: text.py's _AnnotationBase and Annotation without arrows (src/engine/annotation.*: the
+  coordinate systems by name or as a pair, _check_xy with Axes.contains_point, update_positions before drawing
+  and measuring), Axes.annotate and pyplot.annotate; src/_path.h's point_in_path for one point (in
+  src/agg/path_queries.h); Text.get_window_extent made virtual and non-const (an annotation places itself).
   Colour sequences: colors.py's ColorSequenceRegistry (the built-in sequences only) with _cm.py's data
   (data/color_sequences.json; ColorBrewer's schemes in data/color_sequences_colorbrewer.json), written as JSON
   numbers by tools/oracle/make_color_sequences.py; rcsetup.py's _single_string_color_list takes them in cycles.
