@@ -99,9 +99,10 @@ it comes from in its first lines. The changes, as a whole:
   extent with its ticks, Bbox.union, and XAxis/YAxis.get_tick_space feeding AutoLocator's 'auto' bins. For
   Axes.plot: _process_plot_format, the argument grouping of _process_plot_var_args, the property cycle's colours,
   add_line (clipping to the Axes patch, data limits as Bbox.update_from_path), autoscale_view (linear scales, no
-  sticky edges yet) with MaxNLocator.view_limits, and every marker of markers.py with full or no fill (half fills
-  come later); the unit polygons and star the markers use are data (data/marker_paths.json) taken from
-  matplotlib, since NumPy's vectorised sin and cos made them. Log scales: scale.py's LogScale (locators,
+  sticky edges yet) with MaxNLocator.view_limits, and every marker of markers.py with every fill style (the
+  halves of a half-filled marker, drawn as Line2D.draw draws them, the other in markerfacecoloralt); the unit
+  polygons and star the markers use, and the half width of the half-filled hexagon, are data
+  (data/marker_paths.json) taken from matplotlib, since NumPy's vectorised sin and cos made them. Log scales: scale.py's LogScale (locators,
   formatters, limit_range_for_scale), Axis._set_axes_scale (with its immediate autoscale), minor ticks
   (Axis._update_ticks, get_minorticklocs), the data limits' minpos, autoscale_view through the scale's transform, and
   Axes.viewLim running a pending autoscale before it is read, translated to C++; mathtext texts are drawn and

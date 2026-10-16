@@ -72,6 +72,31 @@ const Path& xFilledPath() {
                   {}, true, 11);
 }
 
+// The halves markers.py makes when it is imported: of the triangle, and of the filled plus and x
+const Path& triangleUPath() { return pathOf(closedVertices({0, 1, -3.0 / 5, -1.0 / 5, 3.0 / 5, -1.0 / 5}), {}, true, 13); }
+const Path& triangleDPath() { return pathOf(closedVertices({-3.0 / 5, -1.0 / 5, 3.0 / 5, -1.0 / 5, 1, -1, -1, -1}), {}, true, 14); }
+const Path& triangleLPath() { return pathOf(closedVertices({0, 1, 0, -1, -1, -1}), {}, true, 15); }
+const Path& triangleRPath() { return pathOf(closedVertices({0, 1, 0, -1, 1, -1}), {}, true, 16); }
+const Path& plusFilledTopPath() {
+    return pathOf(closedVertices(scaledBy({+3, 0, +3, +1, +1, +1, +1, +3, -1, +3, -1, +1, -3, +1, -3, 0}, 6)), {}, true, 17);
+}
+const Path& xFilledTopPath() {
+    return pathOf(closedVertices(scaledBy({+1, 0, +2, +1, +1, +2, 0, +1, -1, +2, -2, +1, -1, 0}, 4)), {}, true, 18);
+}
+
+// Path.unit_circle_righthalf: four cubic Bezier eighth-arcs and the line back.
+const Path& unitCircleRightHalf() {
+    const double MAGIC = 0.2652031, SQRTHALF = std::sqrt(0.5), MAGIC45 = SQRTHALF * MAGIC;
+    std::vector<double> v{0.0, -1.0, MAGIC, -1.0, SQRTHALF - MAGIC45, -SQRTHALF - MAGIC45, SQRTHALF, -SQRTHALF,
+                          SQRTHALF + MAGIC45, -SQRTHALF + MAGIC45, 1.0, -MAGIC, 1.0, 0.0, 1.0, MAGIC,
+                          SQRTHALF + MAGIC45, SQRTHALF - MAGIC45, SQRTHALF, SQRTHALF, SQRTHALF - MAGIC45, SQRTHALF + MAGIC45,
+                          MAGIC, 1.0, 0.0, 1.0, 0.0, -1.0};
+    std::vector<unsigned char> codes(14, CURVE4);
+    codes.front() = MOVETO;
+    codes.back() = CLOSEPOLY;
+    return pathOf(std::move(v), std::move(codes), false, 19);
+}
+
 // Path.unit_circle: eight cubic Bezier quarter-arcs.
 const Path& unitCircle() {
     const double MAGIC = 0.2652031, SQRTHALF = std::sqrt(0.5), MAGIC45 = SQRTHALF * MAGIC;
@@ -125,6 +150,42 @@ const Path& markerData(const std::string& name) {
 
 const Path& unitStarPath() { return markerData("star5_hatch"); }
 
+namespace {
+
+// markers.py's constant from NumPy's cos (data/marker_paths.json)
+double markerConstant(const std::string& name) {
+    static const std::map<std::string, double> constants = [] {
+        std::map<std::string, double> out;
+        const auto doc = support::parseJson(embedded::file("data/marker_paths.json"), nullptr);
+        if (doc && doc->find("constants"))
+            for (const auto& [key, value] : doc->find("constants")->members())
+                out.emplace(key, std::strtod(value.asString().c_str(), nullptr));
+        return out;
+    }();
+    return constants.at(name);
+}
+
+// Path(verts) of the points of a marker path at these indices, and of given points ({x, y} pairs)
+struct HalfBuilder {
+    const Path& from;
+    std::vector<double> v;
+    HalfBuilder& at(std::initializer_list<int> indices) {
+        for (int i : indices) v.push_back((*from.vertices)[std::size_t(2 * i)]), v.push_back((*from.vertices)[std::size_t(2 * i + 1)]);
+        return *this;
+    }
+    HalfBuilder& range(int begin, int end) {  // verts[begin:end]
+        for (int i = begin; i < end; ++i) at({i});
+        return *this;
+    }
+    HalfBuilder& point(double x, double y) {
+        v.push_back(x), v.push_back(y);
+        return *this;
+    }
+    Path make(const rc::Params& rc) const { return Path::make(v, {}, rc); }
+};
+
+}  // namespace
+
 bool markerFromJson(const support::Json& value, std::string* marker, std::string* error) {
     static const char* const codes[12] = {"tickleft",  "tickright",  "tickup",        "tickdown",
                                           "caretleft", "caretright", "caretup",       "caretdown",
@@ -158,15 +219,37 @@ bool MarkerStyle::set(const std::string& marker, const std::optional<std::string
     joinstyle_ = "round";
     capstyle_ = "butt";
     filled_ = fillstyle_ != "none";
-    if (fillstyle_ != "full" && fillstyle_ != "none") {
-        *error = "half-filled markers (fillstyle '" + fillstyle_ + "') are not supported yet";
-        return false;
-    }
+    altPath_.reset();
+    const std::string& fs = fillstyle_;
+    const bool half = fs == "left" || fs == "right" || fs == "top" || fs == "bottom";  // _half_fill
+    // the alt transform: the marker's own (alt, the same object, follows it) or a frozen copy
+    bool altFollows = false;
+    transforms::Affine2D altT;
+    // the angle by fill style, in the order right, top, left, bottom
+    const auto angle = [&](double right, double top, double left, double bottom) {
+        return fs == "right" ? right : fs == "top" ? top : fs == "left" ? left : bottom;
+    };
+    // the paths by fill style: (top, bottom), (bottom, top), (left, right), (right, left)
+    const auto halves = [&](const Path& top, const Path& bottom, const Path& left, const Path& right) {
+        if (fs == "top") path_ = top, altPath_ = bottom;
+        else if (fs == "bottom") path_ = bottom, altPath_ = top;
+        else if (fs == "left") path_ = left, altPath_ = right;
+        else path_ = right, altPath_ = left;
+        altFollows = true;
+    };
     const double inf = std::numeric_limits<double>::infinity();
-    const auto triangle = [&](double rot) {
+    const auto triangle = [&](double rot, int skip) {
         t.scale(0.5).rotateDeg(rot);
         snapThreshold_ = 5.0;
-        path_ = trianglePath();
+        if (!half) {
+            path_ = trianglePath();
+        } else {
+            const Path* mpaths[4] = {&triangleUPath(), &triangleLPath(), &triangleDPath(), &triangleRPath()};
+            const int k = fs == "top" ? 0 : fs == "bottom" ? 2 : fs == "left" ? 1 : 3;
+            path_ = *mpaths[(k + skip) % 4];
+            altPath_ = *mpaths[(k + 2 + skip) % 4];
+            altFollows = true;
+        }
         joinstyle_ = "miter";
     };
     const auto tri = [&](std::optional<double> rot) {
@@ -191,45 +274,110 @@ bool MarkerStyle::set(const std::string& marker, const std::optional<std::string
     } else if (marker == "o" || marker == ".") {  // _set_circle, _set_point
         t.scale(0.5 * (marker == "." ? 0.5 : 1.0));
         snapThreshold_ = inf;
-        path_ = unitCircle().madeWith(rc);
+        if (!half) {
+            path_ = unitCircle().madeWith(rc);
+        } else {
+            path_ = unitCircleRightHalf().madeWith(rc);
+            altPath_ = path_;
+            t.rotateDeg(angle(0, 90, 180, 270));
+            altT = transforms::Affine2D(t.matrix());
+            altT.rotateDeg(180.);
+        }
     } else if (marker == ",") {  // _set_pixel
         path_ = Path::unitRectangle(rc);
         t.translate(-0.49999, -0.49999);
-    } else if (marker == "^") triangle(0.0);
-    else if (marker == "v") triangle(180.0);
-    else if (marker == "<") triangle(90.0);
-    else if (marker == ">") triangle(270.0);
+    } else if (marker == "^") triangle(0.0, 0);
+    else if (marker == "v") triangle(180.0, 2);
+    else if (marker == "<") triangle(90.0, 3);
+    else if (marker == ">") triangle(270.0, 1);
     else if (marker == "s") {  // _set_square
         t.translate(-0.5, -0.5);
         snapThreshold_ = 2.0;
-        path_ = Path::unitRectangle(rc);
+        if (!half) {
+            path_ = Path::unitRectangle(rc);
+        } else {
+            path_ = Path::make({0.0, 0.0, 1.0, 0.0, 1.0, 0.5, 0.0, 0.5, 0.0, 0.0}, {}, rc);
+            altPath_ = Path::make({0.0, 0.5, 1.0, 0.5, 1.0, 1.0, 0.0, 1.0, 0.0, 0.5}, {}, rc);
+            t.rotateDeg(fs == "bottom" ? 0 : fs == "right" ? 90 : fs == "top" ? 180 : 270);
+            altFollows = true;
+        }
         joinstyle_ = "miter";
     } else if (marker == "D" || marker == "d") {  // _set_diamond, _set_thin_diamond
         t.translate(-0.5, -0.5).rotateDeg(45);
         snapThreshold_ = 5.0;
-        path_ = Path::unitRectangle(rc);
+        if (!half) {
+            path_ = Path::unitRectangle(rc);
+        } else {
+            path_ = Path::make({0, 0, 1, 0, 1, 1, 0, 0}, {}, rc);
+            altPath_ = Path::make({0, 0, 0, 1, 1, 1, 0, 0}, {}, rc);
+            t.rotateDeg(angle(0, 90, 180, 270));
+            altFollows = true;
+        }
         joinstyle_ = "miter";
         if (marker == "d") t.scale(0.6, 1.0);
     } else if (marker == "p") {  // _set_pentagon
         t.scale(0.5);
         snapThreshold_ = 5.0;
-        path_ = markerData("polygon5").madeWith(rc);
+        const Path polypath = markerData("polygon5");
+        if (!half) {
+            path_ = polypath.madeWith(rc);
+        } else {
+            const double y = (1 + std::sqrt(5.0)) / 4.;
+            halves(HalfBuilder{polypath, {}}.at({0, 1, 4, 0}).make(rc), HalfBuilder{polypath, {}}.at({1, 2, 3, 4, 1}).make(rc),
+                   HalfBuilder{polypath, {}}.at({0, 1, 2}).point(0, -y).at({0}).make(rc),
+                   HalfBuilder{polypath, {}}.at({0, 4, 3}).point(0, -y).at({0}).make(rc));
+        }
         joinstyle_ = "miter";
     } else if (marker == "*") {  // _set_star
         t.scale(0.5);
         snapThreshold_ = 5.0;
-        path_ = markerData("star5").madeWith(rc);
+        const Path polypath = markerData("star5");
+        if (!half) {
+            path_ = polypath.madeWith(rc);
+        } else {
+            halves(HalfBuilder{polypath, {}}.range(0, 4).range(7, 10).at({0}).make(rc),
+                   HalfBuilder{polypath, {}}.range(3, 8).at({3}).make(rc), HalfBuilder{polypath, {}}.range(0, 6).at({0}).make(rc),
+                   HalfBuilder{polypath, {}}.at({0}).range(5, 10).at({0}).make(rc));
+        }
         joinstyle_ = "bevel";
-    } else if (marker == "h" || marker == "H") {  // _set_hexagon1, _set_hexagon2
+    } else if (marker == "h") {  // _set_hexagon1
         t.scale(0.5);
-        if (marker == "H") t.rotateDeg(30);
-        path_ = markerData("polygon6").madeWith(rc);
+        const Path polypath = markerData("polygon6");
+        if (!half) {
+            path_ = polypath.madeWith(rc);
+        } else {
+            const double x = markerConstant("hexagon1_half_x");
+            halves(HalfBuilder{polypath, {}}.point(-x, 0).at({1, 0, 5}).point(x, 0).make(rc),
+                   HalfBuilder{polypath, {}}.point(-x, 0).range(2, 5).point(x, 0).make(rc), HalfBuilder{polypath, {}}.range(0, 4).make(rc),
+                   HalfBuilder{polypath, {}}.at({0, 5, 4, 3}).make(rc));
+        }
+        joinstyle_ = "miter";
+    } else if (marker == "H") {  // _set_hexagon2
+        t.scale(0.5).rotateDeg(30);
+        const Path polypath = markerData("polygon6");
+        if (!half) {
+            path_ = polypath.madeWith(rc);
+        } else {
+            const double x = std::sqrt(3.0) / 4, y = 3 / 4.;
+            halves(HalfBuilder{polypath, {}}.at({1, 0, 5, 4, 1}).make(rc), HalfBuilder{polypath, {}}.range(1, 5).make(rc),
+                   HalfBuilder{polypath, {}}.point(x, y).range(0, 3).point(-x, -y).point(x, y).make(rc),
+                   HalfBuilder{polypath, {}}.point(x, y).at({5, 4, 3}).point(-x, -y).make(rc));
+        }
         joinstyle_ = "miter";
     } else if (marker == "8") {  // _set_octagon
         t.scale(0.5);
         snapThreshold_ = 5.0;
-        t.rotateDeg(22.5);
-        path_ = markerData("polygon8").madeWith(rc);
+        if (!half) {
+            t.rotateDeg(22.5);
+            path_ = markerData("polygon8").madeWith(rc);
+        } else {
+            const double x = std::sqrt(2.) / 4.;
+            path_ = Path::make({0, -1, 0, 1, -x, 1, -1, x, -1, -x, -x, -1, 0, -1}, {}, rc);
+            altPath_ = path_;
+            t.rotateDeg(fs == "left" ? 0 : fs == "bottom" ? 90 : fs == "right" ? 180 : 270);
+            altT = transforms::Affine2D(t.matrix());
+            altT.rotateDeg(180.0);
+        }
         joinstyle_ = "miter";
     } else if (marker == "|" || marker == "_") {  // _set_vline, _set_hline
         t.scale(0.5);
@@ -272,12 +420,21 @@ bool MarkerStyle::set(const std::string& marker, const std::optional<std::string
     } else if (marker == "P" || marker == "X") {  // _set_plus_filled, _set_x_filled
         snapThreshold_ = 5.0;
         joinstyle_ = "miter";
-        path_ = marker == "P" ? plusFilledPath() : xFilledPath();
+        if (!half) {
+            path_ = marker == "P" ? plusFilledPath() : xFilledPath();
+        } else {  // the top half, turned
+            path_ = marker == "P" ? plusFilledTopPath() : xFilledTopPath();
+            altPath_ = path_;
+            t.rotateDeg(fs == "top" ? 0 : fs == "left" ? 90 : fs == "bottom" ? 180 : 270);
+            altT = transforms::Affine2D(t.matrix());
+            altT.rotateDeg(180);
+        }
     } else {
         *error = "marker '" + marker + "' is not supported yet";
         return false;
     }
     transform_ = t.matrix();
+    altTransform_ = altFollows ? t.matrix() : altT.matrix();
     return true;
 }
 
@@ -647,6 +804,7 @@ void Line2D::draw(Renderer& renderer) {
         gc.antialiased = antialiased;
         auto ec = *colors::toRgba(markerEdgeColor(), alpha, rc_, nullptr);
         const auto fc = *colors::toRgba(markerFaceColor(false), alpha, rc_, nullptr);
+        const auto fcalt = *colors::toRgba(markerFaceColor(true), alpha, rc_, nullptr);
         // markeredgecolor 'auto' with a face: the edge takes the face's alpha (get_markerfacecolor()
         // is 'none' for unfilled marker styles)
         if (isAuto(markeredgecolor, false) && !colors::isNone(markerFaceColor(false))) ec[3] = fc[3];
@@ -677,6 +835,12 @@ void Line2D::draw(Renderer& renderer) {
             }
             renderer.drawMarkers(gc, markerStyle.path(), markerTrans.matrix(), subsampled, affine,
                                  std::vector<double>(fc.begin(), fc.end()));
+            if (markerStyle.altPath()) {
+                transforms::Affine2D altTrans(markerStyle.altTransform());
+                altTrans.scale(w);
+                renderer.drawMarkers(gc, *markerStyle.altPath(), altTrans.matrix(), subsampled, affine,
+                                     std::vector<double>(fcalt.begin(), fcalt.end()));
+            }
         }
         // The markers' recache under the 'default' draw style leaves its path as get_path() from now
         // on (only _drawstyle and _transformed_path are put back): what a legend placed 'best' avoids.

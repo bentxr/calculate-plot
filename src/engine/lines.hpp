@@ -35,6 +35,9 @@ public:
     const std::string& marker() const { return marker_; }
     const Path& path() const { return path_; }
     const transforms::Matrix& transform() const { return transform_; }
+    // the other half of a half-filled marker (get_alt_path, get_alt_transform), drawn in markerfacecoloralt
+    const std::optional<Path>& altPath() const { return altPath_; }
+    const transforms::Matrix& altTransform() const { return altTransform_; }
     std::optional<double> snapThreshold() const { return snapThreshold_; }
     const std::string& joinstyle() const { return joinstyle_; }
     const std::string& capstyle() const { return capstyle_; }
@@ -46,6 +49,8 @@ private:
     std::string fillstyle_ = "full";
     Path path_;
     transforms::Matrix transform_;
+    std::optional<Path> altPath_;
+    transforms::Matrix altTransform_;
     std::optional<double> snapThreshold_;
     std::string joinstyle_ = "round", capstyle_ = "butt";
     bool filled_ = true;

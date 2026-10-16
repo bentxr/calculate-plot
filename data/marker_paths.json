@@ -1,7 +1,7 @@
 {
 "_provenance": [
 "Derived from Matplotlib 3.11.2: lib/matplotlib/path.py (unit_regular_polygon, unit_regular_star)",
-"as lib/matplotlib/markers.py and lib/matplotlib/hatch.py use them, written by",
+"as lib/matplotlib/markers.py and lib/matplotlib/hatch.py use them, and a constant of markers.py, written by",
 "tools/oracle/make_marker_paths.py.",
 "Copyright (c) 2012- Matplotlib Development Team; All Rights Reserved",
 "Licence: LICENSES/Matplotlib.txt."
@@ -169,5 +169,8 @@
 79
 ]
 }
+},
+"constants": {
+"hexagon1_half_x": "0x1.bb67ae8584cabp-1"
 }
 }
