@@ -1,4 +1,4 @@
-// Derived from Matplotlib 3.11.2: lib/matplotlib/text.py (_AnnotationBase, Annotation without arrows).
+// Derived from Matplotlib 3.11.2: lib/matplotlib/text.py (_AnnotationBase, Annotation).
 // Copyright (c) 2012- Matplotlib Development Team; All Rights Reserved
 // Licence: LICENSES/Matplotlib.txt. Changes: licensing/changes/matplotlib.md
 
@@ -6,6 +6,9 @@
 
 #include "engine/axes.hpp"
 #include "engine/figure.hpp"
+
+#include <algorithm>
+#include <cmath>
 
 namespace calculate_plot::engine {
 
@@ -88,18 +91,74 @@ bool Annotation::checkXY(Renderer& renderer) {
     return true;
 }
 
-void Annotation::updatePositions(Renderer& renderer) { transform = coordsTransform(renderer, textcoords_); }
+void Annotation::setArrow(std::unique_ptr<FancyArrowPatch> arrow, const ArrowProps& props, std::array<double, 2> relpos) {
+    arrow_ = std::move(arrow);
+    arrowProps_ = props;
+    arrowRelpos_ = relpos;
+}
+
+void Annotation::updatePositions(Renderer& renderer) {
+    transform = coordsTransform(renderer, textcoords_);
+    if (!arrow_) return;
+    const auto bbox = Text::windowExtent(renderer).points();
+    const auto end = positionXY(renderer);  // the annotated point
+    const double x1 = end[0], y1 = end[1];
+    const double ms = arrowProps_.mutationScale ? *arrowProps_.mutationScale : font.size;
+    arrow_->mutationScale = ms;
+    if (!arrowProps_.hasArrowstyle) {
+        // the modified YAArrow API: a 'simple' arrow from the side or middle of the text nearest xy
+        ArrowStyle::make("simple", {{"head_length", arrowProps_.headlength / ms}, {"head_width", arrowProps_.headwidth / ms},
+                                    {"tail_width", arrowProps_.width / ms}},
+                         &arrow_->arrowStyle, nullptr);
+        const auto nearest = [](const std::array<std::pair<double, double>, 3>& pos, double target) {
+            std::size_t best = 0;  // min(pos, key=...): the first of equal distances
+            for (std::size_t i = 1; i < 3; ++i)
+                if (std::fabs(pos[i].first - target) < std::fabs(pos[best].first - target)) best = i;
+            return pos[best];
+        };
+        const auto [nx, relposx] = nearest({{{bbox[0], 0}, {(bbox[0] + bbox[2]) / 2, 0.5}, {bbox[2], 1}}}, x1);
+        const auto [ny, relposy] = nearest({{{bbox[1], 0}, {(bbox[1] + bbox[3]) / 2, 0.5}, {bbox[3], 1}}}, y1);
+        arrowRelpos_ = {relposx, relposy};
+        const double r = std::hypot(ny - y1, nx - x1);
+        const double shrinkPts = arrowProps_.shrink * r / renderer.pointsToPixels(1);
+        arrow_->shrinkA = arrow_->shrinkB = shrinkPts;
+    }
+    // arrow_begin = bbox.p0 + bbox.size * relpos
+    const double w = bbox[2] - bbox[0], h = bbox[3] - bbox[1];
+    arrow_->setPositions({bbox[0] + w * arrowRelpos_[0], bbox[1] + h * arrowRelpos_[1]}, {x1, y1});
+    // patchA: none when given as None or the text is empty; else a box 4 points larger than the text's
+    if (arrowProps_.patchAGiven || text.empty()) {
+        patchA_.reset();
+        arrow_->patchA = nullptr;
+        return;
+    }
+    const double pad = renderer.pointsToPixels(4);
+    patchA_ = std::make_unique<Rectangle>(rc_, bbox[0] - pad / 2, bbox[1] - pad / 2, w + pad, h + pad);
+    patchA_->transform = std::make_shared<transforms::IdentityTransform>();
+    patchA_->transformSet = true;
+    patchA_->clipOn = false;
+    const Rectangle* box = patchA_.get();
+    arrow_->patchA = [box](const bezier::Point& p) { return box->containsPoint(p[0], p[1]); };
+}
 
 void Annotation::draw(Renderer& renderer) {
     if (!visible || !checkXY(renderer)) return;
     updatePositions(renderer);
+    if (arrow_) arrow_->draw(renderer);
     Text::draw(renderer);
 }
 
 transforms::Bbox Annotation::windowExtent(Renderer& renderer) {
     if (!visible || !checkXY(renderer)) return transforms::Bbox({0, 0, 1, 1});  // Bbox.unit()
     updatePositions(renderer);
-    return Text::windowExtent(renderer);
+    const auto textBox = Text::windowExtent(renderer);
+    if (!arrow_) return textBox;
+    // Bbox.union([text, arrow]): the least and greatest of each box's least and greatest coordinates
+    const auto a = textBox.points(), b = arrow_->windowExtent().points();
+    const auto lo = [](double p, double q) { return std::min(p, q); };
+    const auto hi = [](double p, double q) { return std::max(p, q); };
+    return transforms::Bbox({lo(std::min(a[0], a[2]), std::min(b[0], b[2])), lo(std::min(a[1], a[3]), std::min(b[1], b[3])),
+                             hi(std::max(a[0], a[2]), std::max(b[0], b[2])), hi(std::max(a[1], a[3]), std::max(b[1], b[3]))});
 }
 
 }  // namespace calculate_plot::engine

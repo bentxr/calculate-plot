@@ -189,3 +189,16 @@ TEST(FigureModel, NonFiniteFloatsHaveTheirOwnForm) {
     EXPECT_NE(refused(R"({"version":1,"calls":[{"call":"figure","args":[{"$float":"1.5"}]}]})").find("$float"), std::string::npos);
     EXPECT_NE(refused(R"({"version":1,"calls":[{"call":"figure","args":[{"$float":1}]}]})").find("$float"), std::string::npos);
 }
+
+// {"$dict": {...}} is a Python dict with string keys (arrowprops, say), exported in its order.
+TEST(FigureModel, ADictHasStringKeysInItsOrder) {
+    const auto f = parsed(R"({"version":1,"calls":[{"call":"subplots","as":["fig","ax"]},
+        {"on":"ax","call":"annotate","args":["a",[0,1]],"kwargs":{"arrowprops":{"$dict":{"arrowstyle":"->","lw":2,"x":{"$dict":{}},"t":{"$tuple":[1]}}}}}]})");
+    EXPECT_NE(m::exportPython(f, "x").find("ax.annotate('a', [0, 1], arrowprops={'arrowstyle': '->', 'lw': 2, 'x': {}, 't': (1,)})"),
+              std::string::npos)
+        << m::exportPython(f, "x");
+    for (const char* bad : {R"({"$dict":[1]})", R"({"$dict":{"a":1},"b":2})", R"({"$dict":{"a":{"$code":1}}})", R"({})"}) {
+        const std::string json = std::string(R"({"version":1,"calls":[{"call":"figure","args":[)") + bad + "]}]}";
+        EXPECT_FALSE(refused(json).empty()) << bad;
+    }
+}

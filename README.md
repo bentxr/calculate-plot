@@ -54,7 +54,8 @@ ax.legend()
 | `args`, `kwargs` | The arguments, as JSON values |
 | `as` | The name of the result, for the calls that follow |
 | `style`, `rc` | A style sheet (or a list of them) and rcParams, applied before the calls |
-| `{"$tuple": [...]}`, `{"$float": "nan"}` | A Python tuple, and the floats JSON cannot write (`nan`, `inf`, `-inf`) |
+| `{"$tuple": [...]}`, `{"$dict": {...}}` | A Python tuple, and a dict (`arrowprops`, say) |
+| `{"$float": "nan"}` | The floats JSON cannot write (`nan`, `inf`, `-inf`) |
 | `{"$ref": "name"}` | An object an earlier call made (a `Polygon` for `ax.add_patch`, a bar container for `ax.bar_label`) |
 
 What a figure file asks for that is not supported yet is refused with a message saying so: a figure is
@@ -68,7 +69,7 @@ either drawn as Matplotlib draws it, or not at all.
 | Lines and markers | `plot` (with format strings), `step`, `scatter`, `errorbar`, `axhline`, `axvline`, `hlines`, `vlines` |
 | Areas | `fill`, `fill_between`, `fill_betweenx`, `stairs`, `axhspan`, `axvspan`, `Polygon` |
 | Statistics | `bar`, `barh`, `bar_label`, `hist` (every histogram type and bin rule), `boxplot`, `violinplot`, `stem` |
-| Text | titles, axis labels, `text`, `annotate`, mathtext, legends (including `loc='best'`) |
+| Text | titles, axis labels, `text`, `annotate` (with every arrow and connection style), mathtext, legends (including `loc='best'`) |
 | Axes | linear and log scales, limits, grids, minor ticks, `set`, `set_axis_off`, `NullFormatter` |
 | Styles | the rcParams, Matplotlib's bundled style sheets and colour sequences |
 | Output | PNG and SVG as `savefig` writes them (`bbox_inches='tight'` included), and the `.py` script |

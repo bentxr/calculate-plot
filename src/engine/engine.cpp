@@ -2,6 +2,7 @@
 
 #include "agg/path_text.h"
 #include "engine/annotation.hpp"
+#include "engine/arrows.hpp"
 #include "engine/axes.hpp"
 #include "engine/figure.hpp"
 #include "engine/legend.hpp"
@@ -1908,6 +1909,67 @@ private:
         return true;
     }
 
+    // Annotation.__init__'s arrow: FancyArrowPatch((0, 0), (1, 1), **arrowprops) without relpos (with an arrow
+    // style) or without width, headwidth, headlength and shrink (without one, which update_positions reads)
+    bool annotationArrow(Annotation& a, const Json& props, const std::string& where, std::string* error) {
+        Annotation::ArrowProps ap;
+        const Json* style = props.find("arrowstyle");
+        ap.hasArrowstyle = style != nullptr;
+        std::array<double, 2> relpos{0.5, 0.5};
+        const auto number = [&](const char* key, double* out) {
+            const Json* j = props.find(key);
+            if (!j) return true;
+            if (!readFinite(*j, out)) return *error = where + ": arrowprops' " + key + " must be a finite number", false;
+            return true;
+        };
+        std::vector<std::pair<std::string, const Json*>> rest;
+        for (const auto& [key, value] : props.members()) {
+            if (ap.hasArrowstyle && key == "relpos") {
+                const Json* s = sequence(value);
+                if (!s || s->size() != 2 || !readFinite((*s)[0], &relpos[0]) || !readFinite((*s)[1], &relpos[1]))
+                    return *error = where + ": arrowprops' relpos must be a pair of numbers", false;
+                continue;
+            }
+            if (!ap.hasArrowstyle && (key == "width" || key == "headwidth" || key == "headlength" || key == "shrink")) continue;
+            rest.emplace_back(key, &value);
+        }
+        if (!ap.hasArrowstyle && (!number("width", &ap.width) || !number("headwidth", &ap.headwidth) ||
+                                  !number("headlength", &ap.headlength) || !number("shrink", &ap.shrink)))
+            return false;
+        if (const Json* ms = props.find("mutation_scale")) {
+            double m = 0;
+            if (!readFinite(*ms, &m)) return *error = where + ": arrowprops' mutation_scale must be a finite number", false;
+            ap.mutationScale = m;
+        }
+        auto arrow = std::make_unique<FancyArrowPatch>(rc_, bezier::Point{0, 0}, bezier::Point{1, 1});
+        std::vector<std::pair<std::string, const Json*>> patchKwargs;
+        for (const auto& [key, value] : rest) {
+            const Json& j = *value;
+            double n = 0;
+            if (key == "arrowstyle" || key == "connectionstyle") {
+                if (key == "connectionstyle" && j.isNull()) continue;  // (None: 'arc3')
+                if (!j.isString()) return *error = where + ": arrowprops' " + key + " must be a style name", false;
+                if (key == "arrowstyle" ? !ArrowStyle::make(j.asString(), {}, &arrow->arrowStyle, error)
+                                        : !ConnectionStyle::make(j.asString(), {}, &arrow->connectionStyle, error))
+                    return *error = where + ": " + *error, false;
+            } else if (key == "patchA" || key == "patchB") {
+                if (!j.isNull()) return *error = where + ": arrowprops' " + key + " other than None is not supported yet", false;
+                if (key == "patchA") ap.patchAGiven = true;
+            } else if (key == "shrinkA" || key == "shrinkB" || key == "mutation_scale" || key == "mutation_aspect") {
+                if (key == "mutation_aspect" && j.isNull()) continue;  // (get_mutation_aspect: 1)
+                if (!readFinite(j, &n)) return *error = where + ": arrowprops' " + key + " must be a finite number", false;
+                (key == "shrinkA" ? arrow->shrinkA : key == "shrinkB" ? arrow->shrinkB : key == "mutation_scale" ? arrow->mutationScale : arrow->mutationAspect) = n;
+            } else if (key == "path" || key == "posA" || key == "posB") {
+                return *error = where + ": arrowprops' " + key + " is not supported", false;
+            } else {
+                patchKwargs.emplace_back(key, value);
+            }
+        }
+        if (!patchConstructor(*arrow, patchKwargs, where, error)) return false;
+        a.setArrow(std::move(arrow), ap, relpos);
+        return true;
+    }
+
     // Axes.annotate(text, xy, xytext=None, xycoords='data', textcoords=None, arrowprops=None,
     // annotation_clip=None, **kwargs): an Annotation (Text properties as keywords) placed at draw time
     // in its coordinates; its transform is the identity until then. No arrows yet.
@@ -1932,7 +1994,9 @@ private:
         if (v[4] && !v[4]->isNull() && !annotationCoords(*v[4], true, &textcoords, where, error)) return false;
         xytext = xy;
         if (v[2] && !v[2]->isNull() && !pair(v[2], &xytext)) return *error = where + ": xytext must be a pair of numbers", false;
-        if (v[5] && !v[5]->isNull()) return *error = where + ": arrowprops is not supported yet", false;
+        const Json* arrowprops = v[5] && !v[5]->isNull() ? v[5] : nullptr;
+        if (arrowprops && !(arrowprops->isObject() && arrowprops->members()[0].first == "$dict"))
+            return *error = where + ": arrowprops must be a dict ({\"$dict\": {...}}) or None", false;
         std::optional<bool> clip;
         if (v[6] && !v[6]->isNull()) {
             if (!v[6]->isBool()) return *error = where + ": annotation_clip must be True, False or None", false;
@@ -1942,6 +2006,7 @@ private:
         std::vector<std::pair<std::string, const Json*>> given;
         for (const auto& [name, value] : call.kwargs)
             if (std::find(std::begin(names), std::end(names), name) == std::end(names)) given.emplace_back(name, &value);
+        if (arrowprops && !annotationArrow(*a, arrowprops->members()[0].second, where, error)) return false;
         if (!textProperties(*a, given, TextKeywords::Construct, where, error)) return false;
         // clip_on=True: clipped by the Axes' patch (a box); _add_text: the figure
         const Json* clipOn = keyword(call, "clip_on");

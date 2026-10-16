@@ -217,6 +217,13 @@ it comes from in its first lines. The changes, as a whole:
   coordinate systems by name or as a pair, _check_xy with Axes.contains_point, update_positions before drawing
   and measuring), Axes.annotate and pyplot.annotate; src/_path.h's point_in_path for one point (in
   src/agg/path_queries.h); Text.get_window_extent made virtual and non-const (an annotation places itself).
+  Arrows: patches.py's ConnectionStyle (arc3, angle3, angle, arc, bar; clipping by patchA and shrinking),
+  ArrowStyle (every curve, bracket and shape style; _Style's "name,key=value" strings and messages),
+  FancyArrowPatch (drawn in display coordinates, its scale times points_to_pixels(1) of the last draw),
+  Patch.contains and _draw_paths_with_artist_properties for several paths, Path.make_compound_path; bezier.py's
+  routines in src/engine/bezier.* (BezierSegment at one parameter with OpenBLAS's order, de Casteljau,
+  bisection, split_path_inout, parallel and wedged curves); Annotation's arrow (update_positions, the default
+  patchA box, the arrow in its window extent). Figure files hold dicts as {"$dict": {...}}.
   Bar labels: Axes.bar_label (BarContainer.datavalues, orientation and errorbar kept with the container,
   LineCollection.get_segments, Patch.get_window_extent, Bbox.intersection) and cbook._auto_format_str, with
   Python's % formatting and str.format of one number ported in src/support/pyformat.cpp (our own code: the

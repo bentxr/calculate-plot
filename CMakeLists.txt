@@ -77,6 +77,7 @@ add_library(calculate-plot STATIC
     src/engine/annotation.cpp
     src/engine/violin.cpp
     src/engine/bezier.cpp
+    src/engine/arrows.cpp
     src/engine/trace_renderer.cpp
     src/agg/backend_agg.cpp
     src/model/figure_model.cpp

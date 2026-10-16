@@ -1531,7 +1531,7 @@ TEST(AnnotateCalls, ArgumentsAreReadAsMatplotlibReadsThem) {
     EXPECT_EQ(error(R"(["a", [1, 2]])", R"({"xycoords": {"$tuple": ["data", "axes fraction"]}})"), "");
     EXPECT_EQ(error(R"(["a"])", "{}"), "axs[0].annotate: xy is required");
     EXPECT_EQ(error(R"(["a", [1, 2, 3]])", "{}"), "axs[0].annotate: xy must be a pair of numbers");
-    EXPECT_EQ(error(R"(["a", [1, 2]])", R"({"arrowprops": {"$tuple": []}})"), "axs[0].annotate: arrowprops is not supported yet");
+    EXPECT_EQ(error(R"(["a", [1, 2]])", R"({"arrowprops": {"$tuple": []}})"), "axs[0].annotate: arrowprops must be a dict ({\"$dict\": {...}}) or None");
     EXPECT_EQ(error(R"(["a", [1, 2]])", R"({"xycoords": "offset points"})"), "axs[0].annotate: xycoords cannot be an offset coordinate");
     EXPECT_EQ(error(R"(["a", [1, 2]])", R"({"textcoords": "axes"})"), "axs[0].annotate: 'axes' is not a valid coordinate");
     EXPECT_EQ(error(R"(["a", [1, 2]])", R"({"textcoords": "figure inches"})"), "axs[0].annotate: 'inches' is not a recognized unit");
@@ -1719,4 +1719,32 @@ TEST(ArgumentForms, MarkeveryRaisesWhatMatplotlibRaisesWhenTheLineIsDrawn) {
     EXPECT_EQ(plot("[0.5]"), "markevery=[0.5] is iterable but not a valid numpy fancy index");
     EXPECT_EQ(plot(R"({"$tuple": [1, "b"]})"), "markevery=(1, 'b') is a tuple with len 2, but its second element is not an int or a float");
     EXPECT_EQ(plot(R"("x")"), "markevery='x' is iterable but not a valid numpy fancy index");
+}
+
+// An annotation's arrow styles are checked when it is made, as matplotlib checks them; what the arrow
+// cannot be drawn with is raised when it is drawn.
+TEST(AnnotateCalls, ArrowStylesAreCheckedAsMatplotlibChecksThem) {
+    const auto annotate = [](const std::string& props) {
+        return draw(kSubplots + R"({"on": "axs[0]", "call": "annotate", "args": ["t", [0.5, 0.5], [0.1, 0.1]], "kwargs": {"arrowprops": {"$dict": )" +
+                    props + "}}}")
+            .error;
+    };
+    EXPECT_EQ(annotate(R"({"arrowstyle": "->"})"), "");
+    EXPECT_EQ(annotate(R"({"arrowstyle": "foo"})"), "axs[0].annotate: Unknown style: 'foo'");
+    EXPECT_EQ(annotate(R"({"arrowstyle": "->,bogus"})"), "axs[0].annotate: Incorrect style argument: '->,bogus'");
+    EXPECT_EQ(annotate(R"({"arrowstyle": "->,head_length=x"})"), "axs[0].annotate: Incorrect style argument: '->,head_length=x'");
+    EXPECT_EQ(annotate(R"({"arrowstyle": "->,foo=1"})"),
+              "axs[0].annotate: ArrowStyle._Curve.__init__() got an unexpected keyword argument 'foo'");
+    EXPECT_EQ(annotate(R"({"arrowstyle": "-,head_length=1"})"),
+              "axs[0].annotate: ArrowStyle.Curve.__init__() got an unexpected keyword argument 'head_length'");
+    EXPECT_EQ(annotate(R"({"arrowstyle": "->", "connectionstyle": "arc3,rad=1,x=2"})"),
+              "axs[0].annotate: ConnectionStyle.Arc3.__init__() got an unexpected keyword argument 'x'");
+    EXPECT_EQ(annotate(R"({"arrowstyle": "->", "connectionstyle": "angle3,angleA=0,angleB=180"})"),
+              "Given lines do not intersect. Please verify that the angles are not equal or differ by 180 degrees.");
+    EXPECT_EQ(annotate(R"({"arrowstyle": "simple", "connectionstyle": "angle"})"), "'path' is not a valid quadratic Bezier curve");
+    EXPECT_NE(annotate(R"({"relpos": {"$tuple": [0, 0]}})"), "");
+    EXPECT_NE(annotate(R"({"arrowstyle": "->", "shrink": 0.1})"), "");
+    EXPECT_NE(annotate(R"({"patchA": "box"})"), "");
+    EXPECT_EQ(draw(kSubplots + R"({"on": "axs[0]", "call": "annotate", "args": ["t", [0.5, 0.5]], "kwargs": {"arrowprops": [1]}})").error,
+              "axs[0].annotate: arrowprops must be a dict ({\"$dict\": {...}}) or None");
 }

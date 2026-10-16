@@ -50,6 +50,10 @@ bool validValue(const Json& v, const std::set<std::string>& known, std::string* 
         return true;
     }
     if (v.isObject()) {
+        if (v.members().empty()) {
+            if (error) *error = "an object value must be {\"$tuple\": [...]}, {\"$dict\": {...}}, {\"$float\": ...}, {\"$new\": ...} or {\"$ref\": ...}, not {}";
+            return false;
+        }
         if (v.members().size() == 1 && v.members()[0].first == "$float") {
             const Json& f = v.members()[0].second;
             if (f.isString() && (f.asString() == "nan" || f.asString() == "inf" || f.asString() == "-inf")) return true;
@@ -69,9 +73,19 @@ bool validValue(const Json& v, const std::set<std::string>& known, std::string* 
             if (error) *error = "{\"$ref\": ...} must name the result of an earlier call, and nothing else";
             return false;
         }
+        if (v.members()[0].first == "$dict") {
+            const Json& d = v.members()[0].second;
+            if (v.members().size() != 1 || !d.isObject()) {
+                if (error) *error = "{\"$dict\": ...} must hold one JSON object, and nothing else";
+                return false;
+            }
+            for (const auto& member : d.members())
+                if (!validValue(member.second, known, error)) return false;
+            return true;
+        }
         if (v.members().size() != 1 || v.members()[0].first != "$tuple" || !v.members()[0].second.isArray()) {
             if (error)
-                *error = "an object value must be {\"$tuple\": [...]}, {\"$float\": ...}, {\"$new\": ...} or {\"$ref\": ...}, not " +
+                *error = "an object value must be {\"$tuple\": [...]}, {\"$dict\": {...}}, {\"$float\": ...}, {\"$new\": ...} or {\"$ref\": ...}, not " +
                          (v.members().empty() ? std::string("{}") : v.members()[0].first);
             return false;
         }
@@ -99,6 +113,15 @@ std::string python(const Json& v) {
         if (v.members()[0].first == "$float") return "float('" + v.members()[0].second.asString() + "')";
         if (v.members()[0].first == "$new") return "plt." + v.members()[0].second.asString() + "()";
         if (v.members()[0].first == "$ref") return v.members()[0].second.asString();
+        if (v.members()[0].first == "$dict") {
+            std::string out = "{";
+            bool first = true;
+            for (const auto& [key, value] : v.members()[0].second.members()) {
+                out += (first ? "" : ", ") + svg::pythonStrRepr(key) + ": " + python(value);
+                first = false;
+            }
+            return out + "}";
+        }
         const Json& items = v.members()[0].second;
         std::string out = "(";
         for (std::size_t i = 0; i < items.size(); ++i) out += (i ? ", " : "") + python(items[i]);

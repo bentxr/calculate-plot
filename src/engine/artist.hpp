@@ -65,9 +65,20 @@ public:
     virtual transforms::TransformPtr patchTransform() const { return std::make_shared<transforms::IdentityTransform>(); }
     transforms::TransformPtr fullTransform() const { return transforms::compose(patchTransform(), transform); }  // get_transform
     void draw(Renderer& renderer) override;
+    // _draw_paths_with_artist_properties: the paths (each with its transform and face, or none) drawn with
+    // the patch's look, in one group
+    struct DrawPathArgs {
+        Path path;
+        transforms::Matrix transform;
+        std::optional<std::vector<double>> face;
+    };
+    void drawPaths(Renderer& renderer, const std::vector<DrawPathArgs>& args);
     // get_window_extent: Path.get_extents of the path through get_transform() (its MOVETO and LINETO
     // vertices; Bbox.null() without any)
     transforms::Bbox windowExtent() const;
+    // contains(event at (x, y)): the point in the path (each subpath from a MOVETO) through get_transform(),
+    // grown by the radius _process_radius picks (the line width, or 0 without a visible edge)
+    bool containsPoint(double x, double y) const;
 
     bool antialiased;
     std::string capstyle = "butt";

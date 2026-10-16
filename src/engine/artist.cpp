@@ -6,6 +6,8 @@
 
 #include "engine/artist.hpp"
 
+#include "agg/path_queries.h"
+
 #include "rc/rc_params.hpp"
 #include "support/histogram.hpp"
 #include "support/pynum.hpp"
@@ -170,8 +172,10 @@ void Patch::draw(Renderer& renderer) {
     const auto t = transforms::compose(patchTransform(), transform);
     std::optional<std::vector<double>> face;
     if (facecolor_[3] != 0) face = std::vector<double>(facecolor_.begin(), facecolor_.end());
+    drawPaths(renderer, {{transformPathNonAffine(path(), *t), t->matrix(), face}});
+}
 
-    // _draw_paths_with_artist_properties
+void Patch::drawPaths(Renderer& renderer, const std::vector<DrawPathArgs>& args) {
     renderer.openGroup("patch", gid);
     GC gc = renderer.newGc();
     double lw = linewidth_;
@@ -196,8 +200,32 @@ void Patch::draw(Renderer& renderer) {
     gc.faceNumpy = faceNumpy_;
     if (const char* problem = lw > 0 ? gc.setDashes(dashes_.first, dashes_.second) : gc.setDashes(0, std::nullopt))
         renderer.unsupported(problem);
-    renderer.drawPath(gc, transformPathNonAffine(path(), *t), t->matrix(), face);
+    for (const auto& a : args) renderer.drawPath(gc, a.path, a.transform, a.face);
     renderer.closeGroup("patch");
+}
+
+bool Patch::containsPoint(double x, double y) const {
+    const double radius = edgecolor_[3] == 0 ? 0 : linewidth_;
+    const Path p = path();
+    const auto m = fullTransform()->matrix();
+    agg::trans_affine trans(m.sx, m.shy, m.shx, m.sy, m.tx, m.ty);
+    // the subpaths: split before each MOVETO but the first
+    std::vector<std::size_t> starts{0};
+    if (p.codes)
+        for (std::size_t k = 1; k < p.size(); ++k)
+            if ((*p.codes)[k] == MOVETO) starts.push_back(k);
+    starts.push_back(p.size());
+    for (std::size_t s = 0; s + 1 < starts.size(); ++s) {
+        Path sub = p;
+        if (starts.size() > 2) {
+            std::vector<double> v(p.vertices->begin() + std::ptrdiff_t(2 * starts[s]), p.vertices->begin() + std::ptrdiff_t(2 * starts[s + 1]));
+            std::vector<unsigned char> codes(p.codes->begin() + std::ptrdiff_t(starts[s]), p.codes->begin() + std::ptrdiff_t(starts[s + 1]));
+            sub = Path::make(std::move(v), std::move(codes), rc_);
+        }
+        mpl::PathIterator it(sub.vertices, sub.codes, sub.shouldSimplify, sub.simplifyThreshold);
+        if (mpl::point_in_path(x, y, radius, it, trans)) return true;
+    }
+    return false;
 }
 
 transforms::Bbox Patch::windowExtent() const {
