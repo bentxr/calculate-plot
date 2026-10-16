@@ -101,7 +101,7 @@ public:
             }
             // the pyplot functions of the current Axes and of the current figure
             static const std::map<std::string, std::string> ofAxes = {
-                {"plot", "plot"}, {"scatter", "scatter"}, {"fill_between", "fill_between"}, {"errorbar", "errorbar"},
+                {"plot", "plot"}, {"scatter", "scatter"}, {"fill_between", "fill_between"}, {"fill_betweenx", "fill_betweenx"}, {"errorbar", "errorbar"},
                 {"axhline", "axhline"}, {"axvline", "axvline"}, {"axhspan", "axhspan"}, {"axvspan", "axvspan"},
                 {"hlines", "hlines"}, {"vlines", "vlines"}, {"grid", "grid"}, {"legend", "legend"}, {"text", "text"},
                 {"title", "set_title"}, {"xlabel", "set_xlabel"}, {"ylabel", "set_ylabel"}, {"xlim", "set_xlim"},
@@ -175,6 +175,7 @@ private:
             {"scatter", {"x", "y", "s", "c"}, -1},
             {"errorbar", {"x", "y", "yerr", "xerr", "fmt"}, -1},
             {"fill_between", {"x", "y1", "y2"}, -1},
+            {"fill_betweenx", {"y", "x1", "x2"}, -1},
             {"axhline", {"y", "xmin", "xmax"}, 3},
             {"axvline", {"x", "ymin", "ymax"}, 3},
             {"axhspan", {"ymin", "ymax", "xmin", "xmax"}, 4},
@@ -797,7 +798,7 @@ private:
         if (call.method == "bar_label") return barLabel(ax, call, error);
         if (call.method == "plot") return plot(ax, call, error);
         if (call.method == "scatter") return scatter(ax, call, error);
-        if (call.method == "fill_between") return fillBetween(ax, call, error);
+        if (call.method == "fill_between" || call.method == "fill_betweenx") return fillBetween(ax, call, error);
         if (call.method == "errorbar") return errorbar(ax, call, error);
         if (call.method == "legend") return legend(ax, call, error);
         if (call.method == "grid") return grid(ax, call, error);
@@ -1188,14 +1189,17 @@ private:
     }
 
     // Axes.fill_between(x, y1, y2=0, *, where=None, interpolate=False, step=None, **kwargs)
+    // (fill_betweenx: the same with y, x1, x2 and the regions along y)
     bool fillBetween(Axes& ax, const model::Call& call, std::string* error) {
-        const std::string where = call.on + ".fill_between";
-        const Json* xa = call.args.size() > 0 ? &call.args[0] : keyword(call, "x");
-        const Json* y1a = call.args.size() > 1 ? &call.args[1] : keyword(call, "y1");
-        const Json* y2a = call.args.size() > 2 ? &call.args[2] : keyword(call, "y2");
+        const bool alongY = call.method == "fill_betweenx";
+        const std::string where = call.on + "." + call.method;
+        const char* const names[3] = {alongY ? "y" : "x", alongY ? "x1" : "y1", alongY ? "x2" : "y2"};
+        const Json* xa = call.args.size() > 0 ? &call.args[0] : keyword(call, names[0]);
+        const Json* y1a = call.args.size() > 1 ? &call.args[1] : keyword(call, names[1]);
+        const Json* y2a = call.args.size() > 2 ? &call.args[2] : keyword(call, names[2]);
         if (call.args.size() > 3) return *error = where + ": too many positional arguments", false;
         std::vector<double> t, f1, f2;
-        if (!xa || !numbers(*xa, &t)) return *error = where + ": x must be a list of numbers", false;
+        if (!xa || !numbers(*xa, &t)) return *error = where + ": " + names[0] + " must be a list of numbers", false;
         // y1 and y2: lists, or numbers broadcast over x
         const auto values = [&](const Json* j, std::vector<double>* out, double fallback) {
             double one = fallback;
@@ -1205,8 +1209,9 @@ private:
             }
             return numbers(*j, out) && out->size() == t.size();
         };
-        if (!y1a || !values(y1a, &f1, 0.0)) return *error = where + ": y1 must be a number or a list as long as x", false;
-        if (!values(y2a, &f2, 0.0)) return *error = where + ": y2 must be a number or a list as long as x", false;
+        if (!y1a || !values(y1a, &f1, 0.0))
+            return *error = where + ": " + names[1] + " must be a number or a list as long as " + names[0], false;
+        if (!values(y2a, &f2, 0.0)) return *error = where + ": " + names[2] + " must be a number or a list as long as " + names[0], false;
         std::vector<bool> mask(t.size(), true);
         std::optional<std::string> hatchPattern;
         std::string stepKind;
@@ -1220,7 +1225,7 @@ private:
         const bool classic = rc_.boolean("_internal.classic_mode");
         if (!classic && !givenOnce(call, collectionAliases(), where, error)) return false;
         for (const auto& [name, value] : call.kwargs) {
-            if (name == "x" || name == "y1" || name == "y2") continue;
+            if (name == names[0] || name == names[1] || name == names[2]) continue;
             if (name == "where") {
                 const Json* seq = sequence(value);
                 if (value.isNull()) continue;
@@ -1242,6 +1247,13 @@ private:
                         return *error = where + ": step must be 'pre', 'post' or 'mid'", false;
                     stepKind = value.asString();
                 }
+            } else if ((name == "color" || name == "facecolor" || name == "facecolors" || name == "fc") && value.isNull()) {
+                // (given, even as None: no colour from the cycle; None is the default)
+                faceGiven = true;
+                face = ColorArg{};
+                if (name == "color") edge = hatch = ColorArg{};
+            } else if ((name == "edgecolor" || name == "edgecolors" || name == "ec") && value.isNull()) {
+                edge = ColorArg{};
             } else if (name == "color" || name == "facecolor" || name == "facecolors" || name == "fc") {
                 colors::Spec c;
                 if (!color(value, &c)) return *error = where + ": bad " + name, false;
@@ -1277,7 +1289,7 @@ private:
         // x, y1 and y2 are masked where they are not finite (np.ma.masked_invalid): the regions break there
         for (std::size_t i = 0; i < t.size(); ++i)
             mask[i] = mask[i] && std::isfinite(t[i]) && std::isfinite(f1[i]) && std::isfinite(f2[i]);
-        auto collection = std::make_unique<FillBetweenPolyCollection>(rc_, t, f1, f2, mask, stepKind);
+        auto collection = std::make_unique<FillBetweenPolyCollection>(rc_, t, f1, f2, mask, stepKind, alongY);
         // the keyword arguments are set after the defaults (_internal_update)
         collection->setFacecolor(face);
         if (edge.kind != ColorArg::Default) collection->setEdgecolor(edge);

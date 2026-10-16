@@ -326,8 +326,9 @@ PolyCollection::PolyCollection(const rc::Params& rc, const std::vector<std::vect
 
 FillBetweenPolyCollection::FillBetweenPolyCollection(const rc::Params& rc, const std::vector<double>& t,
                                                      const std::vector<double>& f1, const std::vector<double>& f2,
-                                                     const std::vector<bool>& where, const std::string& step)
-    : PolyCollection(rc, makeVerts(t, f1, f2, where, step)) {
+                                                     const std::vector<bool>& where, const std::string& step,
+                                                     bool yDirection)
+    : PolyCollection(rc, makeVerts(t, f1, f2, where, step, yDirection)) {
     groupName = "FillBetweenPolyCollection";
     // _make_verts' box: the points (t, f1) and (t, f2) where drawn, and their minpos
     const double inf = std::numeric_limits<double>::infinity();
@@ -337,6 +338,8 @@ FillBetweenPolyCollection::FillBetweenPolyCollection(const rc::Params& rc, const
         if (where[i]) pts.push_back({t[i], f1[i]});
     for (std::size_t i = 0; i < t.size(); ++i)
         if (where[i]) pts.push_back({t[i], f2[i]});
+    if (yDirection)  // _fix_pts_xy_order
+        for (auto& p : pts) std::swap(p[0], p[1]);
     for (const auto& p : pts) {
         if (!std::isfinite(p[0]) || !std::isfinite(p[1])) continue;
         bbox_.points[0] = std::min(bbox_.points[0], p[0]), bbox_.points[2] = std::max(bbox_.points[2], p[0]);
@@ -350,7 +353,7 @@ std::vector<std::vector<std::array<double, 2>>> FillBetweenPolyCollection::makeV
                                                                                     const std::vector<double>& f1,
                                                                                     const std::vector<double>& f2,
                                                                                     const std::vector<bool>& where,
-                                                                                    const std::string& step) {
+                                                                                    const std::string& step, bool yDirection) {
     std::vector<std::vector<std::array<double, 2>>> regions;
     // cbook.contiguous_regions(where), then _make_verts_for_region without interpolation
     std::size_t i = 0;
@@ -391,6 +394,8 @@ std::vector<std::vector<std::array<double, 2>>> FillBetweenPolyCollection::makeV
         for (std::size_t k = 0; k < ts.size(); ++k) pts.push_back({ts[k], f1s[k]});
         pts.push_back({ts.back(), f2s.back()});    // end
         for (std::size_t k = ts.size(); k-- > 0;) pts.push_back({ts[k], f2s[k]});
+        if (yDirection)  // _fix_pts_xy_order
+            for (auto& p : pts) std::swap(p[0], p[1]);
         regions.push_back(std::move(pts));
         i = j;
     }

@@ -1288,6 +1288,190 @@
   },
   {
    "on": "axes",
+   "call": "fill_betweenx",
+   "parameters": [
+    {
+     "name": "y",
+     "positional": true,
+     "valid": "array-like",
+     "kind": "other",
+     "required": true
+    },
+    {
+     "name": "x1",
+     "positional": true,
+     "valid": "array-like or float",
+     "kind": "other",
+     "required": true
+    },
+    {
+     "name": "x2",
+     "positional": true,
+     "valid": "array-like or float, default: 0",
+     "kind": "other",
+     "default": 0
+    },
+    {
+     "name": "where",
+     "positional": true,
+     "valid": "array-like of bool, optional",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "step",
+     "positional": true,
+     "valid": "{'pre', 'post', 'mid'}, optional",
+     "kind": "choice",
+     "choices": [
+      "pre",
+      "post",
+      "mid"
+     ],
+     "default": null
+    },
+    {
+     "name": "interpolate",
+     "positional": true,
+     "valid": "bool, default: False",
+     "kind": "bool",
+     "default": false
+    },
+    {
+     "name": "data",
+     "positional": false,
+     "valid": "indexable object, optional",
+     "kind": "other",
+     "default": null
+    }
+   ],
+   "artist": "FillBetweenPolyCollection",
+   "properties": [
+    {
+     "name": "alpha",
+     "valid": "array-like or float or None",
+     "kind": "number"
+    },
+    {
+     "name": "capstyle",
+     "valid": "`.CapStyle` or {'butt', 'projecting', 'round'}",
+     "kind": "choice",
+     "choices": [
+      "butt",
+      "projecting",
+      "round"
+     ]
+    },
+    {
+     "name": "clip_on",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "color",
+     "valid": ":mpltype:`color` or list of RGBA tuples",
+     "kind": "colour"
+    },
+    {
+     "name": "edgecolor",
+     "valid": ":mpltype:`color` or list of :mpltype:`color` or 'face'",
+     "kind": "colour",
+     "aliases": [
+      "ec",
+      "edgecolors"
+     ]
+    },
+    {
+     "name": "facecolor",
+     "valid": ":mpltype:`color` or list of :mpltype:`color`",
+     "kind": "colour",
+     "aliases": [
+      "facecolors",
+      "fc"
+     ]
+    },
+    {
+     "name": "hatch",
+     "valid": "{'/', '\\\\', '|', '-', '+', 'x', 'o', 'O', '.', '*'}",
+     "kind": "choice",
+     "choices": [
+      "/",
+      "\\\\",
+      "|",
+      "-",
+      "+",
+      "x",
+      "o",
+      "O",
+      ".",
+      "*"
+     ]
+    },
+    {
+     "name": "hatch_linewidth",
+     "valid": "unknown",
+     "kind": "other"
+    },
+    {
+     "name": "hatchcolor",
+     "valid": ":mpltype:`color` or list of :mpltype:`color` or 'edge'",
+     "kind": "colour"
+    },
+    {
+     "name": "joinstyle",
+     "valid": "`.JoinStyle` or {'miter', 'round', 'bevel'}",
+     "kind": "choice",
+     "choices": [
+      "miter",
+      "round",
+      "bevel"
+     ]
+    },
+    {
+     "name": "label",
+     "valid": "object",
+     "kind": "text"
+    },
+    {
+     "name": "linestyle",
+     "valid": "{'-', '--', '-.', ':', '', ...} or (offset, on-off-seq) or list thereof",
+     "kind": "choice",
+     "choices": [
+      "-",
+      "--",
+      "-.",
+      ":",
+      ""
+     ],
+     "aliases": [
+      "dashes",
+      "linestyles",
+      "ls"
+     ]
+    },
+    {
+     "name": "linewidth",
+     "valid": "float or list of floats",
+     "kind": "number",
+     "aliases": [
+      "linewidths",
+      "lw"
+     ]
+    },
+    {
+     "name": "visible",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "zorder",
+     "valid": "float",
+     "kind": "number"
+    }
+   ]
+  },
+  {
+   "on": "axes",
    "call": "errorbar",
    "parameters": [
     {

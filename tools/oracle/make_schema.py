@@ -39,6 +39,7 @@ CALLS = [
     ("axes", "plot", Axes.plot, lines.Line2D),
     ("axes", "scatter", Axes.scatter, collections.PathCollection),
     ("axes", "fill_between", Axes.fill_between, collections.FillBetweenPolyCollection),
+    ("axes", "fill_betweenx", Axes.fill_betweenx, collections.FillBetweenPolyCollection),
     ("axes", "errorbar", Axes.errorbar, lines.Line2D),
     ("axes", "axhline", Axes.axhline, lines.Line2D),
     ("axes", "axvline", Axes.axvline, lines.Line2D),

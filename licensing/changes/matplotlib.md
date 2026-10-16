@@ -229,6 +229,7 @@ it comes from in its first lines. The changes, as a whole:
   Box plots: cbook.boxplot_stats (without bootstrap), Axes.boxplot and Axes.bxp (merge_kw_rc over
   rcParams["boxplot.*"], PathPatch boxes by add_artist, manage_ticks), ticker.py's FixedLocator and
   FixedFormatter as the axis' major locator and formatter.
+  Axes.fill_betweenx (FillBetweenPolyCollection with t_direction 'y', _fix_pts_xy_order).
   Colour sequences: colors.py's ColorSequenceRegistry (the built-in sequences only) with _cm.py's data
   (data/color_sequences.json; ColorBrewer's schemes in data/color_sequences_colorbrewer.json), written as JSON
   numbers by tools/oracle/make_color_sequences.py; rcsetup.py's _single_string_color_list takes them in cycles.

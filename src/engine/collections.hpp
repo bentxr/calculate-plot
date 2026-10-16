@@ -107,9 +107,11 @@ public:
 // FillBetweenPolyCollection('x', t, f1, f2, where=): the regions between two curves.
 class FillBetweenPolyCollection : public PolyCollection {
 public:
-    // `step`: "", "pre", "post" or "mid" (the regions drawn as steps)
+    // `step`: "", "pre", "post" or "mid" (the regions drawn as steps); `yDirection`: t_direction 'y'
+    // (fill_betweenx: t runs along y, and the points' columns are swapped)
     FillBetweenPolyCollection(const rc::Params& rc, const std::vector<double>& t, const std::vector<double>& f1,
-                              const std::vector<double>& f2, const std::vector<bool>& where, const std::string& step = "");
+                              const std::vector<double>& f2, const std::vector<bool>& where, const std::string& step = "",
+                              bool yDirection = false);
     DataLim dataLim(const transforms::TransformPtr&) const override { return bbox_; }
 
 private:
@@ -117,7 +119,7 @@ private:
                                                                      const std::vector<double>& f1,
                                                                      const std::vector<double>& f2,
                                                                      const std::vector<bool>& where,
-                                                                     const std::string& step);
+                                                                     const std::string& step, bool yDirection);
     DataLim bbox_;
 };
 
