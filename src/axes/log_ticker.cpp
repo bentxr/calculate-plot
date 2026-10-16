@@ -227,7 +227,7 @@ std::string LogFormatterSciNotation::operator()(double x) const {
 
 std::vector<double> withoutMajorTicks(const std::vector<double>& minor, const std::vector<double>& major,
                                       double viewMin, double viewMax, double base) {
-    const auto tr = [&](double v) { return logB(v, base) * (v > 0 ? 1 : 0) + (v <= 0 ? -1000 : 0); };
+    const auto tr = [&](double v) { return v <= 0 ? -1000.0 : logB(v, base); };  // LogTransform, nonpositive='clip'
     double lo = tr(viewMin), hi = tr(viewMax);
     if (lo > hi) std::swap(lo, hi);
     const double tol = (hi - lo) * 1e-5;

@@ -2449,14 +2449,15 @@ private:
             loval = s.q1 - whisFactor * s.iqr;
             hival = s.q3 + whisFactor * s.iqr;
         }
-        // the whiskers: the farthest values within reach, but never inside the box
-        std::optional<double> hi, lo;
+        // the whiskers: the farthest values within reach (np.max(x[x <= hival]), np.min(x[x >= loval])),
+        // but never inside the box
+        std::vector<double> wiskhi, wisklo;
         for (double v : x) {
-            if (v <= hival && (!hi || v > *hi)) hi = v;
-            if (v >= loval && (!lo || v < *lo)) lo = v;
+            if (v <= hival) wiskhi.push_back(v);
+            if (v >= loval) wisklo.push_back(v);
         }
-        s.whishi = !hi || *hi < s.q3 ? s.q3 : *hi;
-        s.whislo = !lo || *lo > s.q1 ? s.q1 : *lo;
+        s.whishi = wiskhi.empty() || support::npMax(wiskhi) < s.q3 ? s.q3 : support::npMax(wiskhi);
+        s.whislo = wisklo.empty() || support::npMin(wisklo) > s.q1 ? s.q1 : support::npMin(wisklo);
         for (double v : x)
             if (v < s.whislo) s.fliers.push_back(v);
         for (double v : x)

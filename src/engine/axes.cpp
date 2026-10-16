@@ -491,7 +491,8 @@ double Axis::sharedMinpos() const {
 }
 
 std::pair<double, double> Axis::locatorNonsingular(double v0, double v1) {
-    if (scale_ == "log") {
+    // (set_ticks put a FixedLocator in the log scale's LogLocator's place)
+    if (scale_ == "log" && !tickerAxis().fixedLocs) {
         logLocator.minpos = sharedMinpos();  // LogLocator.nonsingular: the least over the shared axes
         return logLocator.nonsingular(v0, v1);
     }
@@ -499,7 +500,7 @@ std::pair<double, double> Axis::locatorNonsingular(double v0, double v1) {
 }
 
 std::pair<double, double> Axis::locatorViewLimits(double v0, double v1) {
-    if (scale_ == "log") {
+    if (scale_ == "log" && !tickerAxis().fixedLocs) {
         logLocator.minpos = sharedMinpos();
         return logLocator.viewLimits(v0, v1, rc_.text("axes.autolimit_mode") == "round_numbers");
     }
