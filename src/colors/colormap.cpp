@@ -70,7 +70,9 @@ std::vector<double> Normalize::operator()(const std::vector<double>& data) {
     if (!vmin || !vmax) autoscaleNone(result);
     const double lo = *vmin, hi = *vmax;
     if (lo == hi) {
-        std::fill(result.begin(), result.end(), 0.0);
+        // result.fill(0) of a masked array: the masked values (NaN here) stay masked
+        for (double& v : result)
+            if (!std::isnan(v)) v = 0.0;
     } else {
         for (double& v : result) {
             if (clip) v = std::clamp(v, lo, hi);

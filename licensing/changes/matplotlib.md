@@ -223,6 +223,7 @@ it comes from in its first lines. The changes, as a whole:
   Steps: Axes.step (plot with drawstyle 'steps-<where>'), Axes.stairs and patches.StepPatch (_update_path with
   cbook.contiguous_regions), HandlerStepPatch; Patch.__init__'s order of parameters shared by Polygon and
   StepPatch.
+  Colormapping: where vmin equals vmax, Normalize's result.fill(0) leaves masked values masked (NaN here).
   Colour sequences: colors.py's ColorSequenceRegistry (the built-in sequences only) with _cm.py's data
   (data/color_sequences.json; ColorBrewer's schemes in data/color_sequences_colorbrewer.json), written as JSON
   numbers by tools/oracle/make_color_sequences.py; rcsetup.py's _single_string_color_list takes them in cycles.

@@ -857,9 +857,11 @@ private:
     bool plotFormat(const std::string& fmt, std::optional<std::string>* linestyle, std::optional<std::string>* marker,
                     std::optional<colors::Spec>* colorOut, std::string* error) {
         if (fmt != "0" && fmt != "1" && colors::toRgba(fmt, std::nullopt, rc_, nullptr)) {
-            // the colour is to_rgba(fmt): for 'none' the tuple (0, 0, 0, 0), which takes the line's alpha
-            // as any tuple does (the name 'none' would ignore it)
-            *colorOut = colors::isNone(fmt) ? colors::Spec(std::vector<double>{0, 0, 0, 0}) : colors::Spec(fmt);
+            // the colour is to_rgba(fmt), a tuple of floats: for 'none' (0, 0, 0, 0), which takes the line's
+            // alpha as any tuple does (the name 'none' would ignore it); a polygon's face holds its parts as
+            // floats (an SVG hatch id hashes them). A colour letter among other characters stays a name.
+            const auto rgba = colors::toRgba(fmt, std::nullopt, rc_, nullptr);
+            *colorOut = colors::Spec(std::vector<double>(rgba->begin(), rgba->end()));
             return true;
         }
         static const char* const kMarkers = ".,ov^<>12348spP*hH+xXDd|_";
@@ -2428,13 +2430,7 @@ private:
             if (marker) kw.push_back("marker");
             if (fmtColor) kw.push_back("color");
             if (!closedValue->isNull()) kw.push_back("closed");
-            // the format's colour is to_rgba(fmt), and Polygon's set_facecolor makes every part of a tuple a
-            // float (its alpha too: an SVG hatch id hashes its repr)
-            std::optional<colors::Spec> face;
-            if (fmtColor) {
-                const auto rgba = colors::toRgba(*fmtColor, std::nullopt, rc_, nullptr);
-                face = colors::Spec(std::vector<double>(rgba->begin(), rgba->end()));
-            }
+            std::optional<colors::Spec> face = fmtColor;
             // kwargs = {**kwargs, 'label': label}, then the defaults but the colour where kwargs say nothing
             auto polyProps = props;
             if (!label) polyProps.emplace_back("label", &none);
