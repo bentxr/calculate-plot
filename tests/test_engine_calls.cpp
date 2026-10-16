@@ -1413,7 +1413,7 @@ TEST(SubplotCalls, AxesAtARect) {
               "fig.add_axes: all entries in rect must be finite not [0.1, inf, 0.5, 0.5]");
     EXPECT_EQ(error(R"({"call": "axes", "args": [[0.1, 0.1, 0.5, 0.5]], "kwargs": {"facecolor": "r"}})"),
               "plt.axes: keyword arguments are not supported yet");
-    EXPECT_EQ(error(R"({"call": "plot", "args": [[1, 2]]}, {"call": "loglog", "args": [[1, 2]]})"), "unsupported call: plt.loglog");
+    EXPECT_EQ(error(R"({"call": "plot", "args": [[1, 2]]}, {"call": "stem", "args": [[1, 2]]})"), "unsupported call: plt.stem");
     EXPECT_EQ(draw(kSubplots + R"({"on": "axs[0]", "call": "loglog", "args": [[1, 2]], "kwargs": {"base": 2}})").error,
               "axs[0].loglog: the keywords of the log scale are not supported yet");
 }
@@ -1430,4 +1430,31 @@ TEST(BarCalls, ArgumentsAreReadAsMatplotlibReadsThem) {
     EXPECT_EQ(error(R"({"tick_label": ["a", "b", "c"]})"), "axs[0].bar: tick_label is not supported yet");
     EXPECT_EQ(error(R"({"lw": 1, "linewidth": 2})").find("axs[0].bar:"), 0u);
     EXPECT_EQ(draw(kSubplots + R"({"on": "axs[0]", "call": "bar", "args": [[1, 2]]})").error, "axs[0].bar: height is required");
+}
+
+TEST(HistCalls, ArgumentsAreReadAsMatplotlibReadsThem) {
+    const auto error = [](const std::string& args, const std::string& kwargs) {
+        return draw(kSubplots + R"({"on": "axs[0]", "call": "hist", "args": )" + args + R"(, "kwargs": )" + kwargs + "}").error;
+    };
+    const std::string one = "[[1, 2, 2, 3]]", two = "[[[1, 2], [3, 4, 5]]]";
+    EXPECT_EQ(error(one, "{}"), "");
+    EXPECT_EQ(error("[2.5]", "{}"), "");  // (a number is one value)
+    EXPECT_EQ(error(two, R"({"bins": [0, 2, 6], "stacked": true, "density": true, "cumulative": -1})"), "");
+    EXPECT_EQ(error(one, R"({"histtype": "step"})"), "axs[0].hist: histtype 'step' is not supported yet");
+    EXPECT_EQ(error(one, R"({"histtype": "steps"})"),
+              "axs[0].hist: 'steps' is not a valid value for histtype; supported values are 'bar', 'barstacked', 'step', 'stepfilled'");
+    EXPECT_EQ(error(one, R"({"histtype": null})").find("axs[0].hist: that is not a valid value for histtype"), 0u);
+    EXPECT_EQ(error(one, R"({"bins": "auto"})"), "axs[0].hist: bins given by name are not supported yet");
+    EXPECT_EQ(error(one, R"({"bins": 2.5})"), "axs[0].hist: `bins` must be an integer, a string, or an array");
+    EXPECT_EQ(error(one, R"({"bins": 0})"), "axs[0].hist: `bins` must be positive, when an integer");
+    EXPECT_EQ(error(one, R"({"bins": [3, 1]})"), "axs[0].hist: `bins` must increase monotonically, when an array");
+    EXPECT_EQ(error(one, R"({"range": [3, 1]})"), "axs[0].hist: max must be larger than min in range parameter.");
+    EXPECT_EQ(error("[[1, {\"$float\": \"inf\"}]]", "{}"), "axs[0].hist: supplied range of [1.0, inf] is not finite");
+    EXPECT_EQ(error(one, R"({"weights": [1, 2]})"), "axs[0].hist: weights should have the same shape as x");
+    EXPECT_EQ(error(two, R"({"color": ["r", "g", "b"]})"),
+              "axs[0].hist: The 'color' keyword argument must have one color per dataset, but 2 datasets and 3 colors were provided");
+    EXPECT_EQ(error(two, R"({"hatch": []})"), "axs[0].hist: hatch must not be an empty sequence");
+    EXPECT_EQ(error(one, R"({"linestyle": [0, [1, 1]]})"), "axs[0].hist: linestyle given as dashes is not supported yet");
+    EXPECT_EQ(error(one, R"({"capstyle": "round"})"), "axs[0].hist: unsupported keyword capstyle");
+    EXPECT_EQ(error(one, R"({"ec": "k", "edgecolor": "r"})").find("axs[0].hist:"), 0u);
 }

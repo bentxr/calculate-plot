@@ -1026,12 +1026,12 @@ std::vector<std::pair<std::string, support::Json>> Axes::lineDefaults(const std:
     return out;
 }
 
-colors::Spec Axes::nextPatchColor() {
+colors::Spec Axes::nextColor(std::size_t* index) {
     // _PropCycle.get_next_color(): the colour of the next entry; black, and the cycle stays, without one
     const auto cycle = rc_.propCycle();
-    for (const auto& [property, value] : cycle[patchCycleIndex_]) {
+    for (const auto& [property, value] : cycle[*index]) {
         if (property != "color") continue;
-        patchCycleIndex_ = (patchCycleIndex_ + 1) % cycle.size();
+        *index = (*index + 1) % cycle.size();
         return colors::specOf(value);
     }
     return std::string("k");

@@ -46,6 +46,7 @@ CALLS = [
     ("axes", "axvspan", Axes.axvspan, patches.Rectangle),
     ("axes", "bar", Axes.bar, patches.Rectangle),
     ("axes", "barh", Axes.barh, patches.Rectangle),
+    ("axes", "hist", Axes.hist, patches.Rectangle),
     ("axes", "hlines", Axes.hlines, collections.LineCollection),
     ("axes", "vlines", Axes.vlines, collections.LineCollection),
     ("axes", "text", Axes.text, text.Text),

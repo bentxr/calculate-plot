@@ -195,7 +195,9 @@ public:
     // of the next entry that are not among those given. With all of them given the cycle stays.
     std::vector<std::pair<std::string, support::Json>> lineDefaults(const std::vector<std::string>& given);
     // The patches' own cycle (_get_patches_for_fill.get_next_color), used by scatter and fills.
-    colors::Spec nextPatchColor();
+    colors::Spec nextPatchColor() { return nextColor(&patchCycleIndex_); }
+    // The lines' cycle (_get_lines.get_next_color), used by hist.
+    colors::Spec nextLineColor() { return nextColor(&cycleIndex_); }
     // Axes.add_collection(autolim=True): a pending autoscale runs first, then the data limits grow
     // by the collection's and an autoscale is requested.
     Collection& addCollection(std::unique_ptr<Collection> collection);
@@ -236,6 +238,7 @@ private:
     bool staleX_ = false, staleY_ = false;
     std::shared_ptr<SharedAxes> shared_[2];  // x, y
     std::size_t cycleIndex_ = 0, patchCycleIndex_ = 0;
+    colors::Spec nextColor(std::size_t* index);
     void updateDatalim(const std::vector<std::array<double, 2>>& xys, bool updatex = true, bool updatey = true);
     void updateFromPath(const std::vector<double>& xy, bool updatex, bool updatey);
 };

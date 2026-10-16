@@ -201,6 +201,10 @@ it comes from in its first lines. The changes, as a whole:
   Bars: Axes.bar and barh (_parse_bar_color_args, the broadcasting, align, the error bars through
   errorbar), BarContainer and its legend entry (update_from_first_child), the sticky edges of
   autoscale_view.
+  Bar widths through Axes._convert_dx (cbook._safe_first_finite).
+  Histograms: Axes.hist for histtype 'bar' and 'barstacked' (cbook._reshape_2D for lists, the shared bin
+  edges, stacking, density, cumulative, rwidth, align, orientation, bottom) and _style_helpers.style_generator
+  (named line styles only); 'step' and 'stepfilled' are refused for now.
   Colour sequences: colors.py's ColorSequenceRegistry (the built-in sequences only) with _cm.py's data
   (data/color_sequences.json; ColorBrewer's schemes in data/color_sequences_colorbrewer.json), written as JSON
   numbers by tools/oracle/make_color_sequences.py; rcsetup.py's _single_string_color_list takes them in cycles.

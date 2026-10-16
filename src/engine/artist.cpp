@@ -6,6 +6,7 @@
 #include "engine/artist.hpp"
 
 #include "rc/rc_params.hpp"
+#include "support/pynum.hpp"
 
 namespace calculate_plot::engine {
 
@@ -143,6 +144,17 @@ void Patch::updateFrom(const Patch& o) {
 void Patch::setLinestyle(const std::string& style) {
     linestyle_ = (style == " " || style == "" || style == "none") ? "None" : style;
     unscaledDashes_ = dashPattern(linestyle_, rc_);
+    dashes_ = scaleDashes(unscaledDashes_, linewidth_, rc_);
+}
+
+void Patch::setDashPattern(double offset, const std::optional<std::vector<double>>& onoff) {
+    linestyle_ = "dash pattern";  // (a tuple: never 'None')
+    // _get_dash_pattern: the offset within one cycle of the pattern
+    if (onoff) {
+        const double sum = support::pythonSum(*onoff, std::vector<bool>(onoff->size(), false));  // sum(dashes)
+        if (sum != 0) offset = support::divmod(offset, sum).second;
+    }
+    unscaledDashes_ = {offset, onoff};
     dashes_ = scaleDashes(unscaledDashes_, linewidth_, rc_);
 }
 

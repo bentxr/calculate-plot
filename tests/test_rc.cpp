@@ -384,13 +384,14 @@ TEST(RcParams, KeysThatAreNotHonouredYetTakeOnlyTheirDefault) {
 TEST(RcParams, KeysOfWhatIsNotDrawnTakeWhatMatplotlibTakes) {
     Params p = Params::defaults();
     std::string error;
-    EXPECT_EQ(Params::inertKeys().size(), 136u);
+    EXPECT_EQ(Params::inertKeys().size(), 135u);
     EXPECT_TRUE(p.set("boxplot.whiskers", json("[5, 95]"), &error)) << error;
     EXPECT_TRUE(p.set("boxplot.whiskers", json("2.5"), &error)) << error;
     EXPECT_TRUE(p.set("boxplot.flierprops.marker", json("5"), &error)) << error;
     EXPECT_TRUE(p.set("boxplot.boxprops.linestyle", json("[0, [1, 2]]"), &error)) << error;
     EXPECT_TRUE(p.set("axes3d.xaxis.panecolor", json("[0.1, 0.2, 0.3]"), &error)) << error;
-    EXPECT_TRUE(p.set("hist.bins", json("\"auto\""), &error)) << error;
+    EXPECT_TRUE(p.set("hist.bins", json("7"), &error)) << error;  // (hist reads it: the rules by name are not supported yet)
+    EXPECT_FALSE(p.set("hist.bins", json("\"auto\""), &error));
     EXPECT_TRUE(p.set("pdf.fonttype", json("\"truetype\""), &error)) << error;
     EXPECT_EQ(p.number("pdf.fonttype"), 42.0);
     EXPECT_TRUE(p.set("keymap.save", json("\"s, ctrl+s\""), &error)) << error;

@@ -58,6 +58,8 @@ public:
     void setFacecolor(const std::optional<colors::Spec>& color);
     void setLinewidth(std::optional<double> w);
     void setLinestyle(const std::string& style);
+    // set_linestyle((offset, onoff)): a dash pattern (onoff None: solid); unlike 'None' it keeps the edge
+    void setDashPattern(double offset, const std::optional<std::vector<double>>& onoff);
     virtual Path path() const = 0;
     virtual transforms::TransformPtr patchTransform() const { return std::make_shared<transforms::IdentityTransform>(); }
     transforms::TransformPtr fullTransform() const { return transforms::compose(patchTransform(), transform); }  // get_transform

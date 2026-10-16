@@ -2686,6 +2686,258 @@
   },
   {
    "on": "axes",
+   "call": "hist",
+   "parameters": [
+    {
+     "name": "x",
+     "positional": true,
+     "valid": "(n,) array or sequence of (n,) arrays",
+     "kind": "other",
+     "required": true
+    },
+    {
+     "name": "bins",
+     "positional": true,
+     "valid": "int or sequence or str, default: :rc:`hist.bins`",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "range",
+     "positional": false,
+     "valid": "tuple or None, default: None",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "density",
+     "positional": false,
+     "valid": "bool, default: False",
+     "kind": "bool",
+     "default": false
+    },
+    {
+     "name": "weights",
+     "positional": false,
+     "valid": "(n,) array-like or None, default: None",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "cumulative",
+     "positional": false,
+     "valid": "bool or -1, default: False",
+     "kind": "bool",
+     "default": false
+    },
+    {
+     "name": "bottom",
+     "positional": false,
+     "valid": "array-like or float, default: 0",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "histtype",
+     "positional": false,
+     "valid": "{'bar', 'barstacked', 'step', 'stepfilled'}, default: 'bar'",
+     "kind": "choice",
+     "choices": [
+      "bar",
+      "barstacked",
+      "step",
+      "stepfilled"
+     ],
+     "default": "bar"
+    },
+    {
+     "name": "align",
+     "positional": false,
+     "valid": "{'left', 'mid', 'right'}, default: 'mid'",
+     "kind": "choice",
+     "choices": [
+      "left",
+      "mid",
+      "right"
+     ],
+     "default": "mid"
+    },
+    {
+     "name": "orientation",
+     "positional": false,
+     "valid": "{'vertical', 'horizontal'}, default: 'vertical'",
+     "kind": "choice",
+     "choices": [
+      "vertical",
+      "horizontal"
+     ],
+     "default": "vertical"
+    },
+    {
+     "name": "rwidth",
+     "positional": false,
+     "valid": "float or None, default: None",
+     "kind": "number",
+     "default": null
+    },
+    {
+     "name": "log",
+     "positional": false,
+     "valid": "bool, default: False",
+     "kind": "bool",
+     "default": false
+    },
+    {
+     "name": "color",
+     "positional": false,
+     "valid": ":mpltype:`color` or list of :mpltype:`color` or None, default: None",
+     "kind": "colour",
+     "default": null
+    },
+    {
+     "name": "label",
+     "positional": false,
+     "valid": "str or list of str, optional",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "stacked",
+     "positional": false,
+     "valid": "bool, default: False",
+     "kind": "bool",
+     "default": false
+    },
+    {
+     "name": "data",
+     "positional": false,
+     "valid": "indexable object, optional",
+     "kind": "other",
+     "default": null
+    }
+   ],
+   "artist": "Rectangle",
+   "properties": [
+    {
+     "name": "alpha",
+     "valid": "float or None",
+     "kind": "number"
+    },
+    {
+     "name": "capstyle",
+     "valid": "`.CapStyle` or {'butt', 'projecting', 'round'}",
+     "kind": "choice",
+     "choices": [
+      "butt",
+      "projecting",
+      "round"
+     ]
+    },
+    {
+     "name": "clip_on",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "edgecolor",
+     "valid": ":mpltype:`color` or None",
+     "kind": "colour",
+     "aliases": [
+      "ec"
+     ]
+    },
+    {
+     "name": "edgegapcolor",
+     "valid": ":mpltype:`color` or None",
+     "kind": "colour"
+    },
+    {
+     "name": "facecolor",
+     "valid": ":mpltype:`color` or None",
+     "kind": "colour",
+     "aliases": [
+      "fc"
+     ]
+    },
+    {
+     "name": "fill",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "hatch",
+     "valid": "{'/', '\\\\', '|', '-', '+', 'x', 'o', 'O', '.', '*'}",
+     "kind": "choice",
+     "choices": [
+      "/",
+      "\\\\",
+      "|",
+      "-",
+      "+",
+      "x",
+      "o",
+      "O",
+      ".",
+      "*"
+     ]
+    },
+    {
+     "name": "hatch_linewidth",
+     "valid": "unknown",
+     "kind": "other"
+    },
+    {
+     "name": "hatchcolor",
+     "valid": ":mpltype:`color` or 'edge' or None",
+     "kind": "colour"
+    },
+    {
+     "name": "joinstyle",
+     "valid": "`.JoinStyle` or {'miter', 'round', 'bevel'}",
+     "kind": "choice",
+     "choices": [
+      "miter",
+      "round",
+      "bevel"
+     ]
+    },
+    {
+     "name": "linestyle",
+     "valid": "{'-', '--', '-.', ':', '', ...} or (offset, on-off-seq)",
+     "kind": "choice",
+     "choices": [
+      "-",
+      "--",
+      "-.",
+      ":",
+      ""
+     ],
+     "aliases": [
+      "ls"
+     ]
+    },
+    {
+     "name": "linewidth",
+     "valid": "float or None",
+     "kind": "number",
+     "aliases": [
+      "lw"
+     ]
+    },
+    {
+     "name": "visible",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "zorder",
+     "valid": "float",
+     "kind": "number"
+    }
+   ]
+  },
+  {
+   "on": "axes",
    "call": "hlines",
    "parameters": [
     {

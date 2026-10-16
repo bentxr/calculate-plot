@@ -6,6 +6,7 @@
 #include "engine/tight_layout.hpp"
 #include "rc/rc_params.hpp"
 #include "rc/styles.hpp"
+#include "support/histogram.hpp"
 #include "support/pyformat.hpp"
 #include "svg/svg_renderer.h"
 #include "support/pyparse.hpp"
@@ -100,7 +101,8 @@ public:
                 {"axhline", "axhline"}, {"axvline", "axvline"}, {"axhspan", "axhspan"}, {"axvspan", "axvspan"},
                 {"hlines", "hlines"}, {"vlines", "vlines"}, {"grid", "grid"}, {"legend", "legend"}, {"text", "text"},
                 {"title", "set_title"}, {"xlabel", "set_xlabel"}, {"ylabel", "set_ylabel"}, {"xlim", "set_xlim"},
-                {"ylim", "set_ylim"}, {"xscale", "set_xscale"}, {"yscale", "set_yscale"}};
+                {"ylim", "set_ylim"}, {"xscale", "set_xscale"}, {"yscale", "set_yscale"}, {"bar", "bar"}, {"barh", "barh"},
+                {"hist", "hist"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}};
             static const std::map<std::string, std::string> ofFigure = {
                 {"suptitle", "suptitle"}, {"figtext", "text"}, {"subplots_adjust", "subplots_adjust"}, {"tight_layout", "tight_layout"}};
             const auto a = ofAxes.find(call.method);
@@ -183,6 +185,8 @@ private:
             {"set_ylim", {"bottom", "top"}, 2},
             {"bar", {"x", "height", "width", "bottom"}, 4},
             {"barh", {"y", "width", "height", "left"}, 4},
+            {"hist", {"x", "bins", "range", "density", "weights", "cumulative", "bottom", "histtype", "align", "orientation",
+                      "rwidth", "log", "color", "label", "stacked"}, 15},
             {"set_major_formatter", {"formatter"}, 1},
             {"set_minor_formatter", {"formatter"}, 1},
         };
@@ -789,6 +793,7 @@ private:
         if (call.method == "axhline" || call.method == "axvline") return axline(ax, call, error);
         if (call.method == "axhspan" || call.method == "axvspan") return axspan(ax, call, error);
         if (call.method == "bar" || call.method == "barh") return bar(ax, call, error);
+        if (call.method == "hist") return hist(ax, call, error);
         if (call.method == "vlines" || call.method == "hlines") return lines(ax, call, error);
         if (call.method == "set_xscale" || call.method == "set_yscale") {
             if (!call.kwargs.empty()) return *error = where + ": scale options are not supported yet", false;
@@ -2308,6 +2313,383 @@ private:
         }
         ax.requestAutoscaleView(true, true);
         ax.containers.push_back(container);
+        return true;
+    }
+
+    // A colour as a figure file writes it (for the calls made here)
+    static Json colorJson(const colors::Spec& c) {
+        if (const auto* s = std::get_if<std::string>(&c)) return Json::string(*s);
+        std::vector<Json> items;
+        for (double v : std::get<std::vector<double>>(c)) items.push_back(Json::real(v));
+        return Json::array(items);
+    }
+
+    static Json numbersJson(const std::vector<double>& values) {
+        std::vector<Json> items;
+        for (double v : values) items.push_back(Json::real(v));
+        return Json::array(items);
+    }
+
+    // cbook._reshape_2D for lists: a list of numbers is one data set, otherwise each item is one (a
+    // number being a set of one value)
+    bool reshape2D(const Json& v, std::vector<std::vector<double>>* out) {
+        out->clear();
+        const Json* seq = sequence(v);
+        if (!seq) return false;
+        if (seq->items().empty()) return out->emplace_back(), true;
+        bool flat = true;
+        for (const Json& item : seq->items()) flat = flat && !sequence(item);
+        std::vector<double> one;
+        if (flat) {
+            if (!numbers(v, &one)) return false;
+            out->push_back(one);
+            return true;
+        }
+        for (const Json& item : seq->items()) {
+            double n = 0;
+            if (readNumber(item, &n)) out->push_back({n});
+            else if (numbers(item, &one)) out->push_back(one);
+            else return false;
+        }
+        return true;
+    }
+
+    // Axes.hist(x, bins=None, range=None, density=False, weights=None, cumulative=False, bottom=None,
+    // histtype='bar', align='mid', orientation='vertical', rwidth=None, log=False, color=None,
+    // label=None, stacked=False, **kwargs): np.histogram of each data set, drawn by bar or barh.
+    // (histtype 'step' and 'stepfilled', drawn by fill, and bins given by name are not supported yet.)
+    bool hist(Axes& ax, const model::Call& call, std::string* error) {
+        const std::string where = call.on + ".hist";
+        static const Aliases patchAliases = {{"aa", "antialiased"}, {"ec", "edgecolor"}, {"fc", "facecolor"},
+                                             {"ls", "linestyle"}, {"lw", "linewidth"}};
+        if (!givenOnce(call, patchAliases, where, error)) return false;
+        static const char* const names[15] = {"x",           "bins",   "range", "density", "weights",
+                                              "cumulative",  "bottom", "histtype", "align", "orientation",
+                                              "rwidth",      "log",    "color", "label",   "stacked"};
+        const Json* raw[15];
+        const Json* given[15];  // (None as not given)
+        for (int i = 0; i < 15; ++i) {
+            raw[i] = argument(call, std::size_t(i), names[i]);
+            given[i] = raw[i] && !raw[i]->isNull() ? raw[i] : nullptr;
+        }
+        if (!given[0]) return *error = where + ": x is required", false;
+        const auto truthy = [&](int i, bool* out) {
+            *out = false;
+            if (!given[i]) return true;
+            if (given[i]->isBool()) return *out = given[i]->asBool(), true;
+            double n = 0;
+            if (readNumber(*given[i], &n)) return *out = n != 0, true;
+            return *error = where + ": " + names[i] + " must be True or False", false;
+        };
+        // _api.check_in_list
+        const auto choice = [&](int i, std::initializer_list<const char*> valid, std::string* out) {
+            if (!raw[i]) return *out = *valid.begin(), true;
+            for (const char* c : valid)
+                if (raw[i]->isString() && raw[i]->asString() == c) return *out = c, true;
+            std::string list;
+            for (const char* c : valid) list += std::string(list.empty() ? "" : ", ") + "'" + c + "'";
+            return *error = where + ": " + (raw[i]->isString() ? "'" + raw[i]->asString() + "'" : std::string("that")) +
+                            " is not a valid value for " + names[i] + "; supported values are " + list,
+                   false;
+        };
+        bool density = false, cumulative = false, log = false, stacked = false;
+        if (!truthy(3, &density) || !truthy(5, &cumulative) || !truthy(11, &log) || !truthy(14, &stacked)) return false;
+        std::string histtype, align, orientation;
+        if (!choice(7, {"bar", "barstacked", "step", "stepfilled"}, &histtype) || !choice(8, {"mid", "left", "right"}, &align) ||
+            !choice(9, {"vertical", "horizontal"}, &orientation))
+            return false;
+        if (histtype == "step" || histtype == "stepfilled")
+            return *error = where + ": histtype '" + histtype + "' is not supported yet", false;
+        if (histtype == "barstacked") stacked = true;
+        // the data sets (np.isscalar(x): [x])
+        std::vector<std::vector<double>> x, w;
+        double one = 0;
+        if (readNumber(*given[0], &one)) x = {{one}};
+        else if (!reshape2D(*given[0], &x)) return *error = where + ": x must be numbers or lists of numbers", false;
+        const std::size_t nx = x.size();
+        // bins: rcParams["hist.bins"] when None; a count or the edges
+        support::Bins bins;
+        const Json& binsValue = given[1] ? *given[1] : rc_.value("hist.bins");
+        if (binsValue.isString()) return *error = where + ": bins given by name are not supported yet", false;
+        if (binsValue.isBool()) {
+            bins.count = binsValue.asBool() ? 1 : 0;  // (operator.index(True) is 1)
+        } else if (binsValue.isNumber()) {
+            if (!binsValue.isInteger()) return *error = where + ": `bins` must be an integer, a string, or an array", false;
+            if (binsValue.asNumber() > 100000) return *error = where + ": more than 100000 bins are not supported", false;
+            bins.count = static_cast<long long>(binsValue.asNumber());
+        } else if (!numbers(binsValue, &bins.edges)) {
+            return *error = where + ": `bins` must be an integer, a string, or an array", false;
+        }
+        std::optional<std::pair<double, double>> binRange;
+        if (given[2]) {
+            std::vector<double> r;
+            if (!numbers(*given[2], &r) || r.size() != 2) return *error = where + ": range must be two numbers", false;
+            binRange = std::make_pair(r[0], r[1]);
+        }
+        if (given[4]) {
+            if (!reshape2D(*given[4], &w)) return *error = where + ": weights must be lists of numbers", false;
+            if (w.size() != nx) return *error = where + ": weights should have the same shape as x", false;
+            for (std::size_t i = 0; i < nx; ++i)
+                if (w[i].size() != x[i].size()) return *error = where + ": weights should have the same shape as x", false;
+        }
+        bool inputEmpty = true;
+        for (const auto& xi : x) inputEmpty = inputEmpty && xi.empty();
+        // the colours: the lines' cycle, or one per data set (to_rgba_array)
+        std::vector<colors::Spec> setColors;
+        if (!given[12]) {
+            for (std::size_t i = 0; i < nx; ++i) setColors.push_back(ax.nextLineColor());
+        } else {
+            colors::Spec c;
+            std::vector<colors::Spec> list;
+            if (color(*given[12], &c)) list.assign(nx, c);  // is_color_like: [color] * nx
+            else if (!colorList(*given[12], &list)) return *error = where + ": color is not a colour or a list of colours", false;
+            for (const auto& item : list) {
+                const auto rgba = colors::toRgba(item, std::nullopt, rc_, nullptr);
+                if (!rgba) return *error = where + ": color is not a colour or a list of colours", false;
+                setColors.push_back(std::vector<double>(rgba->begin(), rgba->end()));
+            }
+            if (setColors.size() != nx)
+                return *error = where + ": The 'color' keyword argument must have one color per dataset, but " + std::to_string(nx) +
+                                " datasets and " + std::to_string(setColors.size()) + " colors were provided",
+                       false;
+        }
+        // the labels (np.atleast_1d(np.asarray(label, str)))
+        std::vector<std::string> labels;
+        if (given[13]) {
+            if (given[13]->isString()) {
+                labels.push_back(given[13]->asString());
+            } else if (const Json* seq = sequence(*given[13])) {
+                for (const Json& l : seq->items()) {
+                    if (!l.isString()) return *error = where + ": labels must be strings", false;
+                    labels.push_back(l.asString());
+                }
+            } else {
+                return *error = where + ": label must be a string or a list of strings", false;
+            }
+        }
+        // the other keywords (_style_helpers.style_generator): the colours, hatches, line widths and line
+        // styles cycle over the data sets; the rest go to every bar as they are
+        struct Style {
+            std::string name;
+            std::vector<std::optional<colors::Spec>> colours;  // facecolor, edgecolor (None: default)
+            std::vector<std::optional<std::string>> hatches;
+            std::vector<std::optional<double>> linewidths;
+            std::vector<std::pair<double, std::optional<std::vector<double>>>> dashes;
+            std::size_t size() const { return std::max({colours.size(), hatches.size(), linewidths.size(), dashes.size()}); }
+        };
+        std::vector<std::pair<std::string, const Json*>> rest;
+        std::vector<Style> styles;
+        for (const auto& [rawName, value] : call.kwargs) {
+            const std::string name = fullName(rawName, patchAliases);
+            if (std::find(std::begin(names), std::end(names), name) != std::end(names)) continue;
+            if (name != "facecolor" && name != "edgecolor" && name != "hatch" && name != "linewidth" && name != "linestyle") {
+                rest.emplace_back(name, &value);
+                continue;
+            }
+            Style s;
+            s.name = name;
+            const Json* seq = value.isString() ? nullptr : sequence(value);
+            if (seq && seq->items().empty()) return *error = where + ": " + name + " must not be an empty sequence", false;
+            if (name == "facecolor" || name == "edgecolor") {
+                std::string lower = value.isString() ? value.asString() : "";
+                std::transform(lower.begin(), lower.end(), lower.begin(), [](unsigned char c) { return char(std::tolower(c)); });
+                if (value.isNull()) {
+                    s.colours = {std::nullopt};
+                } else if (lower == "none") {
+                    s.colours = {colors::Spec(value.asString())};
+                } else {
+                    std::vector<colors::Spec> list;
+                    if (!colorList(value, &list)) return *error = where + ": " + name + " is not a colour", false;
+                    for (const auto& item : list) {
+                        const auto rgba = colors::toRgba(item, std::nullopt, rc_, nullptr);
+                        if (!rgba) return *error = where + ": " + name + " is not a colour", false;
+                        if (colors::isNone(item) && list.size() == 1) break;  // to_rgba_array('none'): no rows
+                        s.colours.push_back(std::vector<double>(rgba->begin(), rgba->end()));
+                    }
+                    if (s.colours.empty()) return *error = where + ": " + name + " must not be empty", false;
+                }
+            } else if (name == "hatch") {
+                if (value.isString() || value.isNull()) s.hatches = {value.isNull() ? std::nullopt : std::optional<std::string>(value.asString())};
+                else if (!seq) return *error = where + ": hatch must be a string", false;
+                else
+                    for (const Json& h : seq->items()) {
+                        if (!h.isNull() && !h.isString()) return *error = where + ": hatch must be strings", false;
+                        s.hatches.push_back(h.isNull() ? std::nullopt : std::optional<std::string>(h.asString()));
+                    }
+            } else if (name == "linewidth") {
+                std::vector<double> l;
+                if (value.isNull()) s.linewidths = {std::nullopt};
+                else if (readNumber(value, &one)) s.linewidths = {one};
+                else if (numbers(value, &l)) s.linewidths.assign(l.begin(), l.end());
+                else return *error = where + ": linewidth must be numbers", false;
+            } else {
+                // mlines._get_dash_patterns: one style or one per data set (named styles only)
+                std::vector<std::string> list;
+                if (value.isString()) list = {value.asString()};
+                else if (seq)
+                    for (const Json& l : seq->items()) {
+                        if (!l.isString()) return *error = where + ": linestyle given as dashes is not supported yet", false;
+                        list.push_back(l.asString());
+                    }
+                else return *error = where + ": linestyle given as dashes is not supported yet", false;
+                for (std::string style : list) {
+                    if (style == "-") style = "solid";
+                    else if (style == "--") style = "dashed";
+                    else if (style == "-.") style = "dashdot";
+                    else if (style == ":") style = "dotted";
+                    if (style == "solid" || style == "None" || style == "none" || style == "" || style == " ")
+                        s.dashes.push_back({0.0, std::nullopt});
+                    else if (style == "dashed" || style == "dashdot" || style == "dotted")
+                        s.dashes.push_back(dashPattern(style, rc_));
+                    else
+                        return *error = where + ": Do not know how to convert that to dashes", false;
+                }
+            }
+            styles.push_back(std::move(s));
+        }
+
+        // the histograms: shared edges for several data sets (np.histogram_bin_edges of them all)
+        if (!binRange) {
+            double xmin = std::numeric_limits<double>::infinity(), xmax = -xmin;
+            for (const auto& xi : x) {
+                if (xi.empty()) continue;
+                double lo = std::numeric_limits<double>::quiet_NaN(), hi = lo;  // np.nanmin / np.nanmax
+                for (double v : xi)
+                    if (!std::isnan(v)) {
+                        if (std::isnan(lo) || v < lo) lo = v;
+                        if (std::isnan(hi) || v > hi) hi = v;
+                    }
+                if (lo < xmin) xmin = lo;  // (min(xmin, nan) keeps xmin)
+                if (hi > xmax) xmax = hi;
+            }
+            if (xmin <= xmax) binRange = std::make_pair(xmin, xmax);
+        }
+        std::optional<std::pair<double, double>> histRange;
+        std::vector<double> edges;
+        std::string why;
+        if (!inputEmpty && nx > 1) {
+            std::vector<double> all, allWeights;
+            for (std::size_t i = 0; i < nx; ++i) {
+                all.insert(all.end(), x[i].begin(), x[i].end());
+                if (!w.empty()) allWeights.insert(allWeights.end(), w[i].begin(), w[i].end());
+            }
+            if (!support::histogramBinEdges(all, bins, binRange, w.empty() ? nullptr : &allWeights, &edges, &why))
+                return *error = where + ": " + why, false;
+            bins = support::Bins{std::nullopt, edges};
+        } else {
+            histRange = binRange;
+        }
+        std::vector<std::vector<double>> tops(nx);
+        for (std::size_t i = 0; i < nx; ++i) {
+            if (!support::histogram(x[i], bins, histRange, density && !stacked, w.empty() ? nullptr : &w[i], &tops[i], &edges, &why))
+                return *error = where + ": " + why, false;
+            bins = support::Bins{std::nullopt, edges};
+        }
+        const std::size_t nb = edges.empty() ? 0 : edges.size() - 1;
+        std::vector<double> totwidth(nb);  // np.diff(bins)
+        for (std::size_t b = 0; b < nb; ++b) totwidth[b] = edges[b + 1] - edges[b];
+        if (stacked) {
+            for (std::size_t i = 1; i < nx; ++i)
+                for (std::size_t b = 0; b < nb; ++b) tops[i][b] = tops[i - 1][b] + tops[i][b];
+            if (density) {
+                const double total = support::npSum(tops.back());
+                for (auto& top : tops)
+                    for (std::size_t b = 0; b < nb; ++b) top[b] = (top[b] / totwidth[b]) / total;
+            }
+        }
+        if (cumulative) {
+            double c = 0;
+            const bool reverse = given[5]->isNumber() && readNumber(*given[5], &c) && c < 0;
+            for (auto& top : tops) {
+                if (density)
+                    for (std::size_t b = 0; b < nb; ++b) top[b] = top[b] * totwidth[b];
+                if (reverse)
+                    for (std::size_t b = nb - 1; b-- > 0;) top[b] = top[b + 1] + top[b];
+                else
+                    for (std::size_t b = 1; b < nb; ++b) top[b] = top[b - 1] + top[b];
+            }
+        }
+
+        // the bars: one bar() call per data set, side by side or stacked
+        double dr = 1.0;
+        if (given[10]) {
+            if (!readNumber(*given[10], &dr)) return *error = where + ": rwidth must be a number", false;
+            if (!std::isnan(dr)) dr = std::min(std::max(dr, 0.0), 1.0);  // np.clip(rwidth, 0, 1)
+        } else if (nx > 1 && (!stacked || rc_.boolean("_internal.classic_mode"))) {
+            dr = 0.8;
+        }
+        std::vector<double> width(nb), dw(nb, 0.0), boffset(nb, 0.0);
+        if (histtype == "bar" && !stacked) {
+            for (std::size_t b = 0; b < nb; ++b) {
+                width[b] = dr * totwidth[b] / double(nx);
+                boffset[b] = -0.5 * dr * totwidth[b] * (1 - 1 / double(nx));
+            }
+            dw = width;
+        } else {
+            for (std::size_t b = 0; b < nb; ++b) width[b] = dr * totwidth[b];
+        }
+        if (align == "mid")
+            for (std::size_t b = 0; b < nb; ++b) boffset[b] += 0.5 * totwidth[b];
+        else if (align == "right")
+            for (std::size_t b = 0; b < nb; ++b) boffset[b] += totwidth[b];
+        const bool horizontal = orientation == "horizontal";
+        // bottom: None (zeros), a number or one per bin
+        std::optional<Json> bottom;
+        std::vector<double> bottomValues;
+        if (given[6]) {
+            if (readNumber(*given[6], &one)) bottomValues = {one};
+            else if (!numbers(*given[6], &bottomValues)) return *error = where + ": bottom must be numbers", false;
+            bottom = *given[6];
+        }
+        std::vector<std::vector<Rectangle*>> patches;
+        for (std::size_t i = 0; i < nx; ++i) {
+            if (!bottom) {
+                bottomValues.assign(nb, 0.0);
+                bottom = numbersJson(bottomValues);
+            }
+            std::vector<double> height = tops[i], positions(nb);
+            if (stacked) {
+                if (bottomValues.size() != 1 && bottomValues.size() != nb)
+                    return *error = where + ": bottom cannot be broadcast to the bins", false;
+                for (std::size_t b = 0; b < nb; ++b) height[b] = tops[i][b] - bottomValues[bottomValues.size() == 1 ? 0 : b];
+            }
+            for (std::size_t b = 0; b < nb; ++b) positions[b] = edges[b] + boffset[b];
+            model::Call c;
+            c.on = call.on;
+            c.method = horizontal ? "barh" : "bar";
+            c.args = {numbersJson(positions), numbersJson(height), numbersJson(width)};
+            c.kwargs.emplace_back("align", Json::string("center"));
+            c.kwargs.emplace_back("log", Json::boolean(log));
+            c.kwargs.emplace_back("color", colorJson(setColors[i]));
+            c.kwargs.emplace_back(horizontal ? "left" : "bottom", *bottom);
+            if (!bar(ax, c, error)) return false;
+            patches.push_back(ax.containers.back().bars);
+            if (stacked) {
+                bottomValues = tops[i];
+                bottom = numbersJson(bottomValues);
+            }
+            for (std::size_t b = 0; b < nb; ++b) boffset[b] += dw[b];
+        }
+        for (std::size_t i = 1; i < patches.size(); ++i)
+            for (Rectangle* r : patches[i]) r->stickyX.clear(), r->stickyY.clear();
+        // the keywords on every bar, the cycling ones last (kwargs.update(next(style_gen)))
+        for (std::size_t i = 0; i < patches.size(); ++i) {
+            for (std::size_t k = 0; k < patches[i].size(); ++k) {
+                Rectangle& r = *patches[i][k];
+                for (const auto& [name, value] : rest)
+                    if (!patchProperty(r, name, *value, where, error)) return false;
+                for (const Style& s : styles) {
+                    const std::size_t at = i % s.size();
+                    if (s.name == "facecolor") r.setFacecolor(s.colours[at]);
+                    else if (s.name == "edgecolor") r.setEdgecolor(s.colours[at]);
+                    else if (s.name == "hatch") r.setHatch(s.hatches[at], true);
+                    else if (s.name == "linewidth") r.setLinewidth(s.linewidths[at]);
+                    else r.setDashPattern(s.dashes[at].first, s.dashes[at].second);
+                }
+                if (k == 0 && i < labels.size()) r.label = labels[i];
+                else if (k > 0) r.label = "_nolegend_";
+            }
+        }
         return true;
     }
 

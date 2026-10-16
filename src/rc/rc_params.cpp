@@ -185,7 +185,7 @@ const std::vector<std::string>& Params::inertKeys() {
         "date.interval_multiples", "docstring.hardcopy", "figure.constrained_layout.h_pad",
         "figure.constrained_layout.hspace", "figure.constrained_layout.w_pad", "figure.constrained_layout.wspace",
         "figure.frameon", "figure.labelsize", "figure.labelweight", "figure.max_open_warning", "figure.raise_window",
-        "hist.bins", "image.aspect", "image.composite_image", "image.interpolation",
+        "image.aspect", "image.composite_image", "image.interpolation",
         "image.interpolation_stage", "image.lut", "image.origin", "image.resample", "interactive", "keymap.back",
         "keymap.copy", "keymap.forward", "keymap.fullscreen", "keymap.grid", "keymap.grid_minor", "keymap.help",
         "keymap.home", "keymap.pan", "keymap.quit", "keymap.quit_all", "keymap.save", "keymap.xscale",
