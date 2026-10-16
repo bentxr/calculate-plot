@@ -212,6 +212,8 @@ public:
     // (nanmin / nanmax) grow the data limits and an autoscale is requested.
     Collection& addLinesCollection(std::unique_ptr<Collection> collection);
     void requestAutoscaleView(bool x, bool y);
+    // update_datalim(xys): nothing unless some value is finite; then the data limits grow by the points
+    void updateDatalim(const std::vector<std::array<double, 2>>& xys, bool updatex = true, bool updatey = true);
     void setScale(bool x, const std::string& name);  // set_xscale / set_yscale
     void unstaleViewLim();                            // what reading Axes.viewLim does first
     void clearStale(bool x) { (x ? staleX_ : staleY_) = false; }
@@ -246,7 +248,6 @@ private:
     std::shared_ptr<SharedAxes> shared_[2];  // x, y
     std::size_t cycleIndex_ = 0, patchCycleIndex_ = 0;
     colors::Spec nextColor(std::size_t* index);
-    void updateDatalim(const std::vector<std::array<double, 2>>& xys, bool updatex = true, bool updatey = true);
     void updateFromPath(const std::vector<double>& xy, bool updatex, bool updatey);
 };
 

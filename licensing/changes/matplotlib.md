@@ -220,6 +220,9 @@ it comes from in its first lines. The changes, as a whole:
   LineCollection.get_segments, Patch.get_window_extent, Bbox.intersection) and cbook._auto_format_str, with
   Python's % formatting and str.format of one number ported in src/support/pyformat.cpp (our own code: the
   rules of the Python language, checked against an oracle).
+  Steps: Axes.step (plot with drawstyle 'steps-<where>'), Axes.stairs and patches.StepPatch (_update_path with
+  cbook.contiguous_regions), HandlerStepPatch; Patch.__init__'s order of parameters shared by Polygon and
+  StepPatch.
   Colour sequences: colors.py's ColorSequenceRegistry (the built-in sequences only) with _cm.py's data
   (data/color_sequences.json; ColorBrewer's schemes in data/color_sequences_colorbrewer.json), written as JSON
   numbers by tools/oracle/make_color_sequences.py; rcsetup.py's _single_string_color_list takes them in cycles.

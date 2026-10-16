@@ -106,7 +106,7 @@ public:
                 {"hlines", "hlines"}, {"vlines", "vlines"}, {"grid", "grid"}, {"legend", "legend"}, {"text", "text"},
                 {"title", "set_title"}, {"xlabel", "set_xlabel"}, {"ylabel", "set_ylabel"}, {"xlim", "set_xlim"},
                 {"ylim", "set_ylim"}, {"xscale", "set_xscale"}, {"yscale", "set_yscale"}, {"bar", "bar"}, {"barh", "barh"},
-                {"hist", "hist"}, {"fill", "fill"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}};
+                {"hist", "hist"}, {"fill", "fill"}, {"step", "step"}, {"stairs", "stairs"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}};
             static const std::map<std::string, std::string> ofFigure = {
                 {"suptitle", "suptitle"}, {"figtext", "text"}, {"subplots_adjust", "subplots_adjust"}, {"tight_layout", "tight_layout"}};
             const auto a = ofAxes.find(call.method);
@@ -196,6 +196,7 @@ private:
             {"Polygon", {"xy"}, 1},
             {"annotate", {"text", "xy", "xytext", "xycoords", "textcoords", "arrowprops", "annotation_clip"}, 7},
             {"bar_label", {"container", "labels"}, 2},
+            {"stairs", {"values", "edges"}, 2},
             {"add_patch", {"p"}, 1},
         };
         const std::string where = (call.on.empty() ? "plt" : call.on) + "." + call.method;
@@ -804,6 +805,8 @@ private:
         if (call.method == "axhspan" || call.method == "axvspan") return axspan(ax, call, error);
         if (call.method == "bar" || call.method == "barh") return bar(ax, call, error);
         if (call.method == "fill") return fill(ax, call, error);
+        if (call.method == "step") return step(ax, call, error);
+        if (call.method == "stairs") return stairs(ax, call, error);
         if (call.method == "add_patch") return addPatch(ax, call, error);
         if (call.method == "hist") return hist(ax, call, error);
         if (call.method == "vlines" || call.method == "hlines") return lines(ax, call, error);
@@ -2163,9 +2166,146 @@ private:
         return true;
     }
 
-    // plt.Polygon(xy, *, closed=True, **kwargs): Patch.__init__'s own parameters in its order (a colour
-    // replaces edgecolor, hatchcolor and facecolor, which are then not read), then the other keywords
-    // through their setters as given (aliases included: no normalize_kwargs here).
+    // Patch.__init__(*, edgecolor=None, facecolor=None, color=None, linewidth=None, linestyle=None,
+    // antialiased=None, hatch=None, fill=True, capstyle=None, joinstyle=None, hatchcolor=None,
+    // edgegapcolor=None, **kwargs): its own parameters in its order (fill first; a colour replaces
+    // edgecolor, hatchcolor and facecolor, which are then not read), then the other keywords through
+    // their setters as given (aliases included: no normalize_kwargs there).
+    bool patchConstructor(Patch& p, const std::vector<std::pair<std::string, const Json*>>& kwargs, const std::string& where,
+                          std::string* error) {
+        static const char* const own[] = {"edgecolor", "facecolor", "color", "linewidth", "linestyle", "antialiased", "hatch",
+                                          "fill", "capstyle", "joinstyle", "hatchcolor", "edgegapcolor"};
+        const auto find = [&](const char* name) -> const Json* {
+            for (const auto& [n, v] : kwargs)
+                if (n == name) return v;
+            return nullptr;
+        };
+        const auto value = [&](const char* name) {
+            const Json* v = find(name);
+            return v && !v->isNull() ? v : nullptr;
+        };
+        if (const Json* v = find("fill"); v && !patchProperty(p, "fill", *v, where, error)) return false;
+        if (const Json* c = value("color")) {
+            if (!patchProperty(p, "color", *c, where, error)) return false;
+        } else {
+            for (const char* name : {"edgecolor", "hatchcolor", "facecolor"})
+                if (const Json* v = value(name); v && !patchProperty(p, name, *v, where, error)) return false;
+        }
+        for (const char* name : {"linestyle", "linewidth", "hatch"})
+            if (const Json* v = value(name); v && !patchProperty(p, name, *v, where, error)) return false;
+        for (const char* name : {"antialiased", "capstyle", "joinstyle", "edgegapcolor"})
+            if (value(name)) return *error = where + ": unsupported keyword " + name, false;
+        for (const auto& [name, v] : kwargs) {
+            if (std::find(std::begin(own), std::end(own), name) != std::end(own)) continue;
+            if (!patchProperty(p, name, *v, where, error)) return false;
+        }
+        return true;
+    }
+
+    // Axes.step(x, y, *args, where='pre', data=None, **kwargs): plot with drawstyle 'steps-<where>'
+    bool step(Axes& ax, const model::Call& call, std::string* error) {
+        const std::string where = call.on + ".step";
+        if (call.args.size() < 2) return *error = where + ": x and y are required", false;
+        std::string place = "pre";
+        model::Call c = call;
+        c.method = "plot";
+        c.kwargs.clear();
+        for (const auto& [name, value] : call.kwargs) {
+            if (name == "where") {
+                if (!value.isString() || (value.asString() != "pre" && value.asString() != "post" && value.asString() != "mid"))
+                    return *error = where + ": " + (value.isString() ? "'" + value.asString() + "'" : std::string("that")) +
+                                    " is not a valid value for where; supported values are 'pre', 'post', 'mid'",
+                           false;
+                place = value.asString();
+            } else if (name == "data") {
+                if (!value.isNull()) return *error = where + ": data is not supported yet", false;
+            } else {
+                c.kwargs.emplace_back(name, value);
+            }
+        }
+        // kwargs['drawstyle'] = 'steps-' + where: in place of a drawstyle given, else last
+        const Json drawstyle = Json::string("steps-" + place);
+        auto slot = std::find_if(c.kwargs.begin(), c.kwargs.end(), [](const auto& kw) { return kw.first == "drawstyle"; });
+        if (slot != c.kwargs.end()) slot->second = drawstyle;
+        else c.kwargs.emplace_back("drawstyle", drawstyle);
+        return plot(ax, c, error);
+    }
+
+    // Axes.stairs(values, edges=None, *, orientation='vertical', baseline=0, fill=False, **kwargs): a
+    // StepPatch in the colour given or the lines' next one (as its edge, or its face when filled)
+    bool stairs(Axes& ax, const model::Call& call, std::string* error) {
+        const std::string where = call.on + ".stairs";
+        const Json* valuesJson = argument(call, 0, "values");
+        if (!valuesJson) return *error = where + ": values is required", false;
+        std::vector<double> values, edges;
+        double one = 0;
+        if (readNumber(*valuesJson, &one)) values = {one};
+        else if (!numbers(*valuesJson, &values)) return *error = where + ": values must be numbers", false;
+        if (const Json* e = argument(call, 1, "edges"); e && !e->isNull()) {
+            if (readNumber(*e, &one)) edges = {one};
+            else if (!numbers(*e, &edges)) return *error = where + ": edges must be numbers", false;
+        } else {
+            for (std::size_t i = 0; i <= values.size(); ++i) edges.push_back(double(i));  // np.arange(len(values) + 1)
+        }
+        bool vertical = true;
+        if (const Json* o = keyword(call, "orientation")) {
+            if (!o->isString()) return *error = where + ": orientation must be a string", false;
+            vertical = o->asString() == "vertical";  // (anything else is horizontal)
+        }
+        StepBaseline baseline;
+        if (const Json* b = keyword(call, "baseline")) {
+            if (b->isNull()) baseline.kind = StepBaseline::None;
+            else if (readNumber(*b, &one)) baseline.values = {one};
+            else if (numbers(*b, &baseline.values)) baseline.kind = StepBaseline::Array;
+            else return *error = where + ": Invalid `baseline` specified", false;
+        }
+        bool fill = false;
+        static const Json no = Json::boolean(false);
+        const Json* fillJson = keyword(call, "fill");
+        if (!fillJson) fillJson = &no;
+        if (fillJson->isNull() || fillJson->isBool()) fill = !fillJson->isNull() && fillJson->asBool();
+        else if (readNumber(*fillJson, &one)) fill = one != 0;
+        else return *error = where + ": fill must be True or False", false;
+        // the colour: color= (popped, even None), else the lines' next one
+        std::vector<std::pair<std::string, const Json*>> kwargs;
+        Json color;
+        bool colorGiven = false;
+        for (const auto& [name, value] : call.kwargs) {
+            if (name == "values" || name == "edges" || name == "orientation" || name == "baseline" || name == "fill") continue;
+            if (name == "color") {
+                color = value;
+                colorGiven = true;
+                continue;
+            }
+            kwargs.emplace_back(name, &value);
+        }
+        if (!colorGiven) color = colorJson(ax.nextLineColor());
+        static const Json zero = Json::integer(0);
+        const auto setdefault = [&](const std::string& name, const Json* value) {
+            if (std::none_of(kwargs.begin(), kwargs.end(), [&](const auto& kw) { return kw.first == name; })) kwargs.emplace_back(name, value);
+        };
+        if (fill) {
+            setdefault("linewidth", &zero);
+            setdefault("facecolor", &color);
+        } else {
+            setdefault("edgecolor", &color);
+        }
+        Path path;
+        if (!stepPatchPath(values, edges, baseline, vertical, rc_, &path, error)) return *error = where + ": " + *error, false;
+        auto patch = std::make_unique<StepPatch>(rc_, path);
+        kwargs.emplace(kwargs.begin(), "fill", fillJson);  // (StepPatch(..., fill=fill, **kwargs))
+        if (!patchConstructor(*patch, kwargs, where, error)) return false;
+        Patch& added = ax.addPatch(std::move(patch));
+        if (baseline.kind != StepBaseline::None) {
+            // np.min(baseline): NaN wins
+            double low = baseline.values[0];
+            for (double b : baseline.values) low = std::isnan(low) || std::isnan(b) ? std::nan("") : std::min(low, b);
+            (vertical ? added.stickyY : added.stickyX).push_back(low);
+            ax.updateDatalim({vertical ? std::array<double, 2>{edges[0], low} : std::array<double, 2>{low, edges[0]}});
+        }
+        ax.requestAutoscaleView(true, true);
+        return true;
+    }
     bool polygon(const model::Call& call, std::string* error) {
         const std::string where = "plt.Polygon";
         if (call.as.size() > 1) return *error = where + " returns one object: name it once", false;
@@ -2182,27 +2322,10 @@ private:
             else return *error = where + ": closed must be True, False or None", false;
         }
         auto poly = std::make_unique<Polygon>(rc_, std::move(xy), closed);
-        static const char* const own[] = {"edgecolor", "facecolor", "color", "linewidth", "linestyle", "antialiased", "hatch",
-                                          "fill", "capstyle", "joinstyle", "hatchcolor", "edgegapcolor"};
-        const auto value = [&](const char* name) {
-            const Json* v = keyword(call, name);
-            return v && !v->isNull() ? v : nullptr;
-        };
-        if (const Json* v = keyword(call, "fill"); v && !patchProperty(*poly, "fill", *v, where, error)) return false;
-        if (const Json* c = value("color")) {
-            if (!patchProperty(*poly, "color", *c, where, error)) return false;
-        } else {
-            for (const char* name : {"edgecolor", "hatchcolor", "facecolor"})
-                if (const Json* v = value(name); v && !patchProperty(*poly, name, *v, where, error)) return false;
-        }
-        for (const char* name : {"linestyle", "linewidth", "hatch"})
-            if (const Json* v = value(name); v && !patchProperty(*poly, name, *v, where, error)) return false;
-        for (const char* name : {"antialiased", "capstyle", "joinstyle", "edgegapcolor"})
-            if (value(name)) return *error = where + ": unsupported keyword " + name, false;
-        for (const auto& [name, v] : call.kwargs) {
-            if (name == "xy" || name == "closed" || std::find(std::begin(own), std::end(own), name) != std::end(own)) continue;
-            if (!patchProperty(*poly, name, v, where, error)) return false;
-        }
+        std::vector<std::pair<std::string, const Json*>> kwargs;
+        for (const auto& [name, v] : call.kwargs)
+            if (name != "xy" && name != "closed") kwargs.emplace_back(name, &v);
+        if (!patchConstructor(*poly, kwargs, where, error)) return false;
         if (!call.as.empty()) {
             patches_[call.as[0]] = std::move(poly);
             addedPatches_.erase(call.as[0]);

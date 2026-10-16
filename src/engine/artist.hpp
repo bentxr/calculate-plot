@@ -1,5 +1,6 @@
 // Derived from Matplotlib 3.11.2: lib/matplotlib/artist.py, lib/matplotlib/patches.py (Patch,
-// Rectangle, Polygon), lib/matplotlib/lines.py (dash patterns).
+// Rectangle, Polygon, StepPatch), lib/matplotlib/lines.py (dash patterns), lib/matplotlib/cbook.py
+// (contiguous_regions).
 // Copyright (c) 2012- Matplotlib Development Team; All Rights Reserved
 // Licence: LICENSES/Matplotlib.txt. Changes: licensing/changes/matplotlib.md
 #pragma once
@@ -82,6 +83,9 @@ public:
         faceNumpy_ = true;
     }
     double linewidth() const { return linewidth_; }
+    const std::string& linestyle() const { return linestyle_; }  // get_linestyle: a name, or "dash pattern"
+    bool fill() const { return fill_; }                            // get_fill
+    const colors::Rgba& edgecolorRgba() const { return edgecolor_; }  // get_edgecolor()
     const colors::Rgba& facecolorRgba() const { return facecolor_; }  // get_facecolor()
     // The colours as they were set and as they resolved, to put back what a save changes for a while
     struct Colors {
@@ -173,6 +177,28 @@ public:
 
 private:
     std::optional<bool> closed_;
+    Path path_;
+};
+
+// The baseline of a StepPatch: None, one value, or one per step.
+struct StepBaseline {
+    enum Kind { None, Scalar, Array } kind = Scalar;
+    std::vector<double> values{0.0};
+};
+
+// StepPatch._update_path: for each run of steps whose value (and baseline) is not NaN, the edges
+// repeated, the values repeated, down to the baseline at both ends (closed back along an array
+// baseline; open without one); x and y swapped for horizontal steps. False with matplotlib's message.
+bool stepPatchPath(const std::vector<double>& values, const std::vector<double>& edges, const StepBaseline& baseline,
+                   bool vertical, const rc::Params& rc, Path* out, std::string* error);
+
+// patches.StepPatch: a PathPatch of those steps (made by stairs).
+class StepPatch : public Patch {
+public:
+    StepPatch(const rc::Params& rc, Path path) : Patch(rc), path_(std::move(path)) {}
+    Path path() const override { return path_; }
+
+private:
     Path path_;
 };
 

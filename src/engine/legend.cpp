@@ -551,6 +551,21 @@ Legend::Legend(const rc::Params& rc, Axes& parent, const std::vector<Artist*>& h
             rect->transform = trans;
             handleColors.push_back(colorsOf(*rect));
             handlebox->addArtist(std::move(rect));
+        } else if (auto* step = dynamic_cast<StepPatch*>(handles[i]); step && !step->fill() && !step->hatch()) {
+            // HandlerStepPatch of unfilled steps: a line across in the patch's edge colour, style and width
+            auto legline = std::make_unique<Line2D>(rc, std::vector<double>{0, w}, std::vector<double>{h / 2, h / 2});
+            const auto& stepEdge = step->edgecolorRgba();
+            legline->color = std::vector<double>(stepEdge.begin(), stepEdge.end());
+            std::string why;
+            if (step->linestyle() == "dash pattern") *error = "legend entries for steps with a dash pattern are not supported yet";
+            else if (!legline->setLinestyle(step->linestyle(), &why)) *error = why;
+            legline->setLinewidth(step->linewidth());
+            legline->setDrawstyle("default");
+            std::string unused;
+            legline->setMarker("", &unused);
+            legline->transform = trans;
+            handleColors.push_back(colorsOf(*legline));
+            handlebox->addArtist(std::move(legline));
         } else if (auto* patch = dynamic_cast<Patch*>(handles[i])) {  // HandlerPatch (a Rectangle like the patch)
             auto rect = std::make_unique<Rectangle>(rc, -xd, -yd, w, h);
             rect->updateFrom(*patch);

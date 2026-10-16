@@ -1555,6 +1555,24 @@ TEST(BarCalls, LabelsAreReadAsMatplotlibReadsThem) {
     EXPECT_EQ(error(ref, R"({"fontsize": "huge"})").find("axs[0].bar_label:"), 0u);
 }
 
+// Axes.step (plot with a step draw style) and Axes.stairs (a StepPatch)
+TEST(StepCalls, ArgumentsAreReadAsMatplotlibReadsThem) {
+    const auto error = [](const std::string& call, const std::string& args, const std::string& kwargs) {
+        return draw(kSubplots + R"({"on": "axs[0]", "call": ")" + call + R"(", "args": )" + args + R"(, "kwargs": )" + kwargs + "}").error;
+    };
+    EXPECT_EQ(error("step", "[[1, 2], [3, 4]]", R"({"where": "post", "drawstyle": "default"})"), "");
+    EXPECT_EQ(error("step", "[[1, 2], [3, 4]]", R"({"where": "after"})"),
+              "axs[0].step: 'after' is not a valid value for where; supported values are 'pre', 'post', 'mid'");
+    EXPECT_EQ(error("step", "[[1, 2]]", "{}"), "axs[0].step: x and y are required");
+    EXPECT_EQ(error("stairs", "[[1, 2]]", R"({"baseline": [0, 1], "fill": true})"), "");
+    EXPECT_EQ(error("stairs", "[[1, 2]]", R"({"edges": [0, 1]})"),
+              "axs[0].stairs: Size mismatch between \"values\" and \"edges\". Expected `len(values) + 1 == len(edges)`, but "
+              "`len(values) = 2` and `len(edges) = 2`.");
+    EXPECT_EQ(error("stairs", "[[1, 2]]", R"({"edges": [0, {"$float": "nan"}, 2]})"), "axs[0].stairs: Nan values in \"edges\" are disallowed");
+    EXPECT_EQ(error("stairs", "[[1, 2]]", R"({"baseline": [0, 1, 2]})").find("axs[0].stairs: operands could not be broadcast"), 0u);
+    EXPECT_EQ(error("stairs", "[[1, 2]]", R"({"capstyle": "round"})"), "axs[0].stairs: unsupported keyword capstyle");
+}
+
 TEST(HistCalls, ArgumentsAreReadAsMatplotlibReadsThem) {
     const auto error = [](const std::string& args, const std::string& kwargs) {
         return draw(kSubplots + R"({"on": "axs[0]", "call": "hist", "args": )" + args + R"(, "kwargs": )" + kwargs + "}").error;

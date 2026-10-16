@@ -1,11 +1,13 @@
 // Derived from Matplotlib 3.11.2: lib/matplotlib/artist.py, lib/matplotlib/patches.py (Patch,
-// Rectangle, Polygon), lib/matplotlib/lines.py (dash patterns).
+// Rectangle, Polygon, StepPatch), lib/matplotlib/lines.py (dash patterns), lib/matplotlib/cbook.py
+// (contiguous_regions).
 // Copyright (c) 2012- Matplotlib Development Team; All Rights Reserved
 // Licence: LICENSES/Matplotlib.txt. Changes: licensing/changes/matplotlib.md
 
 #include "engine/artist.hpp"
 
 #include "rc/rc_params.hpp"
+#include "support/histogram.hpp"
 #include "support/pynum.hpp"
 
 #include <cmath>
@@ -285,6 +287,65 @@ void Polygon::setXY(std::vector<double> xy) {
         xy.resize(xy.size() - 2);
     }
     path_ = Path::make(std::move(xy), {}, rc_, closed);
+}
+
+bool stepPatchPath(const std::vector<double>& values, const std::vector<double>& edges, const StepBaseline& baseline,
+                   bool vertical, const rc::Params& rc, Path* out, std::string* error) {
+    if (std::isnan(support::npSum(edges))) return *error = "Nan values in \"edges\" are disallowed", false;
+    if (edges.size() != values.size() + 1)
+        return *error = "Size mismatch between \"values\" and \"edges\". Expected `len(values) + 1 == len(edges)`, but `len(values) = " +
+                        std::to_string(values.size()) + "` and `len(edges) = " + std::to_string(edges.size()) + "`.",
+               false;
+    const bool array = baseline.kind == StepBaseline::Array;
+    if (array && baseline.values.size() != values.size())
+        return *error = "operands could not be broadcast together with shapes (" + std::to_string(values.size()) + ",) (" +
+                        std::to_string(baseline.values.size()) + ",)",
+               false;
+    const auto base = [&](std::size_t i) { return baseline.values[array ? i : 0]; };
+    std::vector<double> vertices;
+    std::vector<unsigned char> codes;
+    // cbook.contiguous_regions(~nan_mask): the runs [i0, i1) of steps to draw
+    std::size_t i = 0;
+    while (i < values.size()) {
+        const auto bad = [&](std::size_t k) { return std::isnan(values[k]) || (baseline.kind != StepBaseline::None && std::isnan(base(k))); };
+        if (bad(i)) {
+            ++i;
+            continue;
+        }
+        const std::size_t i0 = i;
+        while (i < values.size() && !bad(i)) ++i;
+        const std::size_t i1 = i;
+        std::vector<double> x, y;
+        for (std::size_t k = i0; k <= i1; ++k) x.push_back(edges[k]), x.push_back(edges[k]);  // np.repeat
+        for (std::size_t k = i0; k < i1; ++k) y.push_back(values[k]), y.push_back(values[k]);
+        if (baseline.kind == StepBaseline::None) {
+            y.insert(y.begin(), y.front());
+            y.push_back(y[y.size() - 1]);
+        } else if (!array) {
+            y.insert(y.begin(), base(0));
+            y.push_back(base(0));
+        } else {
+            std::vector<double> b;  // np.repeat(baseline[i0:i1], 2)[::-1]
+            for (std::size_t k = i1; k-- > i0;) b.push_back(base(k)), b.push_back(base(k));
+            const std::vector<double> back(x.rbegin(), x.rend());
+            x.insert(x.end(), back.begin(), back.end());
+            std::vector<double> yy{b.back()};
+            yy.insert(yy.end(), y.begin(), y.end());
+            yy.push_back(b.front());
+            yy.push_back(b.front());
+            yy.insert(yy.end(), b.begin(), b.end());
+            yy.push_back(b.back());
+            y = yy;
+        }
+        for (std::size_t k = 0; k < x.size(); ++k) {
+            vertices.push_back(vertical ? x[k] : y[k]);
+            vertices.push_back(vertical ? y[k] : x[k]);
+            codes.push_back(k == 0 ? MOVETO : LINETO);
+        }
+    }
+    *out = Path::make(vertices, codes, rc);
+    if (!out->codes) out->codes = std::make_shared<const std::vector<unsigned char>>();  // (an empty array, not None)
+    return true;
 }
 
 FancyBboxPatch::FancyBboxPatch(const rc::Params& rc, double x, double y, double width, double height,

@@ -3588,6 +3588,403 @@
   },
   {
    "on": "axes",
+   "call": "step",
+   "parameters": [
+    {
+     "name": "x",
+     "positional": true,
+     "valid": "array-like",
+     "kind": "other",
+     "required": true
+    },
+    {
+     "name": "y",
+     "positional": true,
+     "valid": "array-like",
+     "kind": "other",
+     "required": true
+    },
+    {
+     "name": "where",
+     "positional": false,
+     "valid": "{'pre', 'post', 'mid'}, default: 'pre'",
+     "kind": "choice",
+     "choices": [
+      "pre",
+      "post",
+      "mid"
+     ],
+     "default": "pre"
+    },
+    {
+     "name": "data",
+     "positional": false,
+     "valid": "indexable object, optional",
+     "kind": "other",
+     "default": null
+    }
+   ],
+   "artist": "Line2D",
+   "properties": [
+    {
+     "name": "alpha",
+     "valid": "float or None",
+     "kind": "number"
+    },
+    {
+     "name": "clip_on",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "color",
+     "valid": ":mpltype:`color`",
+     "kind": "colour",
+     "aliases": [
+      "c"
+     ]
+    },
+    {
+     "name": "dash_capstyle",
+     "valid": "`.CapStyle` or {'butt', 'projecting', 'round'}",
+     "kind": "choice",
+     "choices": [
+      "butt",
+      "projecting",
+      "round"
+     ]
+    },
+    {
+     "name": "dash_joinstyle",
+     "valid": "`.JoinStyle` or {'miter', 'round', 'bevel'}",
+     "kind": "choice",
+     "choices": [
+      "miter",
+      "round",
+      "bevel"
+     ]
+    },
+    {
+     "name": "drawstyle",
+     "valid": "{'default', 'steps', 'steps-pre', 'steps-mid', 'steps-post'}, default: 'default'",
+     "kind": "choice",
+     "choices": [
+      "default",
+      "steps",
+      "steps-pre",
+      "steps-mid",
+      "steps-post"
+     ],
+     "aliases": [
+      "ds"
+     ]
+    },
+    {
+     "name": "fillstyle",
+     "valid": "{'full', 'left', 'right', 'bottom', 'top', 'none'}",
+     "kind": "choice",
+     "choices": [
+      "full",
+      "left",
+      "right",
+      "bottom",
+      "top",
+      "none"
+     ]
+    },
+    {
+     "name": "gapcolor",
+     "valid": ":mpltype:`color` or None",
+     "kind": "colour"
+    },
+    {
+     "name": "label",
+     "valid": "object",
+     "kind": "text"
+    },
+    {
+     "name": "linestyle",
+     "valid": "{'-', '--', '-.', ':', '', ...} or (offset, on-off-seq)",
+     "kind": "choice",
+     "choices": [
+      "-",
+      "--",
+      "-.",
+      ":",
+      ""
+     ],
+     "aliases": [
+      "ls"
+     ]
+    },
+    {
+     "name": "linewidth",
+     "valid": "float",
+     "kind": "number",
+     "aliases": [
+      "lw"
+     ]
+    },
+    {
+     "name": "marker",
+     "valid": "marker style string, `~.path.Path` or `~.markers.MarkerStyle`",
+     "kind": "other"
+    },
+    {
+     "name": "markeredgecolor",
+     "valid": ":mpltype:`color`",
+     "kind": "colour",
+     "aliases": [
+      "mec"
+     ]
+    },
+    {
+     "name": "markeredgewidth",
+     "valid": "float",
+     "kind": "number",
+     "aliases": [
+      "mew"
+     ]
+    },
+    {
+     "name": "markerfacecolor",
+     "valid": ":mpltype:`color`",
+     "kind": "colour",
+     "aliases": [
+      "mfc"
+     ]
+    },
+    {
+     "name": "markerfacecoloralt",
+     "valid": ":mpltype:`color`",
+     "kind": "colour",
+     "aliases": [
+      "mfcalt"
+     ]
+    },
+    {
+     "name": "markersize",
+     "valid": "float",
+     "kind": "number",
+     "aliases": [
+      "ms"
+     ]
+    },
+    {
+     "name": "solid_capstyle",
+     "valid": "`.CapStyle` or {'butt', 'projecting', 'round'}",
+     "kind": "choice",
+     "choices": [
+      "butt",
+      "projecting",
+      "round"
+     ]
+    },
+    {
+     "name": "solid_joinstyle",
+     "valid": "`.JoinStyle` or {'miter', 'round', 'bevel'}",
+     "kind": "choice",
+     "choices": [
+      "miter",
+      "round",
+      "bevel"
+     ]
+    },
+    {
+     "name": "visible",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "zorder",
+     "valid": "float",
+     "kind": "number"
+    }
+   ]
+  },
+  {
+   "on": "axes",
+   "call": "stairs",
+   "parameters": [
+    {
+     "name": "values",
+     "positional": true,
+     "valid": "array-like",
+     "kind": "other",
+     "required": true
+    },
+    {
+     "name": "edges",
+     "positional": true,
+     "valid": "array-like",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "orientation",
+     "positional": false,
+     "valid": "{'vertical', 'horizontal'}, default: 'vertical'",
+     "kind": "choice",
+     "choices": [
+      "vertical",
+      "horizontal"
+     ],
+     "default": "vertical"
+    },
+    {
+     "name": "baseline",
+     "positional": false,
+     "valid": "float, array-like or None, default: 0",
+     "kind": "number",
+     "default": 0
+    },
+    {
+     "name": "fill",
+     "positional": false,
+     "valid": "bool, default: False",
+     "kind": "bool",
+     "default": false
+    },
+    {
+     "name": "data",
+     "positional": false,
+     "valid": "indexable object, optional",
+     "kind": "other",
+     "default": null
+    }
+   ],
+   "artist": "StepPatch",
+   "properties": [
+    {
+     "name": "alpha",
+     "valid": "float or None",
+     "kind": "number"
+    },
+    {
+     "name": "capstyle",
+     "valid": "`.CapStyle` or {'butt', 'projecting', 'round'}",
+     "kind": "choice",
+     "choices": [
+      "butt",
+      "projecting",
+      "round"
+     ]
+    },
+    {
+     "name": "clip_on",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "color",
+     "valid": ":mpltype:`color`",
+     "kind": "colour"
+    },
+    {
+     "name": "edgecolor",
+     "valid": ":mpltype:`color` or None",
+     "kind": "colour",
+     "aliases": [
+      "ec"
+     ]
+    },
+    {
+     "name": "edgegapcolor",
+     "valid": ":mpltype:`color` or None",
+     "kind": "colour"
+    },
+    {
+     "name": "facecolor",
+     "valid": ":mpltype:`color` or None",
+     "kind": "colour",
+     "aliases": [
+      "fc"
+     ]
+    },
+    {
+     "name": "hatch",
+     "valid": "{'/', '\\\\', '|', '-', '+', 'x', 'o', 'O', '.', '*'}",
+     "kind": "choice",
+     "choices": [
+      "/",
+      "\\\\",
+      "|",
+      "-",
+      "+",
+      "x",
+      "o",
+      "O",
+      ".",
+      "*"
+     ]
+    },
+    {
+     "name": "hatch_linewidth",
+     "valid": "unknown",
+     "kind": "other"
+    },
+    {
+     "name": "hatchcolor",
+     "valid": ":mpltype:`color` or 'edge' or None",
+     "kind": "colour"
+    },
+    {
+     "name": "joinstyle",
+     "valid": "`.JoinStyle` or {'miter', 'round', 'bevel'}",
+     "kind": "choice",
+     "choices": [
+      "miter",
+      "round",
+      "bevel"
+     ]
+    },
+    {
+     "name": "label",
+     "valid": "object",
+     "kind": "text"
+    },
+    {
+     "name": "linestyle",
+     "valid": "{'-', '--', '-.', ':', '', ...} or (offset, on-off-seq)",
+     "kind": "choice",
+     "choices": [
+      "-",
+      "--",
+      "-.",
+      ":",
+      ""
+     ],
+     "aliases": [
+      "ls"
+     ]
+    },
+    {
+     "name": "linewidth",
+     "valid": "float or None",
+     "kind": "number",
+     "aliases": [
+      "lw"
+     ]
+    },
+    {
+     "name": "path",
+     "valid": "unknown",
+     "kind": "other"
+    },
+    {
+     "name": "visible",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "zorder",
+     "valid": "float",
+     "kind": "number"
+    }
+   ]
+  },
+  {
+   "on": "axes",
    "call": "hlines",
    "parameters": [
     {
