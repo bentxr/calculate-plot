@@ -3339,6 +3339,255 @@
   },
   {
    "on": "axes",
+   "call": "bar_label",
+   "parameters": [
+    {
+     "name": "container",
+     "positional": true,
+     "valid": "`.BarContainer`",
+     "kind": "other",
+     "required": true
+    },
+    {
+     "name": "labels",
+     "positional": true,
+     "valid": "array-like, optional",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "fmt",
+     "positional": false,
+     "valid": "str or callable, default: '%g'",
+     "kind": "other",
+     "default": "%g"
+    },
+    {
+     "name": "label_type",
+     "positional": false,
+     "valid": "{'edge', 'center'}, default: 'edge'",
+     "kind": "choice",
+     "choices": [
+      "edge",
+      "center"
+     ],
+     "default": "edge"
+    },
+    {
+     "name": "padding",
+     "positional": false,
+     "valid": "float or array-like, default: 0",
+     "kind": "number",
+     "default": 0
+    }
+   ],
+   "artist": "Annotation",
+   "properties": [
+    {
+     "name": "alpha",
+     "valid": "float or None",
+     "kind": "number"
+    },
+    {
+     "name": "anncoords",
+     "valid": "unknown",
+     "kind": "other"
+    },
+    {
+     "name": "annotation_clip",
+     "valid": "bool or None",
+     "kind": "bool"
+    },
+    {
+     "name": "backgroundcolor",
+     "valid": ":mpltype:`color`",
+     "kind": "colour"
+    },
+    {
+     "name": "clip_on",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "color",
+     "valid": ":mpltype:`color`",
+     "kind": "colour",
+     "aliases": [
+      "c"
+     ]
+    },
+    {
+     "name": "fontfamily",
+     "valid": "{FONTNAME, 'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace'}",
+     "kind": "choice",
+     "choices": [
+      "serif",
+      "sans-serif",
+      "cursive",
+      "fantasy",
+      "monospace"
+     ],
+     "aliases": [
+      "family",
+      "fontname"
+     ]
+    },
+    {
+     "name": "fontfeatures",
+     "valid": "list of str, or tuple of str, or None",
+     "kind": "other"
+    },
+    {
+     "name": "fontsize",
+     "valid": "float or {'xx-small', 'x-small', 'small', 'medium', 'large', 'x-large', 'xx-large'}",
+     "kind": "number",
+     "aliases": [
+      "size"
+     ]
+    },
+    {
+     "name": "fontstretch",
+     "valid": "{a numeric value in range 0-1000, 'ultra-condensed', 'extra-condensed', 'condensed', 'semi-condensed', 'normal', 'semi-expanded', 'expanded', 'extra-expanded', 'ultra-expanded'}",
+     "kind": "choice",
+     "choices": [
+      "ultra-condensed",
+      "extra-condensed",
+      "condensed",
+      "semi-condensed",
+      "normal",
+      "semi-expanded",
+      "expanded",
+      "extra-expanded",
+      "ultra-expanded"
+     ],
+     "aliases": [
+      "stretch"
+     ]
+    },
+    {
+     "name": "fontstyle",
+     "valid": "{'normal', 'italic', 'oblique'}",
+     "kind": "choice",
+     "choices": [
+      "normal",
+      "italic",
+      "oblique"
+     ],
+     "aliases": [
+      "style"
+     ]
+    },
+    {
+     "name": "fontvariant",
+     "valid": "{'normal', 'small-caps'}",
+     "kind": "choice",
+     "choices": [
+      "normal",
+      "small-caps"
+     ],
+     "aliases": [
+      "variant"
+     ]
+    },
+    {
+     "name": "fontweight",
+     "valid": "{a numeric value in range 0-1000, 'ultralight', 'light', 'normal', 'regular', 'book', 'medium', 'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy', 'extra bold', 'black'}",
+     "kind": "choice",
+     "choices": [
+      "ultralight",
+      "light",
+      "normal",
+      "regular",
+      "book",
+      "medium",
+      "roman",
+      "semibold",
+      "demibold",
+      "demi",
+      "bold",
+      "heavy",
+      "extra bold",
+      "black"
+     ],
+     "aliases": [
+      "weight"
+     ]
+    },
+    {
+     "name": "horizontalalignment",
+     "valid": "{'left', 'center', 'right'}",
+     "kind": "choice",
+     "choices": [
+      "left",
+      "center",
+      "right"
+     ],
+     "aliases": [
+      "ha"
+     ]
+    },
+    {
+     "name": "label",
+     "valid": "object",
+     "kind": "text"
+    },
+    {
+     "name": "language",
+     "valid": "str or None",
+     "kind": "other"
+    },
+    {
+     "name": "linespacing",
+     "valid": "'normal' or float, default: 'normal'",
+     "kind": "other"
+    },
+    {
+     "name": "multialignment",
+     "valid": "{'left', 'right', 'center'}",
+     "kind": "choice",
+     "choices": [
+      "left",
+      "right",
+      "center"
+     ],
+     "aliases": [
+      "ma"
+     ]
+    },
+    {
+     "name": "rotation",
+     "valid": "float or {'vertical', 'horizontal'}",
+     "kind": "number"
+    },
+    {
+     "name": "verticalalignment",
+     "valid": "{'baseline', 'bottom', 'center', 'center_baseline', 'top'}",
+     "kind": "choice",
+     "choices": [
+      "baseline",
+      "bottom",
+      "center",
+      "center_baseline",
+      "top"
+     ],
+     "aliases": [
+      "va"
+     ]
+    },
+    {
+     "name": "visible",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "zorder",
+     "valid": "float",
+     "kind": "number"
+    }
+   ]
+  },
+  {
+   "on": "axes",
    "call": "hlines",
    "parameters": [
     {

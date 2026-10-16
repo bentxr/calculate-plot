@@ -1532,6 +1532,29 @@ TEST(AnnotateCalls, ArgumentsAreReadAsMatplotlibReadsThem) {
     EXPECT_EQ(draw(kSubplots + R"({"call": "annotate", "args": ["a", [1, 2]]})").error, "");  // (plt.annotate)
 }
 
+// Axes.bar_label(container, labels=None, *, fmt='%g', label_type='edge', padding=0, **kwargs): the
+// container is a bar call's result, named in the figure file.
+TEST(BarCalls, LabelsAreReadAsMatplotlibReadsThem) {
+    const std::string bars = R"({"on": "axs[0]", "call": "bar", "args": [[1, 2, 3], [4, 5, 6]], "as": "bars"},)";
+    const auto error = [&](const std::string& args, const std::string& kwargs) {
+        return draw(kSubplots + bars + R"({"on": "axs[0]", "call": "bar_label", "args": )" + args + R"(, "kwargs": )" + kwargs + "}").error;
+    };
+    const std::string ref = R"([{"$ref": "bars"}])";
+    EXPECT_EQ(error(ref, "{}"), "");
+    EXPECT_EQ(error(R"([{"$ref": "bars"}, ["a", "b", "c"]])", R"({"padding": [1, 2, 3], "fmt": "{:.1f}"})"), "");
+    EXPECT_EQ(error(ref, R"({"ha": "left"})"), "axs[0].bar_label: Passing 'ha' to bar_label() is not supported.");
+    EXPECT_EQ(error(ref, R"({"verticalalignment": "top"})"), "axs[0].bar_label: Passing 'verticalalignment' to bar_label() is not supported.");
+    EXPECT_EQ(error(ref, R"({"label_type": "middle"})"),
+              "axs[0].bar_label: 'middle' is not a valid value for label_type; supported values are 'edge', 'center'");
+    EXPECT_EQ(error(ref, R"({"padding": [1, 2]})"), "axs[0].bar_label: padding must be of length 3 when passed as a sequence");
+    EXPECT_EQ(error(R"([{"$ref": "bars"}, ["a", "b", "c", "d"]])", "{}"),
+              "axs[0].bar_label: 'NoneType' object has no attribute 'get_bbox'");
+    EXPECT_EQ(error(ref, R"({"fmt": "{1}"})"), "axs[0].bar_label: IndexError: Replacement index 1 out of range for positional args tuple");
+    EXPECT_EQ(error(ref, R"({"fmt": "%*d"})"), "axs[0].bar_label: this fmt is not supported yet ('*' widths)");
+    EXPECT_EQ(error("[1]", "{}"), "axs[0].bar_label: the container must be a bar call's result (a {\"$ref\": name})");
+    EXPECT_EQ(error(ref, R"({"fontsize": "huge"})").find("axs[0].bar_label:"), 0u);
+}
+
 TEST(HistCalls, ArgumentsAreReadAsMatplotlibReadsThem) {
     const auto error = [](const std::string& args, const std::string& kwargs) {
         return draw(kSubplots + R"({"on": "axs[0]", "call": "hist", "args": )" + args + R"(, "kwargs": )" + kwargs + "}").error;

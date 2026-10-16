@@ -270,4 +270,12 @@ void Text::draw(Renderer& renderer) {
     renderer.closeGroup("text");
 }
 
+support::Formatted autoFormatStr(const std::string& fmt, double value, bool isInt) {
+    const support::Formatted percent = support::percentFormat(fmt, value, isInt);
+    if (percent.kind == support::Formatted::Raised &&
+        (percent.text.rfind("TypeError", 0) == 0 || percent.text.rfind("ValueError", 0) == 0))
+        return support::braceFormat(fmt, value, isInt);
+    return percent;
+}
+
 }  // namespace calculate_plot::engine

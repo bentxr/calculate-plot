@@ -216,6 +216,10 @@ it comes from in its first lines. The changes, as a whole:
   coordinate systems by name or as a pair, _check_xy with Axes.contains_point, update_positions before drawing
   and measuring), Axes.annotate and pyplot.annotate; src/_path.h's point_in_path for one point (in
   src/agg/path_queries.h); Text.get_window_extent made virtual and non-const (an annotation places itself).
+  Bar labels: Axes.bar_label (BarContainer.datavalues, orientation and errorbar kept with the container,
+  LineCollection.get_segments, Patch.get_window_extent, Bbox.intersection) and cbook._auto_format_str, with
+  Python's % formatting and str.format of one number ported in src/support/pyformat.cpp (our own code: the
+  rules of the Python language, checked against an oracle).
   Colour sequences: colors.py's ColorSequenceRegistry (the built-in sequences only) with _cm.py's data
   (data/color_sequences.json; ColorBrewer's schemes in data/color_sequences_colorbrewer.json), written as JSON
   numbers by tools/oracle/make_color_sequences.py; rcsetup.py's _single_string_color_list takes them in cycles.

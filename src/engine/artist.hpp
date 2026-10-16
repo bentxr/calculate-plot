@@ -64,6 +64,9 @@ public:
     virtual transforms::TransformPtr patchTransform() const { return std::make_shared<transforms::IdentityTransform>(); }
     transforms::TransformPtr fullTransform() const { return transforms::compose(patchTransform(), transform); }  // get_transform
     void draw(Renderer& renderer) override;
+    // get_window_extent: Path.get_extents of the path through get_transform() (its MOVETO and LINETO
+    // vertices; Bbox.null() without any)
+    transforms::Bbox windowExtent() const;
 
     bool antialiased;
     std::string capstyle = "butt";

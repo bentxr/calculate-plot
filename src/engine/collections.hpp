@@ -154,6 +154,11 @@ struct ErrorbarContainer {
     std::vector<Collection*> barlinecols;
     bool hasXerr = false, hasYerr = false;
     std::string label;
+    // BarContainer: the bars' values (heights; widths of horizontal bars) as bar converted them, whether
+    // NumPy holds them as int64, the orientation, and where in Axes.containers their error bars are
+    std::vector<double> datavalues;
+    bool datavaluesInt = false, horizontal = false;
+    std::optional<std::size_t> errorbar;
 };
 
 }  // namespace calculate_plot::engine

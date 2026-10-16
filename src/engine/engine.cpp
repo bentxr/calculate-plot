@@ -1,5 +1,6 @@
 #include "engine/engine.hpp"
 
+#include "agg/path_text.h"
 #include "engine/annotation.hpp"
 #include "engine/axes.hpp"
 #include "engine/figure.hpp"
@@ -105,7 +106,7 @@ public:
                 {"hlines", "hlines"}, {"vlines", "vlines"}, {"grid", "grid"}, {"legend", "legend"}, {"text", "text"},
                 {"title", "set_title"}, {"xlabel", "set_xlabel"}, {"ylabel", "set_ylabel"}, {"xlim", "set_xlim"},
                 {"ylim", "set_ylim"}, {"xscale", "set_xscale"}, {"yscale", "set_yscale"}, {"bar", "bar"}, {"barh", "barh"},
-                {"hist", "hist"}, {"fill", "fill"}, {"annotate", "annotate"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}};
+                {"hist", "hist"}, {"fill", "fill"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}};
             static const std::map<std::string, std::string> ofFigure = {
                 {"suptitle", "suptitle"}, {"figtext", "text"}, {"subplots_adjust", "subplots_adjust"}, {"tight_layout", "tight_layout"}};
             const auto a = ofAxes.find(call.method);
@@ -194,6 +195,7 @@ private:
             {"set_minor_formatter", {"formatter"}, 1},
             {"Polygon", {"xy"}, 1},
             {"annotate", {"text", "xy", "xytext", "xycoords", "textcoords", "arrowprops", "annotation_clip"}, 7},
+            {"bar_label", {"container", "labels"}, 2},
             {"add_patch", {"p"}, 1},
         };
         const std::string where = (call.on.empty() ? "plt" : call.on) + "." + call.method;
@@ -791,6 +793,7 @@ private:
         }
         if (call.method == "text") return axesText(ax, call, error);
         if (call.method == "annotate") return annotate(ax, call, error);
+        if (call.method == "bar_label") return barLabel(ax, call, error);
         if (call.method == "plot") return plot(ax, call, error);
         if (call.method == "scatter") return scatter(ax, call, error);
         if (call.method == "fill_between") return fillBetween(ax, call, error);
@@ -2568,6 +2571,11 @@ private:
         ErrorbarContainer container;
         container.isBars = true;
         container.label = labelList ? "_nolegend_" : label;
+        // datavalues: bar's height (barh's width) as _convert_dx made it, int64 when the values and the
+        // base are integers ((y0 + h) - y of Python and NumPy ints)
+        container.horizontal = !vertical;
+        for (std::size_t i = 0; i < n; ++i) container.datavalues.push_back(at(v[1], i));
+        container.datavaluesInt = given[1] && integers(*given[1]) && (!given[3] || given[3]->isNull() || integers(*given[3]));
         for (std::size_t i = 0; i < n; ++i) {
             auto r = std::make_unique<Rectangle>(rc_, left[i], bottom[i], width[i], height[i]);
             // Rectangle(xy, width, height, facecolor=, edgecolor=, linewidth=, label=, hatch=)
@@ -2584,6 +2592,7 @@ private:
             ax.addPatch(std::move(r));
         }
         if ((xerr && !xerr->isNull()) || (yerr && !yerr->isNull())) {
+            container.errorbar = ax.containers.size();  // (where errorbar puts its container)
             // errorbar(ex, ey, yerr=, xerr=, fmt='none', ecolor=, capsize=, zorder=, label='_nolegend_')
             model::Call e;
             e.on = call.on;
@@ -2606,6 +2615,169 @@ private:
         }
         ax.requestAutoscaleView(true, true);
         ax.containers.push_back(container);
+        if (!call.as.empty()) barContainers_[call.as[0]] = {&ax, ax.containers.size() - 1};
+        return true;
+    }
+
+    // LineCollection.get_segments: each path's vertices as iter_segments gives them (non-finite ones removed)
+    static std::vector<std::vector<std::array<double, 2>>> segmentsOf(const Collection& c) {
+        std::vector<std::vector<std::array<double, 2>>> out;
+        for (const Path& p : c.paths) {
+            mpl::PathIterator it(p.vertices, p.codes, false, p.simplifyThreshold);
+            agg::trans_affine identity;
+            std::vector<double> v;
+            std::vector<unsigned char> codes;
+            cleanup_path(it, identity, true, false, agg::rect_d(0.0, 0.0, 0.0, 0.0), SNAP_FALSE, 1.0, false, true,
+                         SketchParams{0.0, 0.0, 0.0}, v, codes);
+            std::vector<std::array<double, 2>> s;
+            for (std::size_t k = 0; k < codes.size() && codes[k] != agg::path_cmd_stop; ++k) s.push_back({v[2 * k], v[2 * k + 1]});
+            out.push_back(s);
+        }
+        return out;
+    }
+
+    // Axes.bar_label(container, labels=None, *, fmt='%g', label_type='edge', padding=0, **kwargs): one
+    // annotation per bar, at the end of the bar (or of its error bar) or in its middle, offset by the
+    // padding in points away from the bar's base; the text from `labels` or fmt of the bar's value
+    bool barLabel(Axes& ax, const model::Call& call, std::string* error) {
+        const std::string where = call.on + ".bar_label";
+        for (const char* key : {"horizontalalignment", "ha", "verticalalignment", "va"})
+            if (keyword(call, key)) return *error = where + ": Passing '" + key + "' to bar_label() is not supported.", false;
+        const Json* ref = argument(call, 0, "container");
+        const bool isRef = ref && ref->isObject() && ref->members()[0].first == "$ref";
+        const auto found = isRef ? barContainers_.find(ref->members()[0].second.asString()) : barContainers_.end();
+        if (found == barContainers_.end())
+            return *error = where + ": the container must be a bar call's result (a {\"$ref\": name})", false;
+        if (found->second.first != &ax) return *error = where + ": labels for another Axes' bars are not supported yet", false;
+        // the view limits as they are now (a pending autoscale runs first)
+        const auto yv = ax.yaxis->viewInterval();
+        const bool yInverted = yv[0] > yv[1];
+        const auto xv = ax.xaxis->viewInterval();
+        const bool xInverted = xv[0] > xv[1];
+        std::string labelType = "edge";
+        if (const Json* l = keyword(call, "label_type")) {
+            if (!l->isString() || (l->asString() != "edge" && l->asString() != "center"))
+                return *error = where + ": " + (l->isString() ? "'" + l->asString() + "'" : std::string("that")) +
+                                " is not a valid value for label_type; supported values are 'edge', 'center'",
+                       false;
+            labelType = l->asString();
+        }
+        const ErrorbarContainer container = ax.containers[found->second.second];
+        std::vector<std::vector<std::array<double, 2>>> errs;
+        if (container.errorbar) {
+            const ErrorbarContainer& e = ax.containers[*container.errorbar];
+            if (!e.barlinecols.empty()) errs = segmentsOf(*e.barlinecols[0]);
+        }
+        std::vector<std::string> labels;
+        if (const Json* l = argument(call, 1, "labels"); l && !l->isNull()) {
+            const Json* seq = sequence(*l);
+            if (!seq) return *error = where + ": labels must be a list of strings", false;
+            for (const Json& s : seq->items()) {
+                if (!s.isString()) return *error = where + ": labels must be strings (others are not supported yet)", false;
+                labels.push_back(s.asString());
+            }
+        }
+        const std::size_t n = container.bars.size();
+        std::vector<double> padding;
+        double one = 0;
+        if (const Json* p = keyword(call, "padding"); p && !p->isNull()) {
+            if (readNumber(*p, &one)) {
+                padding.assign(n, one);
+            } else if (!numbers(*p, &padding)) {
+                return *error = where + ": padding must be a number or a list of numbers", false;
+            } else if (padding.size() != n) {
+                return *error = where + ": padding must be of length " + std::to_string(n) + " when passed as a sequence", false;
+            }
+        } else {
+            padding.assign(n, 0.0);
+        }
+        std::string fmt = "%g";
+        if (const Json* f = keyword(call, "fmt")) {
+            if (!f->isString()) return *error = where + ": fmt must be a str (a callable is not supported)", false;
+            fmt = f->asString();
+        }
+        std::vector<std::pair<std::string, const Json*>> rest;
+        for (const auto& [name, value] : call.kwargs) {
+            if (name == "container" || name == "labels" || name == "fmt" || name == "label_type" || name == "padding") continue;
+            static const char* const annotateOwn[] = {"text", "xy", "xytext", "xycoords", "textcoords", "arrowprops", "annotation_clip"};
+            if (std::find(std::begin(annotateOwn), std::end(annotateOwn), name) != std::end(annotateOwn))
+                return *error = where + ": " + name + " is not supported yet", false;
+            rest.emplace_back(name, &value);
+        }
+        if (labels.size() > n) return *error = where + ": 'NoneType' object has no attribute 'get_bbox'", false;
+        const auto sign = [](double x) { return x >= 0 ? 1.0 : -1.0; };
+        for (std::size_t i = 0; i < n; ++i) {
+            Rectangle* bar = container.bars[i];
+            // get_bbox().get_points(): (x0, y0), (x0 + width, y0 + height)
+            const double x0 = bar->x0, y0 = bar->y0, x1 = bar->x0 + bar->width, y1 = bar->y0 + bar->height;
+            const double xc = (x0 + x1) / 2, yc = (y0 + y1) / 2;
+            const double dat = container.datavalues[i];
+            const auto pmax = [](double a, double b) { return b > a ? b : a; };  // max(a, b)
+            const auto pmin = [](double a, double b) { return b < a ? b : a; };  // min(a, b)
+            const double extrema = !container.horizontal ? (dat >= 0 ? pmax(y0, y1) : pmin(y0, y1)) : (dat >= 0 ? pmax(x0, x1) : pmin(x0, x1));
+            double endpt = extrema;
+            if (i < errs.size() && !errs[i].empty()) {
+                // err[:, 1].max() (or .min(); [:, 0] for horizontal bars): NaN wins
+                const int d = container.horizontal ? 0 : 1;
+                endpt = errs[i][0][std::size_t(d)];
+                for (const auto& q : errs[i]) {
+                    const double e = q[std::size_t(d)];
+                    if (std::isnan(endpt)) break;
+                    if (std::isnan(e) || (dat >= 0 ? e > endpt : e < endpt)) endpt = e;
+                }
+            }
+            AnnotationCoords xycoords, textcoords;
+            xycoords.names = {"data"};
+            textcoords.names = {"offset points"};
+            std::array<double, 2> xy{};
+            if (labelType == "center") {
+                xy = {0.5, 0.5};
+                // Bbox.intersection(bar.get_window_extent(r), bar.get_clip_box()) or Bbox.null()
+                xycoords.names.clear();
+                xycoords.box = [bar](Renderer&) {
+                    const auto a = bar->windowExtent().points();
+                    const auto b = bar->clipBox->points();
+                    const auto nanMax = [](double p, double q) { return std::isnan(p) || std::isnan(q) ? std::nan("") : std::max(p, q); };
+                    const auto nanMin = [](double p, double q) { return std::isnan(p) || std::isnan(q) ? std::nan("") : std::min(p, q); };
+                    const double ix0 = nanMax(nanMin(a[0], a[2]), nanMin(b[0], b[2])), ix1 = nanMin(nanMax(a[0], a[2]), nanMax(b[0], b[2]));
+                    const double iy0 = nanMax(nanMin(a[1], a[3]), nanMin(b[1], b[3])), iy1 = nanMin(nanMax(a[1], a[3]), nanMax(b[1], b[3]));
+                    if (ix0 <= ix1 && iy0 <= iy1) return transforms::Bbox({ix0, iy0, ix1, iy1});
+                    const double inf = std::numeric_limits<double>::infinity();
+                    return transforms::Bbox({inf, inf, -inf, -inf});  // Bbox.null()
+                };
+            } else {
+                xy = !container.horizontal ? std::array<double, 2>{xc, endpt} : std::array<double, 2>{endpt, yc};
+            }
+            const double pad = padding[i];
+            const std::array<double, 2> xytext = !container.horizontal ? std::array<double, 2>{0, (yInverted ? -1.0 : 1.0) * sign(dat) * pad}
+                                                                        : std::array<double, 2>{(xInverted ? -1.0 : 1.0) * sign(dat) * pad, 0};
+            std::string ha = "center", va = "center";
+            if (labelType == "edge") {
+                if (!container.horizontal) {
+                    va = yInverted ? (dat > 0 ? "top" : "bottom") : (dat < 0 ? "top" : "bottom");  // (also for NaN)
+                } else {
+                    ha = xInverted ? (dat > 0 ? "right" : "left") : (dat < 0 ? "right" : "left");
+                }
+            }
+            std::string text;
+            if (std::isnan(dat)) {
+                text = "";
+            } else if (i < labels.size()) {
+                text = labels[i];
+            } else {
+                const support::Formatted f = autoFormatStr(fmt, dat, container.datavaluesInt);
+                if (f.kind == support::Formatted::Unsupported) return *error = where + ": this fmt is not supported yet (" + f.text + ")", false;
+                if (f.kind == support::Formatted::Raised) return *error = where + ": " + f.text, false;
+                text = f.text;
+            }
+            auto a = std::make_unique<Annotation>(rc_, ax, text, xy, xytext, xycoords, textcoords, std::nullopt);
+            const Json haJson = Json::string(ha), vaJson = Json::string(va);
+            std::vector<std::pair<std::string, const Json*>> given = {{"ha", &haJson}, {"va", &vaJson}};
+            given.insert(given.end(), rest.begin(), rest.end());
+            if (!textProperties(*a, given, TextKeywords::Construct, where, error)) return false;
+            a->figure = &ax.figure;
+            ax.children.push_back(std::move(a));
+        }
         return true;
     }
 
@@ -3264,6 +3436,8 @@ private:
     // The patches plt.Polygon made, by the names the figure file gave them, until add_patch takes them
     std::map<std::string, std::unique_ptr<Polygon>> patches_;
     std::set<std::string> addedPatches_;
+    // The containers bar calls returned, by name: their Axes and where in its containers they are
+    std::map<std::string, std::pair<Axes*, std::size_t>> barContainers_;
     std::set<std::string> figureNames_;  // what the figure file calls the figure
     Axes* current_ = nullptr;            // the figure's current Axes (gca), if any
 };

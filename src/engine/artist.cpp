@@ -8,6 +8,9 @@
 #include "rc/rc_params.hpp"
 #include "support/pynum.hpp"
 
+#include <cmath>
+#include <limits>
+
 namespace calculate_plot::engine {
 
 std::pair<double, std::optional<std::vector<double>>> dashPattern(const std::string& style, const rc::Params& rc) {
@@ -192,6 +195,25 @@ void Patch::draw(Renderer& renderer) {
         renderer.unsupported(problem);
     renderer.drawPath(gc, transformPathNonAffine(path(), *t), t->matrix(), face);
     renderer.closeGroup("patch");
+}
+
+transforms::Bbox Patch::windowExtent() const {
+    const Path p = path();
+    const auto t = fullTransform();
+    const double inf = std::numeric_limits<double>::infinity();
+    std::array<double, 4> box{inf, inf, -inf, -inf};
+    bool any = false;
+    for (std::size_t k = 0; k < p.size(); ++k) {
+        if (p.codes && (*p.codes)[k] != MOVETO && (*p.codes)[k] != LINETO) continue;
+        const auto q = t->transform((*p.vertices)[2 * k], (*p.vertices)[2 * k + 1]);
+        // xys.min(axis=0), xys.max(axis=0): NaN wins
+        for (int d = 0; d < 2; ++d) {
+            if (!any || std::isnan(q[d]) || q[d] < box[d]) box[d] = std::isnan(box[d]) ? box[d] : q[d];
+            if (!any || std::isnan(q[d]) || q[d] > box[2 + d]) box[2 + d] = std::isnan(box[2 + d]) ? box[2 + d] : q[d];
+        }
+        any = true;
+    }
+    return transforms::Bbox(box);
 }
 
 Shadow::Shadow(const rc::Params& rc, const Patch& patch, double ox, double oy, double shade)

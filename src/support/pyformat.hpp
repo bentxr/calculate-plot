@@ -25,4 +25,16 @@ bool readDouble(const std::string& text, double& value);
 // matplotlib's _short_float_fmt: f"{x:f}" without trailing zeros or decimal point.
 std::string shortFloat(double x);
 
+// What Python makes of a format string and one number: a float (np.float64), or an int (np.int64)
+// when `isInt`. `text` is the result, or for Raised the exception as "TypeError: ..."; Unsupported:
+// a form not ported (mapping keys, '*', grouping, ...).
+struct Formatted {
+    enum Kind { Text, Raised, Unsupported } kind = Text;
+    std::string text;
+};
+// fmt % (value,)
+Formatted percentFormat(const std::string& fmt, double value, bool isInt);
+// fmt.format(value)
+Formatted braceFormat(const std::string& fmt, double value, bool isInt);
+
 }  // namespace calculate_plot::support

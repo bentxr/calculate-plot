@@ -63,7 +63,7 @@ const std::map<std::string, std::string>& leastArguments() {
     static const std::map<std::string, std::string> args = {
         {"plot", "[[0, 1], [0, 1]]"},     {"scatter", "[[0, 1], [0, 1]]"},  {"fill_between", "[[0, 1], [0, 1]]"},
         {"errorbar", "[[0, 1], [0, 1]]"}, {"loglog", "[[1, 2], [1, 2]]"},   {"semilogx", "[[1, 2], [1, 2]]"},
-        {"semilogy", "[[1, 2], [1, 2]]"}, {"axhspan", "[0, 1]"},  {"bar", "[[1, 2], [1, 2]]"}, {"barh", "[[1, 2], [1, 2]]"}, {"hist", "[[1, 2, 3]]"}, {"fill", "[[0, 1, 1], [0, 0, 1]]"}, {"annotate", "[\"a\", [0.5, 0.5]]"},            {"axvspan", "[0, 1]"},
+        {"semilogy", "[[1, 2], [1, 2]]"}, {"axhspan", "[0, 1]"},  {"bar", "[[1, 2], [1, 2]]"}, {"barh", "[[1, 2], [1, 2]]"}, {"hist", "[[1, 2, 3]]"}, {"fill", "[[0, 1, 1], [0, 0, 1]]"}, {"annotate", "[\"a\", [0.5, 0.5]]"}, {"bar_label", "[{\"$ref\": \"bars\"}]"},            {"axvspan", "[0, 1]"},
         {"hlines", "[[1], 0, 1]"},        {"vlines", "[[1], 0, 1]"},        {"set_title", "[\"a\"]"},
         {"set_xlabel", "[\"a\"]"},      {"set_ylabel", "[\"a\"]"},      {"set_xlim", "[]"},
         {"set_ylim", "[]"},           {"set_xscale", "[\"log\"]"},    {"set_yscale", "[\"log\"]"},
@@ -83,6 +83,8 @@ std::string probe(const std::string& on, const std::string& call, const std::str
     std::string setup, receiver;
     if (on != "plt") {
         setup = R"({"call": "subplots", "as": ["fig", "ax"]}, )";
+        // (bar_label labels the bars of a bar call the figure file names)
+        if (call == "bar_label") setup += R"({"on": "ax", "call": "bar", "args": [[1, 2], [1, 2]], "as": "bars"}, )";
         receiver = on == "figure" ? R"("on": "fig", )" : on == "axes" ? R"("on": "ax", )" : R"("on": "ax.xaxis", )";
     }
     return R"({"version": 1, "calls": [)" + setup + "{" + receiver + R"("call": ")" + call + R"(", "args": )" + args +

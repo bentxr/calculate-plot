@@ -4,6 +4,7 @@
 #pragma once
 
 #include "engine/artist.hpp"
+#include "support/pyformat.hpp"
 #include "text/font_manager.hpp"
 
 #include <optional>
@@ -13,6 +14,11 @@
 namespace calculate_plot::engine {
 
 class Figure;
+
+// cbook._auto_format_str(fmt, value): fmt % (value,), or fmt.format(value) where that raises a TypeError
+// or a ValueError. `value` is a float, or an int when `isInt`. Raised: the exception matplotlib lets
+// through; Unsupported: a form not ported.
+support::Formatted autoFormatStr(const std::string& fmt, double value, bool isInt);
 
 class Text : public Artist {
 public:
