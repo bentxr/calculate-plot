@@ -24,6 +24,7 @@ add_executable(calculate-plot-tests
     test_hatch.cpp
     test_histogram.cpp
     test_violin.cpp
+    test_bezier.cpp
     test_json.cpp
     test_json_writer.cpp
     test_licensing.cpp

@@ -510,6 +510,8 @@
     "src/engine/annotation.cpp",
     "src/engine/violin.hpp",
     "src/engine/violin.cpp",
+    "src/engine/bezier.hpp",
+    "src/engine/bezier.cpp",
     "src/text/font_manager.hpp",
     "src/text/font_manager.cpp",
     "data/fonts.json",
