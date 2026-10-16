@@ -1588,6 +1588,26 @@ TEST(StemCalls, ArgumentsAreReadAsMatplotlibReadsThem) {
     EXPECT_EQ(error("[[]]", "{}"), "axs[0].stem: zero-size array to reduction operation minimum which has no identity");
 }
 
+// Axes.boxplot: its own parameters only; property dictionaries and bootstrap are not supported yet
+TEST(BoxplotCalls, ArgumentsAreReadAsMatplotlibReadsThem) {
+    const auto error = [](const std::string& args, const std::string& kwargs) {
+        return draw(kSubplots + R"({"on": "axs[0]", "call": "boxplot", "args": )" + args + R"(, "kwargs": )" + kwargs + "}").error;
+    };
+    const std::string two = "[[[1, 2, 3, 9], [2, 3, 4]]]";
+    EXPECT_EQ(error(two, "{}"), "");
+    EXPECT_EQ(error(two, R"({"color": "r"})"), "axs[0].boxplot: got an unexpected keyword argument 'color'");
+    EXPECT_EQ(error(two, R"({"positions": [1]})"),
+              "axs[0].boxplot: List of boxplot statistics and `positions` values must have same the length");
+    EXPECT_EQ(error(two, R"({"tick_labels": ["a"]})"), "axs[0].boxplot: The number of labels (1) must match the number of columns (2).");
+    EXPECT_EQ(error(two, R"({"whis": "far"})"), "axs[0].boxplot: whis must be a float or list of percentiles");
+    EXPECT_EQ(error(two, R"({"bootstrap": 100})"), "axs[0].boxplot: bootstrap (a random estimate) is not supported");
+    EXPECT_EQ(error(two, R"({"orientation": "up"})"),
+              "axs[0].boxplot: 'up' is not a valid value for orientation; supported values are 'horizontal', 'vertical'");
+    EXPECT_EQ(error(two, R"({"usermedians": [1]})"), "axs[0].boxplot: 'usermedians' and 'x' have different lengths");
+    EXPECT_EQ(error(two, R"({"conf_intervals": [[1], null]})"), "axs[0].boxplot: each confidence interval must have two values");
+    EXPECT_EQ(error(two, R"({"label": ["a"]})"), "axs[0].boxplot: List of boxplot statistics and `label` values must have same the length");
+}
+
 TEST(HistCalls, ArgumentsAreReadAsMatplotlibReadsThem) {
     const auto error = [](const std::string& args, const std::string& kwargs) {
         return draw(kSubplots + R"({"on": "axs[0]", "call": "hist", "args": )" + args + R"(, "kwargs": )" + kwargs + "}").error;

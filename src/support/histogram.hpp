@@ -18,7 +18,7 @@ std::vector<double> npLinspace(double start, double stop, long long num);
 // `integer` (NumPy then casts them to float64 for its sums, in buffers of 8192 values).
 double npMean(const std::vector<double>& a, bool integer = false);
 double npStd(const std::vector<double>& a, bool integer = false);
-double npPercentile(std::vector<double> a, double q);
+double npPercentile(std::vector<double> a, double q);  // (NaN when the data have one)
 
 // The bins of np.histogram: a number of equal bins, their edges, or a rule by name ('auto', 'fd',
 // 'doane', 'scott', 'stone', 'rice', 'sturges', 'sqrt'; when `name` is not empty).

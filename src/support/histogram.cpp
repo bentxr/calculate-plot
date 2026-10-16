@@ -227,6 +227,8 @@ double npStd(const std::vector<double>& a, bool integer) {
 }
 
 double npPercentile(std::vector<double> a, double q) {
+    // (data with a NaN, which sorts last: the result is NaN)
+    if (std::any_of(a.begin(), a.end(), [](double v) { return std::isnan(v); })) return std::nan("");
     std::sort(a.begin(), a.end(), nanLast);
     const std::size_t n = a.size();
     const double virtualIndex = double(n - 1) * (q / 100);  // (n - 1) * quantiles

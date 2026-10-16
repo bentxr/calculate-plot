@@ -106,7 +106,7 @@ public:
                 {"hlines", "hlines"}, {"vlines", "vlines"}, {"grid", "grid"}, {"legend", "legend"}, {"text", "text"},
                 {"title", "set_title"}, {"xlabel", "set_xlabel"}, {"ylabel", "set_ylabel"}, {"xlim", "set_xlim"},
                 {"ylim", "set_ylim"}, {"xscale", "set_xscale"}, {"yscale", "set_yscale"}, {"bar", "bar"}, {"barh", "barh"},
-                {"hist", "hist"}, {"fill", "fill"}, {"step", "step"}, {"stairs", "stairs"}, {"stem", "stem"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}};
+                {"hist", "hist"}, {"fill", "fill"}, {"step", "step"}, {"stairs", "stairs"}, {"stem", "stem"}, {"boxplot", "boxplot"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}};
             static const std::map<std::string, std::string> ofFigure = {
                 {"suptitle", "suptitle"}, {"figtext", "text"}, {"subplots_adjust", "subplots_adjust"}, {"tight_layout", "tight_layout"}};
             const auto a = ofAxes.find(call.method);
@@ -807,6 +807,7 @@ private:
         if (call.method == "fill") return fill(ax, call, error);
         if (call.method == "step") return step(ax, call, error);
         if (call.method == "stem") return stem(ax, call, error);
+        if (call.method == "boxplot") return boxplot(ax, call, error);
         if (call.method == "stairs") return stairs(ax, call, error);
         if (call.method == "add_patch") return addPatch(ax, call, error);
         if (call.method == "hist") return hist(ax, call, error);
@@ -2318,6 +2319,370 @@ private:
             container.label = label->asString();
         }
         ax.containers.push_back(container);
+        return true;
+    }
+
+    // cbook.boxplot_stats of one data set: (`whis`: a factor of the IQR, or two percentiles)
+    struct BoxStats {
+        double mean, med, q1, q3, iqr, cilo, cihi, whislo, whishi;
+        std::vector<double> fliers;
+        std::optional<std::string> label;
+    };
+    static BoxStats boxStats(const std::vector<double>& x, bool integer, double whisFactor,
+                             std::optional<std::pair<double, double>> whisPercentiles, bool autorange) {
+        const double nan = std::numeric_limits<double>::quiet_NaN();
+        BoxStats s{nan, nan, nan, nan, nan, nan, nan, nan, nan, {}, std::nullopt};
+        if (x.empty()) return s;
+        s.mean = support::npMean(x, integer);
+        s.q1 = support::npPercentile(x, 25), s.med = support::npPercentile(x, 50), s.q3 = support::npPercentile(x, 75);
+        s.iqr = s.q3 - s.q1;
+        if (s.iqr == 0 && autorange) whisPercentiles = std::make_pair(0.0, 100.0);
+        // _compute_conf_interval without bootstrap
+        const double n = double(x.size());
+        s.cilo = s.med - 1.57 * s.iqr / std::sqrt(n);
+        s.cihi = s.med + 1.57 * s.iqr / std::sqrt(n);
+        double loval, hival;
+        if (whisPercentiles) {
+            loval = support::npPercentile(x, whisPercentiles->first);
+            hival = support::npPercentile(x, whisPercentiles->second);
+        } else {
+            loval = s.q1 - whisFactor * s.iqr;
+            hival = s.q3 + whisFactor * s.iqr;
+        }
+        // the whiskers: the farthest values within reach, but never inside the box
+        std::optional<double> hi, lo;
+        for (double v : x) {
+            if (v <= hival && (!hi || v > *hi)) hi = v;
+            if (v >= loval && (!lo || v < *lo)) lo = v;
+        }
+        s.whishi = !hi || *hi < s.q3 ? s.q3 : *hi;
+        s.whislo = !lo || *lo > s.q1 ? s.q1 : *lo;
+        for (double v : x)
+            if (v < s.whislo) s.fliers.push_back(v);
+        for (double v : x)
+            if (v > s.whishi) s.fliers.push_back(v);
+        return s;
+    }
+
+    // Axes.boxplot(x, ...) with cbook.boxplot_stats, then Axes.bxp: lines by plot (the boxes by
+    // add_artist of PathPatches with patch_artist), the properties from rcParams["boxplot.*props.*"];
+    // manage_ticks: the data limits reach half a unit past the positions, which become the axis' fixed
+    // ticks, labelled with the tick_labels or the positions
+    bool boxplot(Axes& ax, const model::Call& call, std::string* error) {
+        const std::string where = call.on + ".boxplot";
+        static const char* const names[] = {"x", "notch", "sym", "vert", "orientation", "whis", "positions", "widths",
+                                            "patch_artist", "bootstrap", "usermedians", "conf_intervals", "meanline",
+                                            "showmeans", "showcaps", "showbox", "showfliers", "boxprops", "tick_labels",
+                                            "flierprops", "medianprops", "meanprops", "capprops", "whiskerprops",
+                                            "manage_ticks", "autorange", "zorder", "capwidths", "label"};
+        constexpr std::size_t count = sizeof names / sizeof names[0];
+        if (call.args.size() > count) return *error = where + ": too many positional arguments", false;
+        for (const auto& kw : call.kwargs)
+            if (kw.first != "data" && std::find(std::begin(names), std::end(names), kw.first) == std::end(names))
+                return *error = where + ": got an unexpected keyword argument '" + kw.first + "'", false;
+        if (const Json* d = keyword(call, "data"); d && !d->isNull()) return *error = where + ": data is not supported yet", false;
+        const auto arg = [&](const char* name) -> const Json* {
+            for (std::size_t i = 0; i < count; ++i)
+                if (std::string(names[i]) == name) {
+                    const Json* v = argument(call, i, name);
+                    return v && !v->isNull() ? v : nullptr;
+                }
+            return nullptr;
+        };
+        double one = 0;
+        // bool(v) of a value, or of the rcParam when it is None
+        const auto flag = [&](const char* name, const char* rcKey, bool fallback, bool* out) {
+            const Json* v = arg(name);
+            const Json& w = v ? *v : (rcKey ? rc_.value(rcKey) : Json());
+            if (w.isNull()) return *out = fallback, true;
+            if (w.isBool()) return *out = w.asBool(), true;
+            if (readNumber(w, &one)) return *out = one != 0, true;
+            return *error = where + ": " + name + " must be True or False", false;
+        };
+        for (const char* props : {"boxprops", "flierprops", "medianprops", "meanprops", "capprops", "whiskerprops"})
+            if (arg(props)) return *error = where + ": " + props + " is not supported yet", false;
+        if (arg("bootstrap") || !rc_.value("boxplot.bootstrap").isNull())
+            return *error = where + ": bootstrap (a random estimate) is not supported", false;
+        // the data sets
+        const Json* xJson = arg("x");
+        if (!xJson) return *error = where + ": x is required", false;
+        std::vector<std::vector<double>> sets;
+        std::vector<bool> setInts;
+        if (!reshape2D(*xJson, &sets, &setInts)) return *error = where + ": x must be lists of numbers", false;
+        const std::size_t n = sets.size();
+        // whis: a number, or two percentiles
+        const Json& whisJson = arg("whis") ? *arg("whis") : rc_.value("boxplot.whiskers");
+        double whisFactor = 1.5;
+        std::optional<std::pair<double, double>> whisPercentiles;
+        std::vector<double> pair;
+        if (readNumber(whisJson, &one)) whisFactor = one;
+        else if (numbers(whisJson, &pair) && pair.size() == 2) whisPercentiles = std::make_pair(pair[0], pair[1]);
+        else return *error = where + ": whis must be a float or list of percentiles", false;
+        bool autorange = false;
+        if (!flag("autorange", nullptr, false, &autorange)) return false;
+        std::vector<std::string> tickLabels;
+        if (const Json* l = arg("tick_labels")) {
+            const Json* seq = sequence(*l);
+            if (!seq) return *error = where + ": tick_labels must be a list of strings", false;
+            for (const Json& s : seq->items()) {
+                if (!s.isString()) return *error = where + ": tick_labels must be strings (others are not supported yet)", false;
+                tickLabels.push_back(s.asString());
+            }
+            if (tickLabels.size() != n)
+                return *error = where + ": The number of labels (" + std::to_string(tickLabels.size()) + ") must match the number of columns (" +
+                                std::to_string(n) + ").",
+                       false;
+        }
+        std::vector<BoxStats> stats;
+        for (std::size_t i = 0; i < n; ++i) {
+            stats.push_back(boxStats(sets[i], setInts[i], whisFactor, whisPercentiles, autorange));
+            if (!tickLabels.empty()) stats.back().label = tickLabels[i];
+        }
+        bool notch = false, patchArtist = false, meanline = false, showmeans = false, showcaps = true, showbox = true, showfliers = true;
+        if (!flag("notch", "boxplot.notch", false, &notch) || !flag("patch_artist", "boxplot.patchartist", false, &patchArtist) ||
+            !flag("meanline", "boxplot.meanline", false, &meanline) || !flag("showmeans", "boxplot.showmeans", false, &showmeans) ||
+            !flag("showcaps", "boxplot.showcaps", true, &showcaps) || !flag("showbox", "boxplot.showbox", true, &showbox) ||
+            !flag("showfliers", "boxplot.showfliers", true, &showfliers))
+            return false;
+        // sym: '' hides the fliers; otherwise its marker and colour
+        std::vector<std::pair<std::string, Json>> flierprops;
+        if (const Json* sym = arg("sym")) {
+            if (!sym->isString()) return *error = where + ": sym must be a string", false;
+            if (sym->asString().empty()) {
+                flierprops = {{"linestyle", Json::string("none")}, {"marker", Json::string("")}, {"color", Json::string("none")}};
+                showfliers = false;
+            } else {
+                std::optional<std::string> style, marker;
+                std::optional<colors::Spec> color;
+                if (!plotFormat(sym->asString(), &style, &marker, &color, error)) return *error = where + ": " + *error, false;
+                if (marker) flierprops.emplace_back("marker", Json::string(*marker));
+                if (color) {
+                    for (const char* k : {"color", "markerfacecolor", "markeredgecolor"}) flierprops.emplace_back(k, colorJson(*color));
+                }
+            }
+        }
+        // usermedians and conf_intervals replace what the statistics say
+        if (const Json* um = arg("usermedians")) {
+            const Json* seq = sequence(*um);
+            if (!seq || seq->size() != n) return *error = where + ": 'usermedians' and 'x' have different lengths", false;
+            for (std::size_t i = 0; i < n; ++i) {
+                if ((*seq)[i].isNull()) continue;
+                if (!readNumber((*seq)[i], &one)) return *error = where + ": usermedians must be numbers or None", false;
+                stats[i].med = one;
+            }
+        }
+        if (const Json* ci = arg("conf_intervals")) {
+            const Json* seq = sequence(*ci);
+            if (!seq || seq->size() != n) return *error = where + ": 'conf_intervals' and 'x' have different lengths", false;
+            for (std::size_t i = 0; i < n; ++i) {
+                if ((*seq)[i].isNull()) continue;
+                const Json* two = sequence((*seq)[i]);
+                if (!two || two->size() != 2) return *error = where + ": each confidence interval must have two values", false;
+                for (int k = 0; k < 2; ++k) {
+                    if ((*two)[std::size_t(k)].isNull()) continue;
+                    if (!readNumber((*two)[std::size_t(k)], &one)) return *error = where + ": confidence intervals must be numbers", false;
+                    (k == 0 ? stats[i].cilo : stats[i].cihi) = one;
+                }
+            }
+        }
+        // --- bxp
+        bool vertical = true;
+        // vert None: rcParams["boxplot.vertical"]; vert is False: horizontal, whatever the orientation
+        const Json& vert = arg("vert") ? *arg("vert") : rc_.value("boxplot.vertical");
+        if (vert.isBool() && !vert.asBool()) vertical = false;
+        else if (const Json* o = arg("orientation")) {
+            if (!o->isString() || (o->asString() != "horizontal" && o->asString() != "vertical"))
+                return *error = where + ": " + (o->isString() ? "'" + o->asString() + "'" : std::string("that")) +
+                                " is not a valid value for orientation; supported values are 'horizontal', 'vertical'",
+                       false;
+            vertical = o->asString() == "vertical";
+        }
+        double zorder = 2;  // Line2D.zorder
+        if (const Json* z = arg("zorder"); z && !readFinite(*z, &zorder)) return *error = where + ": zorder must be a finite number", false;
+        using Kw = std::vector<std::pair<std::string, Json>>;
+        const auto update = [](Kw& d, const Kw& with) {
+            for (const auto& entry : with) {
+                auto slot = std::find_if(d.begin(), d.end(), [&](const auto& e) { return e.first == entry.first; });
+                if (slot != d.end()) slot->second = entry.second;
+                else d.push_back(entry);
+            }
+        };
+        const auto setdefault = [](Kw& d, const std::string& k, const Json& v) {
+            if (std::none_of(d.begin(), d.end(), [&](const auto& e) { return e.first == k; })) d.emplace_back(k, v);
+        };
+        // merge_kw_rc: rcParams["boxplot.<sub>props.*"] (alphabetical), the zorder, no marker, then the props given
+        const auto mergeKwRc = [&](const std::string& sub, const Kw& explicitProps, double zdelta, bool usemarker) {
+            Kw d;
+            const std::string prefix = "boxplot." + sub + "props";
+            for (const std::string& key : rc_.keys())
+                if (key.rfind(prefix, 0) == 0) d.emplace_back(key.substr(key.rfind('.') + 1), rc_.value(key));
+            update(d, {{"zorder", Json::real(zorder + zdelta)}});
+            if (!usemarker) update(d, {{"marker", Json::string("")}});
+            update(d, explicitProps);
+            return d;
+        };
+        const Kw butt = {{"solid_capstyle", Json::string("butt")}, {"dash_capstyle", Json::string("butt")}};
+        const double zdelta = 0.1;
+        Kw boxKw;
+        if (patchArtist) {
+            boxKw = {{"linestyle", rc_.value("boxplot.boxprops.linestyle")},
+                     {"linewidth", rc_.value("boxplot.boxprops.linewidth")},
+                     {"edgecolor", rc_.value("boxplot.boxprops.color")},
+                     {"facecolor", rc_.boolean("_internal.classic_mode") ? Json::string("white") : rc_.value("patch.facecolor")},
+                     {"zorder", Json::real(zorder)}};
+            update(boxKw, {{"linestyle", Json::string("solid")}});  // (boxplot sets it for patch_artist)
+        } else {
+            boxKw = mergeKwRc("box", {}, 0, false);
+        }
+        Kw whiskerKw = mergeKwRc("whisker", {}, 0, false), capKw = mergeKwRc("cap", {}, 0, false);
+        Kw flierKw = mergeKwRc("flier", flierprops, 0, true), medianKw = mergeKwRc("median", butt, zdelta, false);
+        Kw meanKw = mergeKwRc("mean", butt, zdelta, true);
+        update(meanKw, {{meanline ? "marker" : "linestyle", Json::string("")}});
+        // positions, widths, capwidths
+        std::vector<double> positions;
+        bool positionsInt = true;
+        if (const Json* p = arg("positions")) {
+            if (!numbers(*p, &positions)) return *error = where + ": positions should be an iterable of numbers", false;
+            if (positions.size() != n) return *error = where + ": List of boxplot statistics and `positions` values must have same the length", false;
+            positionsInt = integers(*p);
+        } else {
+            for (std::size_t i = 0; i < n; ++i) positions.push_back(double(i + 1));
+        }
+        const auto sizesOf = [&](const char* name, std::vector<double>* out) {
+            const Json* w = arg(name);
+            if (!w) return false;
+            if (readNumber(*w, &one)) out->assign(n, one);
+            else if (!numbers(*w, out)) return *error = where + ": " + name + " must be numbers", true;
+            else if (out->size() != n) return *error = where + ": List of boxplot statistics and `" + name + "` values must have same the length", true;
+            return true;
+        };
+        std::vector<double> widths, capwidths;
+        if (sizesOf("widths", &widths)) {
+            if (!error->empty()) return false;
+        } else {
+            // [np.clip(0.15 * np.ptp(positions), 0.15, 0.5)] * N
+            const auto [lo, hi] = std::minmax_element(positions.begin(), positions.end());
+            double w = n ? 0.15 * (*hi - *lo) : 0;
+            if (!std::isnan(w)) w = std::min(std::max(w, 0.15), 0.5);
+            widths.assign(n, w);
+        }
+        if (sizesOf("capwidths", &capwidths)) {
+            if (!error->empty()) return false;
+        } else {
+            for (double w : widths) capwidths.push_back(0.5 * w);
+        }
+        const auto doPlot = [&](std::vector<double> xs, std::vector<double> ys, const Kw& kw) -> Line2D* {
+            if (!vertical) std::swap(xs, ys);
+            model::Call p;
+            p.on = call.on;
+            p.method = "plot";
+            p.args = {numbersJson(xs), numbersJson(ys)};
+            p.kwargs = kw;
+            if (!plot(ax, p, error)) return nullptr;
+            return dynamic_cast<Line2D*>(ax.children.back().get());
+        };
+        const auto doPatch = [&](std::vector<double> xs, std::vector<double> ys, const Kw& kw) -> Patch* {
+            if (!vertical) std::swap(xs, ys);
+            std::vector<double> v;
+            for (std::size_t k = 0; k < xs.size(); ++k) v.push_back(xs[k]), v.push_back(ys[k]);
+            v.push_back(xs[0]), v.push_back(ys[0]);  // Path._create_closed
+            auto patch = std::make_unique<PathPatch>(rc_, Path::make(std::move(v), {}, rc_, true));
+            std::vector<std::pair<std::string, const Json*>> given;
+            for (const auto& [k, value] : kw) given.emplace_back(k, &value);
+            if (!patchConstructor(*patch, given, where, error)) return nullptr;
+            return &ax.addArtist(std::move(patch));
+        };
+        std::vector<Artist*> boxes, medians;
+        std::vector<std::string> datalabels;
+        const Json nolegend = Json::string("_nolegend_");
+        for (std::size_t i = 0; i < n; ++i) {
+            const BoxStats& s = stats[i];
+            const double pos = positions[i], width = widths[i], capwidth = capwidths[i];
+            datalabels.push_back(s.label ? *s.label : positionsInt ? std::to_string(static_cast<long long>(pos)) : support::pythonRepr(pos));
+            const double capLeft = pos - capwidth * 0.5, capRight = pos + capwidth * 0.5;
+            const double boxLeft = pos - width * 0.5, boxRight = pos + width * 0.5;
+            std::vector<double> boxX, boxY, medX;
+            if (notch) {
+                const double notchLeft = pos - width * 0.25, notchRight = pos + width * 0.25;
+                boxX = {boxLeft, boxRight, boxRight, notchRight, boxRight, boxRight, boxLeft, boxLeft, notchLeft, boxLeft, boxLeft};
+                boxY = {s.q1, s.q1, s.cilo, s.med, s.cihi, s.q3, s.q3, s.cihi, s.med, s.cilo, s.q1};
+                medX = {notchLeft, notchRight};
+            } else {
+                boxX = {boxLeft, boxRight, boxRight, boxLeft, boxLeft};
+                boxY = {s.q1, s.q1, s.q3, s.q3, s.q1};
+                medX = {boxLeft, boxRight};
+            }
+            if (showbox) {
+                Artist* box = patchArtist ? static_cast<Artist*>(doPatch(boxX, boxY, boxKw)) : doPlot(boxX, boxY, boxKw);
+                if (!box) return false;
+                boxes.push_back(box);
+                setdefault(medianKw, "label", nolegend);
+            }
+            setdefault(whiskerKw, "label", nolegend);
+            if (!doPlot({pos, pos}, {s.q1, s.whislo}, whiskerKw) || !doPlot({pos, pos}, {s.q3, s.whishi}, whiskerKw)) return false;
+            if (showcaps) {
+                setdefault(capKw, "label", nolegend);
+                if (!doPlot({capLeft, capRight}, {s.whislo, s.whislo}, capKw) || !doPlot({capLeft, capRight}, {s.whishi, s.whishi}, capKw))
+                    return false;
+            }
+            Line2D* median = doPlot(medX, {s.med, s.med}, medianKw);
+            if (!median) return false;
+            medians.push_back(median);
+            if (showmeans) {
+                if (meanline ? !doPlot({boxLeft, boxRight}, {s.mean, s.mean}, meanKw) : !doPlot({pos}, {s.mean}, meanKw)) return false;
+            }
+            if (showfliers) {
+                setdefault(flierKw, "label", nolegend);
+                if (!doPlot(std::vector<double>(s.fliers.size(), pos), s.fliers, flierKw)) return false;
+            }
+        }
+        // label: on the boxes (patch_artist) or the medians
+        if (const Json* label = arg("label")) {
+            std::vector<Artist*>& target = showbox && patchArtist ? boxes : medians;
+            if (label->isString()) {
+                if (!label->asString().empty()) {
+                    if (target.empty()) return *error = where + ": list index out of range", false;
+                    target[0]->label = label->asString();
+                }
+            } else if (const Json* seq = sequence(*label)) {
+                if (!seq->items().empty()) {
+                    if (seq->size() != target.size())
+                        return *error = where + ": List of boxplot statistics and `label` values must have same the length", false;
+                    for (std::size_t i = 0; i < target.size(); ++i) {
+                        if (!(*seq)[i].isString()) return *error = where + ": labels must be strings", false;
+                        target[i]->label = (*seq)[i].asString();
+                    }
+                }
+            } else {
+                return *error = where + ": label must be a string or a list of strings", false;
+            }
+        }
+        bool manageTicks = true;
+        if (!flag("manage_ticks", nullptr, true, &manageTicks)) return false;
+        if (manageTicks && n) {
+            Axis& axis = vertical ? *ax.xaxis : *ax.yaxis;
+            if (axis.scale() == "log") return *error = where + ": boxplot ticks on a log axis are not supported yet", false;
+            // dataLim.intervalx (y) reaches half a unit past the positions
+            const auto [lo, hi] = std::minmax_element(positions.begin(), positions.end());
+            auto p = ax.dataLim->points();
+            const int k = vertical ? 0 : 1;
+            const double a = *lo - .5, b = *hi + .5;
+            if (a < p[std::size_t(k)]) p[std::size_t(k)] = a;          // min(interval[0], min(positions) - .5)
+            if (b > p[std::size_t(k + 2)]) p[std::size_t(k + 2)] = b;  // max(interval[1], max(positions) + .5)
+            ax.dataLim->setPoints(p);
+            for (std::size_t i = 0; i < medians.size(); ++i) {
+                auto& sticky = vertical ? medians[i]->stickyX : medians[i]->stickyY;
+                sticky.push_back(positions[i] - .5);
+                sticky.push_back(positions[i] + .5);
+            }
+            Axis& owner = axis.tickerAxis();
+            if (!owner.fixedLocs) owner.fixedLocs = std::vector<double>{};
+            owner.fixedLocs->insert(owner.fixedLocs->end(), positions.begin(), positions.end());
+            if (!owner.fixedLabels) owner.fixedLabels = std::vector<std::string>{};
+            owner.fixedLabels->insert(owner.fixedLabels->end(), datalabels.begin(), datalabels.end());
+            owner.nullMajorFormatter = false;
+            ax.requestAutoscaleView(true, true);
+        }
         return true;
     }
 

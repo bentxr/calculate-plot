@@ -156,13 +156,14 @@ TEST(Histogram, MeanStdAndPercentilesAreNumpys) {
         const std::vector<double> a = data(*c.find("data"));
         const bool integer = c.find("int")->asBool();
         const std::string name = std::to_string(checked) + " (" + std::to_string(a.size()) + (integer ? " integers)" : " values)");
-        EXPECT_EQ(support::npMean(a, integer), hex(*c.find("mean"))) << name;
-        EXPECT_EQ(support::npStd(a, integer), hex(*c.find("std"))) << name;
-        EXPECT_EQ(support::npPercentile(a, 75), hex(*c.find("p75"))) << name;
-        EXPECT_EQ(support::npPercentile(a, 25), hex(*c.find("p25"))) << name;
+        const auto same = [](double got, double want) { return got == want || (std::isnan(got) && std::isnan(want)); };
+        EXPECT_TRUE(same(support::npMean(a, integer), hex(*c.find("mean")))) << name;
+        EXPECT_TRUE(same(support::npStd(a, integer), hex(*c.find("std")))) << name;
+        EXPECT_TRUE(same(support::npPercentile(a, 75), hex(*c.find("p75")))) << name;
+        EXPECT_TRUE(same(support::npPercentile(a, 25), hex(*c.find("p25")))) << name;
         ++checked;
     }
-    EXPECT_EQ(checked, 77);
+    EXPECT_EQ(checked, 79);
 }
 
 // bins='auto', 'fd', 'doane', 'scott', 'stone', 'rice', 'sturges', 'sqrt'

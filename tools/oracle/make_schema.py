@@ -53,6 +53,7 @@ CALLS = [
     ("axes", "step", Axes.step, lines.Line2D),
     ("axes", "stairs", Axes.stairs, patches.StepPatch),
     ("axes", "stem", Axes.stem, None),
+    ("axes", "boxplot", Axes.boxplot, None),
     ("axes", "hlines", Axes.hlines, collections.LineCollection),
     ("axes", "vlines", Axes.vlines, collections.LineCollection),
     ("axes", "text", Axes.text, text.Text),

@@ -129,6 +129,11 @@ public:
     // NullFormatter() set as the major or the minor formatter: no labels, no offset text. The scale's
     // defaults replace it when the scale is set.
     bool nullMajorFormatter = false, nullMinorFormatter = false;
+    // FixedLocator(locs) and FixedFormatter(seq) as the major locator and formatter (boxplot's
+    // manage_ticks): every location, the i-th labelled seq[i] ('' past its end). The scale's defaults
+    // replace them when the scale is set.
+    std::optional<std::vector<double>> fixedLocs;
+    std::optional<std::vector<std::string>> fixedLabels;
     double labelpad;
     std::string labelPosition;  // bottom/top, left/right
     bool autoscaleOn = true;
@@ -190,6 +195,8 @@ public:
     // Axes.add_line; the line keeps its transform when it was set (axhline, axvline)
     Line2D& addLine(std::unique_ptr<Line2D> line, bool keepTransform = false);
     Patch& addPatch(std::unique_ptr<Patch> patch);  // Axes.add_patch
+    // Axes.add_artist of a patch: in data coordinates, clipped to the Axes, but no data limits
+    Patch& addArtist(std::unique_ptr<Patch> patch);
     Text& addText(std::unique_ptr<Text> text);          // Axes._add_text, as Axes.text does it
     // Axes.contains_point(point): the pixel point in the patch's path, grown by a contour of 1 pixel
     bool containsPoint(double x, double y) const;

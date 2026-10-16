@@ -226,6 +226,9 @@ it comes from in its first lines. The changes, as a whole:
   Colormapping: where vmin equals vmax, Normalize's result.fill(0) leaves masked values masked (NaN here).
   Stems: Axes.stem (vlines/hlines, plot and a StemContainer) and HandlerStem; collections take the line
   styles 'None', 'none', '' and ' ' as undashed (lines._get_dash_pattern).
+  Box plots: cbook.boxplot_stats (without bootstrap), Axes.boxplot and Axes.bxp (merge_kw_rc over
+  rcParams["boxplot.*"], PathPatch boxes by add_artist, manage_ticks), ticker.py's FixedLocator and
+  FixedFormatter as the axis' major locator and formatter.
   Colour sequences: colors.py's ColorSequenceRegistry (the built-in sequences only) with _cm.py's data
   (data/color_sequences.json; ColorBrewer's schemes in data/color_sequences_colorbrewer.json), written as JSON
   numbers by tools/oracle/make_color_sequences.py; rcsetup.py's _single_string_color_list takes them in cycles.

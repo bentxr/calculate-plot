@@ -387,6 +387,8 @@ void Axis::setLabelsOn(bool first, bool on) {
 void Axis::setScale(const std::string& name) {
     scale_ = name;
     nullMajorFormatter = nullMinorFormatter = false;
+    fixedLocs.reset();
+    fixedLabels.reset();
     // The locators and formatters keep their settings of before matplotlib 2 in the classic style
     const bool classic = rc_.boolean("_internal.classic_mode");
     if (name == "log") {  // LogScale.set_default_locators_and_formatters
@@ -455,6 +457,7 @@ std::pair<double, double> Axis::locatorViewLimits(double v0, double v1) {
         return logLocator.viewLimits(v0, v1, rc_.text("axes.autolimit_mode") == "round_numbers");
     }
     locator.tickSpace = tickerAxis().tickSpace();  // the locator's axis
+    if (tickerAxis().fixedLocs) return axes::nonsingular(v0, v1);  // Locator.view_limits: _nonsingular
     return locator.viewLimits(v0, v1);
 }
 
@@ -489,7 +492,7 @@ std::vector<Tick*> Axis::minorTicks(std::size_t count) {
 
 std::string Axis::offsetString() const {
     // NullFormatter.get_offset() is '' (a log scale's formatters have none either)
-    if (scale_ == "log" || tickerAxis().nullMajorFormatter) return std::string();
+    if (scale_ == "log" || tickerAxis().nullMajorFormatter || tickerAxis().fixedLabels) return std::string();
     return formatter.offsetText();
 }
 
@@ -619,7 +622,11 @@ std::vector<Tick*> Axis::updateTicks() {
     if (groupVisible(majorTickKw_)) {
         std::vector<double> locs;
         std::vector<std::string> labels;
-        if (scale_ == "log") {
+        if (owner.fixedLocs) {
+            locs = *owner.fixedLocs;
+            for (std::size_t i = 0; i < locs.size(); ++i)
+                labels.push_back(owner.fixedLabels && i < owner.fixedLabels->size() ? (*owner.fixedLabels)[i] : "");
+        } else if (scale_ == "log") {
             logLocator.tickSpace = owner.tickSpace();
             logLocator.minpos = owner.minpos();
             locs = logLocator.tickValues(ownerView[0], ownerView[1]);
@@ -668,7 +675,7 @@ std::vector<Tick*> Axis::updateTicks() {
     // (every axis makes the same locator from the rcParams: this one's is as good as the owner's)
     if (groupVisible(minorTickKw_) && scale_ != "log" && minorLocator) {
         locator.tickSpace = owner.tickSpace();
-        const auto majorLocs = locator.tickValues(ownerView[0], ownerView[1]);
+        const auto majorLocs = owner.fixedLocs ? *owner.fixedLocs : locator.tickValues(ownerView[0], ownerView[1]);
         const auto locs = axes::withoutMajorTicks((*minorLocator)(majorLocs, ownerView[0], ownerView[1]), majorLocs, view[0], view[1]);
         const std::vector<Tick*> minor = minorTicks(locs.size());
         for (std::size_t i = 0; i < locs.size(); ++i) {
@@ -1061,6 +1068,14 @@ Patch& Axes::addPatch(std::unique_ptr<Patch> p) {
         }
     }
     if (p->label.empty()) p->label = "_child" + std::to_string(children.size());
+    children.push_back(std::move(p));
+    return static_cast<Patch&>(*children.back());
+}
+
+Patch& Axes::addArtist(std::unique_ptr<Patch> p) {
+    if (!p->transformSet) p->transform = transData;  // _set_artist_props
+    p->clipBox = std::make_shared<transforms::TransformedBbox>(
+        std::make_shared<transforms::Bbox>(std::array<double, 4>{0, 0, 1, 1}), patch->fullTransform());
     children.push_back(std::move(p));
     return static_cast<Patch&>(*children.back());
 }

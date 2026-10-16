@@ -127,9 +127,11 @@ for n in list(range(1, 70)) + [100, 127, 128, 129, 255, 300, 1000]:
     dots.append({"a": hexes(p), "b": None, "dot": float.hex(float(p.dot(p))), "hex": True})
 
 # np.mean, np.std and np.percentile(x, [75, 25]) of float64 and int64 data
+NAN = "nan"
 stats = []
 STATS = [([1.0], False), ([1, 2], False), ([1, 2, 3], False), ([3, 1, 2, 2], False), ([0.1 * i for i in range(30)], False),
-         ([1e300, -1e300, 5.0], False), ([5, 5, 5, 5], False), ([1, 2, 2, 3, 3, 3, 4, 4, 4, 4], True), ([7], True)]
+         ([1e300, -1e300, 5.0], False), ([5, 5, 5, 5], False), ([1, 2, 2, 3, 3, 3, 4, 4, 4, 4], True), ([7], True),
+         ([1.0, NAN, 3.0, 4.0], False), ([NAN], False)]
 for n in [2, 3, 4, 5, 7, 8, 9, 10, 16, 17, 100, 129, 1000, 8191, 8192, 8193, 20000]:
     STATS += [(gen(n), False), (gen(n, 104729, 1000003, 1e6, -3.3), False), (igen(n), True),
               (igen(n, 104729, 1000003, -500000), True)]

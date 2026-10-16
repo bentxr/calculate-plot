@@ -202,6 +202,16 @@ private:
     Path path_;
 };
 
+// patches.PathPatch: a patch of a given path (boxplot's boxes).
+class PathPatch : public Patch {
+public:
+    PathPatch(const rc::Params& rc, Path path) : Patch(rc), path_(std::move(path)) {}
+    Path path() const override { return path_; }
+
+private:
+    Path path_;
+};
+
 // FancyBboxPatch with the box styles "round" (pad, rounding_size) and "square" (pad).
 class FancyBboxPatch : public Patch {
 public:

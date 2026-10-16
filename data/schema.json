@@ -4044,6 +4044,226 @@
   },
   {
    "on": "axes",
+   "call": "boxplot",
+   "parameters": [
+    {
+     "name": "x",
+     "positional": true,
+     "valid": "1D array or sequence of 1D arrays or 2D array",
+     "kind": "other",
+     "required": true
+    },
+    {
+     "name": "notch",
+     "positional": false,
+     "valid": "bool, default: :rc:`boxplot.notch`",
+     "kind": "bool",
+     "default": null
+    },
+    {
+     "name": "sym",
+     "positional": false,
+     "valid": "str, optional",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "vert",
+     "positional": false,
+     "valid": "bool, optional",
+     "kind": "bool",
+     "default": null
+    },
+    {
+     "name": "orientation",
+     "positional": false,
+     "valid": "{'vertical', 'horizontal'}, default: 'vertical'",
+     "kind": "choice",
+     "choices": [
+      "vertical",
+      "horizontal"
+     ],
+     "default": "vertical"
+    },
+    {
+     "name": "whis",
+     "positional": false,
+     "valid": "float or (float, float), default: 1.5",
+     "kind": "number",
+     "default": null
+    },
+    {
+     "name": "positions",
+     "positional": false,
+     "valid": "array-like, optional",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "widths",
+     "positional": false,
+     "valid": "float or array-like",
+     "kind": "number",
+     "default": null
+    },
+    {
+     "name": "patch_artist",
+     "positional": false,
+     "valid": "bool, default: :rc:`boxplot.patchartist`",
+     "kind": "bool",
+     "default": null
+    },
+    {
+     "name": "bootstrap",
+     "positional": false,
+     "valid": "int, optional",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "usermedians",
+     "positional": false,
+     "valid": "1D array-like, optional",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "conf_intervals",
+     "positional": false,
+     "valid": "array-like, optional",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "meanline",
+     "positional": false,
+     "valid": "bool, default: :rc:`boxplot.meanline`",
+     "kind": "bool",
+     "default": null
+    },
+    {
+     "name": "showmeans",
+     "positional": false,
+     "valid": "bool, default: :rc:`boxplot.showmeans`",
+     "kind": "bool",
+     "default": null
+    },
+    {
+     "name": "showcaps",
+     "positional": false,
+     "valid": "bool, default: :rc:`boxplot.showcaps`",
+     "kind": "bool",
+     "default": null
+    },
+    {
+     "name": "showbox",
+     "positional": false,
+     "valid": "bool, default: :rc:`boxplot.showbox`",
+     "kind": "bool",
+     "default": null
+    },
+    {
+     "name": "showfliers",
+     "positional": false,
+     "valid": "bool, default: :rc:`boxplot.showfliers`",
+     "kind": "bool",
+     "default": null
+    },
+    {
+     "name": "boxprops",
+     "positional": false,
+     "valid": "dict, default: None",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "tick_labels",
+     "positional": false,
+     "valid": "list of str, optional",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "flierprops",
+     "positional": false,
+     "valid": "dict, default: None",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "medianprops",
+     "positional": false,
+     "valid": "dict, default: None",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "meanprops",
+     "positional": false,
+     "valid": "dict, default: None",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "capprops",
+     "positional": false,
+     "valid": "dict, default: None",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "whiskerprops",
+     "positional": false,
+     "valid": "dict, default: None",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "manage_ticks",
+     "positional": false,
+     "valid": "bool, default: True",
+     "kind": "bool",
+     "default": true
+    },
+    {
+     "name": "autorange",
+     "positional": false,
+     "valid": "bool, default: False",
+     "kind": "bool",
+     "default": false
+    },
+    {
+     "name": "zorder",
+     "positional": false,
+     "valid": "float, default: ``Line2D.zorder = 2``",
+     "kind": "number",
+     "default": null
+    },
+    {
+     "name": "capwidths",
+     "positional": false,
+     "valid": "float or array, default: None",
+     "kind": "number",
+     "default": null
+    },
+    {
+     "name": "label",
+     "positional": false,
+     "valid": "str or list of str, optional",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "data",
+     "positional": false,
+     "valid": "indexable object, optional",
+     "kind": "other",
+     "default": null
+    }
+   ]
+  },
+  {
+   "on": "axes",
    "call": "hlines",
    "parameters": [
     {

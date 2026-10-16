@@ -85,6 +85,7 @@ bool readable(const std::string& key, Kind want, Kind got) {
     if (key == "xtick.minor.ndivs" || key == "ytick.minor.ndivs") return true;  // 'auto' or a number
     if (key == "axes.axisbelow") return true;                                    // 'line', True or False
     if (key == "hist.bins") return true;                                         // a count, a rule by name, edges
+    if (key.rfind("boxplot.", 0) == 0) return true;  // (boxplot passes them to plot and PathPatch, which check them)
     // (their validators give a name or a number, nothing else)
     for (const char* k : kNumberOrName)
         if (key == k) return true;
@@ -167,19 +168,7 @@ const std::vector<std::string>& Params::inertKeys() {
         "animation.html", "animation.writer", "axes.zmargin", "axes3d.automargin", "axes3d.depthshade",
         "axes3d.depthshade_minalpha", "axes3d.grid", "axes3d.mouserotationstyle", "axes3d.snap_rotation",
         "axes3d.trackballborder", "axes3d.trackballsize", "axes3d.xaxis.panecolor", "axes3d.yaxis.panecolor",
-        "axes3d.zaxis.panecolor", "backend_fallback", "boxplot.bootstrap", "boxplot.boxprops.color",
-        "boxplot.boxprops.linestyle", "boxplot.boxprops.linewidth", "boxplot.capprops.color",
-        "boxplot.capprops.linestyle", "boxplot.capprops.linewidth", "boxplot.flierprops.color",
-        "boxplot.flierprops.linestyle", "boxplot.flierprops.linewidth", "boxplot.flierprops.marker",
-        "boxplot.flierprops.markeredgecolor", "boxplot.flierprops.markeredgewidth",
-        "boxplot.flierprops.markerfacecolor", "boxplot.flierprops.markersize", "boxplot.meanline",
-        "boxplot.meanprops.color", "boxplot.meanprops.linestyle", "boxplot.meanprops.linewidth",
-        "boxplot.meanprops.marker", "boxplot.meanprops.markeredgecolor", "boxplot.meanprops.markerfacecolor",
-        "boxplot.meanprops.markersize", "boxplot.medianprops.color", "boxplot.medianprops.linestyle",
-        "boxplot.medianprops.linewidth", "boxplot.notch", "boxplot.patchartist", "boxplot.showbox",
-        "boxplot.showcaps", "boxplot.showfliers", "boxplot.showmeans", "boxplot.vertical",
-        "boxplot.whiskerprops.color", "boxplot.whiskerprops.linestyle", "boxplot.whiskerprops.linewidth",
-        "boxplot.whiskers", "contour.algorithm", "contour.corner_mask", "contour.linewidth",
+        "axes3d.zaxis.panecolor", "backend_fallback", "contour.algorithm", "contour.corner_mask", "contour.linewidth",
         "contour.negative_linestyle", "date.autoformatter.day", "date.autoformatter.hour",
         "date.autoformatter.microsecond", "date.autoformatter.minute", "date.autoformatter.month",
         "date.autoformatter.second", "date.autoformatter.year", "date.converter", "date.epoch",
