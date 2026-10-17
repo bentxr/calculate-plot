@@ -3,6 +3,8 @@
 // Licence: LICENSES/Matplotlib.txt. Changes: licensing/changes/matplotlib.md
 #pragma once
 
+#include "support/pylambda.hpp"
+
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -134,6 +136,23 @@ public:
 
 private:
     LogTransform log_;
+};
+
+// scale.FuncTransform(forward, inverse): a function of its coordinate (a figure file's {"$lambda": ...}),
+// one direction of a blended transform as LogTransform is. The functions are elementwise, so each value is
+// transformed alone.
+class FuncTransform : public Transform {
+public:
+    FuncTransform(std::shared_ptr<const support::PyLambda> forward, std::shared_ptr<const support::PyLambda> inverse)
+        : forward_(std::move(forward)), inverse_(std::move(inverse)) {}
+    Matrix matrix() const override { return {}; }
+    bool isAffine() const override { return false; }
+    bool isAffine2DBase() const override { return false; }
+    double transform1d(double v) const;
+    TransformPtr inverted() const override { return std::make_shared<FuncTransform>(inverse_, forward_); }
+
+private:
+    std::shared_ptr<const support::PyLambda> forward_, inverse_;
 };
 
 // scale.SymmetricalLogTransform(base, linthresh, linscale): linear within linthresh of zero, logarithmic

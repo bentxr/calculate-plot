@@ -1829,3 +1829,22 @@ TEST(DateCalls, RcSettingsNotPortedAreRefused) {
     options.fontDirectory = std::string(CALCULATE_PLOT_SOURCE_DIR) + "/fonts/ttf";
     EXPECT_EQ(calculate_plot::engine::drawAgg(*figure, options).error, "");
 }
+
+// set_xscale('function' / 'functionlog', functions=(forward, inverse)): functions as {"$lambda": ...}
+INSTANTIATE_TEST_SUITE_P(
+    FunctionScales, DateRefusals,
+    testing::Values(
+        Refusal{R"({"on": "axs[0]", "call": "set_xscale", "args": ["function"]})",
+                "axs[0].set_xscale: the function scale needs functions=(forward, inverse)"},
+        Refusal{R"({"on": "axs[0]", "call": "set_yscale", "args": ["functionlog"], "kwargs": {"base": 2}})",
+                "axs[0].set_yscale: the functionlog scale needs functions=(forward, inverse)"},
+        Refusal{R"({"on": "axs[0]", "call": "set_xscale", "args": ["function"], "kwargs": {"functions": [{"$lambda": "x"}]}})",
+                "axs[0].set_xscale: functions must be (forward, inverse), two functions"},
+        Refusal{R"({"on": "axs[0]", "call": "set_xscale", "args": ["function"], "kwargs": {"functions": [1, 2]}})",
+                "axs[0].set_xscale: functions other than {\"$lambda\": ...} are not supported yet"},
+        Refusal{R"j({"on": "axs[0]", "call": "set_xscale", "args": ["function"], "kwargs": {"functions": [{"$lambda": "x * (1 / 0)"}, {"$lambda": "x"}]}})j",
+                "axs[0].set_xscale: ZeroDivisionError: division by zero"},
+        Refusal{R"({"on": "axs[0]", "call": "set_xscale", "args": ["functionlog"], "kwargs": {"functions": [{"$lambda": "x"}, {"$lambda": "x"}], "base": 1}})",
+                "axs[0].set_xscale: The log base cannot be <= 0 or == 1"},
+        Refusal{R"({"on": "axs[0]", "call": "set_xscale", "args": ["function"], "kwargs": {"functions": [{"$lambda": "x"}, {"$lambda": "x"}], "base": 2}})",
+                "axs[0].set_xscale: the function scale's option base is not supported yet"}));

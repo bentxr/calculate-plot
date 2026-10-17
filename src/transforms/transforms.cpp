@@ -5,6 +5,9 @@
 
 #include "transforms/transforms.hpp"
 
+#include <functional>
+#include <limits>
+
 #include "support/log10.hpp"
 
 #include <algorithm>
@@ -206,8 +209,15 @@ std::array<double, 2> CompositeTransform::transformNonAffine(double x, double y)
 std::array<double, 2> BlendedAffine2D::transformNonAffine(double x, double y) const {
     if (x_->isAffine() && y_->isAffine()) return {x, y};
     // a one-dimensional part transforms its own coordinate; a two-dimensional one gives its column
-    const auto one = [](const Transform& t, double v, double* out) {
+    std::function<bool(const Transform&, double, double*)> one = [&one](const Transform& t, double v, double* out) {
         if (const auto* log = dynamic_cast<const LogTransform*>(&t)) return *out = log->transform1d(v), true;
+        if (const auto* f = dynamic_cast<const FuncTransform*>(&t)) return *out = f->transform1d(v), true;
+        // a composite of one-dimensional transforms (FuncScaleLog's FuncTransform + LogTransform, its inverse):
+        // a's transform, then b's non-affine part (the affine parts of these are identities)
+        if (const auto* c = dynamic_cast<const CompositeTransform*>(&t)) {
+            double mid = 0;
+            return one(*c->a(), v, &mid) && one(*c->b(), mid, out);
+        }
         if (const auto* power = dynamic_cast<const InvertedLogTransform*>(&t)) return *out = power->transform1d(v), true;
         if (const auto* symlog = dynamic_cast<const SymmetricalLogTransform*>(&t)) return *out = symlog->transform1d(v), true;
         if (const auto* inverse = dynamic_cast<const InvertedSymmetricalLogTransform*>(&t)) return *out = inverse->transform1d(v), true;
@@ -219,6 +229,14 @@ std::array<double, 2> BlendedAffine2D::transformNonAffine(double x, double y) co
     if (!one(*x_, x, &rx)) rx = x_->transformNonAffine(x, y)[0];
     if (!one(*y_, y, &ry)) ry = y_->transformNonAffine(x, y)[1];
     return {rx, ry};
+}
+
+double FuncTransform::transform1d(double v) const {
+    std::vector<double> out;
+    std::string error;
+    // (the functions are tried when a scale takes them: only their parts without x can raise, and they did not)
+    if (!forward_->apply({v}, &out, &error)) return std::numeric_limits<double>::quiet_NaN();
+    return out[0];
 }
 
 double LogTransform::transform1d(double v) const {

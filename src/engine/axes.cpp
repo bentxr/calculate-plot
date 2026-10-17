@@ -487,7 +487,7 @@ void Axis::setLim(double v0, double v1, std::optional<bool> autoscale, bool emit
     }
     const bool reverse = v0 > v1;
     std::tie(v0, v1) = locatorNonsingular(v0, v1);
-    if (scale_ == "log") {  // LogScale.limit_range_for_scale with this axis' own minpos
+    if (logScale()) {  // LogScale.limit_range_for_scale with this axis' own minpos
         double mp = minpos();
         if (!std::isfinite(mp)) mp = 1e-300;
         v0 = v0 <= 0 ? mp : v0;
@@ -542,7 +542,7 @@ void Axis::setScale(const std::string& name, const ScaleOptions& options) {
     dictLabels.reset();
     // The locators and formatters keep their settings of before matplotlib 2 in the classic style
     const bool classic = rc_.boolean("_internal.classic_mode");
-    if (name == "log") {  // LogScale.set_default_locators_and_formatters
+    if (name == "log" || name == "functionlog") {  // LogScale.set_default_locators_and_formatters (FuncScaleLog's too)
         logLocator = axes::LogLocator();
         logLocator.base = options.base;
         logLocator.classic = classic;
@@ -603,7 +603,11 @@ void Axis::setScale(const std::string& name, const ScaleOptions& options) {
 }
 
 transforms::TransformPtr Axis::scaleTransform() const {
-    if (scale_ == "log") return std::make_shared<transforms::LogTransform>(scaleOptions_.base, scaleOptions_.logClip);
+    if (scale_ == "function") return std::make_shared<transforms::FuncTransform>(scaleOptions_.forward, scaleOptions_.inverse);
+    if (scale_ == "functionlog")  // FuncTransform(forward, inverse) + LogTransform(base)
+        return transforms::compose(std::make_shared<transforms::FuncTransform>(scaleOptions_.forward, scaleOptions_.inverse),
+                                   std::make_shared<transforms::LogTransform>(scaleOptions_.base));
+    if (logScale()) return std::make_shared<transforms::LogTransform>(scaleOptions_.base, scaleOptions_.logClip);
     if (scale_ == "symlog")
         return std::make_shared<transforms::SymmetricalLogTransform>(scaleOptions_.base, scaleOptions_.linthresh, scaleOptions_.linscale);
     if (scale_ == "logit") return std::make_shared<transforms::LogitTransform>(scaleOptions_.clip);
@@ -611,13 +615,21 @@ transforms::TransformPtr Axis::scaleTransform() const {
 }
 
 double Axis::scaleForward(double v) const {
-    if (scale_ == "log") return transforms::LogTransform(scaleOptions_.base, scaleOptions_.logClip).transform1d(v);
+    if (scale_ == "function" || scale_ == "functionlog") {
+        const double f = transforms::FuncTransform(scaleOptions_.forward, scaleOptions_.inverse).transform1d(v);
+        return scale_ == "function" ? f : transforms::LogTransform(scaleOptions_.base).transform1d(f);
+    }
+    if (logScale()) return transforms::LogTransform(scaleOptions_.base, scaleOptions_.logClip).transform1d(v);
     if (scale_ == "symlog") return transforms::SymmetricalLogTransform(scaleOptions_.base, scaleOptions_.linthresh, scaleOptions_.linscale).transform1d(v);
     if (scale_ == "logit") return transforms::LogitTransform(scaleOptions_.clip).transform1d(v);
     return v;
 }
 double Axis::scaleInverse(double v) const {
-    if (scale_ == "log") return transforms::LogTransform(scaleOptions_.base).inverse1d(v);
+    if (scale_ == "function" || scale_ == "functionlog") {
+        const double f = scale_ == "function" ? v : transforms::LogTransform(scaleOptions_.base).inverse1d(v);
+        return transforms::FuncTransform(scaleOptions_.inverse, scaleOptions_.forward).transform1d(f);
+    }
+    if (logScale()) return transforms::LogTransform(scaleOptions_.base).inverse1d(v);
     if (scale_ == "symlog") return transforms::SymmetricalLogTransform(scaleOptions_.base, scaleOptions_.linthresh, scaleOptions_.linscale).inverse1d(v);
     if (scale_ == "logit") return transforms::LogitTransform::inverse1d(v);
     return v;
@@ -637,7 +649,7 @@ std::pair<double, double> Axis::locatorNonsingular(double v0, double v1) {
         return logitLocator.nonsingular(v0, v1);
     }
     // (set_ticks put a FixedLocator in the log scale's LogLocator's place)
-    if (scale_ == "log" && !tickerAxis().fixedLocs) {
+    if (logScale() && !tickerAxis().fixedLocs) {
         logLocator.minpos = sharedMinpos();  // LogLocator.nonsingular: the least over the shared axes
         return logLocator.nonsingular(v0, v1);
     }
@@ -646,7 +658,7 @@ std::pair<double, double> Axis::locatorNonsingular(double v0, double v1) {
 
 std::pair<double, double> Axis::locatorViewLimits(double v0, double v1) {
     if (tickerAxis().dateTickers && !tickerAxis().fixedLocs) return axes::nonsingular(v0, v1);  // Locator.view_limits
-    if (scale_ == "log" && !tickerAxis().fixedLocs) {
+    if (logScale() && !tickerAxis().fixedLocs) {
         logLocator.minpos = sharedMinpos();
         return logLocator.viewLimits(v0, v1, rc_.text("axes.autolimit_mode") == "round_numbers");
     }
@@ -778,7 +790,7 @@ std::vector<Tick*> Axis::minorTicks(std::size_t count) {
 std::string Axis::offsetString() const {
     // NullFormatter.get_offset() is '' (a log scale's formatters have none either)
     const Axis& owner = tickerAxis();
-    if (scale_ == "log" || scale_ == "symlog" || scale_ == "logit" || owner.nullMajorFormatter || owner.fixedLabels || owner.dictLabels ||
+    if (logScale() || scale_ == "symlog" || scale_ == "logit" || owner.nullMajorFormatter || owner.fixedLabels || owner.dictLabels ||
         owner.dateTickers)
         return std::string();
     return formatter.offsetText();
@@ -795,7 +807,7 @@ std::string Axis::ticksPosition() const {
     // Axis._get_ticks_position over a major tick and, where the minor locator is not a NullLocator
     // (log scales), a minor one: what the ticks of a group show is what its keywords say
     std::vector<const TickSwitches*> groups{&majorTickKw_};
-    if (scale_ == "log" || scale_ == "symlog" || scale_ == "logit") groups.push_back(&minorTickKw_);
+    if (logScale() || scale_ == "symlog" || scale_ == "logit") groups.push_back(&minorTickKw_);
     const auto all = [&](bool tick1, bool tick2, bool label1) {
         for (const TickSwitches* k : groups)
             if (k->tick1On != tick1 || k->tick2On != tick2 || k->label1On != label1 || k->label2On == label1) return false;
@@ -919,7 +931,7 @@ std::vector<Tick*> Axis::updateTicks() {
         } else if (owner.dateTickers) {
             std::string error;
             if (!owner.dateLocator.ticks(ownerView[0], ownerView[1], &locs, &error)) support::noteRaised(error);
-        } else if (scale_ == "log") {
+        } else if (logScale()) {
             logLocator.tickSpace = owner.tickSpace();
             logLocator.minpos = owner.minpos();
             locs = logLocator.tickValues(ownerView[0], ownerView[1]);
@@ -951,7 +963,7 @@ std::vector<Tick*> Axis::updateTicks() {
                 if (!owner.dateFormatter.format(v, owner.dateLocator.unit(), &text, &error)) support::noteRaised(error);
                 labels.push_back(text);
             }
-        } else if (scale_ == "log" || scale_ == "symlog") {
+        } else if (logScale() || scale_ == "symlog") {
             logFormatter.setLocs(ownerView[0], ownerView[1]);
             for (double v : locs) labels.push_back(logFormatter(v));
         } else if (scale_ == "logit") {  // format_ticks: set_locs of the locations, then each
@@ -970,7 +982,7 @@ std::vector<Tick*> Axis::updateTicks() {
         }
     }
     // The minor locator: LogLocator(subs='auto') on log scales, NullLocator otherwise
-    if (groupVisible(minorTickKw_) && scale_ == "log") {
+    if (groupVisible(minorTickKw_) && logScale()) {
         logMinorLocator.tickSpace = owner.tickSpace();
         logMinorLocator.minpos = owner.minpos();
         logLocator.tickSpace = owner.tickSpace();
@@ -1031,7 +1043,7 @@ std::vector<Tick*> Axis::updateTicks() {
     }
     // AutoMinorLocator on a linear scale that has one; its labels are empty (NullFormatter)
     // (every axis makes the same locator from the rcParams: this one's is as good as the owner's)
-    if (groupVisible(minorTickKw_) && scale_ == "linear" && minorLocator) {
+    if (groupVisible(minorTickKw_) && (scale_ == "linear" || scale_ == "function") && minorLocator) {
         locator.tickSpace = owner.tickSpace();
         const auto majorLocs = owner.fixedLocs ? *owner.fixedLocs : locator.tickValues(ownerView[0], ownerView[1]);
         const auto locs = axes::withoutMajorTicks((*minorLocator)(majorLocs, ownerView[0], ownerView[1]), majorLocs, view[0], view[1]);
@@ -1556,7 +1568,7 @@ void Axes::autoscaleView(bool scalex, bool scaley) {
             const auto i1 = std::lower_bound(stickies.begin(), stickies.end(), x1 - tol, nanLast) - stickies.begin();
             if (std::size_t(i1) != stickies.size()) x1bound = stickies[std::size_t(i1)];
         }
-        if (axis.scale() == "log") {  // limit_range_for_scale(x0, x1, minimum_minpos)
+        if (axis.logScale()) {  // limit_range_for_scale(x0, x1, minimum_minpos)
             double mp = axis.sharedMinpos();
             if (!std::isfinite(mp)) mp = 1e-300;
             x0 = x0 <= 0 ? mp : x0;
@@ -1829,7 +1841,7 @@ std::optional<transforms::Bbox> Axes::tightbbox(Renderer& renderer, bool forLayo
             // Text.get_tightbbox: nothing for an empty text, nor for one in data coordinates outside the
             // domain of the scales (_point_in_data_domain: val_in_range is finite, and > 0 on a log scale)
             const auto inDomain = [](const Axis& axis, double v) {
-                return std::isfinite(v) && (axis.scale() != "log" || v > 0) && (axis.scale() != "logit" || (0 < v && v < 1));
+                return std::isfinite(v) && (!axis.logScale() || v > 0) && (axis.scale() != "logit" || (0 < v && v < 1));
             };
             if (t->text.empty()) continue;
             if (transforms::equal(*t->transform, *transData) && !(inDomain(*xaxis, t->x) && inDomain(*yaxis, t->y))) continue;

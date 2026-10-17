@@ -257,6 +257,9 @@ it comes from in its first lines. The changes, as a whole:
   their bounds are read, axhspan / axvspan, hlines / vlines, set_xlim / set_ylim); a call is refused when it holds
   dates elsewhere or a list mixing dates with numbers; rcParams date.converter 'concise', another date.epoch and a
   timezone other than UTC are refused.
+  Function scales: scale.py's FuncTransform, FuncScale and FuncScaleLog (FuncTransform + LogTransform, a LogScale
+  for the locators, formatters and limit_range_for_scale), over the functions of figure files
+  (src/support/pylambda.*); the 'log' name checks of Axis._set_lim and autoscale_view stay the log scale's only.
   Bar labels: Axes.bar_label (BarContainer.datavalues, orientation and errorbar kept with the container,
   LineCollection.get_segments, Patch.get_window_extent, Bbox.intersection) and cbook._auto_format_str, with
   Python's % formatting and str.format of one number ported in src/support/pyformat.cpp (our own code: the

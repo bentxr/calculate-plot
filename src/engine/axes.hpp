@@ -108,6 +108,8 @@ struct AxisScaleOptions {
     // logit's nonpositive ('mask' unless clip), one_half and use_overline; log's nonpositive ('clip' unless not)
     bool clip = false, useOverline = false, logClip = true;
     std::string oneHalf = "\\frac{1}{2}";
+    // FuncScale's and FuncScaleLog's functions (the base is FuncScaleLog's)
+    std::shared_ptr<const support::PyLambda> forward, inverse;
 };
 
 class Axis : public Artist {
@@ -155,6 +157,7 @@ public:
     void setScale(const std::string& name, const ScaleOptions& options = ScaleOptions());
     const ScaleOptions& scaleOptions() const { return scaleOptions_; }
     const std::string& scale() const { return scale_; }
+    bool logScale() const { return scale_ == "log" || scale_ == "functionlog"; }  // a LogScale (FuncScaleLog is one)
     transforms::TransformPtr scaleTransform() const;  // get_transform()
     double scaleForward(double v) const;               // the scale's transform of one value
     double scaleInverse(double v) const;

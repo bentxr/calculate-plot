@@ -1388,13 +1388,22 @@ private:
             const Json* nameJson = call.args.empty() ? keyword(call, "value") : &call.args[0];
             if (call.args.size() > 1 || !nameJson || !nameJson->isString()) return *error = where + ": give the scale's name", false;
             const std::string name = nameJson->asString();
-            if (name != "linear" && name != "log" && name != "symlog" && name != "logit")
+            if (name != "linear" && name != "log" && name != "symlog" && name != "logit" && name != "function" && name != "functionlog")
                 return *error = where + ": the " + name + " scale is not supported yet", false;
             AxisScaleOptions options;
+            const bool function = name == "function" || name == "functionlog";
+            bool functionsGiven = false;
             for (const auto& [key, value] : call.kwargs) {
                 if (key == "value") continue;
                 double n = 0;
-                if (name == "symlog" && (key == "base" || key == "linthresh" || key == "linscale")) {
+                if (function && key == "functions") {
+                    if (!functionPair(value, &options.forward, &options.inverse, where, error)) return false;
+                    functionsGiven = true;
+                } else if (name == "functionlog" && key == "base") {
+                    if (!readNumber(value, &n)) return *error = where + ": base must be a number", false;
+                    if (n <= 0 || n == 1) return *error = where + ": The log base cannot be <= 0 or == 1", false;
+                    options.base = n;
+                } else if (name == "symlog" && (key == "base" || key == "linthresh" || key == "linscale")) {
                     if (!readNumber(value, &n)) return *error = where + ": " + key + " must be a number", false;
                     (key == "base" ? options.base : key == "linthresh" ? options.linthresh : options.linscale) = n;
                 } else if (name == "log" && key == "base") {
@@ -1429,6 +1438,8 @@ private:
                     return *error = where + ": the " + name + " scale's option " + key + " is not supported yet", false;
                 }
             }
+            if (function && !functionsGiven)
+                return *error = where + ": the " + name + " scale needs functions=(forward, inverse)", false;
             // SymmetricalLogTransform's checks
             if (name == "symlog") {
                 if (options.base <= 1.0) return *error = where + ": 'base' must be larger than 1", false;
@@ -1440,6 +1451,29 @@ private:
         }
         *error = "unsupported call: " + where;
         return false;
+    }
+
+    // A function of a figure file ({"$lambda": ...}); its errors are Python's, raised by the parts without x,
+    // so a call on one value finds them (matplotlib meets them when it first calls the function)
+    bool function(const Json& v, std::shared_ptr<const support::PyLambda>* out, const std::string& where, std::string* error) {
+        if (!v.isObject() || v.members().size() != 1 || v.members()[0].first != "$lambda" || !v.members()[0].second.isString())
+            return *error = where + ": functions other than {\"$lambda\": ...} are not supported yet", false;
+        std::string why;
+        auto f = support::PyLambda::parse(v.members()[0].second.asString(), &why);
+        if (!f) return *error = where + ": " + why, false;
+        std::vector<double> unused;
+        if (!f->apply({1.0}, &unused, &why)) return *error = where + ": " + why, false;
+        *out = std::make_shared<const support::PyLambda>(std::move(*f));
+        return true;
+    }
+
+    // functions=(forward, inverse): two functions (a tuple or a list), as FuncScale unpacks them
+    bool functionPair(const Json& v, std::shared_ptr<const support::PyLambda>* forward, std::shared_ptr<const support::PyLambda>* inverse,
+                      const std::string& where, std::string* error) {
+        const Json* pair = sequence(v);
+        if (!pair || pair->size() != 2)
+            return *error = where + ": functions must be (forward, inverse), two functions", false;
+        return function((*pair)[0], forward, where, error) && function((*pair)[1], inverse, where, error);
     }
 
     // A one-dimensional list of numbers (ints and floats alike).

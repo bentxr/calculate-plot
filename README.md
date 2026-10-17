@@ -57,6 +57,7 @@ ax.legend()
 | `{"$tuple": [...]}`, `{"$dict": {...}}` | A Python tuple, and a dict (`arrowprops`, say) |
 | `{"$float": "nan"}` | The floats JSON cannot write (`nan`, `inf`, `-inf`) |
 | `{"$datetime": "2024-05-01T12:30:00"}` | A `datetime.datetime` (naive, UTC), for the data of the calls that take dates |
+| `{"$lambda": "x * 1.8 + 32"}` | A function of `x` (`lambda x: ...`): numbers, `+ - * / **`, parentheses, `np.pi`, `np.e` and NumPy's elementary functions (`np.sqrt`, `np.log10`, `np.sin`, ...) |
 | `{"$ref": "name"}` | An object an earlier call made (a `Polygon` for `ax.add_patch`, a bar container for `ax.bar_label`) |
 
 What a figure file asks for that is not supported yet is refused with a message saying so: a figure is
@@ -71,7 +72,7 @@ either drawn as Matplotlib draws it, or not at all.
 | Areas | `fill`, `fill_between`, `fill_betweenx`, `stairs`, `axhspan`, `axvspan`, `Polygon` |
 | Statistics | `bar`, `barh`, `bar_label`, `hist` (every histogram type and bin rule), `boxplot`, `violinplot`, `stem` |
 | Text | titles, axis labels, `text`, `annotate` (with every arrow and connection style), text boxes (`bbox`), mathtext, legends (including `loc='best'`) |
-| Axes | linear, log, symlog and logit scales, date axes, limits, grids, minor ticks, `tick_params`, `set`, `set_axis_off`, `NullFormatter` |
+| Axes | linear, log, symlog, logit and function scales, date axes, limits, grids, minor ticks, `tick_params`, `set`, `set_axis_off`, `NullFormatter` |
 | Styles | the rcParams, Matplotlib's bundled style sheets and colour sequences |
 | Output | PNG and SVG as `savefig` writes them (`bbox_inches='tight'` included), and the `.py` script |
 
