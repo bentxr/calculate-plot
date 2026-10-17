@@ -5554,6 +5554,19 @@ NavigationResult navigate(const model::Figure& model, double ratio, std::array<d
     return out;
 }
 
+PointerTexts pointerTexts(const model::Figure& model, double ratio, std::array<double, 2> size,
+                          const std::vector<std::array<double, 2>>& points, const DrawOptions& options) {
+    PointerTexts out;
+    out.error = runFigure(model, options, [&](Figure& figure) {
+        std::string error;
+        drawScreenTrace(figure, ratio, options.locale, options.fontDirectory, &error, size);
+        if (!error.empty()) return error;
+        for (const auto& p : points) out.texts.push_back(pointerText(figure, ratio, p[0], p[1]));
+        return std::string();
+    });
+    return out;
+}
+
 SvgDrawing drawSvg(const model::Figure& model, const DrawOptions& options) {
     SvgDrawing out;
     out.error = runFigure(model, options, [&](Figure& figure) {

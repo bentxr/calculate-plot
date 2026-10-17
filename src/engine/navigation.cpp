@@ -184,6 +184,54 @@ std::vector<LimitChange> zoom(const std::vector<Axes*>& axes, double sx, double 
 
 }  // namespace
 
+namespace {
+
+// The event's position in device pixels from the bottom-left as mouseEventCoords gives it (LocationEvent finds
+// inaxes and xdata, ydata from it before it keeps int() of it as x, y)
+std::array<double, 2> eventPosition(const Figure& figure, double ratio, double x, double y) {
+    const auto p = figure.bbox->points();
+    const double height = double(static_cast<long long>(std::max(p[1], p[3]) / ratio));
+    return {x * ratio, (height - y) * ratio};
+}
+
+}  // namespace
+
+std::string pointerText(Figure& figure, double ratio, double x, double y) {
+    const auto e = eventPosition(figure, ratio, x, y);
+    // FigureCanvasBase.inaxes: of the visible Axes whose patch holds the point, the topmost (the last of the
+    // highest zorder)
+    Axes* inaxes = nullptr;
+    for (auto& ax : figure.axes)
+        if (ax->visible && ax->patch->containsPoint(e[0], e[1]) && (!inaxes || ax->zorder >= inaxes->zorder)) inaxes = ax.get();
+    if (!inaxes) return std::string();
+    const auto data = inaxes->transData->inverted()->transform(e[0], e[1]);
+    // format_coord(xdata, ydata): of twins, each one's coordinates of the same pixel, by zorder
+    std::vector<Axes*> twins = inaxes->twinned ? *inaxes->twinned : std::vector<Axes*>{inaxes};
+    std::string s = "(x, y) = ";
+    const auto pair = [](Axes& ax, double vx, double vy) -> std::optional<std::string> {
+        const auto fx = ax.xaxis->formatDataShort(vx);
+        const auto fy = ax.yaxis->formatDataShort(vy);
+        if (!fx || !fy) return std::nullopt;
+        return "(" + *fx + ", " + *fy + ")";
+    };
+    if (twins.size() == 1) {
+        const auto p = pair(*inaxes, data[0], data[1]);
+        if (!p) return std::string();
+        s += *p;
+    } else {
+        const auto screen = inaxes->transData->transform(data[0], data[1]);
+        std::stable_sort(twins.begin(), twins.end(), [](const Axes* a, const Axes* b) { return a->zorder < b->zorder; });
+        for (std::size_t i = 0; i < twins.size(); ++i) {
+            const auto d = twins[i]->transData->inverted()->transform(screen[0], screen[1]);
+            const auto p = pair(*twins[i], d[0], d[1]);
+            if (!p) return std::string();
+            s += (i ? " | " : "") + *p;
+        }
+    }
+    s.erase(s.find_last_not_of(" \t\n\r\f\v") + 1);  // rstrip
+    return s;
+}
+
 std::vector<LimitChange> navigate(Figure& figure, double ratio, const NavigationGesture& g) {
     if (g.button != 1 && g.button != 3) return {};
     // FigureCanvasQT.mouseEventCoords: y from the bottom of get_width_height() (logical: int(bbox.max / ratio)),

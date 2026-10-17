@@ -40,6 +40,14 @@ struct NavigationResult {
 NavigationResult navigate(const model::Figure& figure, double ratio, std::array<double, 2> size, const NavigationGesture& gesture,
                           const DrawOptions& options);
 
+// The toolbar's text for the pointer at each point (logical pixels) of the figure on that screen and canvas.
+struct PointerTexts {
+    std::vector<std::string> texts;
+    std::string error;
+};
+PointerTexts pointerTexts(const model::Figure& figure, double ratio, std::array<double, 2> size,
+                          const std::vector<std::array<double, 2>>& points, const DrawOptions& options);
+
 // Runs a figure file's calls without drawing the figure: what they refuse, or "".
 std::string runCalls(const model::Figure& figure, const DrawOptions& options);
 

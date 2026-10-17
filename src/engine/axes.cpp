@@ -914,6 +914,84 @@ double Axis::tickSpace() const {
     return 2147483647;
 }
 
+namespace {
+
+// cbook._g_sig_digits(value, delta): the significant digits to %g-format value known to within delta; nothing
+// where math.floor(math.log10(...)) raises (a delta that is NaN or not positive)
+std::optional<int> gSigDigits(double value, double delta) {
+    if (!std::isfinite(value)) return 0;
+    if (delta == 0) {
+        if (value == 0) return 3;
+        delta = std::fabs(std::nextafter(value, std::copysign(std::numeric_limits<double>::infinity(), value)) - value);  // np.spacing
+    }
+    if (!(delta > 0) || !std::isfinite(delta)) return std::nullopt;
+    const int before = value != 0 ? int(std::floor(std::log10(std::fabs(value)))) + 1 : 1;
+    return std::max(0, before - int(std::floor(std::log10(delta))));
+}
+
+std::optional<std::string> percent(const std::string& fmt, double v) {
+    const auto f = support::percentFormat(fmt, v, false);
+    if (f.kind != support::Formatted::Text) return std::nullopt;
+    return f.text;
+}
+
+std::optional<std::string> brace(const std::string& fmt, double v) {
+    const auto f = support::braceFormat(fmt, v, false);
+    if (f.kind != support::Formatted::Text) return std::nullopt;
+    return f.text;
+}
+
+}  // namespace
+
+std::optional<std::string> Axis::formatDataShort(double value) const {
+    const Axis& owner = tickerAxis();
+    if (owner.nullMajorFormatter || owner.fixedLabels) return std::string();  // (both say '' without a position)
+    if (owner.dictLabels) {  // FuncFormatter: tickd.get(x, '')
+        std::string found;
+        for (const auto& [at, text] : *owner.dictLabels)
+            if (at == value) found = text;
+        return found;
+    }
+    if (owner.dateTickers) {  // AutoDateFormatter.__call__(x): its format for the locator's scale
+        std::string text, error;
+        const double unit = owner.fixedLocs ? 1.0 : owner.dateLocator.unit();
+        if (!owner.dateFormatter.format(value, unit, &text, &error)) return std::nullopt;
+        return text;
+    }
+    if (logScale() || scale_ == "symlog") {  // LogFormatter: ('%-12g' % value).rstrip()
+        auto s = percent("%-12g", value);
+        if (s) s->erase(s->find_last_not_of(' ') + 1);
+        return s;
+    }
+    if (scale_ == "logit") {  // LogitFormatter: scientific below 0.1, fixed below 0.9, else 1 - the rest
+        if (value < 0.1) return brace("{:e}", value);
+        if (value < 0.9) return brace("{:f}", value);
+        const auto rest = brace("{:e}", 1 - value);
+        return rest ? std::optional<std::string>("1-" + *rest) : std::nullopt;
+    }
+    // ScalarFormatter: as many digits as one pixel of the formatter's axis tells apart
+    const Axes& on = owner.axes_;
+    const auto& t = isX_ ? on.xaxisTransform : on.yaxisTransform;
+    const auto inverse = t->inverted();
+    const auto screen = isX_ ? t->transform(value, 0.0) : t->transform(0.0, value);
+    double delta = 0;
+    for (const double step : {-1.0, 1.0}) {
+        const auto n = isX_ ? inverse->transform(screen[0] + step, screen[1]) : inverse->transform(screen[0], screen[1] + step);
+        const double d = std::fabs((isX_ ? n[0] : n[1]) - value);
+        delta = std::isnan(delta) || std::isnan(d) ? std::numeric_limits<double>::quiet_NaN() : std::max(delta, d);  // .max()
+    }
+    const auto digits = gSigDigits(value, delta);
+    if (!digits) return std::nullopt;
+    auto s = percent("%-#." + std::to_string(*digits) + "g", value);
+    if (!s) return std::nullopt;
+    if (rc_.boolean("axes.unicode_minus")) {  // fix_minus
+        std::string out;
+        for (char c : *s) out += c == '-' ? std::string("\xe2\x88\x92") : std::string(1, c);
+        return out;
+    }
+    return s;
+}
+
 std::vector<Tick*> Axis::updateTicks() {
     // The locators and formatters read the limits, the tick space and the minpos of their own axis
     // (the one this axis shares its tickers with); the ticks are then kept by this axis' limits.

@@ -311,6 +311,25 @@ std::string navigate(std::string_view figureFile, const Canvas& canvas, const Ge
     return w.text();
 }
 
+std::vector<std::string> pointerTexts(std::string_view figureFile, const Canvas& canvas, const std::vector<std::pair<double, double>>& points,
+                                      const std::string& fontDirectory, std::string* error) {
+    std::string why;
+    const auto figure = parsed(figureFile, &why);
+    if (!figure) return *error = why, std::vector<std::string>();
+    const double ratio = canvas.devicePixelRatio;
+    if (!(ratio > 0) || ratio > 16) return *error = "the device pixel ratio must be above 0 and at most 16", std::vector<std::string>();
+    if (!(canvas.width > 0) || !(canvas.height > 0) || !std::isfinite(canvas.width) || !std::isfinite(canvas.height))
+        return *error = "the canvas size must be positive and finite", std::vector<std::string>();
+    std::vector<std::array<double, 2>> at;
+    for (const auto& p : points) at.push_back({p.first, p.second});
+    engine::DrawOptions options;
+    options.fontDirectory = fontDirectory;
+    auto result = engine::pointerTexts(*figure, ratio, {canvas.width, canvas.height}, at, options);
+    if (!result.error.empty()) return *error = result.error, std::vector<std::string>();
+    error->clear();
+    return std::move(result.texts);
+}
+
 Image drawCanvas(std::string_view figureFile, const Canvas& canvas, const std::string& fontDirectory, std::string* error) {
     std::string why;
     const auto figure = parsed(figureFile, &why);

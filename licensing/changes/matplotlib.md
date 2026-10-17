@@ -309,7 +309,10 @@ it comes from in its first lines. The changes, as a whole:
   release_zoom, _start_event_axes_interaction), the Axes' start_pan, _get_pan_points, _prepare_view_from_bbox,
   _set_view_from_bbox and set_xbound / set_ybound, and FigureCanvasQT.mouseEventCoords with LocationEvent's
   int() of the position, translated to C++ for one gesture from press to release; the view the gesture leaves is
-  returned as set_xlim / set_ylim calls of the figure file instead of being set on a live figure.
+  returned as set_xlim / set_ylim calls of the figure file instead of being set on a live figure. The pointer's
+  text: _mouse_event_to_message, FigureCanvasBase.inaxes, format_coord and the formatters' format_data_short
+  (ScalarFormatter with cbook._g_sig_digits, LogFormatter, LogitFormatter; AutoDateFormatter, NullFormatter,
+  FixedFormatter and FuncFormatter through __call__ without a position) in src/engine/axes.cpp.
 - File names drop the leading underscore (e.g. src/_backend_agg.h is src/agg/backend_agg.h); includes follow.
 - RendererAgg's rasterizer takes Matplotlib's 32 768 blocks of cells on 64-bit targets and 4 096 on 32-bit ones
   (WebAssembly), which have no memory for more: a path that needs more is refused there with the same

@@ -100,3 +100,28 @@ TEST(Navigation, WhatCannotBeNavigatedSaysWhy) {
     EXPECT_EQ(cp::navigate(unnamed, cp::Canvas{640, 480, 1}, g, kFonts, &error), "");
     EXPECT_EQ(error, "the Axes under the pointer has no name in the figure file");
 }
+
+// The toolbar's text for the pointer over a grid of positions (tests/oracle/coordinates.json, written by
+// tools/oracle/make_coordinates_oracle.py from NavigationToolbar2._mouse_event_to_message).
+TEST(Navigation, ThePointersCoordinatesReadAsMatplotlibsToolbar) {
+    calculate_plot::support::JsonError jsonError;
+    const auto oracle = calculate_plot::support::parseJson(readFile(kSource / "tests/oracle/coordinates.json"), &jsonError);
+    ASSERT_TRUE(oracle.has_value()) << jsonError.message;
+    std::size_t checked = 0;
+    for (const Json& c : oracle->find("cases")->items()) {
+        const std::string name = c.find("case")->asString();
+        const cp::Canvas canvas{c.find("width")->asNumber(), c.find("height")->asNumber(), c.find("ratio")->asNumber()};
+        std::vector<std::pair<double, double>> points;
+        for (const Json& p : c.find("points")->items()) points.emplace_back(p[0].asNumber(), p[1].asNumber());
+        std::string error;
+        const auto texts = cp::pointerTexts(readFile(kSource / "tests/figures" / name / "fig.json"), canvas, points, kFonts, &error);
+        ASSERT_EQ(error, "") << name;
+        ASSERT_EQ(texts.size(), points.size()) << name;
+        for (std::size_t i = 0; i < texts.size(); ++i) {
+            EXPECT_EQ(texts[i], (*c.find("texts"))[i].asString())
+                << name << " @" << canvas.devicePixelRatio << " at " << points[i].first << "," << points[i].second;
+            ++checked;
+        }
+    }
+    EXPECT_EQ(checked, 5760u);
+}

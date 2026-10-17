@@ -129,6 +129,9 @@ public:
     Axis& tickerAxis() const;
     void setLabelText(const std::string& text, const std::string& loc);  // set_xlabel / set_ylabel
     std::vector<Tick*> updateTicks();  // Axis._update_ticks: the ticks to draw, labelled
+    // The major formatter's format_data_short(value): the pointer's coordinate as the toolbar shows it; nothing
+    // where matplotlib raises (ValueError, OverflowError) or for a formatter not ported.
+    std::optional<std::string> formatDataShort(double value) const;
     // Axis._get_ticklabel_bboxes: the window extents of the visible first and second labels.
     std::pair<std::vector<transforms::Bbox>, std::vector<transforms::Bbox>> ticklabelBboxes(
         const std::vector<Tick*>& ticks, Renderer& renderer);

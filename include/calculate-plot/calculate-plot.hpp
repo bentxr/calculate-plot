@@ -4,6 +4,7 @@
 #include <functional>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 namespace calculate_plot {
@@ -92,5 +93,11 @@ struct Gesture {
 // outside every Axes, a zoom of less than 5 pixels, the middle button).
 std::string navigate(std::string_view figureFile, const Canvas& canvas, const Gesture& gesture, const std::string& fontDirectory,
                      std::string* error);
+
+// What matplotlib's toolbar shows for the pointer at each point (logical pixels from the canvas' top-left): the
+// coordinates under it as the Axes' format_coord writes them ("(x, y) = (1.25, 3.0)", the twins of an Axes
+// joined by " | "), "" outside every Axes. Each call draws the figure once, so ask for several points at a time.
+std::vector<std::string> pointerTexts(std::string_view figureFile, const Canvas& canvas, const std::vector<std::pair<double, double>>& points,
+                                      const std::string& fontDirectory, std::string* error);
 
 }  // namespace calculate_plot
