@@ -1,0 +1,133 @@
+# Written by calculate-plot 0.1.0: this script draws the same figure with Matplotlib 3.11.2.
+import locale
+
+import matplotlib.pyplot as plt
+
+# Text is shaped for the language of the locale: this is the one the figure was made with.
+try:
+    locale.setlocale(locale.LC_CTYPE, "C.UTF-8")
+except locale.Error:
+    locale.setlocale(locale.LC_CTYPE, "C")
+
+plt.rcParams.update({
+    '_internal.classic_mode': True,
+    'animation.codec': 'mpeg4',
+    'animation.convert_args': [],
+    'axes.autolimit_mode': 'round_numbers',
+    'axes.axisbelow': False,
+    'axes.edgecolor': 'k',
+    'axes.facecolor': 'w',
+    'axes.formatter.limits': [-7, 7],
+    'axes.formatter.offset_threshold': 2,
+    'axes.labelcolor': 'k',
+    'axes.labelpad': 5.0,
+    'axes.linewidth': 1.0,
+    'axes.prop_cycle': "cycler(color=['b', 'g', 'r', 'c', 'm', 'y', 'k'])",
+    'axes.titlepad': 5.0,
+    'axes.titley': 1.0,
+    'axes.xmargin': 0.0,
+    'axes.ymargin': 0.0,
+    'axes3d.depthshade': False,
+    'backend_fallback': False,
+    'boxplot.boxprops.color': 'b',
+    'boxplot.capprops.color': 'k',
+    'boxplot.flierprops.color': 'b',
+    'boxplot.flierprops.marker': '+',
+    'boxplot.flierprops.markeredgecolor': 'k',
+    'boxplot.flierprops.markerfacecolor': 'auto',
+    'boxplot.meanprops.color': 'r',
+    'boxplot.meanprops.linestyle': '-',
+    'boxplot.meanprops.marker': 's',
+    'boxplot.meanprops.markeredgecolor': 'k',
+    'boxplot.meanprops.markerfacecolor': 'r',
+    'boxplot.medianprops.color': 'r',
+    'boxplot.whiskerprops.color': 'b',
+    'boxplot.whiskerprops.linestyle': '--',
+    'date.autoformatter.day': '%b %d %Y',
+    'date.autoformatter.hour': '%H:%M:%S',
+    'date.autoformatter.microsecond': '%H:%M:%S.%f',
+    'date.autoformatter.minute': '%H:%M:%S.%f',
+    'date.autoformatter.month': '%b %Y',
+    'date.autoformatter.second': '%H:%M:%S.%f',
+    'errorbar.capsize': 3.0,
+    'figure.dpi': 80.0,
+    'figure.edgecolor': 'w',
+    'figure.facecolor': '0.75',
+    'figure.figsize': [8.0, 6.0],
+    'figure.labelsize': 'medium',
+    'figure.subplot.bottom': 0.1,
+    'figure.subplot.top': 0.9,
+    'figure.titlesize': 'medium',
+    'font.cursive': ['Apple Chancery', 'Textile', 'Zapf Chancery', 'Sand', 'Script MT', 'Felipa', 'cursive'],
+    'font.fantasy': ['Comic Sans MS', 'Chicago', 'Charcoal', 'ImpactWestern', 'xkcd script', 'fantasy'],
+    'font.monospace': ['DejaVu Sans Mono', 'Andale Mono', 'Nimbus Mono L', 'Courier New', 'Courier', 'Fixed', 'Terminal', 'monospace'],
+    'font.sans-serif': ['DejaVu Sans', 'Lucida Grande', 'Verdana', 'Geneva', 'Lucid', 'Arial', 'Helvetica', 'Avant Garde', 'sans-serif'],
+    'font.serif': ['DejaVu Serif', 'New Century Schoolbook', 'Century Schoolbook L', 'Utopia', 'ITC Bookman', 'Bookman', 'Nimbus Roman No9 L', 'Times New Roman', 'Times', 'Palatino', 'Charter', 'serif'],
+    'font.size': 12.0,
+    'grid.color': 'k',
+    'grid.linestyle': ':',
+    'grid.linewidth': 0.5,
+    'image.cmap': 'jet',
+    'image.interpolation': 'bilinear',
+    'image.resample': False,
+    'keymap.back': ['left', 'c', 'backspace'],
+    'keymap.forward': ['right', 'v'],
+    'keymap.quit': ['ctrl+w', 'cmd+w'],
+    'legend.edgecolor': 'inherit',
+    'legend.fancybox': False,
+    'legend.fontsize': 'large',
+    'legend.framealpha': None,
+    'legend.loc': 'upper right',
+    'legend.numpoints': 2,
+    'legend.scatterpoints': 3,
+    'lines.color': 'b',
+    'lines.dashdot_pattern': [3.0, 5.0, 1.0, 5.0],
+    'lines.dashed_pattern': [6.0, 6.0],
+    'lines.dotted_pattern': [1.0, 3.0],
+    'lines.linewidth': 1.0,
+    'lines.markeredgewidth': 0.5,
+    'lines.scale_dashes': False,
+    'mathtext.bf': 'serif:bold',
+    'mathtext.fontset': 'cm',
+    'mathtext.it': 'serif:italic',
+    'mathtext.rm': 'serif',
+    'mathtext.sf': 'sans\\-serif',
+    'patch.edgecolor': 'k',
+    'patch.facecolor': 'b',
+    'patch.force_edgecolor': True,
+    'path.simplify_threshold': 0.1111111111111111,
+    'savefig.dpi': 100.0,
+    'savefig.edgecolor': 'w',
+    'savefig.facecolor': 'w',
+    'text.color': 'k',
+    'xtick.color': 'k',
+    'xtick.direction': 'in',
+    'xtick.major.pad': 4.0,
+    'xtick.major.size': 4.0,
+    'xtick.major.width': 0.5,
+    'xtick.minor.pad': 4.0,
+    'xtick.minor.width': 0.5,
+    'xtick.top': True,
+    'ytick.color': 'k',
+    'ytick.direction': 'in',
+    'ytick.major.pad': 4.0,
+    'ytick.major.size': 4.0,
+    'ytick.major.width': 0.5,
+    'ytick.minor.pad': 4.0,
+    'ytick.minor.width': 0.5,
+    'ytick.right': True,
+})
+fig, axs = plt.subplots(2, 2)
+axs[0, 0].plot([1, 10, 100, 1000], [1.0, 100000.0, 1000000000000.0, 1e+19])
+axs[0, 0].set_yscale('log')
+axs[0, 1].plot([1, 2, 3, 4], [2.0, 3.0, 5.0, 7.0])
+axs[0, 1].set_yscale('log')
+axs[1, 0].plot([1e-20, 1e-05, 10000000000.0, 1e+25], [1, 2, 3, 4])
+axs[1, 0].set_xscale('log')
+axs[1, 1].plot([0.5, 30.0, 400.0], [0.3, 20.0, 150.0])
+axs[1, 1].set_xscale('log')
+axs[1, 1].set_yscale('log')
+axs[1, 1].grid(True, which='both')
+
+if __name__ == "__main__":
+    plt.show()

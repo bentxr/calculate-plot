@@ -1,0 +1,580 @@
+{
+"version": 1,
+"calls": [
+{
+"call": "subplots",
+"kwargs": {
+"figsize": {
+"$tuple": [
+6.0,
+4.0
+]
+}
+},
+"as": [
+"fig",
+"ax"
+]
+},
+{
+"on": "ax",
+"call": "plot",
+"args": [
+[
+0,
+0.5
+],
+[
+0,
+0.3
+]
+],
+"kwargs": {
+"marker": ".",
+"linestyle": "",
+"markersize": 6
+}
+},
+{
+"on": "ax",
+"call": "plot",
+"args": [
+[
+1,
+1.5
+],
+[
+0,
+0.3
+]
+],
+"kwargs": {
+"marker": ",",
+"linestyle": "",
+"markersize": 8,
+"markerfacecolor": "none"
+}
+},
+{
+"on": "ax",
+"call": "plot",
+"args": [
+[
+2,
+2.5
+],
+[
+0,
+0.3
+]
+],
+"kwargs": {
+"marker": "o",
+"linestyle": "",
+"markersize": 10,
+"alpha": 0.6
+}
+},
+{
+"on": "ax",
+"call": "plot",
+"args": [
+[
+3,
+3.5
+],
+[
+0,
+0.3
+]
+],
+"kwargs": {
+"marker": "v",
+"linestyle": "",
+"markersize": 12,
+"markeredgecolor": {
+"$tuple": [
+0.2,
+0.4,
+0.6
+]
+}
+}
+},
+{
+"on": "ax",
+"call": "plot",
+"args": [
+[
+4,
+4.5
+],
+[
+0,
+0.3
+]
+],
+"kwargs": {
+"marker": "^",
+"linestyle": "",
+"markersize": 6,
+"markerfacecolor": "none",
+"markeredgewidth": 2.5
+}
+},
+{
+"on": "ax",
+"call": "plot",
+"args": [
+[
+5,
+5.5
+],
+[
+0,
+0.3
+]
+],
+"kwargs": {
+"marker": "<",
+"linestyle": "",
+"markersize": 8
+}
+},
+{
+"on": "ax",
+"call": "plot",
+"args": [
+[
+6,
+6.5
+],
+[
+0,
+0.3
+]
+],
+"kwargs": {
+"marker": ">",
+"linestyle": "",
+"markersize": 10
+}
+},
+{
+"on": "ax",
+"call": "plot",
+"args": [
+[
+7,
+7.5
+],
+[
+0,
+0.3
+]
+],
+"kwargs": {
+"marker": "1",
+"linestyle": "",
+"markersize": 12,
+"markerfacecolor": "none",
+"alpha": 0.6,
+"markeredgecolor": {
+"$tuple": [
+0.2,
+0.4,
+0.6
+]
+}
+}
+},
+{
+"on": "ax",
+"call": "plot",
+"args": [
+[
+8,
+8.5
+],
+[
+0,
+0.3
+]
+],
+"kwargs": {
+"marker": "2",
+"linestyle": "",
+"markersize": 6
+}
+},
+{
+"on": "ax",
+"call": "plot",
+"args": [
+[
+0,
+0.5
+],
+[
+1,
+1.3
+]
+],
+"kwargs": {
+"marker": "3",
+"linestyle": "",
+"markersize": 8
+}
+},
+{
+"on": "ax",
+"call": "plot",
+"args": [
+[
+1,
+1.5
+],
+[
+1,
+1.3
+]
+],
+"kwargs": {
+"marker": "4",
+"linestyle": "",
+"markersize": 10,
+"markerfacecolor": "none"
+}
+},
+{
+"on": "ax",
+"call": "plot",
+"args": [
+[
+2,
+2.5
+],
+[
+1,
+1.3
+]
+],
+"kwargs": {
+"marker": "8",
+"linestyle": "",
+"markersize": 12,
+"markeredgecolor": {
+"$tuple": [
+0.2,
+0.4,
+0.6
+]
+},
+"markeredgewidth": 2.5
+}
+},
+{
+"on": "ax",
+"call": "plot",
+"args": [
+[
+3,
+3.5
+],
+[
+1,
+1.3
+]
+],
+"kwargs": {
+"marker": "s",
+"linestyle": "",
+"markersize": 6,
+"alpha": 0.6
+}
+},
+{
+"on": "ax",
+"call": "plot",
+"args": [
+[
+4,
+4.5
+],
+[
+1,
+1.3
+]
+],
+"kwargs": {
+"marker": "p",
+"linestyle": "",
+"markersize": 8,
+"markerfacecolor": "none"
+}
+},
+{
+"on": "ax",
+"call": "plot",
+"args": [
+[
+5,
+5.5
+],
+[
+1,
+1.3
+]
+],
+"kwargs": {
+"marker": "P",
+"linestyle": "",
+"markersize": 10
+}
+},
+{
+"on": "ax",
+"call": "plot",
+"args": [
+[
+6,
+6.5
+],
+[
+1,
+1.3
+]
+],
+"kwargs": {
+"marker": "*",
+"linestyle": "",
+"markersize": 12,
+"markeredgecolor": {
+"$tuple": [
+0.2,
+0.4,
+0.6
+]
+}
+}
+},
+{
+"on": "ax",
+"call": "plot",
+"args": [
+[
+7,
+7.5
+],
+[
+1,
+1.3
+]
+],
+"kwargs": {
+"marker": "h",
+"linestyle": "",
+"markersize": 6,
+"markerfacecolor": "none"
+}
+},
+{
+"on": "ax",
+"call": "plot",
+"args": [
+[
+8,
+8.5
+],
+[
+1,
+1.3
+]
+],
+"kwargs": {
+"marker": "H",
+"linestyle": "",
+"markersize": 8,
+"alpha": 0.6
+}
+},
+{
+"on": "ax",
+"call": "plot",
+"args": [
+[
+0,
+0.5
+],
+[
+2,
+2.3
+]
+],
+"kwargs": {
+"marker": "+",
+"linestyle": "",
+"markersize": 10,
+"markeredgewidth": 2.5
+}
+},
+{
+"on": "ax",
+"call": "plot",
+"args": [
+[
+1,
+1.5
+],
+[
+2,
+2.3
+]
+],
+"kwargs": {
+"marker": "x",
+"linestyle": "",
+"markersize": 12,
+"markerfacecolor": "none",
+"markeredgecolor": {
+"$tuple": [
+0.2,
+0.4,
+0.6
+]
+}
+}
+},
+{
+"on": "ax",
+"call": "plot",
+"args": [
+[
+2,
+2.5
+],
+[
+2,
+2.3
+]
+],
+"kwargs": {
+"marker": "X",
+"linestyle": "",
+"markersize": 6
+}
+},
+{
+"on": "ax",
+"call": "plot",
+"args": [
+[
+3,
+3.5
+],
+[
+2,
+2.3
+]
+],
+"kwargs": {
+"marker": "D",
+"linestyle": "",
+"markersize": 8
+}
+},
+{
+"on": "ax",
+"call": "plot",
+"args": [
+[
+4,
+4.5
+],
+[
+2,
+2.3
+]
+],
+"kwargs": {
+"marker": "d",
+"linestyle": "",
+"markersize": 10,
+"markerfacecolor": "none",
+"alpha": 0.6
+}
+},
+{
+"on": "ax",
+"call": "plot",
+"args": [
+[
+5,
+5.5
+],
+[
+2,
+2.3
+]
+],
+"kwargs": {
+"marker": "|",
+"linestyle": "",
+"markersize": 12,
+"markeredgecolor": {
+"$tuple": [
+0.2,
+0.4,
+0.6
+]
+}
+}
+},
+{
+"on": "ax",
+"call": "plot",
+"args": [
+[
+6,
+6.5
+],
+[
+2,
+2.3
+]
+],
+"kwargs": {
+"marker": "_",
+"linestyle": "",
+"markersize": 6
+}
+},
+{
+"on": "ax",
+"call": "plot",
+"args": [
+[
+0,
+8
+],
+[
+3.2,
+3.2
+]
+],
+"kwargs": {
+"color": {
+"$tuple": [
+0.9,
+0.1,
+0.1,
+0.5
+]
+},
+"marker": "o",
+"fillstyle": "none",
+"ls": ":"
+}
+}
+]
+}

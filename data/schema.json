@@ -1,0 +1,7601 @@
+{
+ "_provenance": [
+  "Derived from Matplotlib 3.11.2: the signatures of the calls and the setters, aliases and valid values",
+  "of the artists (matplotlib.artist.ArtistInspector), written by tools/oracle/make_schema.py.",
+  "Copyright (c) 2012- Matplotlib Development Team; All Rights Reserved",
+  "Licence: LICENSES/Matplotlib.txt. Changes: licensing/changes/matplotlib.md"
+ ],
+ "calls": [
+  {
+   "on": "plt",
+   "call": "figure",
+   "parameters": [
+    {
+     "name": "num",
+     "positional": true,
+     "valid": "int or str or `.Figure` or `.SubFigure`, optional",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "figsize",
+     "positional": true,
+     "valid": "(float, float) or (float, float, str), default: :rc:`figure.figsize`",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "dpi",
+     "positional": true,
+     "valid": "float, default: :rc:`figure.dpi`",
+     "kind": "number",
+     "default": null
+    },
+    {
+     "name": "facecolor",
+     "positional": false,
+     "valid": ":mpltype:`color`, default: :rc:`figure.facecolor`",
+     "kind": "colour",
+     "default": null
+    },
+    {
+     "name": "edgecolor",
+     "positional": false,
+     "valid": ":mpltype:`color`, default: :rc:`figure.edgecolor`",
+     "kind": "colour",
+     "default": null
+    },
+    {
+     "name": "frameon",
+     "positional": false,
+     "valid": "bool, default: True",
+     "kind": "bool",
+     "default": true
+    },
+    {
+     "name": "FigureClass",
+     "positional": false,
+     "valid": "subclass of `~matplotlib.figure.Figure`",
+     "kind": "other",
+     "default": "<class 'matplotlib.figure.Figure'>"
+    },
+    {
+     "name": "clear",
+     "positional": false,
+     "valid": "bool, default: False",
+     "kind": "bool",
+     "default": false
+    }
+   ]
+  },
+  {
+   "on": "plt",
+   "call": "subplots",
+   "parameters": [
+    {
+     "name": "nrows",
+     "positional": true,
+     "valid": "int, default: 1",
+     "kind": "other",
+     "default": 1
+    },
+    {
+     "name": "ncols",
+     "positional": true,
+     "valid": "int, default: 1",
+     "kind": "other",
+     "default": 1
+    },
+    {
+     "name": "sharex",
+     "positional": false,
+     "valid": "bool or {'none', 'all', 'row', 'col'}, default: False",
+     "kind": "bool",
+     "default": false
+    },
+    {
+     "name": "sharey",
+     "positional": false,
+     "valid": "bool or {'none', 'all', 'row', 'col'}, default: False",
+     "kind": "bool",
+     "default": false
+    },
+    {
+     "name": "squeeze",
+     "positional": false,
+     "valid": "bool, default: True",
+     "kind": "bool",
+     "default": true
+    },
+    {
+     "name": "width_ratios",
+     "positional": false,
+     "valid": "array-like of length *ncols*, optional",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "height_ratios",
+     "positional": false,
+     "valid": "array-like of length *nrows*, optional",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "subplot_kw",
+     "positional": false,
+     "valid": "dict, optional",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "gridspec_kw",
+     "positional": false,
+     "valid": "dict, optional",
+     "kind": "other",
+     "default": null
+    }
+   ]
+  },
+  {
+   "on": "figure",
+   "call": "add_subplot",
+   "parameters": []
+  },
+  {
+   "on": "figure",
+   "call": "add_axes",
+   "parameters": []
+  },
+  {
+   "on": "figure",
+   "call": "suptitle",
+   "parameters": [
+    {
+     "name": "t",
+     "positional": true,
+     "valid": "str",
+     "kind": "text",
+     "required": true
+    }
+   ],
+   "artist": "Text",
+   "properties": [
+    {
+     "name": "alpha",
+     "valid": "float or None",
+     "kind": "number"
+    },
+    {
+     "name": "backgroundcolor",
+     "valid": ":mpltype:`color`",
+     "kind": "colour"
+    },
+    {
+     "name": "clip_on",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "color",
+     "valid": ":mpltype:`color`",
+     "kind": "colour",
+     "aliases": [
+      "c"
+     ]
+    },
+    {
+     "name": "fontfamily",
+     "valid": "{FONTNAME, 'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace'}",
+     "kind": "choice",
+     "choices": [
+      "serif",
+      "sans-serif",
+      "cursive",
+      "fantasy",
+      "monospace"
+     ],
+     "aliases": [
+      "family",
+      "fontname"
+     ]
+    },
+    {
+     "name": "fontfeatures",
+     "valid": "list of str, or tuple of str, or None",
+     "kind": "other"
+    },
+    {
+     "name": "fontsize",
+     "valid": "float or {'xx-small', 'x-small', 'small', 'medium', 'large', 'x-large', 'xx-large'}",
+     "kind": "number",
+     "aliases": [
+      "size"
+     ]
+    },
+    {
+     "name": "fontstretch",
+     "valid": "{a numeric value in range 0-1000, 'ultra-condensed', 'extra-condensed', 'condensed', 'semi-condensed', 'normal', 'semi-expanded', 'expanded', 'extra-expanded', 'ultra-expanded'}",
+     "kind": "choice",
+     "choices": [
+      "ultra-condensed",
+      "extra-condensed",
+      "condensed",
+      "semi-condensed",
+      "normal",
+      "semi-expanded",
+      "expanded",
+      "extra-expanded",
+      "ultra-expanded"
+     ],
+     "aliases": [
+      "stretch"
+     ]
+    },
+    {
+     "name": "fontstyle",
+     "valid": "{'normal', 'italic', 'oblique'}",
+     "kind": "choice",
+     "choices": [
+      "normal",
+      "italic",
+      "oblique"
+     ],
+     "aliases": [
+      "style"
+     ]
+    },
+    {
+     "name": "fontvariant",
+     "valid": "{'normal', 'small-caps'}",
+     "kind": "choice",
+     "choices": [
+      "normal",
+      "small-caps"
+     ],
+     "aliases": [
+      "variant"
+     ]
+    },
+    {
+     "name": "fontweight",
+     "valid": "{a numeric value in range 0-1000, 'ultralight', 'light', 'normal', 'regular', 'book', 'medium', 'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy', 'extra bold', 'black'}",
+     "kind": "choice",
+     "choices": [
+      "ultralight",
+      "light",
+      "normal",
+      "regular",
+      "book",
+      "medium",
+      "roman",
+      "semibold",
+      "demibold",
+      "demi",
+      "bold",
+      "heavy",
+      "extra bold",
+      "black"
+     ],
+     "aliases": [
+      "weight"
+     ]
+    },
+    {
+     "name": "horizontalalignment",
+     "valid": "{'left', 'center', 'right'}",
+     "kind": "choice",
+     "choices": [
+      "left",
+      "center",
+      "right"
+     ],
+     "aliases": [
+      "ha"
+     ]
+    },
+    {
+     "name": "label",
+     "valid": "object",
+     "kind": "text"
+    },
+    {
+     "name": "language",
+     "valid": "str or None",
+     "kind": "other"
+    },
+    {
+     "name": "linespacing",
+     "valid": "'normal' or float, default: 'normal'",
+     "kind": "other"
+    },
+    {
+     "name": "multialignment",
+     "valid": "{'left', 'right', 'center'}",
+     "kind": "choice",
+     "choices": [
+      "left",
+      "right",
+      "center"
+     ],
+     "aliases": [
+      "ma"
+     ]
+    },
+    {
+     "name": "rotation",
+     "valid": "float or {'vertical', 'horizontal'}",
+     "kind": "number"
+    },
+    {
+     "name": "verticalalignment",
+     "valid": "{'baseline', 'bottom', 'center', 'center_baseline', 'top'}",
+     "kind": "choice",
+     "choices": [
+      "baseline",
+      "bottom",
+      "center",
+      "center_baseline",
+      "top"
+     ],
+     "aliases": [
+      "va"
+     ]
+    },
+    {
+     "name": "visible",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "zorder",
+     "valid": "float",
+     "kind": "number"
+    }
+   ]
+  },
+  {
+   "on": "figure",
+   "call": "text",
+   "parameters": [
+    {
+     "name": "x",
+     "positional": true,
+     "valid": "float",
+     "kind": "number",
+     "required": true
+    },
+    {
+     "name": "y",
+     "positional": true,
+     "valid": "float",
+     "kind": "number",
+     "required": true
+    },
+    {
+     "name": "s",
+     "positional": true,
+     "valid": "str",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "fontdict",
+     "positional": true,
+     "valid": "dict, optional",
+     "kind": "other",
+     "default": null
+    }
+   ],
+   "artist": "Text",
+   "properties": [
+    {
+     "name": "alpha",
+     "valid": "float or None",
+     "kind": "number"
+    },
+    {
+     "name": "backgroundcolor",
+     "valid": ":mpltype:`color`",
+     "kind": "colour"
+    },
+    {
+     "name": "clip_on",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "color",
+     "valid": ":mpltype:`color`",
+     "kind": "colour",
+     "aliases": [
+      "c"
+     ]
+    },
+    {
+     "name": "fontfamily",
+     "valid": "{FONTNAME, 'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace'}",
+     "kind": "choice",
+     "choices": [
+      "serif",
+      "sans-serif",
+      "cursive",
+      "fantasy",
+      "monospace"
+     ],
+     "aliases": [
+      "family",
+      "fontname"
+     ]
+    },
+    {
+     "name": "fontfeatures",
+     "valid": "list of str, or tuple of str, or None",
+     "kind": "other"
+    },
+    {
+     "name": "fontsize",
+     "valid": "float or {'xx-small', 'x-small', 'small', 'medium', 'large', 'x-large', 'xx-large'}",
+     "kind": "number",
+     "aliases": [
+      "size"
+     ]
+    },
+    {
+     "name": "fontstretch",
+     "valid": "{a numeric value in range 0-1000, 'ultra-condensed', 'extra-condensed', 'condensed', 'semi-condensed', 'normal', 'semi-expanded', 'expanded', 'extra-expanded', 'ultra-expanded'}",
+     "kind": "choice",
+     "choices": [
+      "ultra-condensed",
+      "extra-condensed",
+      "condensed",
+      "semi-condensed",
+      "normal",
+      "semi-expanded",
+      "expanded",
+      "extra-expanded",
+      "ultra-expanded"
+     ],
+     "aliases": [
+      "stretch"
+     ]
+    },
+    {
+     "name": "fontstyle",
+     "valid": "{'normal', 'italic', 'oblique'}",
+     "kind": "choice",
+     "choices": [
+      "normal",
+      "italic",
+      "oblique"
+     ],
+     "aliases": [
+      "style"
+     ]
+    },
+    {
+     "name": "fontvariant",
+     "valid": "{'normal', 'small-caps'}",
+     "kind": "choice",
+     "choices": [
+      "normal",
+      "small-caps"
+     ],
+     "aliases": [
+      "variant"
+     ]
+    },
+    {
+     "name": "fontweight",
+     "valid": "{a numeric value in range 0-1000, 'ultralight', 'light', 'normal', 'regular', 'book', 'medium', 'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy', 'extra bold', 'black'}",
+     "kind": "choice",
+     "choices": [
+      "ultralight",
+      "light",
+      "normal",
+      "regular",
+      "book",
+      "medium",
+      "roman",
+      "semibold",
+      "demibold",
+      "demi",
+      "bold",
+      "heavy",
+      "extra bold",
+      "black"
+     ],
+     "aliases": [
+      "weight"
+     ]
+    },
+    {
+     "name": "horizontalalignment",
+     "valid": "{'left', 'center', 'right'}",
+     "kind": "choice",
+     "choices": [
+      "left",
+      "center",
+      "right"
+     ],
+     "aliases": [
+      "ha"
+     ]
+    },
+    {
+     "name": "label",
+     "valid": "object",
+     "kind": "text"
+    },
+    {
+     "name": "language",
+     "valid": "str or None",
+     "kind": "other"
+    },
+    {
+     "name": "linespacing",
+     "valid": "'normal' or float, default: 'normal'",
+     "kind": "other"
+    },
+    {
+     "name": "multialignment",
+     "valid": "{'left', 'right', 'center'}",
+     "kind": "choice",
+     "choices": [
+      "left",
+      "right",
+      "center"
+     ],
+     "aliases": [
+      "ma"
+     ]
+    },
+    {
+     "name": "rotation",
+     "valid": "float or {'vertical', 'horizontal'}",
+     "kind": "number"
+    },
+    {
+     "name": "verticalalignment",
+     "valid": "{'baseline', 'bottom', 'center', 'center_baseline', 'top'}",
+     "kind": "choice",
+     "choices": [
+      "baseline",
+      "bottom",
+      "center",
+      "center_baseline",
+      "top"
+     ],
+     "aliases": [
+      "va"
+     ]
+    },
+    {
+     "name": "visible",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "zorder",
+     "valid": "float",
+     "kind": "number"
+    }
+   ]
+  },
+  {
+   "on": "figure",
+   "call": "subplots_adjust",
+   "parameters": [
+    {
+     "name": "left",
+     "positional": true,
+     "valid": "float, optional",
+     "kind": "number",
+     "default": null
+    },
+    {
+     "name": "bottom",
+     "positional": true,
+     "valid": "float, optional",
+     "kind": "number",
+     "default": null
+    },
+    {
+     "name": "right",
+     "positional": true,
+     "valid": "float, optional",
+     "kind": "number",
+     "default": null
+    },
+    {
+     "name": "top",
+     "positional": true,
+     "valid": "float, optional",
+     "kind": "number",
+     "default": null
+    },
+    {
+     "name": "wspace",
+     "positional": true,
+     "valid": "float, optional",
+     "kind": "number",
+     "default": null
+    },
+    {
+     "name": "hspace",
+     "positional": true,
+     "valid": "float, optional",
+     "kind": "number",
+     "default": null
+    }
+   ]
+  },
+  {
+   "on": "figure",
+   "call": "tight_layout",
+   "parameters": [
+    {
+     "name": "pad",
+     "positional": false,
+     "valid": "float, default: 1.08",
+     "kind": "number",
+     "default": 1.08
+    },
+    {
+     "name": "h_pad",
+     "positional": false,
+     "valid": "float, default: *pad*",
+     "kind": "number",
+     "default": null
+    },
+    {
+     "name": "w_pad",
+     "positional": false,
+     "valid": "float, default: *pad*",
+     "kind": "number",
+     "default": null
+    },
+    {
+     "name": "rect",
+     "positional": false,
+     "valid": "tuple (left, bottom, right, top), default: (0, 0, 1, 1)",
+     "kind": "other",
+     "default": null
+    }
+   ]
+  },
+  {
+   "on": "axes",
+   "call": "plot",
+   "parameters": [
+    {
+     "name": "scalex",
+     "positional": false,
+     "valid": "bool, default: True",
+     "kind": "bool",
+     "default": true
+    },
+    {
+     "name": "scaley",
+     "positional": false,
+     "valid": "bool, default: True",
+     "kind": "bool",
+     "default": true
+    },
+    {
+     "name": "data",
+     "positional": false,
+     "valid": "indexable object, optional",
+     "kind": "other",
+     "default": null
+    }
+   ],
+   "artist": "Line2D",
+   "properties": [
+    {
+     "name": "alpha",
+     "valid": "float or None",
+     "kind": "number"
+    },
+    {
+     "name": "clip_on",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "color",
+     "valid": ":mpltype:`color`",
+     "kind": "colour",
+     "aliases": [
+      "c"
+     ]
+    },
+    {
+     "name": "dash_capstyle",
+     "valid": "`.CapStyle` or {'butt', 'projecting', 'round'}",
+     "kind": "choice",
+     "choices": [
+      "butt",
+      "projecting",
+      "round"
+     ]
+    },
+    {
+     "name": "dash_joinstyle",
+     "valid": "`.JoinStyle` or {'miter', 'round', 'bevel'}",
+     "kind": "choice",
+     "choices": [
+      "miter",
+      "round",
+      "bevel"
+     ]
+    },
+    {
+     "name": "drawstyle",
+     "valid": "{'default', 'steps', 'steps-pre', 'steps-mid', 'steps-post'}, default: 'default'",
+     "kind": "choice",
+     "choices": [
+      "default",
+      "steps",
+      "steps-pre",
+      "steps-mid",
+      "steps-post"
+     ],
+     "aliases": [
+      "ds"
+     ]
+    },
+    {
+     "name": "fillstyle",
+     "valid": "{'full', 'left', 'right', 'bottom', 'top', 'none'}",
+     "kind": "choice",
+     "choices": [
+      "full",
+      "left",
+      "right",
+      "bottom",
+      "top",
+      "none"
+     ]
+    },
+    {
+     "name": "gapcolor",
+     "valid": ":mpltype:`color` or None",
+     "kind": "colour"
+    },
+    {
+     "name": "label",
+     "valid": "object",
+     "kind": "text"
+    },
+    {
+     "name": "linestyle",
+     "valid": "{'-', '--', '-.', ':', '', ...} or (offset, on-off-seq)",
+     "kind": "choice",
+     "choices": [
+      "-",
+      "--",
+      "-.",
+      ":",
+      ""
+     ],
+     "aliases": [
+      "ls"
+     ]
+    },
+    {
+     "name": "linewidth",
+     "valid": "float",
+     "kind": "number",
+     "aliases": [
+      "lw"
+     ]
+    },
+    {
+     "name": "marker",
+     "valid": "marker style string, `~.path.Path` or `~.markers.MarkerStyle`",
+     "kind": "other"
+    },
+    {
+     "name": "markeredgecolor",
+     "valid": ":mpltype:`color`",
+     "kind": "colour",
+     "aliases": [
+      "mec"
+     ]
+    },
+    {
+     "name": "markeredgewidth",
+     "valid": "float",
+     "kind": "number",
+     "aliases": [
+      "mew"
+     ]
+    },
+    {
+     "name": "markerfacecolor",
+     "valid": ":mpltype:`color`",
+     "kind": "colour",
+     "aliases": [
+      "mfc"
+     ]
+    },
+    {
+     "name": "markerfacecoloralt",
+     "valid": ":mpltype:`color`",
+     "kind": "colour",
+     "aliases": [
+      "mfcalt"
+     ]
+    },
+    {
+     "name": "markersize",
+     "valid": "float",
+     "kind": "number",
+     "aliases": [
+      "ms"
+     ]
+    },
+    {
+     "name": "solid_capstyle",
+     "valid": "`.CapStyle` or {'butt', 'projecting', 'round'}",
+     "kind": "choice",
+     "choices": [
+      "butt",
+      "projecting",
+      "round"
+     ]
+    },
+    {
+     "name": "solid_joinstyle",
+     "valid": "`.JoinStyle` or {'miter', 'round', 'bevel'}",
+     "kind": "choice",
+     "choices": [
+      "miter",
+      "round",
+      "bevel"
+     ]
+    },
+    {
+     "name": "visible",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "zorder",
+     "valid": "float",
+     "kind": "number"
+    }
+   ]
+  },
+  {
+   "on": "axes",
+   "call": "scatter",
+   "parameters": [
+    {
+     "name": "x",
+     "positional": true,
+     "valid": "float or array-like, shape (n, )",
+     "kind": "number",
+     "required": true
+    },
+    {
+     "name": "y",
+     "positional": true,
+     "valid": "float or array-like, shape (n, )",
+     "kind": "number",
+     "required": true
+    },
+    {
+     "name": "s",
+     "positional": true,
+     "valid": "float or array-like, shape (n, ), optional",
+     "kind": "number",
+     "default": null
+    },
+    {
+     "name": "c",
+     "positional": true,
+     "valid": "array-like or list of :mpltype:`color` or :mpltype:`color`, optional",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "marker",
+     "positional": false,
+     "valid": "`~.markers.MarkerStyle`, default: :rc:`scatter.marker`",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "cmap",
+     "positional": false,
+     "valid": "str or `~matplotlib.colors.Colormap`, default: :rc:`image.cmap`",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "norm",
+     "positional": false,
+     "valid": "str or `~matplotlib.colors.Normalize`, optional",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "vmin",
+     "positional": false,
+     "valid": "float, optional",
+     "kind": "number",
+     "default": null
+    },
+    {
+     "name": "vmax",
+     "positional": false,
+     "valid": "float, optional",
+     "kind": "number",
+     "default": null
+    },
+    {
+     "name": "alpha",
+     "positional": false,
+     "valid": "float, default: None",
+     "kind": "number",
+     "default": null
+    },
+    {
+     "name": "linewidths",
+     "positional": false,
+     "valid": "float or array-like, default: :rc:`lines.linewidth`",
+     "kind": "number",
+     "default": null
+    },
+    {
+     "name": "edgecolors",
+     "positional": false,
+     "valid": "{'face', 'none', *None*} or :mpltype:`color` or list of :mpltype:`color`, default: :rc:`scatter.edgecolors`",
+     "kind": "choice",
+     "choices": [
+      "face",
+      "none"
+     ],
+     "default": null
+    },
+    {
+     "name": "colorizer",
+     "positional": false,
+     "valid": "`~matplotlib.colorizer.Colorizer` or None, default: None",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "plotnonfinite",
+     "positional": false,
+     "valid": "bool, default: False",
+     "kind": "bool",
+     "default": false
+    },
+    {
+     "name": "data",
+     "positional": false,
+     "valid": "indexable object, optional",
+     "kind": "other",
+     "default": null
+    }
+   ],
+   "artist": "PathCollection",
+   "properties": [
+    {
+     "name": "capstyle",
+     "valid": "`.CapStyle` or {'butt', 'projecting', 'round'}",
+     "kind": "choice",
+     "choices": [
+      "butt",
+      "projecting",
+      "round"
+     ]
+    },
+    {
+     "name": "clip_on",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "color",
+     "valid": ":mpltype:`color` or list of RGBA tuples",
+     "kind": "colour"
+    },
+    {
+     "name": "edgecolor",
+     "valid": ":mpltype:`color` or list of :mpltype:`color` or 'face'",
+     "kind": "colour",
+     "aliases": [
+      "ec",
+      "edgecolors"
+     ]
+    },
+    {
+     "name": "facecolor",
+     "valid": ":mpltype:`color` or list of :mpltype:`color`",
+     "kind": "colour",
+     "aliases": [
+      "facecolors",
+      "fc"
+     ]
+    },
+    {
+     "name": "hatch",
+     "valid": "{'/', '\\\\', '|', '-', '+', 'x', 'o', 'O', '.', '*'}",
+     "kind": "choice",
+     "choices": [
+      "/",
+      "\\\\",
+      "|",
+      "-",
+      "+",
+      "x",
+      "o",
+      "O",
+      ".",
+      "*"
+     ]
+    },
+    {
+     "name": "hatch_linewidth",
+     "valid": "unknown",
+     "kind": "other"
+    },
+    {
+     "name": "hatchcolor",
+     "valid": ":mpltype:`color` or list of :mpltype:`color` or 'edge'",
+     "kind": "colour"
+    },
+    {
+     "name": "joinstyle",
+     "valid": "`.JoinStyle` or {'miter', 'round', 'bevel'}",
+     "kind": "choice",
+     "choices": [
+      "miter",
+      "round",
+      "bevel"
+     ]
+    },
+    {
+     "name": "label",
+     "valid": "object",
+     "kind": "text"
+    },
+    {
+     "name": "linestyle",
+     "valid": "{'-', '--', '-.', ':', '', ...} or (offset, on-off-seq) or list thereof",
+     "kind": "choice",
+     "choices": [
+      "-",
+      "--",
+      "-.",
+      ":",
+      ""
+     ],
+     "aliases": [
+      "dashes",
+      "linestyles",
+      "ls"
+     ]
+    },
+    {
+     "name": "linewidth",
+     "valid": "float or list of floats",
+     "kind": "number",
+     "aliases": [
+      "linewidths",
+      "lw"
+     ]
+    },
+    {
+     "name": "visible",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "zorder",
+     "valid": "float",
+     "kind": "number"
+    }
+   ]
+  },
+  {
+   "on": "axes",
+   "call": "fill_between",
+   "parameters": [
+    {
+     "name": "x",
+     "positional": true,
+     "valid": "array-like",
+     "kind": "other",
+     "required": true
+    },
+    {
+     "name": "y1",
+     "positional": true,
+     "valid": "array-like or float",
+     "kind": "other",
+     "required": true
+    },
+    {
+     "name": "y2",
+     "positional": true,
+     "valid": "array-like or float, default: 0",
+     "kind": "other",
+     "default": 0
+    },
+    {
+     "name": "where",
+     "positional": true,
+     "valid": "array-like of bool, optional",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "interpolate",
+     "positional": true,
+     "valid": "bool, default: False",
+     "kind": "bool",
+     "default": false
+    },
+    {
+     "name": "step",
+     "positional": true,
+     "valid": "{'pre', 'post', 'mid'}, optional",
+     "kind": "choice",
+     "choices": [
+      "pre",
+      "post",
+      "mid"
+     ],
+     "default": null
+    },
+    {
+     "name": "data",
+     "positional": false,
+     "valid": "indexable object, optional",
+     "kind": "other",
+     "default": null
+    }
+   ],
+   "artist": "FillBetweenPolyCollection",
+   "properties": [
+    {
+     "name": "alpha",
+     "valid": "array-like or float or None",
+     "kind": "number"
+    },
+    {
+     "name": "capstyle",
+     "valid": "`.CapStyle` or {'butt', 'projecting', 'round'}",
+     "kind": "choice",
+     "choices": [
+      "butt",
+      "projecting",
+      "round"
+     ]
+    },
+    {
+     "name": "clip_on",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "color",
+     "valid": ":mpltype:`color` or list of RGBA tuples",
+     "kind": "colour"
+    },
+    {
+     "name": "edgecolor",
+     "valid": ":mpltype:`color` or list of :mpltype:`color` or 'face'",
+     "kind": "colour",
+     "aliases": [
+      "ec",
+      "edgecolors"
+     ]
+    },
+    {
+     "name": "facecolor",
+     "valid": ":mpltype:`color` or list of :mpltype:`color`",
+     "kind": "colour",
+     "aliases": [
+      "facecolors",
+      "fc"
+     ]
+    },
+    {
+     "name": "hatch",
+     "valid": "{'/', '\\\\', '|', '-', '+', 'x', 'o', 'O', '.', '*'}",
+     "kind": "choice",
+     "choices": [
+      "/",
+      "\\\\",
+      "|",
+      "-",
+      "+",
+      "x",
+      "o",
+      "O",
+      ".",
+      "*"
+     ]
+    },
+    {
+     "name": "hatch_linewidth",
+     "valid": "unknown",
+     "kind": "other"
+    },
+    {
+     "name": "hatchcolor",
+     "valid": ":mpltype:`color` or list of :mpltype:`color` or 'edge'",
+     "kind": "colour"
+    },
+    {
+     "name": "joinstyle",
+     "valid": "`.JoinStyle` or {'miter', 'round', 'bevel'}",
+     "kind": "choice",
+     "choices": [
+      "miter",
+      "round",
+      "bevel"
+     ]
+    },
+    {
+     "name": "label",
+     "valid": "object",
+     "kind": "text"
+    },
+    {
+     "name": "linestyle",
+     "valid": "{'-', '--', '-.', ':', '', ...} or (offset, on-off-seq) or list thereof",
+     "kind": "choice",
+     "choices": [
+      "-",
+      "--",
+      "-.",
+      ":",
+      ""
+     ],
+     "aliases": [
+      "dashes",
+      "linestyles",
+      "ls"
+     ]
+    },
+    {
+     "name": "linewidth",
+     "valid": "float or list of floats",
+     "kind": "number",
+     "aliases": [
+      "linewidths",
+      "lw"
+     ]
+    },
+    {
+     "name": "visible",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "zorder",
+     "valid": "float",
+     "kind": "number"
+    }
+   ]
+  },
+  {
+   "on": "axes",
+   "call": "fill_betweenx",
+   "parameters": [
+    {
+     "name": "y",
+     "positional": true,
+     "valid": "array-like",
+     "kind": "other",
+     "required": true
+    },
+    {
+     "name": "x1",
+     "positional": true,
+     "valid": "array-like or float",
+     "kind": "other",
+     "required": true
+    },
+    {
+     "name": "x2",
+     "positional": true,
+     "valid": "array-like or float, default: 0",
+     "kind": "other",
+     "default": 0
+    },
+    {
+     "name": "where",
+     "positional": true,
+     "valid": "array-like of bool, optional",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "step",
+     "positional": true,
+     "valid": "{'pre', 'post', 'mid'}, optional",
+     "kind": "choice",
+     "choices": [
+      "pre",
+      "post",
+      "mid"
+     ],
+     "default": null
+    },
+    {
+     "name": "interpolate",
+     "positional": true,
+     "valid": "bool, default: False",
+     "kind": "bool",
+     "default": false
+    },
+    {
+     "name": "data",
+     "positional": false,
+     "valid": "indexable object, optional",
+     "kind": "other",
+     "default": null
+    }
+   ],
+   "artist": "FillBetweenPolyCollection",
+   "properties": [
+    {
+     "name": "alpha",
+     "valid": "array-like or float or None",
+     "kind": "number"
+    },
+    {
+     "name": "capstyle",
+     "valid": "`.CapStyle` or {'butt', 'projecting', 'round'}",
+     "kind": "choice",
+     "choices": [
+      "butt",
+      "projecting",
+      "round"
+     ]
+    },
+    {
+     "name": "clip_on",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "color",
+     "valid": ":mpltype:`color` or list of RGBA tuples",
+     "kind": "colour"
+    },
+    {
+     "name": "edgecolor",
+     "valid": ":mpltype:`color` or list of :mpltype:`color` or 'face'",
+     "kind": "colour",
+     "aliases": [
+      "ec",
+      "edgecolors"
+     ]
+    },
+    {
+     "name": "facecolor",
+     "valid": ":mpltype:`color` or list of :mpltype:`color`",
+     "kind": "colour",
+     "aliases": [
+      "facecolors",
+      "fc"
+     ]
+    },
+    {
+     "name": "hatch",
+     "valid": "{'/', '\\\\', '|', '-', '+', 'x', 'o', 'O', '.', '*'}",
+     "kind": "choice",
+     "choices": [
+      "/",
+      "\\\\",
+      "|",
+      "-",
+      "+",
+      "x",
+      "o",
+      "O",
+      ".",
+      "*"
+     ]
+    },
+    {
+     "name": "hatch_linewidth",
+     "valid": "unknown",
+     "kind": "other"
+    },
+    {
+     "name": "hatchcolor",
+     "valid": ":mpltype:`color` or list of :mpltype:`color` or 'edge'",
+     "kind": "colour"
+    },
+    {
+     "name": "joinstyle",
+     "valid": "`.JoinStyle` or {'miter', 'round', 'bevel'}",
+     "kind": "choice",
+     "choices": [
+      "miter",
+      "round",
+      "bevel"
+     ]
+    },
+    {
+     "name": "label",
+     "valid": "object",
+     "kind": "text"
+    },
+    {
+     "name": "linestyle",
+     "valid": "{'-', '--', '-.', ':', '', ...} or (offset, on-off-seq) or list thereof",
+     "kind": "choice",
+     "choices": [
+      "-",
+      "--",
+      "-.",
+      ":",
+      ""
+     ],
+     "aliases": [
+      "dashes",
+      "linestyles",
+      "ls"
+     ]
+    },
+    {
+     "name": "linewidth",
+     "valid": "float or list of floats",
+     "kind": "number",
+     "aliases": [
+      "linewidths",
+      "lw"
+     ]
+    },
+    {
+     "name": "visible",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "zorder",
+     "valid": "float",
+     "kind": "number"
+    }
+   ]
+  },
+  {
+   "on": "axes",
+   "call": "errorbar",
+   "parameters": [
+    {
+     "name": "x",
+     "positional": true,
+     "valid": "float or array-like",
+     "kind": "number",
+     "required": true
+    },
+    {
+     "name": "y",
+     "positional": true,
+     "valid": "float or array-like",
+     "kind": "number",
+     "required": true
+    },
+    {
+     "name": "yerr",
+     "positional": true,
+     "valid": "float or array-like, shape(N,) or shape(2, N), optional",
+     "kind": "number",
+     "default": null
+    },
+    {
+     "name": "xerr",
+     "positional": true,
+     "valid": "float or array-like, shape(N,) or shape(2, N), optional",
+     "kind": "number",
+     "default": null
+    },
+    {
+     "name": "fmt",
+     "positional": true,
+     "valid": "str, default: ''",
+     "kind": "other",
+     "default": ""
+    },
+    {
+     "name": "ecolor",
+     "positional": false,
+     "valid": ":mpltype:`color`, default: None",
+     "kind": "colour",
+     "default": null
+    },
+    {
+     "name": "elinewidth",
+     "positional": false,
+     "valid": "float, default: None",
+     "kind": "number",
+     "default": null
+    },
+    {
+     "name": "capsize",
+     "positional": false,
+     "valid": "float, default: :rc:`errorbar.capsize`",
+     "kind": "number",
+     "default": null
+    },
+    {
+     "name": "barsabove",
+     "positional": false,
+     "valid": "bool, default: False",
+     "kind": "bool",
+     "default": false
+    },
+    {
+     "name": "lolims",
+     "positional": false,
+     "valid": "bool or array-like, default: False",
+     "kind": "bool",
+     "default": false
+    },
+    {
+     "name": "uplims",
+     "positional": false,
+     "valid": "bool or array-like, default: False",
+     "kind": "bool",
+     "default": false
+    },
+    {
+     "name": "xlolims",
+     "positional": false,
+     "valid": "bool or array-like, default: False",
+     "kind": "bool",
+     "default": false
+    },
+    {
+     "name": "xuplims",
+     "positional": false,
+     "valid": "bool or array-like, default: False",
+     "kind": "bool",
+     "default": false
+    },
+    {
+     "name": "errorevery",
+     "positional": false,
+     "valid": "int or (int, int), default: 1",
+     "kind": "other",
+     "default": 1
+    },
+    {
+     "name": "capthick",
+     "positional": false,
+     "valid": "float, default: None",
+     "kind": "number",
+     "default": null
+    },
+    {
+     "name": "elinestyle",
+     "positional": false,
+     "valid": "str or tuple, default: 'solid'",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "data",
+     "positional": false,
+     "valid": "indexable object, optional",
+     "kind": "other",
+     "default": null
+    }
+   ],
+   "artist": "Line2D",
+   "properties": [
+    {
+     "name": "alpha",
+     "valid": "float or None",
+     "kind": "number"
+    },
+    {
+     "name": "clip_on",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "color",
+     "valid": ":mpltype:`color`",
+     "kind": "colour",
+     "aliases": [
+      "c"
+     ]
+    },
+    {
+     "name": "dash_capstyle",
+     "valid": "`.CapStyle` or {'butt', 'projecting', 'round'}",
+     "kind": "choice",
+     "choices": [
+      "butt",
+      "projecting",
+      "round"
+     ]
+    },
+    {
+     "name": "dash_joinstyle",
+     "valid": "`.JoinStyle` or {'miter', 'round', 'bevel'}",
+     "kind": "choice",
+     "choices": [
+      "miter",
+      "round",
+      "bevel"
+     ]
+    },
+    {
+     "name": "drawstyle",
+     "valid": "{'default', 'steps', 'steps-pre', 'steps-mid', 'steps-post'}, default: 'default'",
+     "kind": "choice",
+     "choices": [
+      "default",
+      "steps",
+      "steps-pre",
+      "steps-mid",
+      "steps-post"
+     ],
+     "aliases": [
+      "ds"
+     ]
+    },
+    {
+     "name": "fillstyle",
+     "valid": "{'full', 'left', 'right', 'bottom', 'top', 'none'}",
+     "kind": "choice",
+     "choices": [
+      "full",
+      "left",
+      "right",
+      "bottom",
+      "top",
+      "none"
+     ]
+    },
+    {
+     "name": "gapcolor",
+     "valid": ":mpltype:`color` or None",
+     "kind": "colour"
+    },
+    {
+     "name": "label",
+     "valid": "object",
+     "kind": "text"
+    },
+    {
+     "name": "linestyle",
+     "valid": "{'-', '--', '-.', ':', '', ...} or (offset, on-off-seq)",
+     "kind": "choice",
+     "choices": [
+      "-",
+      "--",
+      "-.",
+      ":",
+      ""
+     ],
+     "aliases": [
+      "ls"
+     ]
+    },
+    {
+     "name": "linewidth",
+     "valid": "float",
+     "kind": "number",
+     "aliases": [
+      "lw"
+     ]
+    },
+    {
+     "name": "marker",
+     "valid": "marker style string, `~.path.Path` or `~.markers.MarkerStyle`",
+     "kind": "other"
+    },
+    {
+     "name": "markeredgecolor",
+     "valid": ":mpltype:`color`",
+     "kind": "colour",
+     "aliases": [
+      "mec"
+     ]
+    },
+    {
+     "name": "markeredgewidth",
+     "valid": "float",
+     "kind": "number",
+     "aliases": [
+      "mew"
+     ]
+    },
+    {
+     "name": "markerfacecolor",
+     "valid": ":mpltype:`color`",
+     "kind": "colour",
+     "aliases": [
+      "mfc"
+     ]
+    },
+    {
+     "name": "markerfacecoloralt",
+     "valid": ":mpltype:`color`",
+     "kind": "colour",
+     "aliases": [
+      "mfcalt"
+     ]
+    },
+    {
+     "name": "markersize",
+     "valid": "float",
+     "kind": "number",
+     "aliases": [
+      "ms"
+     ]
+    },
+    {
+     "name": "solid_capstyle",
+     "valid": "`.CapStyle` or {'butt', 'projecting', 'round'}",
+     "kind": "choice",
+     "choices": [
+      "butt",
+      "projecting",
+      "round"
+     ]
+    },
+    {
+     "name": "solid_joinstyle",
+     "valid": "`.JoinStyle` or {'miter', 'round', 'bevel'}",
+     "kind": "choice",
+     "choices": [
+      "miter",
+      "round",
+      "bevel"
+     ]
+    },
+    {
+     "name": "visible",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "zorder",
+     "valid": "float",
+     "kind": "number"
+    }
+   ]
+  },
+  {
+   "on": "axes",
+   "call": "axhline",
+   "parameters": [
+    {
+     "name": "y",
+     "positional": true,
+     "valid": "float, default: 0",
+     "kind": "number",
+     "default": 0
+    },
+    {
+     "name": "xmin",
+     "positional": true,
+     "valid": "float, default: 0",
+     "kind": "number",
+     "default": 0
+    },
+    {
+     "name": "xmax",
+     "positional": true,
+     "valid": "float, default: 1",
+     "kind": "number",
+     "default": 1
+    }
+   ],
+   "artist": "Line2D",
+   "properties": [
+    {
+     "name": "alpha",
+     "valid": "float or None",
+     "kind": "number"
+    },
+    {
+     "name": "clip_on",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "color",
+     "valid": ":mpltype:`color`",
+     "kind": "colour",
+     "aliases": [
+      "c"
+     ]
+    },
+    {
+     "name": "dash_capstyle",
+     "valid": "`.CapStyle` or {'butt', 'projecting', 'round'}",
+     "kind": "choice",
+     "choices": [
+      "butt",
+      "projecting",
+      "round"
+     ]
+    },
+    {
+     "name": "dash_joinstyle",
+     "valid": "`.JoinStyle` or {'miter', 'round', 'bevel'}",
+     "kind": "choice",
+     "choices": [
+      "miter",
+      "round",
+      "bevel"
+     ]
+    },
+    {
+     "name": "drawstyle",
+     "valid": "{'default', 'steps', 'steps-pre', 'steps-mid', 'steps-post'}, default: 'default'",
+     "kind": "choice",
+     "choices": [
+      "default",
+      "steps",
+      "steps-pre",
+      "steps-mid",
+      "steps-post"
+     ],
+     "aliases": [
+      "ds"
+     ]
+    },
+    {
+     "name": "fillstyle",
+     "valid": "{'full', 'left', 'right', 'bottom', 'top', 'none'}",
+     "kind": "choice",
+     "choices": [
+      "full",
+      "left",
+      "right",
+      "bottom",
+      "top",
+      "none"
+     ]
+    },
+    {
+     "name": "gapcolor",
+     "valid": ":mpltype:`color` or None",
+     "kind": "colour"
+    },
+    {
+     "name": "label",
+     "valid": "object",
+     "kind": "text"
+    },
+    {
+     "name": "linestyle",
+     "valid": "{'-', '--', '-.', ':', '', ...} or (offset, on-off-seq)",
+     "kind": "choice",
+     "choices": [
+      "-",
+      "--",
+      "-.",
+      ":",
+      ""
+     ],
+     "aliases": [
+      "ls"
+     ]
+    },
+    {
+     "name": "linewidth",
+     "valid": "float",
+     "kind": "number",
+     "aliases": [
+      "lw"
+     ]
+    },
+    {
+     "name": "marker",
+     "valid": "marker style string, `~.path.Path` or `~.markers.MarkerStyle`",
+     "kind": "other"
+    },
+    {
+     "name": "markeredgecolor",
+     "valid": ":mpltype:`color`",
+     "kind": "colour",
+     "aliases": [
+      "mec"
+     ]
+    },
+    {
+     "name": "markeredgewidth",
+     "valid": "float",
+     "kind": "number",
+     "aliases": [
+      "mew"
+     ]
+    },
+    {
+     "name": "markerfacecolor",
+     "valid": ":mpltype:`color`",
+     "kind": "colour",
+     "aliases": [
+      "mfc"
+     ]
+    },
+    {
+     "name": "markerfacecoloralt",
+     "valid": ":mpltype:`color`",
+     "kind": "colour",
+     "aliases": [
+      "mfcalt"
+     ]
+    },
+    {
+     "name": "markersize",
+     "valid": "float",
+     "kind": "number",
+     "aliases": [
+      "ms"
+     ]
+    },
+    {
+     "name": "solid_capstyle",
+     "valid": "`.CapStyle` or {'butt', 'projecting', 'round'}",
+     "kind": "choice",
+     "choices": [
+      "butt",
+      "projecting",
+      "round"
+     ]
+    },
+    {
+     "name": "solid_joinstyle",
+     "valid": "`.JoinStyle` or {'miter', 'round', 'bevel'}",
+     "kind": "choice",
+     "choices": [
+      "miter",
+      "round",
+      "bevel"
+     ]
+    },
+    {
+     "name": "visible",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "zorder",
+     "valid": "float",
+     "kind": "number"
+    }
+   ]
+  },
+  {
+   "on": "axes",
+   "call": "axvline",
+   "parameters": [
+    {
+     "name": "x",
+     "positional": true,
+     "valid": "float, default: 0",
+     "kind": "number",
+     "default": 0
+    },
+    {
+     "name": "ymin",
+     "positional": true,
+     "valid": "float, default: 0",
+     "kind": "number",
+     "default": 0
+    },
+    {
+     "name": "ymax",
+     "positional": true,
+     "valid": "float, default: 1",
+     "kind": "number",
+     "default": 1
+    }
+   ],
+   "artist": "Line2D",
+   "properties": [
+    {
+     "name": "alpha",
+     "valid": "float or None",
+     "kind": "number"
+    },
+    {
+     "name": "clip_on",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "color",
+     "valid": ":mpltype:`color`",
+     "kind": "colour",
+     "aliases": [
+      "c"
+     ]
+    },
+    {
+     "name": "dash_capstyle",
+     "valid": "`.CapStyle` or {'butt', 'projecting', 'round'}",
+     "kind": "choice",
+     "choices": [
+      "butt",
+      "projecting",
+      "round"
+     ]
+    },
+    {
+     "name": "dash_joinstyle",
+     "valid": "`.JoinStyle` or {'miter', 'round', 'bevel'}",
+     "kind": "choice",
+     "choices": [
+      "miter",
+      "round",
+      "bevel"
+     ]
+    },
+    {
+     "name": "drawstyle",
+     "valid": "{'default', 'steps', 'steps-pre', 'steps-mid', 'steps-post'}, default: 'default'",
+     "kind": "choice",
+     "choices": [
+      "default",
+      "steps",
+      "steps-pre",
+      "steps-mid",
+      "steps-post"
+     ],
+     "aliases": [
+      "ds"
+     ]
+    },
+    {
+     "name": "fillstyle",
+     "valid": "{'full', 'left', 'right', 'bottom', 'top', 'none'}",
+     "kind": "choice",
+     "choices": [
+      "full",
+      "left",
+      "right",
+      "bottom",
+      "top",
+      "none"
+     ]
+    },
+    {
+     "name": "gapcolor",
+     "valid": ":mpltype:`color` or None",
+     "kind": "colour"
+    },
+    {
+     "name": "label",
+     "valid": "object",
+     "kind": "text"
+    },
+    {
+     "name": "linestyle",
+     "valid": "{'-', '--', '-.', ':', '', ...} or (offset, on-off-seq)",
+     "kind": "choice",
+     "choices": [
+      "-",
+      "--",
+      "-.",
+      ":",
+      ""
+     ],
+     "aliases": [
+      "ls"
+     ]
+    },
+    {
+     "name": "linewidth",
+     "valid": "float",
+     "kind": "number",
+     "aliases": [
+      "lw"
+     ]
+    },
+    {
+     "name": "marker",
+     "valid": "marker style string, `~.path.Path` or `~.markers.MarkerStyle`",
+     "kind": "other"
+    },
+    {
+     "name": "markeredgecolor",
+     "valid": ":mpltype:`color`",
+     "kind": "colour",
+     "aliases": [
+      "mec"
+     ]
+    },
+    {
+     "name": "markeredgewidth",
+     "valid": "float",
+     "kind": "number",
+     "aliases": [
+      "mew"
+     ]
+    },
+    {
+     "name": "markerfacecolor",
+     "valid": ":mpltype:`color`",
+     "kind": "colour",
+     "aliases": [
+      "mfc"
+     ]
+    },
+    {
+     "name": "markerfacecoloralt",
+     "valid": ":mpltype:`color`",
+     "kind": "colour",
+     "aliases": [
+      "mfcalt"
+     ]
+    },
+    {
+     "name": "markersize",
+     "valid": "float",
+     "kind": "number",
+     "aliases": [
+      "ms"
+     ]
+    },
+    {
+     "name": "solid_capstyle",
+     "valid": "`.CapStyle` or {'butt', 'projecting', 'round'}",
+     "kind": "choice",
+     "choices": [
+      "butt",
+      "projecting",
+      "round"
+     ]
+    },
+    {
+     "name": "solid_joinstyle",
+     "valid": "`.JoinStyle` or {'miter', 'round', 'bevel'}",
+     "kind": "choice",
+     "choices": [
+      "miter",
+      "round",
+      "bevel"
+     ]
+    },
+    {
+     "name": "visible",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "zorder",
+     "valid": "float",
+     "kind": "number"
+    }
+   ]
+  },
+  {
+   "on": "axes",
+   "call": "axhspan",
+   "parameters": [
+    {
+     "name": "ymin",
+     "positional": true,
+     "valid": "float",
+     "kind": "number",
+     "required": true
+    },
+    {
+     "name": "ymax",
+     "positional": true,
+     "valid": "float",
+     "kind": "number",
+     "required": true
+    },
+    {
+     "name": "xmin",
+     "positional": true,
+     "valid": "float, default: 0",
+     "kind": "number",
+     "default": 0
+    },
+    {
+     "name": "xmax",
+     "positional": true,
+     "valid": "float, default: 1",
+     "kind": "number",
+     "default": 1
+    }
+   ],
+   "artist": "Rectangle",
+   "properties": [
+    {
+     "name": "alpha",
+     "valid": "float or None",
+     "kind": "number"
+    },
+    {
+     "name": "capstyle",
+     "valid": "`.CapStyle` or {'butt', 'projecting', 'round'}",
+     "kind": "choice",
+     "choices": [
+      "butt",
+      "projecting",
+      "round"
+     ]
+    },
+    {
+     "name": "clip_on",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "color",
+     "valid": ":mpltype:`color`",
+     "kind": "colour"
+    },
+    {
+     "name": "edgecolor",
+     "valid": ":mpltype:`color` or None",
+     "kind": "colour",
+     "aliases": [
+      "ec"
+     ]
+    },
+    {
+     "name": "edgegapcolor",
+     "valid": ":mpltype:`color` or None",
+     "kind": "colour"
+    },
+    {
+     "name": "facecolor",
+     "valid": ":mpltype:`color` or None",
+     "kind": "colour",
+     "aliases": [
+      "fc"
+     ]
+    },
+    {
+     "name": "fill",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "hatch",
+     "valid": "{'/', '\\\\', '|', '-', '+', 'x', 'o', 'O', '.', '*'}",
+     "kind": "choice",
+     "choices": [
+      "/",
+      "\\\\",
+      "|",
+      "-",
+      "+",
+      "x",
+      "o",
+      "O",
+      ".",
+      "*"
+     ]
+    },
+    {
+     "name": "hatch_linewidth",
+     "valid": "unknown",
+     "kind": "other"
+    },
+    {
+     "name": "hatchcolor",
+     "valid": ":mpltype:`color` or 'edge' or None",
+     "kind": "colour"
+    },
+    {
+     "name": "joinstyle",
+     "valid": "`.JoinStyle` or {'miter', 'round', 'bevel'}",
+     "kind": "choice",
+     "choices": [
+      "miter",
+      "round",
+      "bevel"
+     ]
+    },
+    {
+     "name": "label",
+     "valid": "object",
+     "kind": "text"
+    },
+    {
+     "name": "linestyle",
+     "valid": "{'-', '--', '-.', ':', '', ...} or (offset, on-off-seq)",
+     "kind": "choice",
+     "choices": [
+      "-",
+      "--",
+      "-.",
+      ":",
+      ""
+     ],
+     "aliases": [
+      "ls"
+     ]
+    },
+    {
+     "name": "linewidth",
+     "valid": "float or None",
+     "kind": "number",
+     "aliases": [
+      "lw"
+     ]
+    },
+    {
+     "name": "visible",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "zorder",
+     "valid": "float",
+     "kind": "number"
+    }
+   ]
+  },
+  {
+   "on": "axes",
+   "call": "axvspan",
+   "parameters": [
+    {
+     "name": "xmin",
+     "positional": true,
+     "valid": "float",
+     "kind": "number",
+     "required": true
+    },
+    {
+     "name": "xmax",
+     "positional": true,
+     "valid": "float",
+     "kind": "number",
+     "required": true
+    },
+    {
+     "name": "ymin",
+     "positional": true,
+     "valid": "float, default: 0",
+     "kind": "number",
+     "default": 0
+    },
+    {
+     "name": "ymax",
+     "positional": true,
+     "valid": "float, default: 1",
+     "kind": "number",
+     "default": 1
+    }
+   ],
+   "artist": "Rectangle",
+   "properties": [
+    {
+     "name": "alpha",
+     "valid": "float or None",
+     "kind": "number"
+    },
+    {
+     "name": "capstyle",
+     "valid": "`.CapStyle` or {'butt', 'projecting', 'round'}",
+     "kind": "choice",
+     "choices": [
+      "butt",
+      "projecting",
+      "round"
+     ]
+    },
+    {
+     "name": "clip_on",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "color",
+     "valid": ":mpltype:`color`",
+     "kind": "colour"
+    },
+    {
+     "name": "edgecolor",
+     "valid": ":mpltype:`color` or None",
+     "kind": "colour",
+     "aliases": [
+      "ec"
+     ]
+    },
+    {
+     "name": "edgegapcolor",
+     "valid": ":mpltype:`color` or None",
+     "kind": "colour"
+    },
+    {
+     "name": "facecolor",
+     "valid": ":mpltype:`color` or None",
+     "kind": "colour",
+     "aliases": [
+      "fc"
+     ]
+    },
+    {
+     "name": "fill",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "hatch",
+     "valid": "{'/', '\\\\', '|', '-', '+', 'x', 'o', 'O', '.', '*'}",
+     "kind": "choice",
+     "choices": [
+      "/",
+      "\\\\",
+      "|",
+      "-",
+      "+",
+      "x",
+      "o",
+      "O",
+      ".",
+      "*"
+     ]
+    },
+    {
+     "name": "hatch_linewidth",
+     "valid": "unknown",
+     "kind": "other"
+    },
+    {
+     "name": "hatchcolor",
+     "valid": ":mpltype:`color` or 'edge' or None",
+     "kind": "colour"
+    },
+    {
+     "name": "joinstyle",
+     "valid": "`.JoinStyle` or {'miter', 'round', 'bevel'}",
+     "kind": "choice",
+     "choices": [
+      "miter",
+      "round",
+      "bevel"
+     ]
+    },
+    {
+     "name": "label",
+     "valid": "object",
+     "kind": "text"
+    },
+    {
+     "name": "linestyle",
+     "valid": "{'-', '--', '-.', ':', '', ...} or (offset, on-off-seq)",
+     "kind": "choice",
+     "choices": [
+      "-",
+      "--",
+      "-.",
+      ":",
+      ""
+     ],
+     "aliases": [
+      "ls"
+     ]
+    },
+    {
+     "name": "linewidth",
+     "valid": "float or None",
+     "kind": "number",
+     "aliases": [
+      "lw"
+     ]
+    },
+    {
+     "name": "visible",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "zorder",
+     "valid": "float",
+     "kind": "number"
+    }
+   ]
+  },
+  {
+   "on": "axes",
+   "call": "bar",
+   "parameters": [
+    {
+     "name": "x",
+     "positional": true,
+     "valid": "float or array-like",
+     "kind": "number",
+     "required": true
+    },
+    {
+     "name": "height",
+     "positional": true,
+     "valid": "float or array-like",
+     "kind": "number",
+     "required": true
+    },
+    {
+     "name": "width",
+     "positional": true,
+     "valid": "float or array-like, default: 0.8",
+     "kind": "number",
+     "default": 0.8
+    },
+    {
+     "name": "bottom",
+     "positional": true,
+     "valid": "float or array-like, default: 0",
+     "kind": "number",
+     "default": null
+    },
+    {
+     "name": "align",
+     "positional": false,
+     "valid": "{'center', 'edge'}, default: 'center'",
+     "kind": "choice",
+     "choices": [
+      "center",
+      "edge"
+     ],
+     "default": "center"
+    },
+    {
+     "name": "data",
+     "positional": false,
+     "valid": "indexable object, optional",
+     "kind": "other",
+     "default": null
+    }
+   ],
+   "artist": "Rectangle",
+   "properties": [
+    {
+     "name": "alpha",
+     "valid": "float or None",
+     "kind": "number"
+    },
+    {
+     "name": "capstyle",
+     "valid": "`.CapStyle` or {'butt', 'projecting', 'round'}",
+     "kind": "choice",
+     "choices": [
+      "butt",
+      "projecting",
+      "round"
+     ]
+    },
+    {
+     "name": "clip_on",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "color",
+     "valid": ":mpltype:`color`",
+     "kind": "colour"
+    },
+    {
+     "name": "edgecolor",
+     "valid": ":mpltype:`color` or None",
+     "kind": "colour",
+     "aliases": [
+      "ec"
+     ]
+    },
+    {
+     "name": "edgegapcolor",
+     "valid": ":mpltype:`color` or None",
+     "kind": "colour"
+    },
+    {
+     "name": "facecolor",
+     "valid": ":mpltype:`color` or None",
+     "kind": "colour",
+     "aliases": [
+      "fc"
+     ]
+    },
+    {
+     "name": "fill",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "hatch",
+     "valid": "{'/', '\\\\', '|', '-', '+', 'x', 'o', 'O', '.', '*'}",
+     "kind": "choice",
+     "choices": [
+      "/",
+      "\\\\",
+      "|",
+      "-",
+      "+",
+      "x",
+      "o",
+      "O",
+      ".",
+      "*"
+     ]
+    },
+    {
+     "name": "hatch_linewidth",
+     "valid": "unknown",
+     "kind": "other"
+    },
+    {
+     "name": "hatchcolor",
+     "valid": ":mpltype:`color` or 'edge' or None",
+     "kind": "colour"
+    },
+    {
+     "name": "joinstyle",
+     "valid": "`.JoinStyle` or {'miter', 'round', 'bevel'}",
+     "kind": "choice",
+     "choices": [
+      "miter",
+      "round",
+      "bevel"
+     ]
+    },
+    {
+     "name": "label",
+     "valid": "object",
+     "kind": "text"
+    },
+    {
+     "name": "linestyle",
+     "valid": "{'-', '--', '-.', ':', '', ...} or (offset, on-off-seq)",
+     "kind": "choice",
+     "choices": [
+      "-",
+      "--",
+      "-.",
+      ":",
+      ""
+     ],
+     "aliases": [
+      "ls"
+     ]
+    },
+    {
+     "name": "linewidth",
+     "valid": "float or None",
+     "kind": "number",
+     "aliases": [
+      "lw"
+     ]
+    },
+    {
+     "name": "visible",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "zorder",
+     "valid": "float",
+     "kind": "number"
+    }
+   ]
+  },
+  {
+   "on": "axes",
+   "call": "barh",
+   "parameters": [
+    {
+     "name": "y",
+     "positional": true,
+     "valid": "float or array-like",
+     "kind": "number",
+     "required": true
+    },
+    {
+     "name": "width",
+     "positional": true,
+     "valid": "float or array-like",
+     "kind": "number",
+     "required": true
+    },
+    {
+     "name": "height",
+     "positional": true,
+     "valid": "float or array-like, default: 0.8",
+     "kind": "number",
+     "default": 0.8
+    },
+    {
+     "name": "left",
+     "positional": true,
+     "valid": "float or array-like, default: 0",
+     "kind": "number",
+     "default": null
+    },
+    {
+     "name": "align",
+     "positional": false,
+     "valid": "{'center', 'edge'}, default: 'center'",
+     "kind": "choice",
+     "choices": [
+      "center",
+      "edge"
+     ],
+     "default": "center"
+    },
+    {
+     "name": "data",
+     "positional": false,
+     "valid": "indexable object, optional",
+     "kind": "other",
+     "default": null
+    }
+   ],
+   "artist": "Rectangle",
+   "properties": [
+    {
+     "name": "alpha",
+     "valid": "float or None",
+     "kind": "number"
+    },
+    {
+     "name": "capstyle",
+     "valid": "`.CapStyle` or {'butt', 'projecting', 'round'}",
+     "kind": "choice",
+     "choices": [
+      "butt",
+      "projecting",
+      "round"
+     ]
+    },
+    {
+     "name": "clip_on",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "color",
+     "valid": ":mpltype:`color`",
+     "kind": "colour"
+    },
+    {
+     "name": "edgecolor",
+     "valid": ":mpltype:`color` or None",
+     "kind": "colour",
+     "aliases": [
+      "ec"
+     ]
+    },
+    {
+     "name": "edgegapcolor",
+     "valid": ":mpltype:`color` or None",
+     "kind": "colour"
+    },
+    {
+     "name": "facecolor",
+     "valid": ":mpltype:`color` or None",
+     "kind": "colour",
+     "aliases": [
+      "fc"
+     ]
+    },
+    {
+     "name": "fill",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "hatch",
+     "valid": "{'/', '\\\\', '|', '-', '+', 'x', 'o', 'O', '.', '*'}",
+     "kind": "choice",
+     "choices": [
+      "/",
+      "\\\\",
+      "|",
+      "-",
+      "+",
+      "x",
+      "o",
+      "O",
+      ".",
+      "*"
+     ]
+    },
+    {
+     "name": "hatch_linewidth",
+     "valid": "unknown",
+     "kind": "other"
+    },
+    {
+     "name": "hatchcolor",
+     "valid": ":mpltype:`color` or 'edge' or None",
+     "kind": "colour"
+    },
+    {
+     "name": "joinstyle",
+     "valid": "`.JoinStyle` or {'miter', 'round', 'bevel'}",
+     "kind": "choice",
+     "choices": [
+      "miter",
+      "round",
+      "bevel"
+     ]
+    },
+    {
+     "name": "label",
+     "valid": "object",
+     "kind": "text"
+    },
+    {
+     "name": "linestyle",
+     "valid": "{'-', '--', '-.', ':', '', ...} or (offset, on-off-seq)",
+     "kind": "choice",
+     "choices": [
+      "-",
+      "--",
+      "-.",
+      ":",
+      ""
+     ],
+     "aliases": [
+      "ls"
+     ]
+    },
+    {
+     "name": "linewidth",
+     "valid": "float or None",
+     "kind": "number",
+     "aliases": [
+      "lw"
+     ]
+    },
+    {
+     "name": "visible",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "zorder",
+     "valid": "float",
+     "kind": "number"
+    }
+   ]
+  },
+  {
+   "on": "axes",
+   "call": "hist",
+   "parameters": [
+    {
+     "name": "x",
+     "positional": true,
+     "valid": "(n,) array or sequence of (n,) arrays",
+     "kind": "other",
+     "required": true
+    },
+    {
+     "name": "bins",
+     "positional": true,
+     "valid": "int or sequence or str, default: :rc:`hist.bins`",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "range",
+     "positional": false,
+     "valid": "tuple or None, default: None",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "density",
+     "positional": false,
+     "valid": "bool, default: False",
+     "kind": "bool",
+     "default": false
+    },
+    {
+     "name": "weights",
+     "positional": false,
+     "valid": "(n,) array-like or None, default: None",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "cumulative",
+     "positional": false,
+     "valid": "bool or -1, default: False",
+     "kind": "bool",
+     "default": false
+    },
+    {
+     "name": "bottom",
+     "positional": false,
+     "valid": "array-like or float, default: 0",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "histtype",
+     "positional": false,
+     "valid": "{'bar', 'barstacked', 'step', 'stepfilled'}, default: 'bar'",
+     "kind": "choice",
+     "choices": [
+      "bar",
+      "barstacked",
+      "step",
+      "stepfilled"
+     ],
+     "default": "bar"
+    },
+    {
+     "name": "align",
+     "positional": false,
+     "valid": "{'left', 'mid', 'right'}, default: 'mid'",
+     "kind": "choice",
+     "choices": [
+      "left",
+      "mid",
+      "right"
+     ],
+     "default": "mid"
+    },
+    {
+     "name": "orientation",
+     "positional": false,
+     "valid": "{'vertical', 'horizontal'}, default: 'vertical'",
+     "kind": "choice",
+     "choices": [
+      "vertical",
+      "horizontal"
+     ],
+     "default": "vertical"
+    },
+    {
+     "name": "rwidth",
+     "positional": false,
+     "valid": "float or None, default: None",
+     "kind": "number",
+     "default": null
+    },
+    {
+     "name": "log",
+     "positional": false,
+     "valid": "bool, default: False",
+     "kind": "bool",
+     "default": false
+    },
+    {
+     "name": "color",
+     "positional": false,
+     "valid": ":mpltype:`color` or list of :mpltype:`color` or None, default: None",
+     "kind": "colour",
+     "default": null
+    },
+    {
+     "name": "label",
+     "positional": false,
+     "valid": "str or list of str, optional",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "stacked",
+     "positional": false,
+     "valid": "bool, default: False",
+     "kind": "bool",
+     "default": false
+    },
+    {
+     "name": "data",
+     "positional": false,
+     "valid": "indexable object, optional",
+     "kind": "other",
+     "default": null
+    }
+   ],
+   "artist": "Rectangle",
+   "properties": [
+    {
+     "name": "alpha",
+     "valid": "float or None",
+     "kind": "number"
+    },
+    {
+     "name": "capstyle",
+     "valid": "`.CapStyle` or {'butt', 'projecting', 'round'}",
+     "kind": "choice",
+     "choices": [
+      "butt",
+      "projecting",
+      "round"
+     ]
+    },
+    {
+     "name": "clip_on",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "edgecolor",
+     "valid": ":mpltype:`color` or None",
+     "kind": "colour",
+     "aliases": [
+      "ec"
+     ]
+    },
+    {
+     "name": "edgegapcolor",
+     "valid": ":mpltype:`color` or None",
+     "kind": "colour"
+    },
+    {
+     "name": "facecolor",
+     "valid": ":mpltype:`color` or None",
+     "kind": "colour",
+     "aliases": [
+      "fc"
+     ]
+    },
+    {
+     "name": "fill",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "hatch",
+     "valid": "{'/', '\\\\', '|', '-', '+', 'x', 'o', 'O', '.', '*'}",
+     "kind": "choice",
+     "choices": [
+      "/",
+      "\\\\",
+      "|",
+      "-",
+      "+",
+      "x",
+      "o",
+      "O",
+      ".",
+      "*"
+     ]
+    },
+    {
+     "name": "hatch_linewidth",
+     "valid": "unknown",
+     "kind": "other"
+    },
+    {
+     "name": "hatchcolor",
+     "valid": ":mpltype:`color` or 'edge' or None",
+     "kind": "colour"
+    },
+    {
+     "name": "joinstyle",
+     "valid": "`.JoinStyle` or {'miter', 'round', 'bevel'}",
+     "kind": "choice",
+     "choices": [
+      "miter",
+      "round",
+      "bevel"
+     ]
+    },
+    {
+     "name": "linestyle",
+     "valid": "{'-', '--', '-.', ':', '', ...} or (offset, on-off-seq)",
+     "kind": "choice",
+     "choices": [
+      "-",
+      "--",
+      "-.",
+      ":",
+      ""
+     ],
+     "aliases": [
+      "ls"
+     ]
+    },
+    {
+     "name": "linewidth",
+     "valid": "float or None",
+     "kind": "number",
+     "aliases": [
+      "lw"
+     ]
+    },
+    {
+     "name": "visible",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "zorder",
+     "valid": "float",
+     "kind": "number"
+    }
+   ]
+  },
+  {
+   "on": "axes",
+   "call": "fill",
+   "parameters": [
+    {
+     "name": "data",
+     "positional": false,
+     "valid": "indexable object, optional",
+     "kind": "other",
+     "default": null
+    }
+   ],
+   "artist": "Polygon",
+   "properties": [
+    {
+     "name": "alpha",
+     "valid": "float or None",
+     "kind": "number"
+    },
+    {
+     "name": "capstyle",
+     "valid": "`.CapStyle` or {'butt', 'projecting', 'round'}",
+     "kind": "choice",
+     "choices": [
+      "butt",
+      "projecting",
+      "round"
+     ]
+    },
+    {
+     "name": "clip_on",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "closed",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "color",
+     "valid": ":mpltype:`color`",
+     "kind": "colour"
+    },
+    {
+     "name": "edgecolor",
+     "valid": ":mpltype:`color` or None",
+     "kind": "colour",
+     "aliases": [
+      "ec"
+     ]
+    },
+    {
+     "name": "edgegapcolor",
+     "valid": ":mpltype:`color` or None",
+     "kind": "colour"
+    },
+    {
+     "name": "facecolor",
+     "valid": ":mpltype:`color` or None",
+     "kind": "colour",
+     "aliases": [
+      "fc"
+     ]
+    },
+    {
+     "name": "fill",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "hatch",
+     "valid": "{'/', '\\\\', '|', '-', '+', 'x', 'o', 'O', '.', '*'}",
+     "kind": "choice",
+     "choices": [
+      "/",
+      "\\\\",
+      "|",
+      "-",
+      "+",
+      "x",
+      "o",
+      "O",
+      ".",
+      "*"
+     ]
+    },
+    {
+     "name": "hatch_linewidth",
+     "valid": "unknown",
+     "kind": "other"
+    },
+    {
+     "name": "hatchcolor",
+     "valid": ":mpltype:`color` or 'edge' or None",
+     "kind": "colour"
+    },
+    {
+     "name": "joinstyle",
+     "valid": "`.JoinStyle` or {'miter', 'round', 'bevel'}",
+     "kind": "choice",
+     "choices": [
+      "miter",
+      "round",
+      "bevel"
+     ]
+    },
+    {
+     "name": "label",
+     "valid": "object",
+     "kind": "text"
+    },
+    {
+     "name": "linestyle",
+     "valid": "{'-', '--', '-.', ':', '', ...} or (offset, on-off-seq)",
+     "kind": "choice",
+     "choices": [
+      "-",
+      "--",
+      "-.",
+      ":",
+      ""
+     ],
+     "aliases": [
+      "ls"
+     ]
+    },
+    {
+     "name": "linewidth",
+     "valid": "float or None",
+     "kind": "number",
+     "aliases": [
+      "lw"
+     ]
+    },
+    {
+     "name": "visible",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "zorder",
+     "valid": "float",
+     "kind": "number"
+    }
+   ]
+  },
+  {
+   "on": "axes",
+   "call": "annotate",
+   "parameters": [
+    {
+     "name": "text",
+     "positional": true,
+     "valid": "str",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "xy",
+     "positional": true,
+     "valid": "(float, float)",
+     "kind": "other",
+     "required": true
+    },
+    {
+     "name": "xytext",
+     "positional": true,
+     "valid": "(float, float), default: *xy*",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "xycoords",
+     "positional": true,
+     "valid": "single or two-tuple of str or `.Artist` or `.Transform` or callable, default: 'data'",
+     "kind": "other",
+     "default": "data"
+    },
+    {
+     "name": "textcoords",
+     "positional": true,
+     "valid": "single or two-tuple of str or `.Artist` or `.Transform` or callable, default: value of *xycoords*",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "arrowprops",
+     "positional": true,
+     "valid": "dict, optional",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "annotation_clip",
+     "positional": true,
+     "valid": "bool or None, default: None",
+     "kind": "bool",
+     "default": null
+    }
+   ],
+   "artist": "Annotation",
+   "properties": [
+    {
+     "name": "alpha",
+     "valid": "float or None",
+     "kind": "number"
+    },
+    {
+     "name": "anncoords",
+     "valid": "unknown",
+     "kind": "other"
+    },
+    {
+     "name": "backgroundcolor",
+     "valid": ":mpltype:`color`",
+     "kind": "colour"
+    },
+    {
+     "name": "clip_on",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "color",
+     "valid": ":mpltype:`color`",
+     "kind": "colour",
+     "aliases": [
+      "c"
+     ]
+    },
+    {
+     "name": "fontfamily",
+     "valid": "{FONTNAME, 'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace'}",
+     "kind": "choice",
+     "choices": [
+      "serif",
+      "sans-serif",
+      "cursive",
+      "fantasy",
+      "monospace"
+     ],
+     "aliases": [
+      "family",
+      "fontname"
+     ]
+    },
+    {
+     "name": "fontfeatures",
+     "valid": "list of str, or tuple of str, or None",
+     "kind": "other"
+    },
+    {
+     "name": "fontsize",
+     "valid": "float or {'xx-small', 'x-small', 'small', 'medium', 'large', 'x-large', 'xx-large'}",
+     "kind": "number",
+     "aliases": [
+      "size"
+     ]
+    },
+    {
+     "name": "fontstretch",
+     "valid": "{a numeric value in range 0-1000, 'ultra-condensed', 'extra-condensed', 'condensed', 'semi-condensed', 'normal', 'semi-expanded', 'expanded', 'extra-expanded', 'ultra-expanded'}",
+     "kind": "choice",
+     "choices": [
+      "ultra-condensed",
+      "extra-condensed",
+      "condensed",
+      "semi-condensed",
+      "normal",
+      "semi-expanded",
+      "expanded",
+      "extra-expanded",
+      "ultra-expanded"
+     ],
+     "aliases": [
+      "stretch"
+     ]
+    },
+    {
+     "name": "fontstyle",
+     "valid": "{'normal', 'italic', 'oblique'}",
+     "kind": "choice",
+     "choices": [
+      "normal",
+      "italic",
+      "oblique"
+     ],
+     "aliases": [
+      "style"
+     ]
+    },
+    {
+     "name": "fontvariant",
+     "valid": "{'normal', 'small-caps'}",
+     "kind": "choice",
+     "choices": [
+      "normal",
+      "small-caps"
+     ],
+     "aliases": [
+      "variant"
+     ]
+    },
+    {
+     "name": "fontweight",
+     "valid": "{a numeric value in range 0-1000, 'ultralight', 'light', 'normal', 'regular', 'book', 'medium', 'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy', 'extra bold', 'black'}",
+     "kind": "choice",
+     "choices": [
+      "ultralight",
+      "light",
+      "normal",
+      "regular",
+      "book",
+      "medium",
+      "roman",
+      "semibold",
+      "demibold",
+      "demi",
+      "bold",
+      "heavy",
+      "extra bold",
+      "black"
+     ],
+     "aliases": [
+      "weight"
+     ]
+    },
+    {
+     "name": "horizontalalignment",
+     "valid": "{'left', 'center', 'right'}",
+     "kind": "choice",
+     "choices": [
+      "left",
+      "center",
+      "right"
+     ],
+     "aliases": [
+      "ha"
+     ]
+    },
+    {
+     "name": "label",
+     "valid": "object",
+     "kind": "text"
+    },
+    {
+     "name": "language",
+     "valid": "str or None",
+     "kind": "other"
+    },
+    {
+     "name": "linespacing",
+     "valid": "'normal' or float, default: 'normal'",
+     "kind": "other"
+    },
+    {
+     "name": "multialignment",
+     "valid": "{'left', 'right', 'center'}",
+     "kind": "choice",
+     "choices": [
+      "left",
+      "right",
+      "center"
+     ],
+     "aliases": [
+      "ma"
+     ]
+    },
+    {
+     "name": "rotation",
+     "valid": "float or {'vertical', 'horizontal'}",
+     "kind": "number"
+    },
+    {
+     "name": "verticalalignment",
+     "valid": "{'baseline', 'bottom', 'center', 'center_baseline', 'top'}",
+     "kind": "choice",
+     "choices": [
+      "baseline",
+      "bottom",
+      "center",
+      "center_baseline",
+      "top"
+     ],
+     "aliases": [
+      "va"
+     ]
+    },
+    {
+     "name": "visible",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "zorder",
+     "valid": "float",
+     "kind": "number"
+    }
+   ]
+  },
+  {
+   "on": "axes",
+   "call": "bar_label",
+   "parameters": [
+    {
+     "name": "container",
+     "positional": true,
+     "valid": "`.BarContainer`",
+     "kind": "other",
+     "required": true
+    },
+    {
+     "name": "labels",
+     "positional": true,
+     "valid": "array-like, optional",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "fmt",
+     "positional": false,
+     "valid": "str or callable, default: '%g'",
+     "kind": "other",
+     "default": "%g"
+    },
+    {
+     "name": "label_type",
+     "positional": false,
+     "valid": "{'edge', 'center'}, default: 'edge'",
+     "kind": "choice",
+     "choices": [
+      "edge",
+      "center"
+     ],
+     "default": "edge"
+    },
+    {
+     "name": "padding",
+     "positional": false,
+     "valid": "float or array-like, default: 0",
+     "kind": "number",
+     "default": 0
+    }
+   ],
+   "artist": "Annotation",
+   "properties": [
+    {
+     "name": "alpha",
+     "valid": "float or None",
+     "kind": "number"
+    },
+    {
+     "name": "anncoords",
+     "valid": "unknown",
+     "kind": "other"
+    },
+    {
+     "name": "annotation_clip",
+     "valid": "bool or None",
+     "kind": "bool"
+    },
+    {
+     "name": "backgroundcolor",
+     "valid": ":mpltype:`color`",
+     "kind": "colour"
+    },
+    {
+     "name": "clip_on",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "color",
+     "valid": ":mpltype:`color`",
+     "kind": "colour",
+     "aliases": [
+      "c"
+     ]
+    },
+    {
+     "name": "fontfamily",
+     "valid": "{FONTNAME, 'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace'}",
+     "kind": "choice",
+     "choices": [
+      "serif",
+      "sans-serif",
+      "cursive",
+      "fantasy",
+      "monospace"
+     ],
+     "aliases": [
+      "family",
+      "fontname"
+     ]
+    },
+    {
+     "name": "fontfeatures",
+     "valid": "list of str, or tuple of str, or None",
+     "kind": "other"
+    },
+    {
+     "name": "fontsize",
+     "valid": "float or {'xx-small', 'x-small', 'small', 'medium', 'large', 'x-large', 'xx-large'}",
+     "kind": "number",
+     "aliases": [
+      "size"
+     ]
+    },
+    {
+     "name": "fontstretch",
+     "valid": "{a numeric value in range 0-1000, 'ultra-condensed', 'extra-condensed', 'condensed', 'semi-condensed', 'normal', 'semi-expanded', 'expanded', 'extra-expanded', 'ultra-expanded'}",
+     "kind": "choice",
+     "choices": [
+      "ultra-condensed",
+      "extra-condensed",
+      "condensed",
+      "semi-condensed",
+      "normal",
+      "semi-expanded",
+      "expanded",
+      "extra-expanded",
+      "ultra-expanded"
+     ],
+     "aliases": [
+      "stretch"
+     ]
+    },
+    {
+     "name": "fontstyle",
+     "valid": "{'normal', 'italic', 'oblique'}",
+     "kind": "choice",
+     "choices": [
+      "normal",
+      "italic",
+      "oblique"
+     ],
+     "aliases": [
+      "style"
+     ]
+    },
+    {
+     "name": "fontvariant",
+     "valid": "{'normal', 'small-caps'}",
+     "kind": "choice",
+     "choices": [
+      "normal",
+      "small-caps"
+     ],
+     "aliases": [
+      "variant"
+     ]
+    },
+    {
+     "name": "fontweight",
+     "valid": "{a numeric value in range 0-1000, 'ultralight', 'light', 'normal', 'regular', 'book', 'medium', 'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy', 'extra bold', 'black'}",
+     "kind": "choice",
+     "choices": [
+      "ultralight",
+      "light",
+      "normal",
+      "regular",
+      "book",
+      "medium",
+      "roman",
+      "semibold",
+      "demibold",
+      "demi",
+      "bold",
+      "heavy",
+      "extra bold",
+      "black"
+     ],
+     "aliases": [
+      "weight"
+     ]
+    },
+    {
+     "name": "horizontalalignment",
+     "valid": "{'left', 'center', 'right'}",
+     "kind": "choice",
+     "choices": [
+      "left",
+      "center",
+      "right"
+     ],
+     "aliases": [
+      "ha"
+     ]
+    },
+    {
+     "name": "label",
+     "valid": "object",
+     "kind": "text"
+    },
+    {
+     "name": "language",
+     "valid": "str or None",
+     "kind": "other"
+    },
+    {
+     "name": "linespacing",
+     "valid": "'normal' or float, default: 'normal'",
+     "kind": "other"
+    },
+    {
+     "name": "multialignment",
+     "valid": "{'left', 'right', 'center'}",
+     "kind": "choice",
+     "choices": [
+      "left",
+      "right",
+      "center"
+     ],
+     "aliases": [
+      "ma"
+     ]
+    },
+    {
+     "name": "rotation",
+     "valid": "float or {'vertical', 'horizontal'}",
+     "kind": "number"
+    },
+    {
+     "name": "verticalalignment",
+     "valid": "{'baseline', 'bottom', 'center', 'center_baseline', 'top'}",
+     "kind": "choice",
+     "choices": [
+      "baseline",
+      "bottom",
+      "center",
+      "center_baseline",
+      "top"
+     ],
+     "aliases": [
+      "va"
+     ]
+    },
+    {
+     "name": "visible",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "zorder",
+     "valid": "float",
+     "kind": "number"
+    }
+   ]
+  },
+  {
+   "on": "axes",
+   "call": "step",
+   "parameters": [
+    {
+     "name": "x",
+     "positional": true,
+     "valid": "array-like",
+     "kind": "other",
+     "required": true
+    },
+    {
+     "name": "y",
+     "positional": true,
+     "valid": "array-like",
+     "kind": "other",
+     "required": true
+    },
+    {
+     "name": "where",
+     "positional": false,
+     "valid": "{'pre', 'post', 'mid'}, default: 'pre'",
+     "kind": "choice",
+     "choices": [
+      "pre",
+      "post",
+      "mid"
+     ],
+     "default": "pre"
+    },
+    {
+     "name": "data",
+     "positional": false,
+     "valid": "indexable object, optional",
+     "kind": "other",
+     "default": null
+    }
+   ],
+   "artist": "Line2D",
+   "properties": [
+    {
+     "name": "alpha",
+     "valid": "float or None",
+     "kind": "number"
+    },
+    {
+     "name": "clip_on",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "color",
+     "valid": ":mpltype:`color`",
+     "kind": "colour",
+     "aliases": [
+      "c"
+     ]
+    },
+    {
+     "name": "dash_capstyle",
+     "valid": "`.CapStyle` or {'butt', 'projecting', 'round'}",
+     "kind": "choice",
+     "choices": [
+      "butt",
+      "projecting",
+      "round"
+     ]
+    },
+    {
+     "name": "dash_joinstyle",
+     "valid": "`.JoinStyle` or {'miter', 'round', 'bevel'}",
+     "kind": "choice",
+     "choices": [
+      "miter",
+      "round",
+      "bevel"
+     ]
+    },
+    {
+     "name": "drawstyle",
+     "valid": "{'default', 'steps', 'steps-pre', 'steps-mid', 'steps-post'}, default: 'default'",
+     "kind": "choice",
+     "choices": [
+      "default",
+      "steps",
+      "steps-pre",
+      "steps-mid",
+      "steps-post"
+     ],
+     "aliases": [
+      "ds"
+     ]
+    },
+    {
+     "name": "fillstyle",
+     "valid": "{'full', 'left', 'right', 'bottom', 'top', 'none'}",
+     "kind": "choice",
+     "choices": [
+      "full",
+      "left",
+      "right",
+      "bottom",
+      "top",
+      "none"
+     ]
+    },
+    {
+     "name": "gapcolor",
+     "valid": ":mpltype:`color` or None",
+     "kind": "colour"
+    },
+    {
+     "name": "label",
+     "valid": "object",
+     "kind": "text"
+    },
+    {
+     "name": "linestyle",
+     "valid": "{'-', '--', '-.', ':', '', ...} or (offset, on-off-seq)",
+     "kind": "choice",
+     "choices": [
+      "-",
+      "--",
+      "-.",
+      ":",
+      ""
+     ],
+     "aliases": [
+      "ls"
+     ]
+    },
+    {
+     "name": "linewidth",
+     "valid": "float",
+     "kind": "number",
+     "aliases": [
+      "lw"
+     ]
+    },
+    {
+     "name": "marker",
+     "valid": "marker style string, `~.path.Path` or `~.markers.MarkerStyle`",
+     "kind": "other"
+    },
+    {
+     "name": "markeredgecolor",
+     "valid": ":mpltype:`color`",
+     "kind": "colour",
+     "aliases": [
+      "mec"
+     ]
+    },
+    {
+     "name": "markeredgewidth",
+     "valid": "float",
+     "kind": "number",
+     "aliases": [
+      "mew"
+     ]
+    },
+    {
+     "name": "markerfacecolor",
+     "valid": ":mpltype:`color`",
+     "kind": "colour",
+     "aliases": [
+      "mfc"
+     ]
+    },
+    {
+     "name": "markerfacecoloralt",
+     "valid": ":mpltype:`color`",
+     "kind": "colour",
+     "aliases": [
+      "mfcalt"
+     ]
+    },
+    {
+     "name": "markersize",
+     "valid": "float",
+     "kind": "number",
+     "aliases": [
+      "ms"
+     ]
+    },
+    {
+     "name": "solid_capstyle",
+     "valid": "`.CapStyle` or {'butt', 'projecting', 'round'}",
+     "kind": "choice",
+     "choices": [
+      "butt",
+      "projecting",
+      "round"
+     ]
+    },
+    {
+     "name": "solid_joinstyle",
+     "valid": "`.JoinStyle` or {'miter', 'round', 'bevel'}",
+     "kind": "choice",
+     "choices": [
+      "miter",
+      "round",
+      "bevel"
+     ]
+    },
+    {
+     "name": "visible",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "zorder",
+     "valid": "float",
+     "kind": "number"
+    }
+   ]
+  },
+  {
+   "on": "axes",
+   "call": "stairs",
+   "parameters": [
+    {
+     "name": "values",
+     "positional": true,
+     "valid": "array-like",
+     "kind": "other",
+     "required": true
+    },
+    {
+     "name": "edges",
+     "positional": true,
+     "valid": "array-like",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "orientation",
+     "positional": false,
+     "valid": "{'vertical', 'horizontal'}, default: 'vertical'",
+     "kind": "choice",
+     "choices": [
+      "vertical",
+      "horizontal"
+     ],
+     "default": "vertical"
+    },
+    {
+     "name": "baseline",
+     "positional": false,
+     "valid": "float, array-like or None, default: 0",
+     "kind": "number",
+     "default": 0
+    },
+    {
+     "name": "fill",
+     "positional": false,
+     "valid": "bool, default: False",
+     "kind": "bool",
+     "default": false
+    },
+    {
+     "name": "data",
+     "positional": false,
+     "valid": "indexable object, optional",
+     "kind": "other",
+     "default": null
+    }
+   ],
+   "artist": "StepPatch",
+   "properties": [
+    {
+     "name": "alpha",
+     "valid": "float or None",
+     "kind": "number"
+    },
+    {
+     "name": "capstyle",
+     "valid": "`.CapStyle` or {'butt', 'projecting', 'round'}",
+     "kind": "choice",
+     "choices": [
+      "butt",
+      "projecting",
+      "round"
+     ]
+    },
+    {
+     "name": "clip_on",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "color",
+     "valid": ":mpltype:`color`",
+     "kind": "colour"
+    },
+    {
+     "name": "edgecolor",
+     "valid": ":mpltype:`color` or None",
+     "kind": "colour",
+     "aliases": [
+      "ec"
+     ]
+    },
+    {
+     "name": "edgegapcolor",
+     "valid": ":mpltype:`color` or None",
+     "kind": "colour"
+    },
+    {
+     "name": "facecolor",
+     "valid": ":mpltype:`color` or None",
+     "kind": "colour",
+     "aliases": [
+      "fc"
+     ]
+    },
+    {
+     "name": "hatch",
+     "valid": "{'/', '\\\\', '|', '-', '+', 'x', 'o', 'O', '.', '*'}",
+     "kind": "choice",
+     "choices": [
+      "/",
+      "\\\\",
+      "|",
+      "-",
+      "+",
+      "x",
+      "o",
+      "O",
+      ".",
+      "*"
+     ]
+    },
+    {
+     "name": "hatch_linewidth",
+     "valid": "unknown",
+     "kind": "other"
+    },
+    {
+     "name": "hatchcolor",
+     "valid": ":mpltype:`color` or 'edge' or None",
+     "kind": "colour"
+    },
+    {
+     "name": "joinstyle",
+     "valid": "`.JoinStyle` or {'miter', 'round', 'bevel'}",
+     "kind": "choice",
+     "choices": [
+      "miter",
+      "round",
+      "bevel"
+     ]
+    },
+    {
+     "name": "label",
+     "valid": "object",
+     "kind": "text"
+    },
+    {
+     "name": "linestyle",
+     "valid": "{'-', '--', '-.', ':', '', ...} or (offset, on-off-seq)",
+     "kind": "choice",
+     "choices": [
+      "-",
+      "--",
+      "-.",
+      ":",
+      ""
+     ],
+     "aliases": [
+      "ls"
+     ]
+    },
+    {
+     "name": "linewidth",
+     "valid": "float or None",
+     "kind": "number",
+     "aliases": [
+      "lw"
+     ]
+    },
+    {
+     "name": "path",
+     "valid": "unknown",
+     "kind": "other"
+    },
+    {
+     "name": "visible",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "zorder",
+     "valid": "float",
+     "kind": "number"
+    }
+   ]
+  },
+  {
+   "on": "axes",
+   "call": "stem",
+   "parameters": [
+    {
+     "name": "linefmt",
+     "positional": false,
+     "valid": "str, optional",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "markerfmt",
+     "positional": false,
+     "valid": "str, optional",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "basefmt",
+     "positional": false,
+     "valid": "str, default: 'C3-' ('C2-' in classic mode)",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "bottom",
+     "positional": false,
+     "valid": "float, default: 0",
+     "kind": "number",
+     "default": 0
+    },
+    {
+     "name": "label",
+     "positional": false,
+     "valid": "str, optional",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "orientation",
+     "positional": false,
+     "valid": "{'vertical', 'horizontal'}, default: 'vertical'",
+     "kind": "choice",
+     "choices": [
+      "vertical",
+      "horizontal"
+     ],
+     "default": "vertical"
+    },
+    {
+     "name": "data",
+     "positional": false,
+     "valid": "indexable object, optional",
+     "kind": "other",
+     "default": null
+    }
+   ]
+  },
+  {
+   "on": "axes",
+   "call": "boxplot",
+   "parameters": [
+    {
+     "name": "x",
+     "positional": true,
+     "valid": "1D array or sequence of 1D arrays or 2D array",
+     "kind": "other",
+     "required": true
+    },
+    {
+     "name": "notch",
+     "positional": false,
+     "valid": "bool, default: :rc:`boxplot.notch`",
+     "kind": "bool",
+     "default": null
+    },
+    {
+     "name": "sym",
+     "positional": false,
+     "valid": "str, optional",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "vert",
+     "positional": false,
+     "valid": "bool, optional",
+     "kind": "bool",
+     "default": null
+    },
+    {
+     "name": "orientation",
+     "positional": false,
+     "valid": "{'vertical', 'horizontal'}, default: 'vertical'",
+     "kind": "choice",
+     "choices": [
+      "vertical",
+      "horizontal"
+     ],
+     "default": "vertical"
+    },
+    {
+     "name": "whis",
+     "positional": false,
+     "valid": "float or (float, float), default: 1.5",
+     "kind": "number",
+     "default": null
+    },
+    {
+     "name": "positions",
+     "positional": false,
+     "valid": "array-like, optional",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "widths",
+     "positional": false,
+     "valid": "float or array-like",
+     "kind": "number",
+     "default": null
+    },
+    {
+     "name": "patch_artist",
+     "positional": false,
+     "valid": "bool, default: :rc:`boxplot.patchartist`",
+     "kind": "bool",
+     "default": null
+    },
+    {
+     "name": "bootstrap",
+     "positional": false,
+     "valid": "int, optional",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "usermedians",
+     "positional": false,
+     "valid": "1D array-like, optional",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "conf_intervals",
+     "positional": false,
+     "valid": "array-like, optional",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "meanline",
+     "positional": false,
+     "valid": "bool, default: :rc:`boxplot.meanline`",
+     "kind": "bool",
+     "default": null
+    },
+    {
+     "name": "showmeans",
+     "positional": false,
+     "valid": "bool, default: :rc:`boxplot.showmeans`",
+     "kind": "bool",
+     "default": null
+    },
+    {
+     "name": "showcaps",
+     "positional": false,
+     "valid": "bool, default: :rc:`boxplot.showcaps`",
+     "kind": "bool",
+     "default": null
+    },
+    {
+     "name": "showbox",
+     "positional": false,
+     "valid": "bool, default: :rc:`boxplot.showbox`",
+     "kind": "bool",
+     "default": null
+    },
+    {
+     "name": "showfliers",
+     "positional": false,
+     "valid": "bool, default: :rc:`boxplot.showfliers`",
+     "kind": "bool",
+     "default": null
+    },
+    {
+     "name": "boxprops",
+     "positional": false,
+     "valid": "dict, default: None",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "tick_labels",
+     "positional": false,
+     "valid": "list of str, optional",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "flierprops",
+     "positional": false,
+     "valid": "dict, default: None",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "medianprops",
+     "positional": false,
+     "valid": "dict, default: None",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "meanprops",
+     "positional": false,
+     "valid": "dict, default: None",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "capprops",
+     "positional": false,
+     "valid": "dict, default: None",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "whiskerprops",
+     "positional": false,
+     "valid": "dict, default: None",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "manage_ticks",
+     "positional": false,
+     "valid": "bool, default: True",
+     "kind": "bool",
+     "default": true
+    },
+    {
+     "name": "autorange",
+     "positional": false,
+     "valid": "bool, default: False",
+     "kind": "bool",
+     "default": false
+    },
+    {
+     "name": "zorder",
+     "positional": false,
+     "valid": "float, default: ``Line2D.zorder = 2``",
+     "kind": "number",
+     "default": null
+    },
+    {
+     "name": "capwidths",
+     "positional": false,
+     "valid": "float or array, default: None",
+     "kind": "number",
+     "default": null
+    },
+    {
+     "name": "label",
+     "positional": false,
+     "valid": "str or list of str, optional",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "data",
+     "positional": false,
+     "valid": "indexable object, optional",
+     "kind": "other",
+     "default": null
+    }
+   ]
+  },
+  {
+   "on": "axes",
+   "call": "violinplot",
+   "parameters": [
+    {
+     "name": "dataset",
+     "positional": true,
+     "valid": "1D array or sequence of 1D arrays or 2D array",
+     "kind": "other",
+     "required": true
+    },
+    {
+     "name": "positions",
+     "positional": true,
+     "valid": "array-like, default: [1, 2, ..., n]",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "vert",
+     "positional": false,
+     "valid": "bool, optional",
+     "kind": "bool",
+     "default": null
+    },
+    {
+     "name": "orientation",
+     "positional": false,
+     "valid": "{'vertical', 'horizontal'}, default: 'vertical'",
+     "kind": "choice",
+     "choices": [
+      "vertical",
+      "horizontal"
+     ],
+     "default": "vertical"
+    },
+    {
+     "name": "widths",
+     "positional": false,
+     "valid": "float or array-like, default: 0.5",
+     "kind": "number",
+     "default": 0.5
+    },
+    {
+     "name": "showmeans",
+     "positional": false,
+     "valid": "bool, default: False",
+     "kind": "bool",
+     "default": false
+    },
+    {
+     "name": "showextrema",
+     "positional": false,
+     "valid": "bool, default: True",
+     "kind": "bool",
+     "default": true
+    },
+    {
+     "name": "showmedians",
+     "positional": false,
+     "valid": "bool, default: False",
+     "kind": "bool",
+     "default": false
+    },
+    {
+     "name": "quantiles",
+     "positional": false,
+     "valid": "array-like, default: None",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "points",
+     "positional": false,
+     "valid": "int, default: 100",
+     "kind": "other",
+     "default": 100
+    },
+    {
+     "name": "bw_method",
+     "positional": false,
+     "valid": "{'scott', 'silverman'} or float or callable, default: 'scott'",
+     "kind": "choice",
+     "choices": [
+      "scott",
+      "silverman"
+     ],
+     "default": null
+    },
+    {
+     "name": "side",
+     "positional": false,
+     "valid": "{'both', 'low', 'high'}, default: 'both'",
+     "kind": "choice",
+     "choices": [
+      "both",
+      "low",
+      "high"
+     ],
+     "default": "both"
+    },
+    {
+     "name": "facecolor",
+     "positional": false,
+     "valid": ":mpltype:`color` or list of :mpltype:`color`, optional",
+     "kind": "colour",
+     "default": null
+    },
+    {
+     "name": "linecolor",
+     "positional": false,
+     "valid": ":mpltype:`color` or list of :mpltype:`color`, optional",
+     "kind": "colour",
+     "default": null
+    },
+    {
+     "name": "data",
+     "positional": false,
+     "valid": "indexable object, optional",
+     "kind": "other",
+     "default": null
+    }
+   ]
+  },
+  {
+   "on": "axes",
+   "call": "pie",
+   "parameters": [
+    {
+     "name": "x",
+     "positional": true,
+     "valid": "1D array-like",
+     "kind": "other",
+     "required": true
+    },
+    {
+     "name": "explode",
+     "positional": false,
+     "valid": "array-like, default: None",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "labels",
+     "positional": false,
+     "valid": "list, default: None",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "colors",
+     "positional": false,
+     "valid": ":mpltype:`color` or list of :mpltype:`color`, default: None",
+     "kind": "colour",
+     "default": null
+    },
+    {
+     "name": "autopct",
+     "positional": false,
+     "valid": "None or str or callable, default: None",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "pctdistance",
+     "positional": false,
+     "valid": "float, default: 0.6",
+     "kind": "number",
+     "default": 0.6
+    },
+    {
+     "name": "shadow",
+     "positional": false,
+     "valid": "bool or dict, default: False",
+     "kind": "bool",
+     "default": false
+    },
+    {
+     "name": "labeldistance",
+     "positional": false,
+     "valid": "float or None, default: 1.1",
+     "kind": "number",
+     "default": 1.1
+    },
+    {
+     "name": "startangle",
+     "positional": false,
+     "valid": "float, default: 0 degrees",
+     "kind": "number",
+     "default": 0
+    },
+    {
+     "name": "radius",
+     "positional": false,
+     "valid": "float, default: 1",
+     "kind": "number",
+     "default": 1
+    },
+    {
+     "name": "counterclock",
+     "positional": false,
+     "valid": "bool, default: True",
+     "kind": "bool",
+     "default": true
+    },
+    {
+     "name": "wedgeprops",
+     "positional": false,
+     "valid": "dict, default: None",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "textprops",
+     "positional": false,
+     "valid": "dict, default: None",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "center",
+     "positional": false,
+     "valid": "(float, float), default: (0, 0)",
+     "kind": "other",
+     "default": [
+      0,
+      0
+     ]
+    },
+    {
+     "name": "frame",
+     "positional": false,
+     "valid": "bool, default: False",
+     "kind": "bool",
+     "default": false
+    },
+    {
+     "name": "rotatelabels",
+     "positional": false,
+     "valid": "bool, default: False",
+     "kind": "bool",
+     "default": false
+    },
+    {
+     "name": "normalize",
+     "positional": false,
+     "valid": "bool, default: True",
+     "kind": "bool",
+     "default": true
+    },
+    {
+     "name": "hatch",
+     "positional": false,
+     "valid": "str or list, default: None",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "data",
+     "positional": false,
+     "valid": "indexable object, optional",
+     "kind": "other",
+     "default": null
+    }
+   ]
+  },
+  {
+   "on": "axes",
+   "call": "hlines",
+   "parameters": [
+    {
+     "name": "y",
+     "positional": true,
+     "valid": "float or array-like",
+     "kind": "number",
+     "required": true
+    },
+    {
+     "name": "xmin",
+     "positional": true,
+     "valid": "float or array-like",
+     "kind": "number",
+     "required": true
+    },
+    {
+     "name": "xmax",
+     "positional": true,
+     "valid": "float or array-like",
+     "kind": "number",
+     "required": true
+    },
+    {
+     "name": "colors",
+     "positional": true,
+     "valid": ":mpltype:`color` or list of color , default: :rc:`lines.color`",
+     "kind": "colour",
+     "default": null
+    },
+    {
+     "name": "linestyles",
+     "positional": true,
+     "valid": "{'solid', 'dashed', 'dashdot', 'dotted'}, default: 'solid'",
+     "kind": "choice",
+     "choices": [
+      "solid",
+      "dashed",
+      "dashdot",
+      "dotted"
+     ],
+     "default": "solid"
+    },
+    {
+     "name": "label",
+     "positional": false,
+     "valid": "str, default: ''",
+     "kind": "other",
+     "default": ""
+    },
+    {
+     "name": "data",
+     "positional": false,
+     "valid": "indexable object, optional",
+     "kind": "other",
+     "default": null
+    }
+   ],
+   "artist": "LineCollection",
+   "properties": [
+    {
+     "name": "alpha",
+     "valid": "array-like or float or None",
+     "kind": "number"
+    },
+    {
+     "name": "capstyle",
+     "valid": "`.CapStyle` or {'butt', 'projecting', 'round'}",
+     "kind": "choice",
+     "choices": [
+      "butt",
+      "projecting",
+      "round"
+     ]
+    },
+    {
+     "name": "clip_on",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "color",
+     "valid": ":mpltype:`color` or list of :mpltype:`color`",
+     "kind": "colour"
+    },
+    {
+     "name": "edgecolor",
+     "valid": ":mpltype:`color` or list of :mpltype:`color` or 'face'",
+     "kind": "colour",
+     "aliases": [
+      "ec",
+      "edgecolors"
+     ]
+    },
+    {
+     "name": "facecolor",
+     "valid": ":mpltype:`color` or list of :mpltype:`color`",
+     "kind": "colour",
+     "aliases": [
+      "facecolors",
+      "fc"
+     ]
+    },
+    {
+     "name": "gapcolor",
+     "valid": ":mpltype:`color` or list of :mpltype:`color` or None",
+     "kind": "colour"
+    },
+    {
+     "name": "hatch",
+     "valid": "{'/', '\\\\', '|', '-', '+', 'x', 'o', 'O', '.', '*'}",
+     "kind": "choice",
+     "choices": [
+      "/",
+      "\\\\",
+      "|",
+      "-",
+      "+",
+      "x",
+      "o",
+      "O",
+      ".",
+      "*"
+     ]
+    },
+    {
+     "name": "hatch_linewidth",
+     "valid": "unknown",
+     "kind": "other"
+    },
+    {
+     "name": "hatchcolor",
+     "valid": ":mpltype:`color` or list of :mpltype:`color` or 'edge'",
+     "kind": "colour"
+    },
+    {
+     "name": "joinstyle",
+     "valid": "`.JoinStyle` or {'miter', 'round', 'bevel'}",
+     "kind": "choice",
+     "choices": [
+      "miter",
+      "round",
+      "bevel"
+     ]
+    },
+    {
+     "name": "linestyle",
+     "valid": "{'-', '--', '-.', ':', '', ...} or (offset, on-off-seq) or list thereof",
+     "kind": "choice",
+     "choices": [
+      "-",
+      "--",
+      "-.",
+      ":",
+      ""
+     ],
+     "aliases": [
+      "dashes",
+      "linestyles",
+      "ls"
+     ]
+    },
+    {
+     "name": "linewidth",
+     "valid": "float or list of floats",
+     "kind": "number",
+     "aliases": [
+      "linewidths",
+      "lw"
+     ]
+    },
+    {
+     "name": "visible",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "zorder",
+     "valid": "float",
+     "kind": "number"
+    }
+   ]
+  },
+  {
+   "on": "axes",
+   "call": "vlines",
+   "parameters": [
+    {
+     "name": "x",
+     "positional": true,
+     "valid": "float or array-like",
+     "kind": "number",
+     "required": true
+    },
+    {
+     "name": "ymin",
+     "positional": true,
+     "valid": "float or array-like",
+     "kind": "number",
+     "required": true
+    },
+    {
+     "name": "ymax",
+     "positional": true,
+     "valid": "float or array-like",
+     "kind": "number",
+     "required": true
+    },
+    {
+     "name": "colors",
+     "positional": true,
+     "valid": ":mpltype:`color` or list of color, default: :rc:`lines.color`",
+     "kind": "colour",
+     "default": null
+    },
+    {
+     "name": "linestyles",
+     "positional": true,
+     "valid": "{'solid', 'dashed', 'dashdot', 'dotted'}, default: 'solid'",
+     "kind": "choice",
+     "choices": [
+      "solid",
+      "dashed",
+      "dashdot",
+      "dotted"
+     ],
+     "default": "solid"
+    },
+    {
+     "name": "label",
+     "positional": false,
+     "valid": "str, default: ''",
+     "kind": "other",
+     "default": ""
+    },
+    {
+     "name": "data",
+     "positional": false,
+     "valid": "indexable object, optional",
+     "kind": "other",
+     "default": null
+    }
+   ],
+   "artist": "LineCollection",
+   "properties": [
+    {
+     "name": "alpha",
+     "valid": "array-like or float or None",
+     "kind": "number"
+    },
+    {
+     "name": "capstyle",
+     "valid": "`.CapStyle` or {'butt', 'projecting', 'round'}",
+     "kind": "choice",
+     "choices": [
+      "butt",
+      "projecting",
+      "round"
+     ]
+    },
+    {
+     "name": "clip_on",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "color",
+     "valid": ":mpltype:`color` or list of :mpltype:`color`",
+     "kind": "colour"
+    },
+    {
+     "name": "edgecolor",
+     "valid": ":mpltype:`color` or list of :mpltype:`color` or 'face'",
+     "kind": "colour",
+     "aliases": [
+      "ec",
+      "edgecolors"
+     ]
+    },
+    {
+     "name": "facecolor",
+     "valid": ":mpltype:`color` or list of :mpltype:`color`",
+     "kind": "colour",
+     "aliases": [
+      "facecolors",
+      "fc"
+     ]
+    },
+    {
+     "name": "gapcolor",
+     "valid": ":mpltype:`color` or list of :mpltype:`color` or None",
+     "kind": "colour"
+    },
+    {
+     "name": "hatch",
+     "valid": "{'/', '\\\\', '|', '-', '+', 'x', 'o', 'O', '.', '*'}",
+     "kind": "choice",
+     "choices": [
+      "/",
+      "\\\\",
+      "|",
+      "-",
+      "+",
+      "x",
+      "o",
+      "O",
+      ".",
+      "*"
+     ]
+    },
+    {
+     "name": "hatch_linewidth",
+     "valid": "unknown",
+     "kind": "other"
+    },
+    {
+     "name": "hatchcolor",
+     "valid": ":mpltype:`color` or list of :mpltype:`color` or 'edge'",
+     "kind": "colour"
+    },
+    {
+     "name": "joinstyle",
+     "valid": "`.JoinStyle` or {'miter', 'round', 'bevel'}",
+     "kind": "choice",
+     "choices": [
+      "miter",
+      "round",
+      "bevel"
+     ]
+    },
+    {
+     "name": "linestyle",
+     "valid": "{'-', '--', '-.', ':', '', ...} or (offset, on-off-seq) or list thereof",
+     "kind": "choice",
+     "choices": [
+      "-",
+      "--",
+      "-.",
+      ":",
+      ""
+     ],
+     "aliases": [
+      "dashes",
+      "linestyles",
+      "ls"
+     ]
+    },
+    {
+     "name": "linewidth",
+     "valid": "float or list of floats",
+     "kind": "number",
+     "aliases": [
+      "linewidths",
+      "lw"
+     ]
+    },
+    {
+     "name": "visible",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "zorder",
+     "valid": "float",
+     "kind": "number"
+    }
+   ]
+  },
+  {
+   "on": "axes",
+   "call": "text",
+   "parameters": [
+    {
+     "name": "x",
+     "positional": true,
+     "valid": "float",
+     "kind": "number",
+     "required": true
+    },
+    {
+     "name": "y",
+     "positional": true,
+     "valid": "float",
+     "kind": "number",
+     "required": true
+    },
+    {
+     "name": "s",
+     "positional": true,
+     "valid": "str",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "fontdict",
+     "positional": true,
+     "valid": "dict, default: None",
+     "kind": "other",
+     "default": null
+    }
+   ],
+   "artist": "Text",
+   "properties": [
+    {
+     "name": "alpha",
+     "valid": "float or None",
+     "kind": "number"
+    },
+    {
+     "name": "backgroundcolor",
+     "valid": ":mpltype:`color`",
+     "kind": "colour"
+    },
+    {
+     "name": "clip_on",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "color",
+     "valid": ":mpltype:`color`",
+     "kind": "colour",
+     "aliases": [
+      "c"
+     ]
+    },
+    {
+     "name": "fontfamily",
+     "valid": "{FONTNAME, 'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace'}",
+     "kind": "choice",
+     "choices": [
+      "serif",
+      "sans-serif",
+      "cursive",
+      "fantasy",
+      "monospace"
+     ],
+     "aliases": [
+      "family",
+      "fontname"
+     ]
+    },
+    {
+     "name": "fontfeatures",
+     "valid": "list of str, or tuple of str, or None",
+     "kind": "other"
+    },
+    {
+     "name": "fontsize",
+     "valid": "float or {'xx-small', 'x-small', 'small', 'medium', 'large', 'x-large', 'xx-large'}",
+     "kind": "number",
+     "aliases": [
+      "size"
+     ]
+    },
+    {
+     "name": "fontstretch",
+     "valid": "{a numeric value in range 0-1000, 'ultra-condensed', 'extra-condensed', 'condensed', 'semi-condensed', 'normal', 'semi-expanded', 'expanded', 'extra-expanded', 'ultra-expanded'}",
+     "kind": "choice",
+     "choices": [
+      "ultra-condensed",
+      "extra-condensed",
+      "condensed",
+      "semi-condensed",
+      "normal",
+      "semi-expanded",
+      "expanded",
+      "extra-expanded",
+      "ultra-expanded"
+     ],
+     "aliases": [
+      "stretch"
+     ]
+    },
+    {
+     "name": "fontstyle",
+     "valid": "{'normal', 'italic', 'oblique'}",
+     "kind": "choice",
+     "choices": [
+      "normal",
+      "italic",
+      "oblique"
+     ],
+     "aliases": [
+      "style"
+     ]
+    },
+    {
+     "name": "fontvariant",
+     "valid": "{'normal', 'small-caps'}",
+     "kind": "choice",
+     "choices": [
+      "normal",
+      "small-caps"
+     ],
+     "aliases": [
+      "variant"
+     ]
+    },
+    {
+     "name": "fontweight",
+     "valid": "{a numeric value in range 0-1000, 'ultralight', 'light', 'normal', 'regular', 'book', 'medium', 'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy', 'extra bold', 'black'}",
+     "kind": "choice",
+     "choices": [
+      "ultralight",
+      "light",
+      "normal",
+      "regular",
+      "book",
+      "medium",
+      "roman",
+      "semibold",
+      "demibold",
+      "demi",
+      "bold",
+      "heavy",
+      "extra bold",
+      "black"
+     ],
+     "aliases": [
+      "weight"
+     ]
+    },
+    {
+     "name": "horizontalalignment",
+     "valid": "{'left', 'center', 'right'}",
+     "kind": "choice",
+     "choices": [
+      "left",
+      "center",
+      "right"
+     ],
+     "aliases": [
+      "ha"
+     ]
+    },
+    {
+     "name": "label",
+     "valid": "object",
+     "kind": "text"
+    },
+    {
+     "name": "language",
+     "valid": "str or None",
+     "kind": "other"
+    },
+    {
+     "name": "linespacing",
+     "valid": "'normal' or float, default: 'normal'",
+     "kind": "other"
+    },
+    {
+     "name": "multialignment",
+     "valid": "{'left', 'right', 'center'}",
+     "kind": "choice",
+     "choices": [
+      "left",
+      "right",
+      "center"
+     ],
+     "aliases": [
+      "ma"
+     ]
+    },
+    {
+     "name": "rotation",
+     "valid": "float or {'vertical', 'horizontal'}",
+     "kind": "number"
+    },
+    {
+     "name": "verticalalignment",
+     "valid": "{'baseline', 'bottom', 'center', 'center_baseline', 'top'}",
+     "kind": "choice",
+     "choices": [
+      "baseline",
+      "bottom",
+      "center",
+      "center_baseline",
+      "top"
+     ],
+     "aliases": [
+      "va"
+     ]
+    },
+    {
+     "name": "visible",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "zorder",
+     "valid": "float",
+     "kind": "number"
+    }
+   ]
+  },
+  {
+   "on": "axes",
+   "call": "set_title",
+   "parameters": [
+    {
+     "name": "label",
+     "positional": true,
+     "valid": "str",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "fontdict",
+     "positional": true,
+     "valid": "dict",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "loc",
+     "positional": true,
+     "valid": "{'center', 'left', 'right'}, default: :rc:`axes.titlelocation`",
+     "kind": "choice",
+     "choices": [
+      "center",
+      "left",
+      "right"
+     ],
+     "default": null
+    },
+    {
+     "name": "pad",
+     "positional": true,
+     "valid": "float, default: :rc:`axes.titlepad`",
+     "kind": "number",
+     "default": null
+    },
+    {
+     "name": "y",
+     "positional": false,
+     "valid": "float, default: :rc:`axes.titley`",
+     "kind": "number",
+     "default": null
+    }
+   ],
+   "artist": "Text",
+   "properties": [
+    {
+     "name": "alpha",
+     "valid": "float or None",
+     "kind": "number"
+    },
+    {
+     "name": "backgroundcolor",
+     "valid": ":mpltype:`color`",
+     "kind": "colour"
+    },
+    {
+     "name": "clip_on",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "color",
+     "valid": ":mpltype:`color`",
+     "kind": "colour",
+     "aliases": [
+      "c"
+     ]
+    },
+    {
+     "name": "fontfamily",
+     "valid": "{FONTNAME, 'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace'}",
+     "kind": "choice",
+     "choices": [
+      "serif",
+      "sans-serif",
+      "cursive",
+      "fantasy",
+      "monospace"
+     ],
+     "aliases": [
+      "family",
+      "fontname"
+     ]
+    },
+    {
+     "name": "fontfeatures",
+     "valid": "list of str, or tuple of str, or None",
+     "kind": "other"
+    },
+    {
+     "name": "fontsize",
+     "valid": "float or {'xx-small', 'x-small', 'small', 'medium', 'large', 'x-large', 'xx-large'}",
+     "kind": "number",
+     "aliases": [
+      "size"
+     ]
+    },
+    {
+     "name": "fontstretch",
+     "valid": "{a numeric value in range 0-1000, 'ultra-condensed', 'extra-condensed', 'condensed', 'semi-condensed', 'normal', 'semi-expanded', 'expanded', 'extra-expanded', 'ultra-expanded'}",
+     "kind": "choice",
+     "choices": [
+      "ultra-condensed",
+      "extra-condensed",
+      "condensed",
+      "semi-condensed",
+      "normal",
+      "semi-expanded",
+      "expanded",
+      "extra-expanded",
+      "ultra-expanded"
+     ],
+     "aliases": [
+      "stretch"
+     ]
+    },
+    {
+     "name": "fontstyle",
+     "valid": "{'normal', 'italic', 'oblique'}",
+     "kind": "choice",
+     "choices": [
+      "normal",
+      "italic",
+      "oblique"
+     ],
+     "aliases": [
+      "style"
+     ]
+    },
+    {
+     "name": "fontvariant",
+     "valid": "{'normal', 'small-caps'}",
+     "kind": "choice",
+     "choices": [
+      "normal",
+      "small-caps"
+     ],
+     "aliases": [
+      "variant"
+     ]
+    },
+    {
+     "name": "fontweight",
+     "valid": "{a numeric value in range 0-1000, 'ultralight', 'light', 'normal', 'regular', 'book', 'medium', 'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy', 'extra bold', 'black'}",
+     "kind": "choice",
+     "choices": [
+      "ultralight",
+      "light",
+      "normal",
+      "regular",
+      "book",
+      "medium",
+      "roman",
+      "semibold",
+      "demibold",
+      "demi",
+      "bold",
+      "heavy",
+      "extra bold",
+      "black"
+     ],
+     "aliases": [
+      "weight"
+     ]
+    },
+    {
+     "name": "horizontalalignment",
+     "valid": "{'left', 'center', 'right'}",
+     "kind": "choice",
+     "choices": [
+      "left",
+      "center",
+      "right"
+     ],
+     "aliases": [
+      "ha"
+     ]
+    },
+    {
+     "name": "language",
+     "valid": "str or None",
+     "kind": "other"
+    },
+    {
+     "name": "linespacing",
+     "valid": "'normal' or float, default: 'normal'",
+     "kind": "other"
+    },
+    {
+     "name": "multialignment",
+     "valid": "{'left', 'right', 'center'}",
+     "kind": "choice",
+     "choices": [
+      "left",
+      "right",
+      "center"
+     ],
+     "aliases": [
+      "ma"
+     ]
+    },
+    {
+     "name": "rotation",
+     "valid": "float or {'vertical', 'horizontal'}",
+     "kind": "number"
+    },
+    {
+     "name": "verticalalignment",
+     "valid": "{'baseline', 'bottom', 'center', 'center_baseline', 'top'}",
+     "kind": "choice",
+     "choices": [
+      "baseline",
+      "bottom",
+      "center",
+      "center_baseline",
+      "top"
+     ],
+     "aliases": [
+      "va"
+     ]
+    },
+    {
+     "name": "visible",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "zorder",
+     "valid": "float",
+     "kind": "number"
+    }
+   ]
+  },
+  {
+   "on": "axes",
+   "call": "set_xlabel",
+   "parameters": [
+    {
+     "name": "xlabel",
+     "positional": true,
+     "valid": "str",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "fontdict",
+     "positional": true,
+     "default": null
+    },
+    {
+     "name": "labelpad",
+     "positional": true,
+     "valid": "float, default: :rc:`axes.labelpad`",
+     "kind": "number",
+     "default": null
+    },
+    {
+     "name": "loc",
+     "positional": false,
+     "valid": "{'left', 'center', 'right'}, default: :rc:`xaxis.labellocation`",
+     "kind": "choice",
+     "choices": [
+      "left",
+      "center",
+      "right"
+     ],
+     "default": null
+    }
+   ],
+   "artist": "Text",
+   "properties": [
+    {
+     "name": "alpha",
+     "valid": "float or None",
+     "kind": "number"
+    },
+    {
+     "name": "backgroundcolor",
+     "valid": ":mpltype:`color`",
+     "kind": "colour"
+    },
+    {
+     "name": "clip_on",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "color",
+     "valid": ":mpltype:`color`",
+     "kind": "colour",
+     "aliases": [
+      "c"
+     ]
+    },
+    {
+     "name": "fontfamily",
+     "valid": "{FONTNAME, 'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace'}",
+     "kind": "choice",
+     "choices": [
+      "serif",
+      "sans-serif",
+      "cursive",
+      "fantasy",
+      "monospace"
+     ],
+     "aliases": [
+      "family",
+      "fontname"
+     ]
+    },
+    {
+     "name": "fontfeatures",
+     "valid": "list of str, or tuple of str, or None",
+     "kind": "other"
+    },
+    {
+     "name": "fontsize",
+     "valid": "float or {'xx-small', 'x-small', 'small', 'medium', 'large', 'x-large', 'xx-large'}",
+     "kind": "number",
+     "aliases": [
+      "size"
+     ]
+    },
+    {
+     "name": "fontstretch",
+     "valid": "{a numeric value in range 0-1000, 'ultra-condensed', 'extra-condensed', 'condensed', 'semi-condensed', 'normal', 'semi-expanded', 'expanded', 'extra-expanded', 'ultra-expanded'}",
+     "kind": "choice",
+     "choices": [
+      "ultra-condensed",
+      "extra-condensed",
+      "condensed",
+      "semi-condensed",
+      "normal",
+      "semi-expanded",
+      "expanded",
+      "extra-expanded",
+      "ultra-expanded"
+     ],
+     "aliases": [
+      "stretch"
+     ]
+    },
+    {
+     "name": "fontstyle",
+     "valid": "{'normal', 'italic', 'oblique'}",
+     "kind": "choice",
+     "choices": [
+      "normal",
+      "italic",
+      "oblique"
+     ],
+     "aliases": [
+      "style"
+     ]
+    },
+    {
+     "name": "fontvariant",
+     "valid": "{'normal', 'small-caps'}",
+     "kind": "choice",
+     "choices": [
+      "normal",
+      "small-caps"
+     ],
+     "aliases": [
+      "variant"
+     ]
+    },
+    {
+     "name": "fontweight",
+     "valid": "{a numeric value in range 0-1000, 'ultralight', 'light', 'normal', 'regular', 'book', 'medium', 'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy', 'extra bold', 'black'}",
+     "kind": "choice",
+     "choices": [
+      "ultralight",
+      "light",
+      "normal",
+      "regular",
+      "book",
+      "medium",
+      "roman",
+      "semibold",
+      "demibold",
+      "demi",
+      "bold",
+      "heavy",
+      "extra bold",
+      "black"
+     ],
+     "aliases": [
+      "weight"
+     ]
+    },
+    {
+     "name": "horizontalalignment",
+     "valid": "{'left', 'center', 'right'}",
+     "kind": "choice",
+     "choices": [
+      "left",
+      "center",
+      "right"
+     ],
+     "aliases": [
+      "ha"
+     ]
+    },
+    {
+     "name": "label",
+     "valid": "object",
+     "kind": "text"
+    },
+    {
+     "name": "language",
+     "valid": "str or None",
+     "kind": "other"
+    },
+    {
+     "name": "linespacing",
+     "valid": "'normal' or float, default: 'normal'",
+     "kind": "other"
+    },
+    {
+     "name": "multialignment",
+     "valid": "{'left', 'right', 'center'}",
+     "kind": "choice",
+     "choices": [
+      "left",
+      "right",
+      "center"
+     ],
+     "aliases": [
+      "ma"
+     ]
+    },
+    {
+     "name": "rotation",
+     "valid": "float or {'vertical', 'horizontal'}",
+     "kind": "number"
+    },
+    {
+     "name": "verticalalignment",
+     "valid": "{'baseline', 'bottom', 'center', 'center_baseline', 'top'}",
+     "kind": "choice",
+     "choices": [
+      "baseline",
+      "bottom",
+      "center",
+      "center_baseline",
+      "top"
+     ],
+     "aliases": [
+      "va"
+     ]
+    },
+    {
+     "name": "visible",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "zorder",
+     "valid": "float",
+     "kind": "number"
+    }
+   ]
+  },
+  {
+   "on": "axes",
+   "call": "set_ylabel",
+   "parameters": [
+    {
+     "name": "ylabel",
+     "positional": true,
+     "valid": "str",
+     "kind": "text",
+     "required": true
+    },
+    {
+     "name": "fontdict",
+     "positional": true,
+     "default": null
+    },
+    {
+     "name": "labelpad",
+     "positional": true,
+     "valid": "float, default: :rc:`axes.labelpad`",
+     "kind": "number",
+     "default": null
+    },
+    {
+     "name": "loc",
+     "positional": false,
+     "valid": "{'bottom', 'center', 'top'}, default: :rc:`yaxis.labellocation`",
+     "kind": "choice",
+     "choices": [
+      "bottom",
+      "center",
+      "top"
+     ],
+     "default": null
+    }
+   ],
+   "artist": "Text",
+   "properties": [
+    {
+     "name": "alpha",
+     "valid": "float or None",
+     "kind": "number"
+    },
+    {
+     "name": "backgroundcolor",
+     "valid": ":mpltype:`color`",
+     "kind": "colour"
+    },
+    {
+     "name": "clip_on",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "color",
+     "valid": ":mpltype:`color`",
+     "kind": "colour",
+     "aliases": [
+      "c"
+     ]
+    },
+    {
+     "name": "fontfamily",
+     "valid": "{FONTNAME, 'serif', 'sans-serif', 'cursive', 'fantasy', 'monospace'}",
+     "kind": "choice",
+     "choices": [
+      "serif",
+      "sans-serif",
+      "cursive",
+      "fantasy",
+      "monospace"
+     ],
+     "aliases": [
+      "family",
+      "fontname"
+     ]
+    },
+    {
+     "name": "fontfeatures",
+     "valid": "list of str, or tuple of str, or None",
+     "kind": "other"
+    },
+    {
+     "name": "fontsize",
+     "valid": "float or {'xx-small', 'x-small', 'small', 'medium', 'large', 'x-large', 'xx-large'}",
+     "kind": "number",
+     "aliases": [
+      "size"
+     ]
+    },
+    {
+     "name": "fontstretch",
+     "valid": "{a numeric value in range 0-1000, 'ultra-condensed', 'extra-condensed', 'condensed', 'semi-condensed', 'normal', 'semi-expanded', 'expanded', 'extra-expanded', 'ultra-expanded'}",
+     "kind": "choice",
+     "choices": [
+      "ultra-condensed",
+      "extra-condensed",
+      "condensed",
+      "semi-condensed",
+      "normal",
+      "semi-expanded",
+      "expanded",
+      "extra-expanded",
+      "ultra-expanded"
+     ],
+     "aliases": [
+      "stretch"
+     ]
+    },
+    {
+     "name": "fontstyle",
+     "valid": "{'normal', 'italic', 'oblique'}",
+     "kind": "choice",
+     "choices": [
+      "normal",
+      "italic",
+      "oblique"
+     ],
+     "aliases": [
+      "style"
+     ]
+    },
+    {
+     "name": "fontvariant",
+     "valid": "{'normal', 'small-caps'}",
+     "kind": "choice",
+     "choices": [
+      "normal",
+      "small-caps"
+     ],
+     "aliases": [
+      "variant"
+     ]
+    },
+    {
+     "name": "fontweight",
+     "valid": "{a numeric value in range 0-1000, 'ultralight', 'light', 'normal', 'regular', 'book', 'medium', 'roman', 'semibold', 'demibold', 'demi', 'bold', 'heavy', 'extra bold', 'black'}",
+     "kind": "choice",
+     "choices": [
+      "ultralight",
+      "light",
+      "normal",
+      "regular",
+      "book",
+      "medium",
+      "roman",
+      "semibold",
+      "demibold",
+      "demi",
+      "bold",
+      "heavy",
+      "extra bold",
+      "black"
+     ],
+     "aliases": [
+      "weight"
+     ]
+    },
+    {
+     "name": "horizontalalignment",
+     "valid": "{'left', 'center', 'right'}",
+     "kind": "choice",
+     "choices": [
+      "left",
+      "center",
+      "right"
+     ],
+     "aliases": [
+      "ha"
+     ]
+    },
+    {
+     "name": "label",
+     "valid": "object",
+     "kind": "text"
+    },
+    {
+     "name": "language",
+     "valid": "str or None",
+     "kind": "other"
+    },
+    {
+     "name": "linespacing",
+     "valid": "'normal' or float, default: 'normal'",
+     "kind": "other"
+    },
+    {
+     "name": "multialignment",
+     "valid": "{'left', 'right', 'center'}",
+     "kind": "choice",
+     "choices": [
+      "left",
+      "right",
+      "center"
+     ],
+     "aliases": [
+      "ma"
+     ]
+    },
+    {
+     "name": "rotation",
+     "valid": "float or {'vertical', 'horizontal'}",
+     "kind": "number"
+    },
+    {
+     "name": "verticalalignment",
+     "valid": "{'baseline', 'bottom', 'center', 'center_baseline', 'top'}",
+     "kind": "choice",
+     "choices": [
+      "baseline",
+      "bottom",
+      "center",
+      "center_baseline",
+      "top"
+     ],
+     "aliases": [
+      "va"
+     ]
+    },
+    {
+     "name": "visible",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "zorder",
+     "valid": "float",
+     "kind": "number"
+    }
+   ]
+  },
+  {
+   "on": "axes",
+   "call": "set_xlim",
+   "parameters": [
+    {
+     "name": "left",
+     "positional": true,
+     "valid": "float, optional",
+     "kind": "number",
+     "default": null
+    },
+    {
+     "name": "right",
+     "positional": true,
+     "valid": "float, optional",
+     "kind": "number",
+     "default": null
+    },
+    {
+     "name": "emit",
+     "positional": false,
+     "valid": "bool, default: True",
+     "kind": "bool",
+     "default": true
+    },
+    {
+     "name": "auto",
+     "positional": false,
+     "valid": "bool or None, default: False",
+     "kind": "bool",
+     "default": false
+    },
+    {
+     "name": "xmin",
+     "positional": false,
+     "valid": "float, optional",
+     "kind": "number",
+     "default": null
+    },
+    {
+     "name": "xmax",
+     "positional": false,
+     "valid": "float, optional",
+     "kind": "number",
+     "default": null
+    }
+   ]
+  },
+  {
+   "on": "axes",
+   "call": "set_ylim",
+   "parameters": [
+    {
+     "name": "bottom",
+     "positional": true,
+     "valid": "float, optional",
+     "kind": "number",
+     "default": null
+    },
+    {
+     "name": "top",
+     "positional": true,
+     "valid": "float, optional",
+     "kind": "number",
+     "default": null
+    },
+    {
+     "name": "emit",
+     "positional": false,
+     "valid": "bool, default: True",
+     "kind": "bool",
+     "default": true
+    },
+    {
+     "name": "auto",
+     "positional": false,
+     "valid": "bool or None, default: False",
+     "kind": "bool",
+     "default": false
+    },
+    {
+     "name": "ymin",
+     "positional": false,
+     "valid": "float, optional",
+     "kind": "number",
+     "default": null
+    },
+    {
+     "name": "ymax",
+     "positional": false,
+     "valid": "float, optional",
+     "kind": "number",
+     "default": null
+    }
+   ]
+  },
+  {
+   "on": "axes",
+   "call": "set_xscale",
+   "parameters": [
+    {
+     "name": "value",
+     "positional": true,
+     "valid": "str or `.ScaleBase`",
+     "kind": "other",
+     "required": true
+    }
+   ]
+  },
+  {
+   "on": "axes",
+   "call": "set_yscale",
+   "parameters": [
+    {
+     "name": "value",
+     "positional": true,
+     "valid": "str or `.ScaleBase`",
+     "kind": "other",
+     "required": true
+    }
+   ]
+  },
+  {
+   "on": "axes",
+   "call": "grid",
+   "parameters": [
+    {
+     "name": "visible",
+     "positional": true,
+     "valid": "bool or None, optional",
+     "kind": "bool",
+     "default": null
+    },
+    {
+     "name": "which",
+     "positional": true,
+     "valid": "{'major', 'minor', 'both'}, optional",
+     "kind": "choice",
+     "choices": [
+      "major",
+      "minor",
+      "both"
+     ],
+     "default": "major"
+    },
+    {
+     "name": "axis",
+     "positional": true,
+     "valid": "{'both', 'x', 'y'}, optional",
+     "kind": "choice",
+     "choices": [
+      "both",
+      "x",
+      "y"
+     ],
+     "default": "both"
+    }
+   ],
+   "artist": "Line2D",
+   "properties": [
+    {
+     "name": "alpha",
+     "valid": "float or None",
+     "kind": "number"
+    },
+    {
+     "name": "clip_on",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "color",
+     "valid": ":mpltype:`color`",
+     "kind": "colour",
+     "aliases": [
+      "c"
+     ]
+    },
+    {
+     "name": "dash_capstyle",
+     "valid": "`.CapStyle` or {'butt', 'projecting', 'round'}",
+     "kind": "choice",
+     "choices": [
+      "butt",
+      "projecting",
+      "round"
+     ]
+    },
+    {
+     "name": "dash_joinstyle",
+     "valid": "`.JoinStyle` or {'miter', 'round', 'bevel'}",
+     "kind": "choice",
+     "choices": [
+      "miter",
+      "round",
+      "bevel"
+     ]
+    },
+    {
+     "name": "drawstyle",
+     "valid": "{'default', 'steps', 'steps-pre', 'steps-mid', 'steps-post'}, default: 'default'",
+     "kind": "choice",
+     "choices": [
+      "default",
+      "steps",
+      "steps-pre",
+      "steps-mid",
+      "steps-post"
+     ],
+     "aliases": [
+      "ds"
+     ]
+    },
+    {
+     "name": "fillstyle",
+     "valid": "{'full', 'left', 'right', 'bottom', 'top', 'none'}",
+     "kind": "choice",
+     "choices": [
+      "full",
+      "left",
+      "right",
+      "bottom",
+      "top",
+      "none"
+     ]
+    },
+    {
+     "name": "gapcolor",
+     "valid": ":mpltype:`color` or None",
+     "kind": "colour"
+    },
+    {
+     "name": "label",
+     "valid": "object",
+     "kind": "text"
+    },
+    {
+     "name": "linestyle",
+     "valid": "{'-', '--', '-.', ':', '', ...} or (offset, on-off-seq)",
+     "kind": "choice",
+     "choices": [
+      "-",
+      "--",
+      "-.",
+      ":",
+      ""
+     ],
+     "aliases": [
+      "ls"
+     ]
+    },
+    {
+     "name": "linewidth",
+     "valid": "float",
+     "kind": "number",
+     "aliases": [
+      "lw"
+     ]
+    },
+    {
+     "name": "marker",
+     "valid": "marker style string, `~.path.Path` or `~.markers.MarkerStyle`",
+     "kind": "other"
+    },
+    {
+     "name": "markeredgecolor",
+     "valid": ":mpltype:`color`",
+     "kind": "colour",
+     "aliases": [
+      "mec"
+     ]
+    },
+    {
+     "name": "markeredgewidth",
+     "valid": "float",
+     "kind": "number",
+     "aliases": [
+      "mew"
+     ]
+    },
+    {
+     "name": "markerfacecolor",
+     "valid": ":mpltype:`color`",
+     "kind": "colour",
+     "aliases": [
+      "mfc"
+     ]
+    },
+    {
+     "name": "markerfacecoloralt",
+     "valid": ":mpltype:`color`",
+     "kind": "colour",
+     "aliases": [
+      "mfcalt"
+     ]
+    },
+    {
+     "name": "markersize",
+     "valid": "float",
+     "kind": "number",
+     "aliases": [
+      "ms"
+     ]
+    },
+    {
+     "name": "solid_capstyle",
+     "valid": "`.CapStyle` or {'butt', 'projecting', 'round'}",
+     "kind": "choice",
+     "choices": [
+      "butt",
+      "projecting",
+      "round"
+     ]
+    },
+    {
+     "name": "solid_joinstyle",
+     "valid": "`.JoinStyle` or {'miter', 'round', 'bevel'}",
+     "kind": "choice",
+     "choices": [
+      "miter",
+      "round",
+      "bevel"
+     ]
+    },
+    {
+     "name": "zorder",
+     "valid": "float",
+     "kind": "number"
+    }
+   ]
+  },
+  {
+   "on": "axes",
+   "call": "legend",
+   "parameters": [
+    {
+     "name": "handles",
+     "positional": true,
+     "valid": "list of (`.Artist` or tuple of `.Artist`)",
+     "kind": "other",
+     "required": true
+    },
+    {
+     "name": "labels",
+     "positional": true,
+     "valid": "list of str",
+     "kind": "other",
+     "required": true
+    },
+    {
+     "name": "loc",
+     "positional": false,
+     "valid": "str or pair of floats, default: :rc:`legend.loc` for Axes, 'upper right' for Figure",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "numpoints",
+     "positional": false,
+     "valid": "int, default: :rc:`legend.numpoints`",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "markerscale",
+     "positional": false,
+     "valid": "float, default: :rc:`legend.markerscale`",
+     "kind": "number",
+     "default": null
+    },
+    {
+     "name": "markerfirst",
+     "positional": false,
+     "valid": "bool, default: True",
+     "kind": "bool",
+     "default": true
+    },
+    {
+     "name": "reverse",
+     "positional": false,
+     "valid": "bool, default: False",
+     "kind": "bool",
+     "default": false
+    },
+    {
+     "name": "scatterpoints",
+     "positional": false,
+     "valid": "int, default: :rc:`legend.scatterpoints`",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "scatteryoffsets",
+     "positional": false,
+     "valid": "iterable of floats, default: ``[0.375, 0.5, 0.3125]``",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "prop",
+     "positional": false,
+     "valid": "None or `~matplotlib.font_manager.FontProperties` or dict",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "fontsize",
+     "positional": false,
+     "valid": "int or {'xx-small', 'x-small', 'small', 'medium', 'large', 'x-large', 'xx-large'}",
+     "kind": "choice",
+     "choices": [
+      "xx-small",
+      "x-small",
+      "small",
+      "medium",
+      "large",
+      "x-large",
+      "xx-large"
+     ],
+     "default": null
+    },
+    {
+     "name": "labelcolor",
+     "positional": false,
+     "valid": "str or list, default: :rc:`legend.labelcolor`",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "borderpad",
+     "positional": false,
+     "valid": "float, default: :rc:`legend.borderpad`",
+     "kind": "number",
+     "default": null
+    },
+    {
+     "name": "labelspacing",
+     "positional": false,
+     "valid": "float, default: :rc:`legend.labelspacing`",
+     "kind": "number",
+     "default": null
+    },
+    {
+     "name": "handlelength",
+     "positional": false,
+     "valid": "float, default: :rc:`legend.handlelength`",
+     "kind": "number",
+     "default": null
+    },
+    {
+     "name": "handleheight",
+     "positional": false,
+     "valid": "float, default: :rc:`legend.handleheight`",
+     "kind": "number",
+     "default": null
+    },
+    {
+     "name": "handletextpad",
+     "positional": false,
+     "valid": "float, default: :rc:`legend.handletextpad`",
+     "kind": "number",
+     "default": null
+    },
+    {
+     "name": "borderaxespad",
+     "positional": false,
+     "valid": "float, default: :rc:`legend.borderaxespad`",
+     "kind": "number",
+     "default": null
+    },
+    {
+     "name": "columnspacing",
+     "positional": false,
+     "valid": "float, default: :rc:`legend.columnspacing`",
+     "kind": "number",
+     "default": null
+    },
+    {
+     "name": "ncols",
+     "positional": false,
+     "valid": "int, default: 1",
+     "kind": "other",
+     "default": 1
+    },
+    {
+     "name": "mode",
+     "positional": false,
+     "valid": "{\"expand\", None}",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "fancybox",
+     "positional": false,
+     "valid": "bool, default: :rc:`legend.fancybox`",
+     "kind": "bool",
+     "default": null
+    },
+    {
+     "name": "shadow",
+     "positional": false,
+     "valid": "None, bool or dict, default: :rc:`legend.shadow`",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "title",
+     "positional": false,
+     "valid": "str or None",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "title_fontsize",
+     "positional": false,
+     "valid": "int or {'xx-small', 'x-small', 'small', 'medium', 'large', 'x-large', 'xx-large'}, default: :rc:`legend.title_fontsize`",
+     "kind": "choice",
+     "choices": [
+      "xx-small",
+      "x-small",
+      "small",
+      "medium",
+      "large",
+      "x-large",
+      "xx-large"
+     ],
+     "default": null
+    },
+    {
+     "name": "framealpha",
+     "positional": false,
+     "valid": "float, default: :rc:`legend.framealpha`",
+     "kind": "number",
+     "default": null
+    },
+    {
+     "name": "edgecolor",
+     "positional": false,
+     "valid": "\"inherit\" or color, default: :rc:`legend.edgecolor`",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "facecolor",
+     "positional": false,
+     "valid": "\"inherit\" or color, default: :rc:`legend.facecolor`",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "linewidth",
+     "positional": false,
+     "valid": "float or None, default: :rc:`legend.linewidth`",
+     "kind": "number",
+     "default": null
+    },
+    {
+     "name": "bbox_to_anchor",
+     "positional": false,
+     "valid": "`.BboxBase`, 2-tuple, or 4-tuple of floats",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "bbox_transform",
+     "positional": false,
+     "valid": "None or `~matplotlib.transforms.Transform`",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "frameon",
+     "positional": false,
+     "valid": "bool, default: :rc:`legend.frameon`",
+     "kind": "bool",
+     "default": null
+    },
+    {
+     "name": "handler_map",
+     "positional": false,
+     "valid": "dict or None",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "title_fontproperties",
+     "positional": false,
+     "valid": "None or `~matplotlib.font_manager.FontProperties` or dict",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "alignment",
+     "positional": false,
+     "valid": "{'center', 'left', 'right'}, default: 'center'",
+     "kind": "choice",
+     "choices": [
+      "center",
+      "left",
+      "right"
+     ],
+     "default": "center"
+    },
+    {
+     "name": "ncol",
+     "positional": false,
+     "default": 1
+    },
+    {
+     "name": "draggable",
+     "positional": false,
+     "valid": "bool, default: False",
+     "kind": "bool",
+     "default": false
+    }
+   ]
+  },
+  {
+   "on": "axes",
+   "call": "loglog",
+   "parameters": [],
+   "artist": "Line2D",
+   "properties": [
+    {
+     "name": "alpha",
+     "valid": "float or None",
+     "kind": "number"
+    },
+    {
+     "name": "clip_on",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "color",
+     "valid": ":mpltype:`color`",
+     "kind": "colour",
+     "aliases": [
+      "c"
+     ]
+    },
+    {
+     "name": "dash_capstyle",
+     "valid": "`.CapStyle` or {'butt', 'projecting', 'round'}",
+     "kind": "choice",
+     "choices": [
+      "butt",
+      "projecting",
+      "round"
+     ]
+    },
+    {
+     "name": "dash_joinstyle",
+     "valid": "`.JoinStyle` or {'miter', 'round', 'bevel'}",
+     "kind": "choice",
+     "choices": [
+      "miter",
+      "round",
+      "bevel"
+     ]
+    },
+    {
+     "name": "drawstyle",
+     "valid": "{'default', 'steps', 'steps-pre', 'steps-mid', 'steps-post'}, default: 'default'",
+     "kind": "choice",
+     "choices": [
+      "default",
+      "steps",
+      "steps-pre",
+      "steps-mid",
+      "steps-post"
+     ],
+     "aliases": [
+      "ds"
+     ]
+    },
+    {
+     "name": "fillstyle",
+     "valid": "{'full', 'left', 'right', 'bottom', 'top', 'none'}",
+     "kind": "choice",
+     "choices": [
+      "full",
+      "left",
+      "right",
+      "bottom",
+      "top",
+      "none"
+     ]
+    },
+    {
+     "name": "gapcolor",
+     "valid": ":mpltype:`color` or None",
+     "kind": "colour"
+    },
+    {
+     "name": "label",
+     "valid": "object",
+     "kind": "text"
+    },
+    {
+     "name": "linestyle",
+     "valid": "{'-', '--', '-.', ':', '', ...} or (offset, on-off-seq)",
+     "kind": "choice",
+     "choices": [
+      "-",
+      "--",
+      "-.",
+      ":",
+      ""
+     ],
+     "aliases": [
+      "ls"
+     ]
+    },
+    {
+     "name": "linewidth",
+     "valid": "float",
+     "kind": "number",
+     "aliases": [
+      "lw"
+     ]
+    },
+    {
+     "name": "marker",
+     "valid": "marker style string, `~.path.Path` or `~.markers.MarkerStyle`",
+     "kind": "other"
+    },
+    {
+     "name": "markeredgecolor",
+     "valid": ":mpltype:`color`",
+     "kind": "colour",
+     "aliases": [
+      "mec"
+     ]
+    },
+    {
+     "name": "markeredgewidth",
+     "valid": "float",
+     "kind": "number",
+     "aliases": [
+      "mew"
+     ]
+    },
+    {
+     "name": "markerfacecolor",
+     "valid": ":mpltype:`color`",
+     "kind": "colour",
+     "aliases": [
+      "mfc"
+     ]
+    },
+    {
+     "name": "markerfacecoloralt",
+     "valid": ":mpltype:`color`",
+     "kind": "colour",
+     "aliases": [
+      "mfcalt"
+     ]
+    },
+    {
+     "name": "markersize",
+     "valid": "float",
+     "kind": "number",
+     "aliases": [
+      "ms"
+     ]
+    },
+    {
+     "name": "solid_capstyle",
+     "valid": "`.CapStyle` or {'butt', 'projecting', 'round'}",
+     "kind": "choice",
+     "choices": [
+      "butt",
+      "projecting",
+      "round"
+     ]
+    },
+    {
+     "name": "solid_joinstyle",
+     "valid": "`.JoinStyle` or {'miter', 'round', 'bevel'}",
+     "kind": "choice",
+     "choices": [
+      "miter",
+      "round",
+      "bevel"
+     ]
+    },
+    {
+     "name": "visible",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "zorder",
+     "valid": "float",
+     "kind": "number"
+    }
+   ]
+  },
+  {
+   "on": "axes",
+   "call": "semilogx",
+   "parameters": [],
+   "artist": "Line2D",
+   "properties": [
+    {
+     "name": "alpha",
+     "valid": "float or None",
+     "kind": "number"
+    },
+    {
+     "name": "clip_on",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "color",
+     "valid": ":mpltype:`color`",
+     "kind": "colour",
+     "aliases": [
+      "c"
+     ]
+    },
+    {
+     "name": "dash_capstyle",
+     "valid": "`.CapStyle` or {'butt', 'projecting', 'round'}",
+     "kind": "choice",
+     "choices": [
+      "butt",
+      "projecting",
+      "round"
+     ]
+    },
+    {
+     "name": "dash_joinstyle",
+     "valid": "`.JoinStyle` or {'miter', 'round', 'bevel'}",
+     "kind": "choice",
+     "choices": [
+      "miter",
+      "round",
+      "bevel"
+     ]
+    },
+    {
+     "name": "drawstyle",
+     "valid": "{'default', 'steps', 'steps-pre', 'steps-mid', 'steps-post'}, default: 'default'",
+     "kind": "choice",
+     "choices": [
+      "default",
+      "steps",
+      "steps-pre",
+      "steps-mid",
+      "steps-post"
+     ],
+     "aliases": [
+      "ds"
+     ]
+    },
+    {
+     "name": "fillstyle",
+     "valid": "{'full', 'left', 'right', 'bottom', 'top', 'none'}",
+     "kind": "choice",
+     "choices": [
+      "full",
+      "left",
+      "right",
+      "bottom",
+      "top",
+      "none"
+     ]
+    },
+    {
+     "name": "gapcolor",
+     "valid": ":mpltype:`color` or None",
+     "kind": "colour"
+    },
+    {
+     "name": "label",
+     "valid": "object",
+     "kind": "text"
+    },
+    {
+     "name": "linestyle",
+     "valid": "{'-', '--', '-.', ':', '', ...} or (offset, on-off-seq)",
+     "kind": "choice",
+     "choices": [
+      "-",
+      "--",
+      "-.",
+      ":",
+      ""
+     ],
+     "aliases": [
+      "ls"
+     ]
+    },
+    {
+     "name": "linewidth",
+     "valid": "float",
+     "kind": "number",
+     "aliases": [
+      "lw"
+     ]
+    },
+    {
+     "name": "marker",
+     "valid": "marker style string, `~.path.Path` or `~.markers.MarkerStyle`",
+     "kind": "other"
+    },
+    {
+     "name": "markeredgecolor",
+     "valid": ":mpltype:`color`",
+     "kind": "colour",
+     "aliases": [
+      "mec"
+     ]
+    },
+    {
+     "name": "markeredgewidth",
+     "valid": "float",
+     "kind": "number",
+     "aliases": [
+      "mew"
+     ]
+    },
+    {
+     "name": "markerfacecolor",
+     "valid": ":mpltype:`color`",
+     "kind": "colour",
+     "aliases": [
+      "mfc"
+     ]
+    },
+    {
+     "name": "markerfacecoloralt",
+     "valid": ":mpltype:`color`",
+     "kind": "colour",
+     "aliases": [
+      "mfcalt"
+     ]
+    },
+    {
+     "name": "markersize",
+     "valid": "float",
+     "kind": "number",
+     "aliases": [
+      "ms"
+     ]
+    },
+    {
+     "name": "solid_capstyle",
+     "valid": "`.CapStyle` or {'butt', 'projecting', 'round'}",
+     "kind": "choice",
+     "choices": [
+      "butt",
+      "projecting",
+      "round"
+     ]
+    },
+    {
+     "name": "solid_joinstyle",
+     "valid": "`.JoinStyle` or {'miter', 'round', 'bevel'}",
+     "kind": "choice",
+     "choices": [
+      "miter",
+      "round",
+      "bevel"
+     ]
+    },
+    {
+     "name": "visible",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "zorder",
+     "valid": "float",
+     "kind": "number"
+    }
+   ]
+  },
+  {
+   "on": "axes",
+   "call": "semilogy",
+   "parameters": [],
+   "artist": "Line2D",
+   "properties": [
+    {
+     "name": "alpha",
+     "valid": "float or None",
+     "kind": "number"
+    },
+    {
+     "name": "clip_on",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "color",
+     "valid": ":mpltype:`color`",
+     "kind": "colour",
+     "aliases": [
+      "c"
+     ]
+    },
+    {
+     "name": "dash_capstyle",
+     "valid": "`.CapStyle` or {'butt', 'projecting', 'round'}",
+     "kind": "choice",
+     "choices": [
+      "butt",
+      "projecting",
+      "round"
+     ]
+    },
+    {
+     "name": "dash_joinstyle",
+     "valid": "`.JoinStyle` or {'miter', 'round', 'bevel'}",
+     "kind": "choice",
+     "choices": [
+      "miter",
+      "round",
+      "bevel"
+     ]
+    },
+    {
+     "name": "drawstyle",
+     "valid": "{'default', 'steps', 'steps-pre', 'steps-mid', 'steps-post'}, default: 'default'",
+     "kind": "choice",
+     "choices": [
+      "default",
+      "steps",
+      "steps-pre",
+      "steps-mid",
+      "steps-post"
+     ],
+     "aliases": [
+      "ds"
+     ]
+    },
+    {
+     "name": "fillstyle",
+     "valid": "{'full', 'left', 'right', 'bottom', 'top', 'none'}",
+     "kind": "choice",
+     "choices": [
+      "full",
+      "left",
+      "right",
+      "bottom",
+      "top",
+      "none"
+     ]
+    },
+    {
+     "name": "gapcolor",
+     "valid": ":mpltype:`color` or None",
+     "kind": "colour"
+    },
+    {
+     "name": "label",
+     "valid": "object",
+     "kind": "text"
+    },
+    {
+     "name": "linestyle",
+     "valid": "{'-', '--', '-.', ':', '', ...} or (offset, on-off-seq)",
+     "kind": "choice",
+     "choices": [
+      "-",
+      "--",
+      "-.",
+      ":",
+      ""
+     ],
+     "aliases": [
+      "ls"
+     ]
+    },
+    {
+     "name": "linewidth",
+     "valid": "float",
+     "kind": "number",
+     "aliases": [
+      "lw"
+     ]
+    },
+    {
+     "name": "marker",
+     "valid": "marker style string, `~.path.Path` or `~.markers.MarkerStyle`",
+     "kind": "other"
+    },
+    {
+     "name": "markeredgecolor",
+     "valid": ":mpltype:`color`",
+     "kind": "colour",
+     "aliases": [
+      "mec"
+     ]
+    },
+    {
+     "name": "markeredgewidth",
+     "valid": "float",
+     "kind": "number",
+     "aliases": [
+      "mew"
+     ]
+    },
+    {
+     "name": "markerfacecolor",
+     "valid": ":mpltype:`color`",
+     "kind": "colour",
+     "aliases": [
+      "mfc"
+     ]
+    },
+    {
+     "name": "markerfacecoloralt",
+     "valid": ":mpltype:`color`",
+     "kind": "colour",
+     "aliases": [
+      "mfcalt"
+     ]
+    },
+    {
+     "name": "markersize",
+     "valid": "float",
+     "kind": "number",
+     "aliases": [
+      "ms"
+     ]
+    },
+    {
+     "name": "solid_capstyle",
+     "valid": "`.CapStyle` or {'butt', 'projecting', 'round'}",
+     "kind": "choice",
+     "choices": [
+      "butt",
+      "projecting",
+      "round"
+     ]
+    },
+    {
+     "name": "solid_joinstyle",
+     "valid": "`.JoinStyle` or {'miter', 'round', 'bevel'}",
+     "kind": "choice",
+     "choices": [
+      "miter",
+      "round",
+      "bevel"
+     ]
+    },
+    {
+     "name": "visible",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "zorder",
+     "valid": "float",
+     "kind": "number"
+    }
+   ]
+  },
+  {
+   "on": "axes",
+   "call": "tick_params",
+   "parameters": [
+    {
+     "name": "axis",
+     "positional": true,
+     "valid": "{'x', 'y', 'both'}, default: 'both'",
+     "kind": "choice",
+     "choices": [
+      "x",
+      "y",
+      "both"
+     ],
+     "default": "both"
+    }
+   ]
+  },
+  {
+   "on": "axes",
+   "call": "twinx",
+   "parameters": [
+    {
+     "name": "axes_class",
+     "positional": true,
+     "valid": "subclass type of `~.axes.Axes`, optional",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "delta_zorder",
+     "positional": false,
+     "valid": "float, default: 0",
+     "kind": "number",
+     "default": 0.0
+    }
+   ]
+  },
+  {
+   "on": "axes",
+   "call": "twiny",
+   "parameters": [
+    {
+     "name": "axes_class",
+     "positional": true,
+     "valid": "subclass type of `~.axes.Axes`, optional",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "delta_zorder",
+     "positional": false,
+     "valid": "float, default: 0",
+     "kind": "number",
+     "default": 0.0
+    }
+   ]
+  },
+  {
+   "on": "axes",
+   "call": "inset_axes",
+   "parameters": [
+    {
+     "name": "bounds",
+     "positional": true,
+     "valid": "[x0, y0, width, height]",
+     "kind": "other",
+     "required": true
+    },
+    {
+     "name": "transform",
+     "positional": false,
+     "valid": "`.Transform`",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "zorder",
+     "positional": false,
+     "valid": "number",
+     "kind": "other",
+     "default": 5
+    }
+   ]
+  },
+  {
+   "on": "axes",
+   "call": "indicate_inset",
+   "parameters": [
+    {
+     "name": "bounds",
+     "positional": true,
+     "valid": "[x0, y0, width, height], optional",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "inset_ax",
+     "positional": true,
+     "valid": "`.Axes`, optional",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "transform",
+     "positional": false,
+     "valid": "`.Transform`",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "facecolor",
+     "positional": false,
+     "valid": ":mpltype:`color`, default: 'none'",
+     "kind": "colour",
+     "default": "none"
+    },
+    {
+     "name": "edgecolor",
+     "positional": false,
+     "valid": ":mpltype:`color`, default: '0.5'",
+     "kind": "colour",
+     "default": "0.5"
+    },
+    {
+     "name": "alpha",
+     "positional": false,
+     "valid": "float or None, default: 0.5",
+     "kind": "number",
+     "default": 0.5
+    },
+    {
+     "name": "zorder",
+     "positional": false,
+     "valid": "float, default: 4.99",
+     "kind": "number",
+     "default": null
+    }
+   ],
+   "artist": "Rectangle",
+   "properties": [
+    {
+     "name": "capstyle",
+     "valid": "`.CapStyle` or {'butt', 'projecting', 'round'}",
+     "kind": "choice",
+     "choices": [
+      "butt",
+      "projecting",
+      "round"
+     ]
+    },
+    {
+     "name": "clip_on",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "color",
+     "valid": ":mpltype:`color`",
+     "kind": "colour"
+    },
+    {
+     "name": "edgegapcolor",
+     "valid": ":mpltype:`color` or None",
+     "kind": "colour"
+    },
+    {
+     "name": "fill",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "hatch",
+     "valid": "{'/', '\\\\', '|', '-', '+', 'x', 'o', 'O', '.', '*'}",
+     "kind": "choice",
+     "choices": [
+      "/",
+      "\\\\",
+      "|",
+      "-",
+      "+",
+      "x",
+      "o",
+      "O",
+      ".",
+      "*"
+     ]
+    },
+    {
+     "name": "hatch_linewidth",
+     "valid": "unknown",
+     "kind": "other"
+    },
+    {
+     "name": "hatchcolor",
+     "valid": ":mpltype:`color` or 'edge' or None",
+     "kind": "colour"
+    },
+    {
+     "name": "joinstyle",
+     "valid": "`.JoinStyle` or {'miter', 'round', 'bevel'}",
+     "kind": "choice",
+     "choices": [
+      "miter",
+      "round",
+      "bevel"
+     ]
+    },
+    {
+     "name": "label",
+     "valid": "object",
+     "kind": "text"
+    },
+    {
+     "name": "linestyle",
+     "valid": "{'-', '--', '-.', ':', '', ...} or (offset, on-off-seq)",
+     "kind": "choice",
+     "choices": [
+      "-",
+      "--",
+      "-.",
+      ":",
+      ""
+     ],
+     "aliases": [
+      "ls"
+     ]
+    },
+    {
+     "name": "linewidth",
+     "valid": "float or None",
+     "kind": "number",
+     "aliases": [
+      "lw"
+     ]
+    },
+    {
+     "name": "visible",
+     "valid": "bool",
+     "kind": "bool"
+    }
+   ]
+  },
+  {
+   "on": "axes",
+   "call": "indicate_inset_zoom",
+   "parameters": [
+    {
+     "name": "inset_ax",
+     "positional": true,
+     "valid": "`.Axes`",
+     "kind": "other",
+     "required": true
+    }
+   ],
+   "artist": "Rectangle",
+   "properties": [
+    {
+     "name": "alpha",
+     "valid": "float or None",
+     "kind": "number"
+    },
+    {
+     "name": "capstyle",
+     "valid": "`.CapStyle` or {'butt', 'projecting', 'round'}",
+     "kind": "choice",
+     "choices": [
+      "butt",
+      "projecting",
+      "round"
+     ]
+    },
+    {
+     "name": "clip_on",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "color",
+     "valid": ":mpltype:`color`",
+     "kind": "colour"
+    },
+    {
+     "name": "edgecolor",
+     "valid": ":mpltype:`color` or None",
+     "kind": "colour",
+     "aliases": [
+      "ec"
+     ]
+    },
+    {
+     "name": "edgegapcolor",
+     "valid": ":mpltype:`color` or None",
+     "kind": "colour"
+    },
+    {
+     "name": "facecolor",
+     "valid": ":mpltype:`color` or None",
+     "kind": "colour",
+     "aliases": [
+      "fc"
+     ]
+    },
+    {
+     "name": "fill",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "hatch",
+     "valid": "{'/', '\\\\', '|', '-', '+', 'x', 'o', 'O', '.', '*'}",
+     "kind": "choice",
+     "choices": [
+      "/",
+      "\\\\",
+      "|",
+      "-",
+      "+",
+      "x",
+      "o",
+      "O",
+      ".",
+      "*"
+     ]
+    },
+    {
+     "name": "hatch_linewidth",
+     "valid": "unknown",
+     "kind": "other"
+    },
+    {
+     "name": "hatchcolor",
+     "valid": ":mpltype:`color` or 'edge' or None",
+     "kind": "colour"
+    },
+    {
+     "name": "joinstyle",
+     "valid": "`.JoinStyle` or {'miter', 'round', 'bevel'}",
+     "kind": "choice",
+     "choices": [
+      "miter",
+      "round",
+      "bevel"
+     ]
+    },
+    {
+     "name": "label",
+     "valid": "object",
+     "kind": "text"
+    },
+    {
+     "name": "linestyle",
+     "valid": "{'-', '--', '-.', ':', '', ...} or (offset, on-off-seq)",
+     "kind": "choice",
+     "choices": [
+      "-",
+      "--",
+      "-.",
+      ":",
+      ""
+     ],
+     "aliases": [
+      "ls"
+     ]
+    },
+    {
+     "name": "linewidth",
+     "valid": "float or None",
+     "kind": "number",
+     "aliases": [
+      "lw"
+     ]
+    },
+    {
+     "name": "visible",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "zorder",
+     "valid": "float",
+     "kind": "number"
+    }
+   ]
+  },
+  {
+   "on": "axis",
+   "call": "set_major_formatter",
+   "parameters": [
+    {
+     "name": "formatter",
+     "positional": true,
+     "valid": "`~matplotlib.ticker.Formatter`, ``str``, or function",
+     "kind": "other",
+     "required": true
+    }
+   ]
+  },
+  {
+   "on": "axis",
+   "call": "set_minor_formatter",
+   "parameters": [
+    {
+     "name": "formatter",
+     "positional": true,
+     "valid": "`~matplotlib.ticker.Formatter`, ``str``, or function",
+     "kind": "other",
+     "required": true
+    }
+   ]
+  },
+  {
+   "on": "axis",
+   "call": "set_tick_params",
+   "parameters": [
+    {
+     "name": "which",
+     "positional": true,
+     "default": "major"
+    },
+    {
+     "name": "reset",
+     "positional": true,
+     "default": false
+    }
+   ]
+  }
+ ]
+}

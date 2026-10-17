@@ -1,0 +1,7 @@
+{"version": 1, "calls": [
+  {"call": "subplots", "args": [2, 1], "kwargs": {"sharex": true}, "as": ["fig", "axs"]},
+  {"on": "axs[0]", "call": "plot", "args": [[0, 1, 2], [0, 1, 4]]},
+  {"on": "axs[1]", "call": "plot", "args": [[1, 5], [3, 4]]},
+  {"on": "axs[0]", "call": "set_xlabel", "args": ["hidden by the grid"]},
+  {"on": "axs[1]", "call": "set_xlabel", "args": ["shared x"]}
+]}

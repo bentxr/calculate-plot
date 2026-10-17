@@ -1,0 +1,16 @@
+{"version": 1, "calls": [
+  {"call": "subplots", "args": [2, 2], "kwargs": {"figsize": {"$tuple": [7.0, 5.0]}}, "as": ["fig", "axs"]},
+  {"on": "axs[0, 0]", "call": "fill_between", "args": [[0, 2, 4, 6, 8, 10], [0, 3, 1, 4, 2, 5], [9, 7, 8, 6, 9, 8]], "kwargs": {"alpha": 0.5}},
+  {"on": "axs[0, 0]", "call": "set_xlim", "args": [4.5, 5.0]},
+  {"on": "axs[0, 0]", "call": "set_ylim", "args": [4.0, 4.5]},
+  {"on": "axs[0, 0]", "call": "set_title", "args": ["a band far larger than the figure"]},
+  {"on": "axs[0, 1]", "call": "fill_between", "args": [[0, 2, 4, 6, 8, 10], [4.0, 4.1, 4.0, 4.1, 4.0, 4.1], [4.2, 4.3, 4.2, 4.3, 4.2, 4.3]], "kwargs": {"color": "C1"}},
+  {"on": "axs[0, 1]", "call": "set_xlim", "args": [4.5, 5.0]},
+  {"on": "axs[0, 1]", "call": "set_title", "args": ["wider than the figure, not taller"]},
+  {"on": "axs[1, 0]", "call": "fill_between", "args": [[4.6, 4.7, 4.8], [0, 30, 10], [900, 700, 800]], "kwargs": {"color": "C2"}},
+  {"on": "axs[1, 0]", "call": "set_ylim", "args": [400, 401]},
+  {"on": "axs[1, 0]", "call": "set_title", "args": ["taller than the figure, not wider"]},
+  {"on": "axs[1, 1]", "call": "scatter", "args": [[1.0], [1.0]], "kwargs": {"s": 2000000, "marker": "s", "alpha": 0.4}},
+  {"on": "axs[1, 1]", "call": "scatter", "args": [[1.0], [1.0]], "kwargs": {"s": 400, "marker": "D", "color": "C3"}},
+  {"on": "axs[1, 1]", "call": "set_title", "args": ["one square marker larger than the figure"]}
+]}

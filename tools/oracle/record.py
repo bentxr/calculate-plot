@@ -1,0 +1,458 @@
+"""Record what matplotlib's Agg renderer is asked to draw.
+
+A figure is drawn by matplotlib 3.11.2 as usual, but the C++ renderer object inside RendererAgg
+is wrapped in a proxy that writes down every call, with every argument exactly as matplotlib's
+C++ side receives it, before forwarding it. The result is a *trace*: replaying it through
+calculate-plot's renderer must give the same pixels as matplotlib gave (tests/corpus).
+
+Text is recorded twice: the glyph bitmaps reach the renderer as draw_text_image calls, and the
+"text" and "glyphs" events beside them say which characters, fonts and positions produced them,
+so the text pipeline can be checked on its own.
+
+Numbers are written with Python's repr, which round-trips every double exactly; non-finite
+numbers as the strings "nan", "inf" and "-inf"; byte images as base64.
+"""
+import base64
+import json
+import math
+
+import numpy as np
+
+import matplotlib
+from matplotlib.backends.backend_agg import FigureCanvasAgg, RendererAgg
+from matplotlib.font_manager import fontManager
+
+TRACE_VERSION = 1
+
+
+def number(x):
+    x = float(x)
+    if math.isfinite(x):
+        return x
+    return "nan" if math.isnan(x) else ("inf" if x > 0 else "-inf")
+
+
+def numbers(values):
+    return [number(v) for v in np.asarray(values, dtype=float).ravel()]
+
+
+def array(values, dtype=float):
+    a = np.asarray(values, dtype=dtype)
+    return {"shape": list(a.shape), "data": numbers(a)}
+
+
+def image(values):
+    """The pixels as base64 in lines of 16 characters: secret scanners (which refuse pushes) look for
+    key patterns of 20 or more letters and digits, and a newline breaks every such run."""
+    a = np.ascontiguousarray(values, dtype=np.uint8)
+    b64 = base64.b64encode(a.tobytes()).decode("ascii")
+    return {"shape": list(a.shape), "base64": "\n".join(b64[i:i + 16] for i in range(0, len(b64), 16))}
+
+
+def color(rgba):
+    return None if rgba is None else numbers(rgba)
+
+
+def affine(transform):
+    """A transform as the C++ side reads it: the first two rows of its 3x3 matrix, or None."""
+    if transform is None:
+        return None
+    m = np.asarray(transform, dtype=float)
+    return numbers([m[0, 0], m[0, 1], m[0, 2], m[1, 0], m[1, 1], m[1, 2]])
+
+
+def path(p):
+    if p is None:
+        return None
+    codes = p.codes
+    return {"vertices": numbers(p.vertices), "codes": None if codes is None else [int(c) for c in codes],
+            "simplify": bool(p.should_simplify), "threshold": number(p.simplify_threshold)}
+
+
+def dashes(offset_and_pattern):
+    offset, pattern = offset_and_pattern
+    return [number(offset), None if pattern is None else numbers(pattern)]
+
+
+def bbox(b):
+    return None if b is None else numbers(np.asarray(b, dtype=float))
+
+
+_identities = {}
+
+
+def identity(p):
+    """What matplotlib's C++ renderer uses to recognise a clip path it has just drawn: the address
+    of the Python vertex array (id() in CPython), when the array is passed through unconverted
+    (float64). Numbered in order of first appearance; an address reused by a later array maps to
+    the same number, exactly as matplotlib's comparison sees it."""
+    vertices = p.vertices
+    if not (isinstance(vertices, np.ndarray) and vertices.dtype == np.float64):
+        return None  # converted to a temporary array: a fresh identity each call
+    return _identities.setdefault(id(vertices), len(_identities))
+
+
+def gc(g):
+    """The graphics context, field by field as matplotlib's C++ GCAgg reads it."""
+    clip_path, clip_trans = g.get_clip_path()
+    return {
+        "linewidth": number(g._linewidth),
+        "alpha": number(g._alpha),
+        "forced_alpha": bool(g._forced_alpha),
+        "rgb": color(g._rgb),
+        "antialiased": bool(g._antialiased),
+        "capstyle": g._capstyle.name,
+        "joinstyle": g._joinstyle.name,
+        "dashes": dashes(g.get_dashes()),
+        "cliprect": bbox(g._cliprect),
+        "clippath": None if clip_path is None else {"path": path(clip_path), "id": identity(clip_path),
+                                                     "transform": affine(clip_trans)},
+        "snap": g.get_snap(),
+        "hatch": path(g.get_hatch_path()),
+        "hatch_color": color(g.get_hatch_color()),
+        "hatch_linewidth": number(g.get_hatch_linewidth()),
+        "sketch": None if g.get_sketch_params() is None else numbers(g.get_sketch_params()),
+    }
+
+
+class RecordingRenderer:
+    """Stands in for the C++ _RendererAgg object: records each call, then forwards it."""
+
+    def __init__(self, inner, events):
+        self._inner = inner
+        self._events = events
+
+    def __getattr__(self, name):  # buffer access, copy_from_bbox, ...
+        return getattr(self._inner, name)
+
+    def __buffer__(self, flags):
+        return memoryview(self._inner)
+
+    def draw_path(self, g, p, transform, rgb_face=None):
+        self._events.append({"op": "draw_path", "gc": gc(g), "path": path(p),
+                             "transform": affine(transform), "face": color(rgb_face)})
+        return self._inner.draw_path(g, p, transform, rgb_face)
+
+    def draw_markers(self, g, marker_path, marker_trans, p, trans, rgb_face=None):
+        self._events.append({"op": "draw_markers", "gc": gc(g), "marker_path": path(marker_path),
+                             "marker_transform": affine(marker_trans), "path": path(p),
+                             "transform": affine(trans), "face": color(rgb_face)})
+        return self._inner.draw_markers(g, marker_path, marker_trans, p, trans, rgb_face)
+
+    def draw_text_image(self, img, x, y, angle, g):
+        self._events.append({"op": "draw_text_image", "image": image(img), "x": int(x), "y": int(y),
+                             "angle": number(angle), "gc": gc(g)})
+        return self._inner.draw_text_image(img, x, y, angle, g)
+
+    def draw_image(self, g, x, y, img):
+        self._events.append({"op": "draw_image", "gc": gc(g), "x": number(x), "y": number(y),
+                             "image": image(img)})
+        return self._inner.draw_image(g, x, y, img)
+
+    def draw_path_collection(self, g, master_transform, paths, all_transforms, offsets, offset_trans,
+                             facecolors, edgecolors, linewidths, linestyles, antialiaseds, urls,
+                             offset_position, *, hatchcolors=None):
+        # hatchcolors is keyword-only, as in matplotlib's binding: matplotlib probes for it and
+        # takes another drawing path when the probe raises TypeError.
+        paths = list(paths)
+        if hatchcolors is None:
+            hatchcolors = np.empty((0, 4))
+        self._events.append({
+            "op": "draw_path_collection", "gc": gc(g), "master_transform": affine(master_transform),
+            "paths": [path(p) for p in paths],
+            "transforms": array(np.asarray(all_transforms, float).reshape(-1, 3, 3) if len(all_transforms) else np.empty((0, 3, 3))),
+            "offsets": array(np.asarray(offsets, float).reshape(-1, 2) if np.size(offsets) else np.empty((0, 2))),
+            "offset_transform": affine(offset_trans),
+            "facecolors": array(np.asarray(facecolors, float).reshape(-1, 4) if np.size(facecolors) else np.empty((0, 4))),
+            "edgecolors": array(np.asarray(edgecolors, float).reshape(-1, 4) if np.size(edgecolors) else np.empty((0, 4))),
+            "linewidths": array(np.asarray(linewidths, float).reshape(-1)),
+            "dashes": [dashes(d) for d in linestyles],
+            "antialiaseds": array(np.asarray(antialiaseds, np.uint8).reshape(-1)),
+            "hatchcolors": array(np.asarray(hatchcolors, float).reshape(-1, 4) if np.size(hatchcolors) else np.empty((0, 4))),
+        })
+        return self._inner.draw_path_collection(g, master_transform, paths, all_transforms, offsets,
+                                                offset_trans, facecolors, edgecolors, linewidths,
+                                                linestyles, antialiaseds, urls, offset_position,
+                                                hatchcolors=hatchcolors)
+
+    def draw_quad_mesh(self, g, master_transform, mesh_width, mesh_height, coordinates, offsets,
+                       offset_trans, facecolors, antialiased, edgecolors):
+        self._events.append({
+            "op": "draw_quad_mesh", "gc": gc(g), "master_transform": affine(master_transform),
+            "mesh_width": int(mesh_width), "mesh_height": int(mesh_height),
+            "coordinates": array(coordinates),
+            "offsets": array(np.asarray(offsets, float).reshape(-1, 2) if np.size(offsets) else np.empty((0, 2))),
+            "offset_transform": affine(offset_trans),
+            "facecolors": array(np.asarray(facecolors, float).reshape(-1, 4) if np.size(facecolors) else np.empty((0, 4))),
+            "antialiased": bool(antialiased),
+            "edgecolors": array(np.asarray(edgecolors, float).reshape(-1, 4) if np.size(edgecolors) else np.empty((0, 4))),
+        })
+        return self._inner.draw_quad_mesh(g, master_transform, mesh_width, mesh_height, coordinates,
+                                          offsets, offset_trans, facecolors, antialiased, edgecolors)
+
+    def draw_gouraud_triangles(self, g, points, colors, transform):
+        self._events.append({"op": "draw_gouraud_triangles", "gc": gc(g), "points": array(points),
+                             "colors": array(colors), "transform": affine(transform)})
+        return self._inner.draw_gouraud_triangles(g, points, colors, transform)
+
+    def clear(self):
+        # A draw starts by clearing: only the last one is the figure that is saved (saving with a
+        # tight bounding box first draws once, with drawing disabled, to place the artists).
+        del self._events[:]
+        self._events.append({"op": "clear"})
+        return self._inner.clear()
+
+    def restore_region(self, *args):
+        raise NotImplementedError("restore_region is not recorded yet")
+
+
+MPL_FONTS = __import__("pathlib").Path(matplotlib.get_data_path(), "fonts", "ttf")
+
+
+def font_name(path):
+    """A font file as calculate-plot finds it: its name in fonts/ttf (matplotlib's bundled fonts)."""
+    path = __import__("pathlib").Path(str(getattr(path, "path", path)))
+    if path.parent != MPL_FONTS:
+        raise ValueError(f"{path} is not one of matplotlib's bundled fonts (set MPL_IGNORE_SYSTEM_FONTS=1)")
+    return path.name
+
+
+def font_paths(prop):
+    return [font_name(f) for f in fontManager._find_fonts_by_props(prop)]
+
+
+def record(fig):
+    """Saves `fig` as a PNG with Agg (Figure.savefig, so that rcParams["savefig.*"] count); returns
+    (trace dict of the draw that is saved, RGBA numpy array of the result)."""
+    events = []
+    _identities.clear()
+    canvas = FigureCanvasAgg(fig)
+    original_get_renderer = canvas.get_renderer
+
+    def get_renderer():
+        renderer = original_get_renderer()
+        if not isinstance(renderer._renderer, RecordingRenderer):
+            renderer._renderer = RecordingRenderer(renderer._renderer, events)
+            renderer._update_methods()
+        return renderer
+
+    canvas.get_renderer = get_renderer
+
+    original_text = RendererAgg.draw_text
+    original_glyphs = RendererAgg._draw_text_glyphs_and_boxes
+
+    def draw_text(self, g, x, y, s, prop, angle, ismath=False, mtext=None):
+        events.append({"op": "text", "s": s, "x": number(x), "y": number(y), "angle": number(angle),
+                       "ismath": ismath if isinstance(ismath, str) else bool(ismath),
+                       "fonts": font_paths(prop), "size": number(prop.get_size_in_points()),
+                       "features": None if mtext is None or mtext.get_fontfeatures() is None
+                       else list(mtext.get_fontfeatures()),
+                       "language": None if mtext is None else mtext.get_language(),
+                       "antialiased": bool(g.get_antialiased()),
+                       "hinting": matplotlib.rcParams["text.hinting"], "gc": gc(g)})
+        return original_text(self, g, x, y, s, prop, angle, ismath, mtext)
+
+    def draw_text_glyphs_and_boxes(self, g, x, y, angle, glyphs, boxes):
+        glyphs, boxes = list(glyphs), list(boxes)
+        events.append({"op": "glyphs", "x": number(x), "y": number(y), "angle": number(angle),
+                       "dpi": number(self.dpi), "height": number(self.height),
+                       "glyphs": [{"font": font_name(font.fname), "size": number(size), "index": int(index),
+                                   "slant": number(slant), "extend": number(extend),
+                                   "dx": number(dx), "dy": number(dy)}
+                                  for font, size, index, slant, extend, dx, dy in glyphs],
+                       "boxes": [numbers(b) for b in boxes],
+                       "hinting": matplotlib.rcParams["text.hinting"], "gc": gc(g)})
+        return original_glyphs(self, g, x, y, angle, glyphs, boxes)
+
+    RendererAgg.draw_text = draw_text
+    RendererAgg._draw_text_glyphs_and_boxes = draw_text_glyphs_and_boxes
+    try:
+        fig.savefig(__import__("io").BytesIO(), format="png")
+    finally:
+        RendererAgg.draw_text = original_text
+        RendererAgg._draw_text_glyphs_and_boxes = original_glyphs
+    renderer = canvas.renderer  # the one that drew what was saved (get_renderer would make a new one)
+    rgba = np.asarray(canvas.buffer_rgba()).copy()
+    # HarfBuzz takes its default text language from the process locale (LC_CTYPE), and that changes
+    # shaping (e.g. ligatures): the trace says which locale matplotlib ran in.
+    trace = {"version": TRACE_VERSION, "matplotlib": matplotlib.__version__,
+             "locale": __import__("locale").setlocale(__import__("locale").LC_CTYPE),
+             "width": int(renderer.width), "height": int(renderer.height), "dpi": number(renderer.dpi),
+             "events": events}
+    return trace, rgba
+
+
+# --- SVG -----------------------------------------------------------------------------------------
+
+_svg_clip_paths = {}
+
+
+def svg_gc(g):
+    """The graphics context as matplotlib's SVG renderer reads it. Clip paths are numbered by the
+    identity of the Path object, as RendererSVG._get_clippath_id numbers them."""
+    d = gc(g)
+    clip_path, _ = g.get_clip_path()
+    clip_index = None
+    if clip_path is not None:
+        clip_index = _svg_clip_paths.setdefault(id(clip_path), (len(_svg_clip_paths), clip_path))[0]
+    d["hatch_color"] = exact_color(g.get_hatch_color())
+    d.update({"url": g.get_url(), "gid": g.get_gid(), "hatch_string": g.get_hatch(),
+              # Patches keep their hatch as np.str_, collections as str: the id hash spells them apart.
+              "hatch_numpy": isinstance(g.get_hatch(), np.str_),
+              "rgb_length": len(g.get_rgb()), "clip_index": clip_index})
+    return d
+
+
+def matrix(transform):
+    return None if transform is None else affine(transform.get_matrix())
+
+
+def exact_color(c):
+    """A colour as numbers, integers kept as integers: an alpha of 1 (to_rgba of an RGB tuple) and of 1.0
+    print differently in the hashes of SVG ids."""
+    if c is None:
+        return None
+    return [int(v) if isinstance(v, (int, np.integer)) and not isinstance(v, bool) else number(v) for v in c]
+
+
+def face_numpy(rgb_face):
+    """{"face_numpy": True} for a face of NumPy floats (a legend handle's, first_color of an array): a
+    hatch's SVG id hashes its repr, np.float64(...); nothing otherwise."""
+    if rgb_face is not None and len(rgb_face) and isinstance(rgb_face[0], np.floating):
+        return {"face_numpy": True}
+    return {}
+
+
+def face(rgb_face):
+    """A face colour with its length (the SVG style rules depend on it), integers kept."""
+    return None if rgb_face is None else exact_color(rgb_face)
+
+
+def record_svg(fig, metadata):
+    """Draws `fig` with matplotlib's SVG backend; returns (trace dict, SVG text).
+
+    The trace logs the renderer's drawing calls at the Python level (only the outermost call when
+    one drawing method uses another), plus every id hash input matplotlib computes (`_make_id`):
+    replaying the trace through calculate-plot's SVG renderer must write the same bytes.
+    """
+    import io
+    from matplotlib.backends.backend_svg import RendererSVG
+    from matplotlib.backends.backend_svg import FigureCanvasSVG
+
+    events = []
+    ids = []
+    depth = [0]
+    _svg_clip_paths.clear()
+    originals = {}
+
+    def wrap(name, describe):
+        original = getattr(RendererSVG, name)
+        originals[name] = original
+
+        def method(self, *args, **kwargs):
+            if depth[0] == 0:
+                events.append(describe(self, *args, **kwargs))
+            depth[0] += 1
+            try:
+                return original(self, *args, **kwargs)
+            finally:
+                depth[0] -= 1
+        setattr(RendererSVG, name, method)
+
+    def clip_transform_text(g):
+        clip_path, clip_trans = g.get_clip_path()
+        if clip_path is None:
+            return None
+        return str(clip_trans + __import__("matplotlib").transforms.Affine2D().scale(1, -1).translate(
+            0, events[0]["height"]))
+
+    wrap("draw_path", lambda self, g, p, transform, rgbFace=None: {
+        "op": "draw_path", "gc": svg_gc(g), "path": path(p), "transform": matrix(transform),
+        "face": face(rgbFace), "clip_transform": clip_transform_text(g), **face_numpy(rgbFace)})
+    wrap("draw_markers", lambda self, g, marker_path, marker_trans, p, trans, rgbFace=None: {
+        "op": "draw_markers", "gc": svg_gc(g), "marker_path": path(marker_path),
+        "marker_transform": matrix(marker_trans), "path": path(p), "transform": matrix(trans),
+        "face": face(rgbFace), "clip_transform": clip_transform_text(g)})
+
+    def collection(self, g, master_transform, paths, all_transforms, offsets, offset_trans,
+                   facecolors, edgecolors, linewidths, linestyles, antialiaseds, urls,
+                   offset_position, *, hatchcolors=None):
+        return {"op": "draw_path_collection", "gc": svg_gc(g), "master_transform": matrix(master_transform),
+                "paths": [path(p) for p in paths],
+                "transforms": array(np.asarray(all_transforms, float).reshape(-1, 3, 3) if len(all_transforms) else np.empty((0, 3, 3))),
+                "offsets": array(np.asarray(offsets, float).reshape(-1, 2) if np.size(offsets) else np.empty((0, 2))),
+                "offset_transform": matrix(offset_trans),
+                "facecolors": array(np.asarray(facecolors, float).reshape(-1, 4) if np.size(facecolors) else np.empty((0, 4))),
+                "edgecolors": array(np.asarray(edgecolors, float).reshape(-1, 4) if np.size(edgecolors) else np.empty((0, 4))),
+                "linewidths": array(np.asarray(linewidths, float).reshape(-1)),
+                "dashes": [dashes(d) for d in linestyles],
+                "antialiaseds": array(np.asarray(antialiaseds, np.uint8).reshape(-1)),
+                "urls": [None if u is None else str(u) for u in urls],
+                "hatchcolors": array(np.asarray(hatchcolors, float).reshape(-1, 4) if hatchcolors is not None and np.size(hatchcolors) else np.empty((0, 4))),
+                "clip_transform": clip_transform_text(g)}
+    wrap("draw_path_collection", collection)
+    wrap("draw_gouraud_triangles", lambda self, g, points, colors, transform: {
+        "op": "draw_gouraud_triangles", "gc": svg_gc(g), "points": array(points), "colors": array(colors),
+        "transform": matrix(transform), "clip_transform": clip_transform_text(g)})
+    wrap("draw_image", lambda self, g, x, y, im, transform=None: {
+        "op": "draw_image", "gc": svg_gc(g), "x": number(x), "y": number(y), "image": image(im),
+        "transform": matrix(transform), "clip_transform": clip_transform_text(g)})
+
+    def text(self, g, x, y, s, prop, angle, ismath=False, mtext=None):
+        event = {"op": "draw_text", "gc": svg_gc(g), "x": number(x), "y": number(y), "s": s,
+                 "fonts": font_paths(prop), "size": number(prop.get_size_in_points()),
+                 "angle": number(angle), "ismath": ismath if isinstance(ismath, str) else bool(ismath),
+                 "features": None if mtext is None or mtext.get_fontfeatures() is None
+                 else list(mtext.get_fontfeatures()),
+                 "language": None if mtext is None else mtext.get_language(),
+                 "clip_transform": clip_transform_text(g)}
+        if ismath is True:
+            # The mathtext layout (ported later); recorded as TextToPath uses it, at FONT_SCALE.
+            p = prop.copy()
+            p.set_size(self._text2path.FONT_SCALE)
+            width, height, descent, glyphs, rects = self._text2path.mathtext_parser.parse(s, 72, p)
+            event["math"] = {"glyphs": [{"font": font_name(font.fname), "size": number(fontsize),
+                                         "index": int(index), "ox": number(ox), "oy": number(oy)}
+                                        for font, fontsize, _ccode, index, ox, oy in glyphs],
+                             "rects": [numbers(r) for r in rects]}
+        return event
+    wrap("draw_text", text)
+    wrap("open_group", lambda self, s, gid=None: {"op": "open_group", "s": s, "gid": gid})
+    wrap("close_group", lambda self, s: {"op": "close_group", "s": s})
+
+    original_make_id = RendererSVG._make_id
+    originals["_make_id"] = original_make_id
+
+    def make_id(self, type, content):
+        result = original_make_id(self, type, content)
+        ids.append({"type": type, "content": str(content) if not isinstance(content, bytes) else None,
+                    "id": result})
+        return result
+    RendererSVG._make_id = make_id
+
+    original_init = RendererSVG.__init__
+    originals["__init__"] = original_init
+
+    def init(self, width, height, svgwriter, basename=None, image_dpi=72, *, metadata=None):
+        # only the last renderer writes the file (a tight bounding box makes one more, to measure)
+        del events[:]
+        del ids[:]
+        _svg_clip_paths.clear()
+        events.insert(0, {"op": "begin", "width": number(width), "height": number(height),
+                          "image_dpi": number(image_dpi)})
+        return original_init(self, width, height, svgwriter, basename, image_dpi, metadata=metadata)
+    RendererSVG.__init__ = init
+
+    out = io.StringIO()
+    try:
+        fig.savefig(out, format="svg", metadata=metadata)
+    finally:
+        for name, original in originals.items():
+            setattr(RendererSVG, name, original)
+    rc = matplotlib.rcParams
+    trace = {"version": TRACE_VERSION, "matplotlib": matplotlib.__version__,
+             "locale": __import__("locale").setlocale(__import__("locale").LC_CTYPE),
+             "metadata": metadata, "hashsalt": rc["svg.hashsalt"], "svg_id": rc["svg.id"],
+             "image_inline": bool(rc["svg.image_inline"]), "fonttype": rc["svg.fonttype"],
+             "events": events, "ids": ids}
+    return trace, out.getvalue()

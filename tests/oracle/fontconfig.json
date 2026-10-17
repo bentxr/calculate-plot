@@ -1,0 +1,6866 @@
+[
+{
+"pattern": "sans",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "sans:italic",
+"family": [
+"sans"
+],
+"style": "italic",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans-Oblique.ttf"
+},
+{
+"pattern": "sans:bold",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "bold",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans-Bold.ttf"
+},
+{
+"pattern": "sans:italic:bold",
+"family": [
+"sans"
+],
+"style": "italic",
+"variant": "normal",
+"weight": "bold",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans-BoldOblique.ttf"
+},
+{
+"pattern": "cursive",
+"family": [
+"cursive"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "monospace",
+"family": [
+"monospace"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSansMono.ttf"
+},
+{
+"pattern": "serif",
+"family": [
+"serif"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSerif.ttf"
+},
+{
+"pattern": "DejaVu Sans",
+"family": [
+"DejaVu Sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "DejaVu Sans:italic",
+"family": [
+"DejaVu Sans"
+],
+"style": "italic",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans-Oblique.ttf"
+},
+{
+"pattern": "DejaVu Sans:weight=bold",
+"family": [
+"DejaVu Sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "bold",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans-Bold.ttf"
+},
+{
+"pattern": "DejaVu Sans:italic:bold",
+"family": [
+"DejaVu Sans"
+],
+"style": "italic",
+"variant": "normal",
+"weight": "bold",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans-BoldOblique.ttf"
+},
+{
+"pattern": "DejaVu Sans Display",
+"family": [
+"DejaVu Sans Display"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSansDisplay.ttf"
+},
+{
+"pattern": "DejaVu Serif:italic",
+"family": [
+"DejaVu Serif"
+],
+"style": "italic",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSerif-Italic.ttf"
+},
+{
+"pattern": "DejaVu Sans Mono",
+"family": [
+"DejaVu Sans Mono"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSansMono.ttf"
+},
+{
+"pattern": "cmex10",
+"family": [
+"cmex10"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "cmex10.ttf"
+},
+{
+"pattern": "cmr10",
+"family": [
+"cmr10"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "cmr10.ttf"
+},
+{
+"pattern": "cmmi10",
+"family": [
+"cmmi10"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "cmmi10.ttf"
+},
+{
+"pattern": "STIXGeneral",
+"family": [
+"STIXGeneral"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "STIXGeneral.ttf"
+},
+{
+"pattern": "STIXGeneral:italic",
+"family": [
+"STIXGeneral"
+],
+"style": "italic",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "STIXGeneralItalic.ttf"
+},
+{
+"pattern": "STIXGeneral:weight=bold",
+"family": [
+"STIXGeneral"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "bold",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "STIXGeneralBol.ttf"
+},
+{
+"pattern": "STIXGeneral:italic:bold",
+"family": [
+"STIXGeneral"
+],
+"style": "italic",
+"variant": "normal",
+"weight": "bold",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "STIXGeneralBolIta.ttf"
+},
+{
+"pattern": "STIXNonUnicode",
+"family": [
+"STIXNonUnicode"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "STIXNonUni.ttf"
+},
+{
+"pattern": "STIXNonUnicode:italic",
+"family": [
+"STIXNonUnicode"
+],
+"style": "italic",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "STIXNonUniIta.ttf"
+},
+{
+"pattern": "STIXNonUnicode:weight=bold",
+"family": [
+"STIXNonUnicode"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "bold",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "STIXNonUniBol.ttf"
+},
+{
+"pattern": "STIXSizeOneSym",
+"family": [
+"STIXSizeOneSym"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "STIXSizOneSymReg.ttf"
+},
+{
+"pattern": "STIXSizeTwoSym",
+"family": [
+"STIXSizeTwoSym"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "STIXSizTwoSymReg.ttf"
+},
+{
+"pattern": "STIXSizeThreeSym",
+"family": [
+"STIXSizeThreeSym"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "STIXSizThreeSymReg.ttf"
+},
+{
+"pattern": "STIXSizeFourSym",
+"family": [
+"STIXSizeFourSym"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "STIXSizFourSymReg.ttf"
+},
+{
+"pattern": "STIXSizeFiveSym",
+"family": [
+"STIXSizeFiveSym"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "STIXSizFiveSymReg.ttf"
+},
+{
+"pattern": "",
+"family": [
+""
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": " ",
+"family": [
+""
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": ":bold",
+"family": [
+""
+],
+"style": "normal",
+"variant": "normal",
+"weight": "bold",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans-Bold.ttf"
+},
+{
+"pattern": "serif,sans",
+"family": [
+"serif"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSerif.ttf"
+},
+{
+"pattern": "no such font,serif",
+"family": [
+"no such font"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "serif, sans",
+"family": [
+"serif"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSerif.ttf"
+},
+{
+"pattern": " serif",
+"family": [
+"serif"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSerif.ttf"
+},
+{
+"pattern": "serif ",
+"family": [
+"serif "
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "  DejaVu  Serif  ",
+"family": [
+"DejaVu  Serif  "
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "sans-serif",
+"invalid": true
+},
+{
+"pattern": "sans\\-serif",
+"family": [
+"sans-serif"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "a\\:b",
+"family": [
+"a:b"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "a\\,b",
+"family": [
+"a,b"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "a\\\\b",
+"family": [
+"a\\b"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "a\\b",
+"invalid": true
+},
+{
+"pattern": "a\\",
+"invalid": true
+},
+{
+"pattern": "\\-",
+"family": [
+"-"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "serif,",
+"family": [
+"serif"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSerif.ttf"
+},
+{
+"pattern": ",serif",
+"family": [
+""
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": ",",
+"family": [
+""
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "a,b,c:bold",
+"family": [
+"a"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "bold",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans-Bold.ttf"
+},
+{
+"pattern": "Serif",
+"family": [
+"Serif"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSerif.ttf"
+},
+{
+"pattern": "SANS",
+"family": [
+"SANS"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "sans\tserif",
+"family": [
+"sans    serif"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "sans\n",
+"family": [
+"sans\n"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "\nsans",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "é",
+"family": [
+"é"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "中文字体",
+"family": [
+"中文字体"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "sans;bold",
+"family": [
+"sans;bold"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "sans=bold",
+"family": [
+"sans=bold"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "sans_serif",
+"family": [
+"sans_serif"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "sans.serif",
+"family": [
+"sans.serif"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "sans/serif",
+"family": [
+"sans/serif"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "sans-12",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.8000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "sans-12.5",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.9000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "sans-.5",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.0000000000000p+0",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "sans-12.",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.8000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "sans-12,14",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.8000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "sans-12:bold",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "bold",
+"stretch": "normal",
+"size": "0x1.8000000000000p+3",
+"file": null,
+"font": "DejaVuSans-Bold.ttf"
+},
+{
+"pattern": "-12",
+"family": [
+""
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.8000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "sans-",
+"invalid": true
+},
+{
+"pattern": "sans-12-14",
+"invalid": true
+},
+{
+"pattern": "sans-a",
+"invalid": true
+},
+{
+"pattern": "sans-1e3",
+"invalid": true
+},
+{
+"pattern": "sans-0",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.0000000000000p+0",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "sans-0.5",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.0000000000000p+0",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "sans - 12",
+"family": [
+"sans "
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.8000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "sans-12 ,14",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.8000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "sans-12, 14",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.8000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "sans--12",
+"invalid": true
+},
+{
+"pattern": "sans-12pt",
+"invalid": true
+},
+{
+"pattern": "serif-100:italic",
+"family": [
+"serif"
+],
+"style": "italic",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.9000000000000p+6",
+"file": null,
+"font": "DejaVuSerif-Italic.ttf"
+},
+{
+"pattern": "sans:black",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "black",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans-Bold.ttf"
+},
+{
+"pattern": "sans:book",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "book",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "sans:condensed",
+"broken": "AttributeError: 'FontProperties' object has no attribute 'set_width'"
+},
+{
+"pattern": "sans:demibold",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "demibold",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans-Bold.ttf"
+},
+{
+"pattern": "sans:expanded",
+"broken": "AttributeError: 'FontProperties' object has no attribute 'set_width'"
+},
+{
+"pattern": "sans:extrabold",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "extra bold",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans-Bold.ttf"
+},
+{
+"pattern": "sans:extracondensed",
+"broken": "AttributeError: 'FontProperties' object has no attribute 'set_width'"
+},
+{
+"pattern": "sans:extraexpanded",
+"broken": "AttributeError: 'FontProperties' object has no attribute 'set_width'"
+},
+{
+"pattern": "sans:extralight",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "light",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "sans:heavy",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "heavy",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans-Bold.ttf"
+},
+{
+"pattern": "sans:light",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "light",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "sans:medium",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "medium",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "sans:normal",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "sans:oblique",
+"family": [
+"sans"
+],
+"style": "oblique",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans-Oblique.ttf"
+},
+{
+"pattern": "sans:regular",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "regular",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "sans:roman",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "sans:semibold",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "semibold",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans-Bold.ttf"
+},
+{
+"pattern": "sans:semicondensed",
+"broken": "AttributeError: 'FontProperties' object has no attribute 'set_width'"
+},
+{
+"pattern": "sans:thin",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "light",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "sans:ultracondensed",
+"broken": "AttributeError: 'FontProperties' object has no attribute 'set_width'"
+},
+{
+"pattern": "sans:ultraexpanded",
+"broken": "AttributeError: 'FontProperties' object has no attribute 'set_width'"
+},
+{
+"pattern": "sans:ultralight",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "light",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "sans:bold:italic",
+"family": [
+"sans"
+],
+"style": "italic",
+"variant": "normal",
+"weight": "bold",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans-BoldOblique.ttf"
+},
+{
+"pattern": "sans:italic:oblique",
+"family": [
+"sans"
+],
+"style": "italic",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans-Oblique.ttf"
+},
+{
+"pattern": "sans:oblique:italic",
+"family": [
+"sans"
+],
+"style": "oblique",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans-Oblique.ttf"
+},
+{
+"pattern": "sans:bold:light",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "bold",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans-Bold.ttf"
+},
+{
+"pattern": "sans:light:bold",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "light",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "sans:roman:italic",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "sans:Bold",
+"invalid": true
+},
+{
+"pattern": "sans:boldx",
+"invalid": true
+},
+{
+"pattern": "sans:xbold",
+"invalid": true
+},
+{
+"pattern": "sans:bold ",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "bold",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans-Bold.ttf"
+},
+{
+"pattern": "sans: bold",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "bold",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans-Bold.ttf"
+},
+{
+"pattern": "sans :bold",
+"family": [
+"sans "
+],
+"style": "normal",
+"variant": "normal",
+"weight": "bold",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans-Bold.ttf"
+},
+{
+"pattern": "sans:bold:",
+"invalid": true
+},
+{
+"pattern": "sans::bold",
+"invalid": true
+},
+{
+"pattern": "sans:",
+"invalid": true
+},
+{
+"pattern": "sans:extra bold",
+"invalid": true
+},
+{
+"pattern": "sans:demi",
+"invalid": true
+},
+{
+"pattern": "sans:heavy:black",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "heavy",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans-Bold.ttf"
+},
+{
+"pattern": "serif:condensed:bold",
+"broken": "AttributeError: 'FontProperties' object has no attribute 'set_width'"
+},
+{
+"pattern": "sans:bolditalic",
+"invalid": true
+},
+{
+"pattern": "sans:italicbold",
+"invalid": true
+},
+{
+"pattern": "sans:regular:roman",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "regular",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "sans:weight=bold",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "bold",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans-Bold.ttf"
+},
+{
+"pattern": "sans:weight=700",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": 700,
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans-Bold.ttf"
+},
+{
+"pattern": "sans:weight=7.5",
+"broken": "ValueError: weight='7.5' is invalid"
+},
+{
+"pattern": "sans:weight=heavyish",
+"broken": "ValueError: weight='heavyish' is invalid"
+},
+{
+"pattern": "sans:weight=bold,light",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "bold",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans-Bold.ttf"
+},
+{
+"pattern": "sans:weight=light,bold",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "light",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "sans:weight=bold:weight=light",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "bold",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans-Bold.ttf"
+},
+{
+"pattern": "sans:weight=",
+"broken": "ValueError: weight='' is invalid"
+},
+{
+"pattern": "sans:weight",
+"invalid": true
+},
+{
+"pattern": "sans:weight=1001",
+"broken": "ValueError: weight=1001 is invalid"
+},
+{
+"pattern": "sans:weight= bold",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "bold",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans-Bold.ttf"
+},
+{
+"pattern": "sans:weight=bold ",
+"broken": "ValueError: weight='bold ' is invalid"
+},
+{
+"pattern": "sans:weight =bold",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "bold",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans-Bold.ttf"
+},
+{
+"pattern": "sans:weight=extra bold",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "extra bold",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans-Bold.ttf"
+},
+{
+"pattern": "sans:weight=-1",
+"broken": "ValueError: weight=-1 is invalid"
+},
+{
+"pattern": "sans:weight=0",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": 0,
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "sans:style=italic",
+"family": [
+"sans"
+],
+"style": "italic",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans-Oblique.ttf"
+},
+{
+"pattern": "sans:style=oblique",
+"family": [
+"sans"
+],
+"style": "oblique",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans-Oblique.ttf"
+},
+{
+"pattern": "sans:style=slanted",
+"broken": "ValueError: 'slanted' is not a valid value for style. Supported values are 'normal', 'italic', 'oblique'"
+},
+{
+"pattern": "sans:slant=italic",
+"family": [
+"sans"
+],
+"style": "italic",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans-Oblique.ttf"
+},
+{
+"pattern": "sans:slant=upright",
+"broken": "ValueError: 'upright' is not a valid value for style. Supported values are 'normal', 'italic', 'oblique'"
+},
+{
+"pattern": "sans:style=italic:slant=oblique",
+"family": [
+"sans"
+],
+"style": "oblique",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans-Oblique.ttf"
+},
+{
+"pattern": "sans:slant=oblique:style=italic",
+"family": [
+"sans"
+],
+"style": "italic",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans-Oblique.ttf"
+},
+{
+"pattern": "sans:italic:style=normal",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "sans:style=normal:italic",
+"family": [
+"sans"
+],
+"style": "italic",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans-Oblique.ttf"
+},
+{
+"pattern": "sans:variant=small-caps",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "small-caps",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "sans:variant=small\\-caps",
+"invalid": true
+},
+{
+"pattern": "sans:variant=normal",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "sans:variant=caps",
+"broken": "ValueError: 'caps' is not a valid value for variant. Supported values are 'normal', 'small-caps'"
+},
+{
+"pattern": "sans:stretch=condensed",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "condensed",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "sans:stretch=500",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": 500,
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "sans:stretch=wide",
+"broken": "ValueError: stretch='wide' is invalid"
+},
+{
+"pattern": "sans:stretch=semi\\-condensed",
+"invalid": true
+},
+{
+"pattern": "sans:stretch=ultra-condensed",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "ultra-condensed",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "sans:size=12",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.8000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "sans:size=large",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.8000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "sans:size=huge",
+"broken": "ValueError: Size is invalid. Valid font size are xx-small, x-small, small, medium, large, x-large, xx-large, larger, smaller, None"
+},
+{
+"pattern": "sans:size=0.5",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.0000000000000p+0",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "sans-10:size=20",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "sans:size=20,10",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+4",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "sans:family=serif",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "sans:name=serif",
+"family": [
+"serif"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSerif.ttf"
+},
+{
+"pattern": ":family=serif",
+"family": [
+""
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": ":name=serif",
+"family": [
+"serif"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSerif.ttf"
+},
+{
+"pattern": "sans:file=x.ttf",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": "x.ttf"
+},
+{
+"pattern": "sans:file=",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": ""
+},
+{
+"pattern": "sans:width=condensed",
+"broken": "AttributeError: 'FontProperties' object has no attribute 'set_width'"
+},
+{
+"pattern": "sans:foo=bar",
+"broken": "AttributeError: 'FontProperties' object has no attribute 'set_foo'"
+},
+{
+"pattern": "sans:math=cm",
+"broken": "AttributeError: 'FontProperties' object has no attribute 'set_math'"
+},
+{
+"pattern": "sans:math_fontfamily=cm",
+"invalid": true
+},
+{
+"pattern": "sans:fontconfig=x",
+"broken": "AttributeError: 'FontProperties' object has no attribute 'set_fontconfig'"
+},
+{
+"pattern": "sans:Weight=bold",
+"invalid": true
+},
+{
+"pattern": "sans:weight2=bold",
+"invalid": true
+},
+{
+"pattern": "sans:=bold",
+"invalid": true
+},
+{
+"pattern": "sans:weight==bold",
+"invalid": true
+},
+{
+"pattern": "sans:weight=a=b",
+"invalid": true
+},
+{
+"pattern": "sans:weight=a\\=b",
+"broken": "ValueError: weight='a=b' is invalid"
+},
+{
+"pattern": "sans:weight=bo\\ld",
+"invalid": true
+},
+{
+"pattern": "sans:weight=bold\\:x",
+"broken": "ValueError: weight='bold:x' is invalid"
+},
+{
+"pattern": "sans:weight=bold_x",
+"invalid": true
+},
+{
+"pattern": "sans:weight=bold\\_x",
+"broken": "ValueError: weight='bold_x' is invalid"
+},
+{
+"pattern": "sans:weight=bold\\,light",
+"broken": "ValueError: weight='bold,light' is invalid"
+},
+{
+"pattern": "sans:weight=bold,",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "bold",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans-Bold.ttf"
+},
+{
+"pattern": "sans:weight=,bold",
+"broken": "ValueError: weight='' is invalid"
+},
+{
+"pattern": "sans:weight=bold,,light",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "bold",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans-Bold.ttf"
+},
+{
+"pattern": "sans:size=",
+"broken": "ValueError: Size is invalid. Valid font size are xx-small, x-small, small, medium, large, x-large, xx-large, larger, smaller, None"
+},
+{
+"pattern": "sans:size=1e1",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "sans:size= 12",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.8000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "serif:italic:weight=bold:size=14",
+"family": [
+"serif"
+],
+"style": "italic",
+"variant": "normal",
+"weight": "bold",
+"stretch": "normal",
+"size": "0x1.c000000000000p+3",
+"file": null,
+"font": "DejaVuSerif-BoldItalic.ttf"
+},
+{
+"pattern": "monospace:bold:slant=oblique",
+"family": [
+"monospace"
+],
+"style": "oblique",
+"variant": "normal",
+"weight": "bold",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSansMono-BoldOblique.ttf"
+},
+{
+"pattern": "cursive:weight=light:stretch=condensed",
+"family": [
+"cursive"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "light",
+"stretch": "condensed",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "DejaVu Serif:style=italic:weight=bold",
+"family": [
+"DejaVu Serif"
+],
+"style": "italic",
+"variant": "normal",
+"weight": "bold",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSerif-BoldItalic.ttf"
+},
+{
+"pattern": "STIXGeneral:weight=bold:italic",
+"family": [
+"STIXGeneral"
+],
+"style": "italic",
+"variant": "normal",
+"weight": "bold",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "STIXGeneralBolIta.ttf"
+},
+{
+"pattern": "cmr10:bold",
+"family": [
+"cmr10"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "bold",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "cmr10.ttf"
+},
+{
+"pattern": "cmb10",
+"family": [
+"cmb10"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "cmb10.ttf"
+},
+{
+"pattern": "cmss10:italic",
+"family": [
+"cmss10"
+],
+"style": "italic",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "cmss10.ttf"
+},
+{
+"pattern": "DejaVu Sans Mono:bold:oblique",
+"family": [
+"DejaVu Sans Mono"
+],
+"style": "oblique",
+"variant": "normal",
+"weight": "bold",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSansMono-BoldOblique.ttf"
+},
+{
+"pattern": "serif:weight=book",
+"family": [
+"serif"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "book",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSerif.ttf"
+},
+{
+"pattern": "serif:weight=roman",
+"family": [
+"serif"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "roman",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSerif.ttf"
+},
+{
+"pattern": "serif:weight=demi",
+"family": [
+"serif"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "demi",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSerif-Bold.ttf"
+},
+{
+"pattern": "serif:weight=black",
+"family": [
+"serif"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "black",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSerif-Bold.ttf"
+},
+{
+"pattern": "serif:book",
+"family": [
+"serif"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "book",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSerif.ttf"
+},
+{
+"pattern": "serif:medium:italic",
+"family": [
+"serif"
+],
+"style": "italic",
+"variant": "normal",
+"weight": "medium",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSerif-Italic.ttf"
+},
+{
+"pattern": "sans:ultralight:italic",
+"family": [
+"sans"
+],
+"style": "italic",
+"variant": "normal",
+"weight": "light",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans-Oblique.ttf"
+},
+{
+"pattern": "obliqueslant=,variant=",
+"family": [
+"obliqueslant="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "stretch=",
+"family": [
+"stretch="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "oblique=boldsans",
+"family": [
+"oblique=boldsans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": ",\\stretch=:size=1.5",
+"invalid": true
+},
+{
+"pattern": "12",
+"family": [
+"12"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "size=",
+"family": [
+"size="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "file=STIXGeneralserifmonospaceboldSTIXGeneral",
+"family": [
+"file=STIXGeneralserifmonospaceboldSTIXGeneral"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "\\xsmall-caps ",
+"invalid": true
+},
+{
+"pattern": "style=:monospace:STIXGeneral",
+"invalid": true
+},
+{
+"pattern": "700__variant=",
+"family": [
+"700__variant="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "serifSTIXGeneral12lightslant=",
+"family": [
+"serifSTIXGeneral12lightslant="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "variant=weight=x",
+"family": [
+"variant=weight=x"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "italicsize=stretch=",
+"family": [
+"italicsize=stretch="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "-serifvariant=",
+"invalid": true
+},
+{
+"pattern": "DejaVu Serifserifboldsmall-caps",
+"invalid": true
+},
+{
+"pattern": "variant=",
+"family": [
+"variant="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "bold",
+"family": [
+"bold"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "cmr10oblique",
+"family": [
+"cmr10oblique"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "small-caps",
+"invalid": true
+},
+{
+"pattern": "aslant=monospace",
+"family": [
+"aslant=monospace"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "=stretch=1.5size=condensed",
+"family": [
+"=stretch=1.5size=condensed"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "__italic:",
+"invalid": true
+},
+{
+"pattern": "stretch=-12bold",
+"invalid": true
+},
+{
+"pattern": "sansobliquesize=-italic",
+"invalid": true
+},
+{
+"pattern": "DejaVu Serif",
+"family": [
+"DejaVu Serif"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSerif.ttf"
+},
+{
+"pattern": "xstretch=",
+"family": [
+"xstretch="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": ",serifstyle=obliquex",
+"family": [
+""
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "_a",
+"family": [
+"_a"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "slant=light\\:\\condensed",
+"invalid": true
+},
+{
+"pattern": "DejaVu Serifobliquesize=\\1.5",
+"invalid": true
+},
+{
+"pattern": "condensedlightserifsansserif ",
+"family": [
+"condensedlightserifsansserif "
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "oblique700 italic12",
+"family": [
+"oblique700 italic12"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "_monospacelightDejaVu Serif",
+"family": [
+"_monospacelightDejaVu Serif"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "small-capsSTIXGeneralfile=12",
+"invalid": true
+},
+{
+"pattern": "slant=stretch=variant=:serif",
+"invalid": true
+},
+{
+"pattern": ",serifDejaVu Serifcmr1070012",
+"family": [
+""
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "slant=12weight=",
+"family": [
+"slant=12weight="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "ax1.5",
+"family": [
+"ax1.5"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "file=italiccmr10700slant=",
+"family": [
+"file=italiccmr10700slant="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "STIXGeneralsize=,",
+"family": [
+"STIXGeneralsize="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "STIXGeneralweight=weight=-small-capsstretch=",
+"invalid": true
+},
+{
+"pattern": "serif1.5",
+"family": [
+"serif1.5"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "\\a-monospace",
+"invalid": true
+},
+{
+"pattern": "size==italicstyle=bold",
+"family": [
+"size==italicstyle=bold"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "oblique12small-caps",
+"invalid": true
+},
+{
+"pattern": "bold,size=",
+"family": [
+"bold"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "=variant=",
+"family": [
+"=variant="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "italic==monospacebold",
+"family": [
+"italic==monospacebold"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "file=\\monospace",
+"invalid": true
+},
+{
+"pattern": "weight=slant=serifstyle=a",
+"family": [
+"weight=slant=serifstyle=a"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "weight=: ",
+"invalid": true
+},
+{
+"pattern": "bold lighta",
+"family": [
+"bold lighta"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "condensed700condensed",
+"family": [
+"condensed700condensed"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "style=, light",
+"family": [
+"style="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "DejaVu Serifvariant=700small-capslightsize=",
+"invalid": true
+},
+{
+"pattern": "variant=avariant=file=",
+"family": [
+"variant=avariant=file="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": ":1.5",
+"invalid": true
+},
+{
+"pattern": "xobliquemonospace",
+"family": [
+"xobliquemonospace"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "slant=weight= weight=1.5serif",
+"family": [
+"slant=weight= weight=1.5serif"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "weight=DejaVu Serifsans:12",
+"invalid": true
+},
+{
+"pattern": "12condensed",
+"family": [
+"12condensed"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "-weight=",
+"invalid": true
+},
+{
+"pattern": "serifstretch=a12",
+"family": [
+"serifstretch=a12"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "sans file=",
+"family": [
+"sans file="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "acondensed=slant=variant=",
+"family": [
+"acondensed=slant=variant="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "serifobliqueserif,",
+"family": [
+"serifobliqueserif"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "stretch=small-capsfile=",
+"invalid": true
+},
+{
+"pattern": "stretch=cmr10 slant=monospace",
+"family": [
+"stretch=cmr10 slant=monospace"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "italic",
+"family": [
+"italic"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "x",
+"family": [
+"x"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "serifbold_1.5=size=",
+"family": [
+"serifbold_1.5=size="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "style=italicfile=STIXGeneral",
+"family": [
+"style=italicfile=STIXGeneral"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "size=monospacestretch=,weight=x",
+"family": [
+"size=monospacestretch="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": " obliquesans12",
+"family": [
+"obliquesans12"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "x_",
+"family": [
+"x_"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "size=file=style=size=",
+"family": [
+"size=file=style=size="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "variant=asize=12stretch=",
+"family": [
+"variant=asize=12stretch="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "variant=oblique ",
+"family": [
+"variant=oblique "
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "\\obliquelightsize=700",
+"invalid": true
+},
+{
+"pattern": "a-stretch=,obliquevariant=",
+"invalid": true
+},
+{
+"pattern": "weight=stretch=slant=",
+"family": [
+"weight=stretch=slant="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "=cmr10-",
+"invalid": true
+},
+{
+"pattern": "file=1.5style=stretch=slant=",
+"family": [
+"file=1.5style=stretch=slant="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "condensedsize=",
+"family": [
+"condensedsize="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "file=DejaVu Serifsize=",
+"family": [
+"file=DejaVu Serifsize="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "cmr10light:aSTIXGeneral",
+"invalid": true
+},
+{
+"pattern": "weight=:\\boldcondensedcmr10",
+"invalid": true
+},
+{
+"pattern": "bold1212obliquex1.5",
+"family": [
+"bold1212obliquex1.5"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "-_weight== ",
+"invalid": true
+},
+{
+"pattern": "file=\\=variant=",
+"invalid": true
+},
+{
+"pattern": "oblique12italic",
+"family": [
+"oblique12italic"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "asize=slant=file=weight=",
+"family": [
+"asize=slant=file=weight="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "serifcmr10",
+"family": [
+"serifcmr10"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "condensedvariant=condensed_,700",
+"family": [
+"condensedvariant=condensed_"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "style=-lightsmall-caps700",
+"invalid": true
+},
+{
+"pattern": "\\",
+"invalid": true
+},
+{
+"pattern": "weight=",
+"family": [
+"weight="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "aweight=STIXGeneral12,",
+"family": [
+"aweight=STIXGeneral12"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "variant=light",
+"family": [
+"variant=light"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "stretch=12 1.5",
+"family": [
+"stretch=12 1.5"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "lightDejaVu Serif",
+"family": [
+"lightDejaVu Serif"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "weight=serifavariant=",
+"family": [
+"weight=serifavariant="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "file=STIXGeneralcmr10",
+"family": [
+"file=STIXGeneralcmr10"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "=file=sansstretch=700",
+"family": [
+"=file=sansstretch=700"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "serifsize=",
+"family": [
+"serifsize="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "oblique",
+"family": [
+"oblique"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "boldweight=700",
+"family": [
+"boldweight=700"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "file=STIXGeneralDejaVu Serif",
+"family": [
+"file=STIXGeneralDejaVu Serif"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "stretch=condensedslant=",
+"family": [
+"stretch=condensedslant="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "cmr10,",
+"family": [
+"cmr10"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "cmr10.ttf"
+},
+{
+"pattern": ":-",
+"invalid": true
+},
+{
+"pattern": "slant=boldfile=serif,",
+"family": [
+"slant=boldfile=serif"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "==style=",
+"family": [
+"==style="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "lightsans",
+"family": [
+"lightsans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "small-capssmall-caps1.5",
+"invalid": true
+},
+{
+"pattern": "serifslant=",
+"family": [
+"serifslant="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "condenseda",
+"family": [
+"condenseda"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "700slant=style=",
+"family": [
+"700slant=style="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "sansweight=style= monospace",
+"family": [
+"sansweight=style= monospace"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "italic1.5x",
+"family": [
+"italic1.5x"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "-small-capssize=obliqueDejaVu Serif",
+"invalid": true
+},
+{
+"pattern": "boldstretch=style=size=",
+"family": [
+"boldstretch=style=size="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "style=",
+"family": [
+"style="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "_1.5boldcmr10_",
+"family": [
+"_1.5boldcmr10_"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": ":12=variant=",
+"invalid": true
+},
+{
+"pattern": "size=12 :_\\",
+"invalid": true
+},
+{
+"pattern": "x12",
+"family": [
+"x12"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "7001.5-lightcmr10style=",
+"invalid": true
+},
+{
+"pattern": "\\STIXGeneralsmall-capsfile=",
+"invalid": true
+},
+{
+"pattern": ",STIXGeneral:style=:DejaVu Serif",
+"invalid": true
+},
+{
+"pattern": " :STIXGeneral=bold,",
+"invalid": true
+},
+{
+"pattern": ",obliqueitaliclight",
+"family": [
+""
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "STIXGeneralfile=:",
+"invalid": true
+},
+{
+"pattern": "obliqueserifsmall-capsDejaVu Serif\\",
+"invalid": true
+},
+{
+"pattern": " 12small-caps-monospace",
+"invalid": true
+},
+{
+"pattern": "serifsansx,file=weight=",
+"family": [
+"serifsansx"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "1.5STIXGeneral\\STIXGeneral-",
+"invalid": true
+},
+{
+"pattern": "cmr10:file=",
+"family": [
+"cmr10"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": ""
+},
+{
+"pattern": "lightweight=slant=",
+"family": [
+"lightweight=slant="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": ":",
+"invalid": true
+},
+{
+"pattern": "small-caps700stretch=",
+"invalid": true
+},
+{
+"pattern": "obliqueboldstyle=",
+"family": [
+"obliqueboldstyle="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "__size=",
+"family": [
+"__size="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "file=",
+"family": [
+"file="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "\\a",
+"invalid": true
+},
+{
+"pattern": "file=variant=cmr10STIXGeneral:\\",
+"invalid": true
+},
+{
+"pattern": "\\weight=",
+"invalid": true
+},
+{
+"pattern": "weight=italicmonospacesans12",
+"family": [
+"weight=italicmonospacesans12"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "afile=style=",
+"family": [
+"afile=style="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "- cmr10700 STIXGeneral",
+"invalid": true
+},
+{
+"pattern": "size=variant=sansstyle==",
+"family": [
+"size=variant=sansstyle=="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "slant=cmr10weight=",
+"family": [
+"slant=cmr10weight="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "size=serif",
+"family": [
+"size=serif"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "small-capsitalicoblique",
+"invalid": true
+},
+{
+"pattern": "monospace700",
+"family": [
+"monospace700"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "1.5sans",
+"family": [
+"1.5sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "boldcondensedmonospace,serif",
+"family": [
+"boldcondensedmonospace"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "STIXGeneralstretch=1.5",
+"family": [
+"STIXGeneralstretch=1.5"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "small-capsx",
+"invalid": true
+},
+{
+"pattern": "slant=_- -",
+"invalid": true
+},
+{
+"pattern": "asize=small-caps-,",
+"invalid": true
+},
+{
+"pattern": "\\xmonospace",
+"invalid": true
+},
+{
+"pattern": "_",
+"family": [
+"_"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "italicstyle=sansweight=:",
+"invalid": true
+},
+{
+"pattern": "700700cmr10size=x",
+"family": [
+"700700cmr10size=x"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "a",
+"family": [
+"a"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "monospace_small-capsweight=_",
+"invalid": true
+},
+{
+"pattern": "small-capsitalic_file=",
+"invalid": true
+},
+{
+"pattern": "12sans",
+"family": [
+"12sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "size=:bold_",
+"invalid": true
+},
+{
+"pattern": "cmr101.5,",
+"family": [
+"cmr101.5"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "serif:",
+"invalid": true
+},
+{
+"pattern": "small-capsbold700small-caps",
+"invalid": true
+},
+{
+"pattern": "-slant=",
+"invalid": true
+},
+{
+"pattern": "astyle=-\\-",
+"invalid": true
+},
+{
+"pattern": "light700",
+"family": [
+"light700"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "condensed\\size==small-caps",
+"invalid": true
+},
+{
+"pattern": "cmr10sansxxDejaVu Serif,",
+"family": [
+"cmr10sansxxDejaVu Serif"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "monospaceserif",
+"family": [
+"monospaceserif"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "\\serif\\variant=",
+"invalid": true
+},
+{
+"pattern": "-",
+"invalid": true
+},
+{
+"pattern": "monospace12file=",
+"family": [
+"monospace12file="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "obliquevariant=12file=1.5style=",
+"family": [
+"obliquevariant=12file=1.5style="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "a=",
+"family": [
+"a="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": ":x",
+"invalid": true
+},
+{
+"pattern": "monospaceSTIXGeneral,small-capsvariant=",
+"invalid": true
+},
+{
+"pattern": "xvariant=a",
+"family": [
+"xvariant=a"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "small-capsmonospacebold,oblique",
+"invalid": true
+},
+{
+"pattern": "\\xsize=condensed",
+"invalid": true
+},
+{
+"pattern": "1.5",
+"family": [
+"1.5"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "700 ",
+"family": [
+"700 "
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "serifobliqueweight=bold",
+"family": [
+"serifobliqueweight=bold"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "DejaVu Serifsans",
+"family": [
+"DejaVu Serifsans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "\\_DejaVu Serifslant=",
+"invalid": true
+},
+{
+"pattern": "sans-obliquea- ",
+"invalid": true
+},
+{
+"pattern": "stretch=DejaVu Serif=",
+"family": [
+"stretch=DejaVu Serif="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "style=file=bold",
+"family": [
+"style=file=bold"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "700style=xboldcondensed",
+"family": [
+"700style=xboldcondensed"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": " file=weight=,",
+"family": [
+"file=weight="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": ",700xweight=x",
+"family": [
+""
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "small-caps_,",
+"invalid": true
+},
+{
+"pattern": "italicstyle=70012small-caps-",
+"invalid": true
+},
+{
+"pattern": "-italiclightweight=condensed=",
+"invalid": true
+},
+{
+"pattern": "a oblique",
+"family": [
+"a oblique"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "12bold",
+"family": [
+"12bold"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "style=sans",
+"family": [
+"style=sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "=-stretch=_",
+"invalid": true
+},
+{
+"pattern": "xweight= small-capsfile=700",
+"invalid": true
+},
+{
+"pattern": "stretch=style=stretch==",
+"family": [
+"stretch=style=stretch=="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "weight=slant=sans=-oblique",
+"invalid": true
+},
+{
+"pattern": "serifslant= 700",
+"family": [
+"serifslant= 700"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "stretch=:,style=STIXGeneralsmall-caps",
+"invalid": true
+},
+{
+"pattern": " weight=",
+"family": [
+"weight="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "oblique700sansSTIXGeneralboldsmall-caps",
+"invalid": true
+},
+{
+"pattern": "alight1.5variant=_",
+"family": [
+"alight1.5variant=_"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "\\slant=bold",
+"invalid": true
+},
+{
+"pattern": "style=STIXGeneral:\\",
+"invalid": true
+},
+{
+"pattern": "DejaVu Serif _a",
+"family": [
+"DejaVu Serif _a"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "variant=bolditalicbold",
+"family": [
+"variant=bolditalicbold"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "=weight=700lightxfile=",
+"family": [
+"=weight=700lightxfile="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "size=DejaVu Serif1.5STIXGeneral",
+"family": [
+"size=DejaVu Serif1.5STIXGeneral"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "light",
+"family": [
+"light"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "boldDejaVu Serif_bold",
+"family": [
+"boldDejaVu Serif_bold"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "obliqueserifobliquesanssmall-caps",
+"invalid": true
+},
+{
+"pattern": "12sanssize=",
+"family": [
+"12sanssize="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "style=DejaVu Serifserifslant=700=",
+"family": [
+"style=DejaVu Serifserifslant=700="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "serif=small-capslight",
+"invalid": true
+},
+{
+"pattern": ",serif\\stretch=",
+"invalid": true
+},
+{
+"pattern": "700 stretch=size=",
+"family": [
+"700 stretch=size="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": " sansstretch=1.5monospace",
+"family": [
+"sansstretch=1.5monospace"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "weight=bold",
+"family": [
+"weight=bold"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "oblique:sansstyle=monospace",
+"broken": "AttributeError: 'FontProperties' object has no attribute 'set_sansstyle'"
+},
+{
+"pattern": "cmr10 lightvariant=serif",
+"family": [
+"cmr10 lightvariant=serif"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "700",
+"family": [
+"700"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "lightbold",
+"family": [
+"lightbold"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "=cmr10small-caps",
+"invalid": true
+},
+{
+"pattern": ":style=variant=",
+"invalid": true
+},
+{
+"pattern": "DejaVu Serifsmall-capscondensedxsansslant=",
+"invalid": true
+},
+{
+"pattern": "slant=weight=lightmonospace",
+"family": [
+"slant=weight=lightmonospace"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "boldsize=weight=",
+"family": [
+"boldsize=weight="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "STIXGeneralfile=obliqueslant=",
+"family": [
+"STIXGeneralfile=obliqueslant="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "DejaVu Serifcmr10\\sans",
+"invalid": true
+},
+{
+"pattern": "style=12size=cmr10 ",
+"family": [
+"style=12size=cmr10 "
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": ":\\size=_",
+"invalid": true
+},
+{
+"pattern": "size=-small-capsserif",
+"invalid": true
+},
+{
+"pattern": ":xboldcmr10stretch=",
+"invalid": true
+},
+{
+"pattern": "monospaceSTIXGeneralweight==",
+"family": [
+"monospaceSTIXGeneralweight=="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "\\boldxlight=stretch=",
+"invalid": true
+},
+{
+"pattern": "file=monospace-",
+"invalid": true
+},
+{
+"pattern": "12light",
+"family": [
+"12light"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "weight=,12slant=bold",
+"family": [
+"weight="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "italicstretch=monospace700",
+"family": [
+"italicstretch=monospace700"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "a_",
+"family": [
+"a_"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "style=alight",
+"family": [
+"style=alight"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "lightitalic",
+"family": [
+"lightitalic"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "1.5-style=slant=size=small-caps",
+"invalid": true
+},
+{
+"pattern": "DejaVu Serifa",
+"family": [
+"DejaVu Serifa"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "12\\oblique",
+"invalid": true
+},
+{
+"pattern": "  _=",
+"family": [
+"_="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "-style=",
+"invalid": true
+},
+{
+"pattern": "condensed_xslant=",
+"family": [
+"condensed_xslant="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "serif-size=slant=condensed",
+"invalid": true
+},
+{
+"pattern": "condensed1.512:small-caps",
+"invalid": true
+},
+{
+"pattern": "x,700",
+"family": [
+"x"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "--variant==file= ",
+"invalid": true
+},
+{
+"pattern": ",sansstyle=serif",
+"family": [
+""
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": " monospacestretch=1.5weight=",
+"family": [
+"monospacestretch=1.5weight="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "\\:lightweight=",
+"family": [
+":lightweight="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "cmr10condensedsansweight=",
+"family": [
+"cmr10condensedsansweight="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "xavariant=weight=,",
+"family": [
+"xavariant=weight="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "cmr10weight=oblique",
+"family": [
+"cmr10weight=oblique"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "-\\-sanssize=",
+"invalid": true
+},
+{
+"pattern": "12a stretch=,monospace",
+"family": [
+"12a stretch="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "_lightxboldvariant=:",
+"invalid": true
+},
+{
+"pattern": ":italica monospace",
+"invalid": true
+},
+{
+"pattern": "=",
+"family": [
+"="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "=-",
+"invalid": true
+},
+{
+"pattern": "x-,slant=",
+"invalid": true
+},
+{
+"pattern": "1.5serifcmr10",
+"family": [
+"1.5serifcmr10"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "-slant=stretch=700light",
+"invalid": true
+},
+{
+"pattern": "bold\\",
+"invalid": true
+},
+{
+"pattern": "obliqueSTIXGeneral",
+"family": [
+"obliqueSTIXGeneral"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "monospacesansstyle=",
+"family": [
+"monospacesansstyle="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "acmr10variant= STIXGenerallight",
+"family": [
+"acmr10variant= STIXGenerallight"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "slant==x",
+"family": [
+"slant==x"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": ":xcondensed",
+"invalid": true
+},
+{
+"pattern": "weight=\\,serifoblique",
+"family": [
+"weight=,serifoblique"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "cmr10small-caps=700-",
+"invalid": true
+},
+{
+"pattern": "1.5light",
+"family": [
+"1.5light"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "file=condensedvariant=lightmonospace-",
+"invalid": true
+},
+{
+"pattern": "weight=_STIXGeneral, ",
+"family": [
+"weight=_STIXGeneral"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "lightsize=oblique",
+"family": [
+"lightsize=oblique"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "variant=xcondensed1.5",
+"family": [
+"variant=xcondensed1.5"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "condensedsize=italicstretch=",
+"family": [
+"condensedsize=italicstretch="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "_,file=monospace-cmr10",
+"invalid": true
+},
+{
+"pattern": "  cmr10sansDejaVu Serifsans",
+"family": [
+"cmr10sansDejaVu Serifsans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "slant=cmr10slant= ",
+"family": [
+"slant=cmr10slant= "
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "weight=condensed",
+"family": [
+"weight=condensed"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "STIXGeneralsize=",
+"family": [
+"STIXGeneralsize="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "light12",
+"family": [
+"light12"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "DejaVu Serif\\",
+"invalid": true
+},
+{
+"pattern": "_1.5file=_",
+"family": [
+"_1.5file=_"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "condensedsansstretch=,weight=",
+"family": [
+"condensedsansstretch="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": ",DejaVu Serifitalicsize=cmr10DejaVu Serif",
+"family": [
+""
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "slant=style=",
+"family": [
+"slant=style="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "-italicobliquebold",
+"invalid": true
+},
+{
+"pattern": "lightweight=12oblique",
+"family": [
+"lightweight=12oblique"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "obliquesmall-capslightsize=light",
+"invalid": true
+},
+{
+"pattern": ":monospace=size=12oblique",
+"invalid": true
+},
+{
+"pattern": "12lightmonospace700",
+"family": [
+"12lightmonospace700"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "small-capslight12",
+"invalid": true
+},
+{
+"pattern": "boldvariant=style=a",
+"family": [
+"boldvariant=style=a"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "700cmr10aSTIXGeneral:",
+"invalid": true
+},
+{
+"pattern": "serifweight=",
+"family": [
+"serifweight="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "size=STIXGeneralsans",
+"family": [
+"size=STIXGeneralsans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "italicmonospace",
+"family": [
+"italicmonospace"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "style=size=stretch=",
+"family": [
+"style=size=stretch="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "\\,size=",
+"family": [
+",size="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "boldfile=",
+"family": [
+"boldfile="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "=stretch=stretch=bold:",
+"invalid": true
+},
+{
+"pattern": "file=serif",
+"family": [
+"file=serif"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "slant=12",
+"family": [
+"slant=12"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "\\variant=x ",
+"invalid": true
+},
+{
+"pattern": "bold,12",
+"family": [
+"bold"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "--stretch=italic",
+"invalid": true
+},
+{
+"pattern": "x,alight_",
+"family": [
+"x"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "condensedmonospace12121.5",
+"family": [
+"condensedmonospace12121.5"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "DejaVu SerifDejaVu Serif:",
+"invalid": true
+},
+{
+"pattern": "stretch=monospacecmr10",
+"family": [
+"stretch=monospacecmr10"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "_\\light_oblique",
+"invalid": true
+},
+{
+"pattern": ":700style=small-capscmr10small-caps",
+"invalid": true
+},
+{
+"pattern": "small-caps=file=DejaVu Serifcondensed",
+"invalid": true
+},
+{
+"pattern": "boldlight-",
+"invalid": true
+},
+{
+"pattern": "italicfile=stretch=italic",
+"family": [
+"italicfile=stretch=italic"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "lightfile=STIXGeneralxmonospaceslant=",
+"family": [
+"lightfile=STIXGeneralxmonospaceslant="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "afile=",
+"family": [
+"afile="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "STIXGeneral,small-caps1.5,a",
+"invalid": true
+},
+{
+"pattern": ":,small-capscmr10",
+"invalid": true
+},
+{
+"pattern": "sans1.5",
+"family": [
+"sans1.5"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "STIXGeneralweight=",
+"family": [
+"STIXGeneralweight="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "12,_a",
+"family": [
+"12"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "_-700:",
+"invalid": true
+},
+{
+"pattern": "boldsize=cmr10weight=lightsmall-caps",
+"invalid": true
+},
+{
+"pattern": "lightDejaVu Serifxsize=",
+"family": [
+"lightDejaVu Serifxsize="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": ",-file=style=condenseda",
+"invalid": true
+},
+{
+"pattern": "STIXGeneralcondensed",
+"family": [
+"STIXGeneralcondensed"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "serifstyle==",
+"family": [
+"serifstyle=="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "\\bold",
+"invalid": true
+},
+{
+"pattern": "monospace condensed1.5style=",
+"family": [
+"monospace condensed1.5style="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "acmr10weight=variant=",
+"family": [
+"acmr10weight=variant="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": ":file=700cmr10",
+"family": [
+""
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": "700cmr10"
+},
+{
+"pattern": "obliquestyle=",
+"family": [
+"obliquestyle="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": ":bolditalicsize=",
+"broken": "AttributeError: 'FontProperties' object has no attribute 'set_bolditalicsize'"
+},
+{
+"pattern": "serifstretch=small-caps",
+"invalid": true
+},
+{
+"pattern": "lightboldsans",
+"family": [
+"lightboldsans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "condensed\\",
+"invalid": true
+},
+{
+"pattern": "STIXGeneral=variant=1.5DejaVu Serif",
+"family": [
+"STIXGeneral=variant=1.5DejaVu Serif"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "DejaVu Serifbold",
+"family": [
+"DejaVu Serifbold"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "-asans=",
+"invalid": true
+},
+{
+"pattern": "weight=small-capssmall-caps",
+"invalid": true
+},
+{
+"pattern": "serifsansserif",
+"family": [
+"serifsansserif"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "DejaVu Serifcondensed",
+"family": [
+"DejaVu Serifcondensed"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": ":file=boldmonospace",
+"family": [
+""
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": "boldmonospace"
+},
+{
+"pattern": "monospacea_light_",
+"family": [
+"monospacea_light_"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": " 1.5_lightstretch=stretch=",
+"family": [
+"1.5_lightstretch=stretch="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "slant=boldaa",
+"family": [
+"slant=boldaa"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "700oblique",
+"family": [
+"700oblique"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "variant=oblique",
+"family": [
+"variant=oblique"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "sansaSTIXGeneral12-a",
+"invalid": true
+},
+{
+"pattern": "sanscondensed12size=",
+"family": [
+"sanscondensed12size="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "sans,oblique",
+"family": [
+"sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "STIXGeneral1.5sansobliqueSTIXGeneral",
+"family": [
+"STIXGeneral1.5sansobliqueSTIXGeneral"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "size=serifsize=12:",
+"invalid": true
+},
+{
+"pattern": "stretch=DejaVu Serif1.5",
+"family": [
+"stretch=DejaVu Serif1.5"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "condensedbold12",
+"family": [
+"condensedbold12"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "monospacelight_file=",
+"family": [
+"monospacelight_file="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "12\\",
+"invalid": true
+},
+{
+"pattern": "stretch=acmr10STIXGeneral12",
+"family": [
+"stretch=acmr10STIXGeneral12"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "oblique:DejaVu Serifobliquelight",
+"invalid": true
+},
+{
+"pattern": "cmr10small-capslight-variant=",
+"invalid": true
+},
+{
+"pattern": "1.5,lightcmr10weight=",
+"family": [
+"1.5"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "1.5:cmr10",
+"invalid": true
+},
+{
+"pattern": "style=\\italicmonospacex",
+"invalid": true
+},
+{
+"pattern": "file= afile=",
+"family": [
+"file= afile="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "STIXGeneralserifstyle=size=700DejaVu Serif",
+"family": [
+"STIXGeneralserifstyle=size=700DejaVu Serif"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "obliqueitalicxlight",
+"family": [
+"obliqueitalicxlight"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "file= bold",
+"family": [
+"file= bold"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "variant=-size=italic",
+"invalid": true
+},
+{
+"pattern": "condensed700size=cmr10size=file=",
+"family": [
+"condensed700size=cmr10size=file="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "condensed,",
+"family": [
+"condensed"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "boldxcmr10slant=1.5",
+"family": [
+"boldxcmr10slant=1.5"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "sans lightoblique\\",
+"invalid": true
+},
+{
+"pattern": " cmr1012",
+"family": [
+"cmr1012"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "weight=size=oblique1.5700stretch=",
+"family": [
+"weight=size=oblique1.5700stretch="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "12-xSTIXGeneralfile=",
+"invalid": true
+},
+{
+"pattern": "cmr10condensed=style=",
+"family": [
+"cmr10condensed=style="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "monospaceastyle=700style=-",
+"invalid": true
+},
+{
+"pattern": "STIXGeneralslant=",
+"family": [
+"STIXGeneralslant="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "12,monospace",
+"family": [
+"12"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "slant=stretch=serif",
+"family": [
+"slant=stretch=serif"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "file=condensedcondensed",
+"family": [
+"file=condensedcondensed"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "stretch=xcondensed",
+"family": [
+"stretch=xcondensed"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "=cmr10condensed:xmonospace",
+"invalid": true
+},
+{
+"pattern": "size=_700",
+"family": [
+"size=_700"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": ",condensed",
+"family": [
+""
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "style=-boldsize=:",
+"invalid": true
+},
+{
+"pattern": "lightitalic1.5",
+"family": [
+"lightitalic1.5"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "_\\bold",
+"invalid": true
+},
+{
+"pattern": "size=700condensedSTIXGeneral -",
+"invalid": true
+},
+{
+"pattern": "serifoblique-",
+"invalid": true
+},
+{
+"pattern": ":stretch=",
+"broken": "ValueError: stretch='' is invalid"
+},
+{
+"pattern": "file=variant=",
+"family": [
+"file=variant="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "700cmr1012slant=slant=",
+"family": [
+"700cmr1012slant=slant="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "slant=size=weight=:DejaVu Serif",
+"invalid": true
+},
+{
+"pattern": "obliquebold=",
+"family": [
+"obliquebold="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "condensed12-stretch=",
+"invalid": true
+},
+{
+"pattern": "xsize=",
+"family": [
+"xsize="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "700weight=",
+"family": [
+"700weight="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "\\monospace_\\",
+"invalid": true
+},
+{
+"pattern": "serif1.5size=STIXGeneral ",
+"family": [
+"serif1.5size=STIXGeneral "
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "DejaVu Serif,700file=",
+"family": [
+"DejaVu Serif"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSerif.ttf"
+},
+{
+"pattern": "slant=_",
+"family": [
+"slant=_"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "condensed",
+"family": [
+"condensed"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "\\monospacecmr10",
+"invalid": true
+},
+{
+"pattern": "oblique DejaVu Serifoblique",
+"family": [
+"oblique DejaVu Serifoblique"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": ":bolditalic1.51.5",
+"invalid": true
+},
+{
+"pattern": "\\variant=weight=",
+"invalid": true
+},
+{
+"pattern": "\\1.5STIXGenerala12",
+"invalid": true
+},
+{
+"pattern": ",monospace",
+"family": [
+""
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": ",serifstyle=",
+"family": [
+""
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "x- ",
+"invalid": true
+},
+{
+"pattern": "1.5italic",
+"family": [
+"1.5italic"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "condensed=700style=",
+"family": [
+"condensed=700style="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "bold-stretch=small-caps",
+"invalid": true
+},
+{
+"pattern": "italic\\",
+"invalid": true
+},
+{
+"pattern": "STIXGeneral1.5STIXGeneral",
+"family": [
+"STIXGeneral1.5STIXGeneral"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "condensedDejaVu Serif",
+"family": [
+"condensedDejaVu Serif"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "weight=STIXGeneral",
+"family": [
+"weight=STIXGeneral"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "_style=serif",
+"family": [
+"_style=serif"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "slant=aitalicitalicsize=slant=",
+"family": [
+"slant=aitalicitalicsize=slant="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "=small-capsvariant=size=file=:",
+"invalid": true
+},
+{
+"pattern": "boldcondensedslant=:",
+"invalid": true
+},
+{
+"pattern": "serifstyle=",
+"family": [
+"serifstyle="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "size=boldmonospacecondensedsmall-capsx",
+"invalid": true
+},
+{
+"pattern": "cmr10:",
+"invalid": true
+},
+{
+"pattern": "\\monospace",
+"invalid": true
+},
+{
+"pattern": "1.5oblique",
+"family": [
+"1.5oblique"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "slant=size=xstyle=",
+"family": [
+"slant=size=xstyle="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "small-caps_",
+"invalid": true
+},
+{
+"pattern": "sansweight=bold",
+"family": [
+"sansweight=bold"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "weight=serifcmr10",
+"family": [
+"weight=serifcmr10"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "STIXGeneralxsize=x",
+"family": [
+"STIXGeneralxsize=x"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "small-caps,variant=",
+"invalid": true
+},
+{
+"pattern": "condensed1.5",
+"family": [
+"condensed1.5"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "sans:=12monospace",
+"invalid": true
+},
+{
+"pattern": "monospacestyle=,700",
+"family": [
+"monospacestyle="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "700monospacesmall-caps700italic",
+"invalid": true
+},
+{
+"pattern": "=\\weight= 1.5",
+"invalid": true
+},
+{
+"pattern": "slant= ",
+"family": [
+"slant= "
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "cmr10:file=a",
+"family": [
+"cmr10"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": "a"
+},
+{
+"pattern": "monospacevariant=a",
+"family": [
+"monospacevariant=a"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "size=small-caps",
+"invalid": true
+},
+{
+"pattern": "file=1.5obliquesmall-capssize=",
+"invalid": true
+},
+{
+"pattern": "700oblique\\a12-",
+"invalid": true
+},
+{
+"pattern": "sansmonospaceserifvariant=",
+"family": [
+"sansmonospaceserifvariant="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": ":12=",
+"invalid": true
+},
+{
+"pattern": "file=file=file=-condensed",
+"invalid": true
+},
+{
+"pattern": "file=italic:",
+"invalid": true
+},
+{
+"pattern": "monospace1.5:\\",
+"invalid": true
+},
+{
+"pattern": "1.5file=",
+"family": [
+"1.5file="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "astyle=\\serifDejaVu Serifa",
+"invalid": true
+},
+{
+"pattern": " light=condensedmonospace\\",
+"invalid": true
+},
+{
+"pattern": "small-capscmr10monospace",
+"invalid": true
+},
+{
+"pattern": ":slant=condensed",
+"broken": "ValueError: 'condensed' is not a valid value for style. Supported values are 'normal', 'italic', 'oblique'"
+},
+{
+"pattern": "xvariant=small-capsSTIXGeneral",
+"invalid": true
+},
+{
+"pattern": "STIXGeneralcmr10 sans-style=",
+"invalid": true
+},
+{
+"pattern": "style=small-caps-",
+"invalid": true
+},
+{
+"pattern": "boldboldSTIXGeneralitalic",
+"family": [
+"boldboldSTIXGeneralitalic"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "file=,cmr10slant=",
+"family": [
+"file="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "-size=variant=condensedsize=\\",
+"invalid": true
+},
+{
+"pattern": "700weight=cmr101.5cmr10700",
+"family": [
+"700weight=cmr101.5cmr10700"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "DejaVu Serifsansstyle=:a",
+"invalid": true
+},
+{
+"pattern": "variant=serif",
+"family": [
+"variant=serif"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "variant=light:",
+"invalid": true
+},
+{
+"pattern": " xsize==italic",
+"family": [
+"xsize==italic"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "a:",
+"invalid": true
+},
+{
+"pattern": "lightfile=light",
+"family": [
+"lightfile=light"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "sansxweight=serifDejaVu Serifa",
+"family": [
+"sansxweight=serifDejaVu Serifa"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "_small-capsweight=",
+"invalid": true
+},
+{
+"pattern": "1.5obliquelight_",
+"family": [
+"1.5obliquelight_"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "700cmr10file=:condensedvariant=",
+"broken": "AttributeError: 'FontProperties' object has no attribute 'set_condensedvariant'"
+},
+{
+"pattern": "size=size=sans",
+"family": [
+"size=size=sans"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "condensedasans12serifDejaVu Serif",
+"family": [
+"condensedasans12serifDejaVu Serif"
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "STIXGeneralvariant=-_astretch=",
+"invalid": true
+},
+{
+"pattern": "=axSTIXGeneralfile=",
+"family": [
+"=axSTIXGeneralfile="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+},
+{
+"pattern": "size=_xvariant=slant=",
+"family": [
+"size=_xvariant=slant="
+],
+"style": "normal",
+"variant": "normal",
+"weight": "normal",
+"stretch": "normal",
+"size": "0x1.4000000000000p+3",
+"file": null,
+"font": "DejaVuSans.ttf"
+}
+]

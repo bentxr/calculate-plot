@@ -1,0 +1,1 @@
+{"version": 1, "calls": [{"call": "subplots", "as": ["fig", "ax"]}, {"on": "ax", "call": "barh", "args": [[-2], [-3.17]]}, {"on": "ax", "call": "loglog"}, {"on": "ax", "call": "set_xticks", "args": [[]]}]}

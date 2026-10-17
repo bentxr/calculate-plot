@@ -1,0 +1,9 @@
+{"version": 1,
+ "rc": {"xtick.labeltop": true, "xtick.labelbottom": false, "xtick.top": true, "xtick.bottom": false},
+ "calls": [
+  {"call": "subplots", "args": [1, 2], "kwargs": {"figsize": {"$tuple": [6.0, 3.0]}}, "as": ["fig", "axs"]},
+  {"on": "axs[0]", "call": "plot", "args": [[10000, 10001], [0, 1]]},
+  {"on": "axs[0]", "call": "set_title", "args": ["Above the top labels"]},
+  {"on": "axs[1]", "call": "set_title", "args": ["Left"], "kwargs": {"loc": "left"}},
+  {"on": "axs[1]", "call": "set_title", "args": ["Right"], "kwargs": {"loc": "right"}}
+]}

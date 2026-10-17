@@ -1,0 +1,4 @@
+{"version": 1, "calls": [
+  {"call": "subplots", "kwargs": {"figsize": {"$tuple": [3.0, 3.0]}}, "as": ["fig", "ax"]},
+  {"on": "ax", "call": "plot", "args": [[3], [7], "o"]}
+]}

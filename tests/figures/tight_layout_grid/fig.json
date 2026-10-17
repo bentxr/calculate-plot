@@ -1,0 +1,9 @@
+{"version": 1, "calls": [
+  {"call": "subplots", "args": [2, 2], "kwargs": {"figsize": {"$tuple": [5.0, 4.0]}}, "as": ["fig", "axs"]},
+  {"on": "axs[0, 0]", "call": "plot", "args": [[0, 1, 2], [0, 1000, 4000]]},
+  {"on": "axs[0, 0]", "call": "set_ylabel", "args": ["counts"]},
+  {"on": "axs[0, 1]", "call": "set_title", "args": ["A title"]},
+  {"on": "axs[1, 0]", "call": "set_xlabel", "args": ["time (s)"]},
+  {"on": "axs[1, 1]", "call": "plot", "args": [[0, 10], [0, 0.001]]},
+  {"on": "fig", "call": "tight_layout"}
+]}

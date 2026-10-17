@@ -1,0 +1,1 @@
+{"version": 1, "calls": [{"call": "subplots", "args": [1, 2], "as": ["fig", "axs"]}, {"call": "plot", "args": [[0, 1, 2], [0, 1, 0]]}, {"call": "title", "args": ["the last axes"]}, {"on": "fig", "call": "gca", "as": "ax"}, {"on": "ax", "call": "set_xlabel", "args": ["x"]}, {"on": "axs[0]", "call": "set_title", "args": ["first"]}]}

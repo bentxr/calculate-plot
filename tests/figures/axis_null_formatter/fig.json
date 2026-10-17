@@ -1,0 +1,19 @@
+{"version": 1,
+ "calls": [
+  {"call": "subplots", "args": [2, 2], "kwargs": {"sharex": "col", "figsize": {"$tuple": [6.4, 4.8]}}, "as": ["fig", "axs"]},
+  {"on": "axs[0, 0]", "call": "plot", "args": [[1, 2, 3, 4], [1e5, 1.00002e5, 1.00001e5, 1.00004e5]]},
+  {"on": "axs[0, 0]", "call": "set_title", "args": ["offset text gone"]},
+  {"on": "axs[0, 0].yaxis", "call": "set_major_formatter", "args": [{"$new": "NullFormatter"}]},
+  {"on": "axs[1, 0]", "call": "plot", "args": [[1, 2, 3, 4], [3, 1, 4, 1]]},
+  {"on": "axs[1, 0].xaxis", "call": "set_major_formatter", "args": [{"$new": "NullFormatter"}]},
+  {"on": "axs[0, 1]", "call": "plot", "args": [[1, 10, 100, 1000], [2, 30, 200, 5000]]},
+  {"on": "axs[0, 1]", "call": "set_yscale", "args": ["log"]},
+  {"on": "axs[0, 1].yaxis", "call": "set_minor_formatter", "args": [{"$new": "NullFormatter"}]},
+  {"on": "axs[1, 1]", "call": "plot", "args": [[1, 2, 3], [0.5, 0.7, 0.2]]},
+  {"on": "axs[1, 1].yaxis", "call": "set_major_formatter", "args": [{"$new": "NullFormatter"}]},
+  {"on": "axs[1, 1]", "call": "set_yscale", "args": ["log"]},
+  {"on": "axs[1, 1]", "call": "set_ylabel", "args": ["the scale's own formatter again"]},
+  {"on": "fig", "call": "suptitle", "args": [""]},
+  {"on": "axs[1, 1]", "call": "set_title", "args": [""]},
+  {"on": "fig", "call": "tight_layout"}
+ ]}

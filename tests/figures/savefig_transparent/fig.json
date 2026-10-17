@@ -1,0 +1,7 @@
+{"version": 1,
+ "rc": {"savefig.transparent": true, "savefig.facecolor": "green"},
+ "calls": [
+  {"call": "subplots", "args": [1, 2], "kwargs": {"figsize": {"$tuple": [4.0, 2.0]}}, "as": ["fig", "axs"]},
+  {"on": "axs[0]", "call": "plot", "args": [[0, 1], [0, 1]]},
+  {"on": "axs[1]", "call": "axhspan", "args": [0.2, 0.6]}
+]}

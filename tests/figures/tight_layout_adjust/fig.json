@@ -1,0 +1,8 @@
+{"version": 1, "calls": [
+  {"call": "subplots", "args": [3, 1], "kwargs": {"figsize": {"$tuple": [4.0, 6.0]}}, "as": ["fig", "axs"]},
+  {"on": "axs[0]", "call": "set_title", "args": ["first"]},
+  {"on": "axs[1]", "call": "set_xlabel", "args": ["second"]},
+  {"on": "axs[2]", "call": "plot", "args": [[0, 1, 2], [0.0001, 0.0002, 0.0004], "o-"], "kwargs": {"markersize": 20}},
+  {"on": "fig", "call": "tight_layout", "kwargs": {"h_pad": 2.5}},
+  {"on": "fig", "call": "subplots_adjust", "kwargs": {"top": 0.8}}
+]}

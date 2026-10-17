@@ -1,0 +1,50 @@
+# Written by calculate-plot 0.1.0: this script draws the same figure with Matplotlib 3.11.2.
+import locale
+
+import matplotlib.pyplot as plt
+
+# Text is shaped for the language of the locale: this is the one the figure was made with.
+try:
+    locale.setlocale(locale.LC_CTYPE, "C.UTF-8")
+except locale.Error:
+    locale.setlocale(locale.LC_CTYPE, "C")
+
+fig, ax = plt.subplots(figsize=(7.0, 5.0))
+ax.plot([0, 10], [0, 10], linewidth=14)
+ax.plot([0, 10], [10, 0], linewidth=14, zorder=5)
+ax.text(5, 5, 'over the first line, under the second', ha='center', fontsize=14)
+ax.text(2, 2, 'zorder 1: under both', zorder=1, ha='center', fontsize=14)
+ax.text(8, 2, 'zorder 9: over both', zorder=9, ha='center', fontsize=14)
+ax.text(8, 8, 'zorder None is 3', zorder=None, ha='center', fontsize=14)
+ax.text(9.5, 6, 'clipped at the edge of the axes', clip_on=True)
+ax.text(9.5, 5, 'not clipped at the edge', clip_on=False)
+ax.text(1, 9, 'not shown', visible=False)
+ax.text(1, 9.5, 'shown', visible=True)
+ax.text(1, 8, 'half there', alpha=0.5, fontsize=20)
+ax.text(1, 7, 'alpha None and 1', alpha=None)
+ax.text(5, 7, '$\\frac{a}{b}+\\sqrt{x}$ seen through', alpha=0.25, fontsize=20, color='C3')
+ax.text(4, 9, '$\\frac{a}{b}\\sqrt{x}$ thin rules grow', fontsize=5)
+ax.text(6, 9, '$\\frac{a}{b}\\sqrt{x}$ snap None', fontsize=5, snap=None)
+ax.text(4, 8.5, '$\\frac{a}{b}\\sqrt{x}$ snap True', fontsize=5, snap=True)
+ax.text(6, 8.5, '$\\frac{a}{b}\\sqrt{x}$ snap False: they do not', fontsize=5, snap=False)
+ax.text(4, 8.0, '$\\frac{a}{b}\\sqrt{x}$ turned and thin', fontsize=5, rotation=20)
+ax.text(4, 7.6, '$\\frac{.}{.}\\overline{.}$', fontsize=1)
+ax.text(4.5, 7.6, '$\\frac{.}{.}\\overline{.}$', fontsize=1, snap=False)
+ax.text(0.5, 4, '$x$ is not math here', parse_math=False)
+ax.text(0.5, 3.4, '$x$ is math, and 5\\$ a price', parse_math=True)
+ax.text(0.5, 2.8, 'parse_math None; 5\\$', parse_math=None)
+ax.text(0.5, 1.2, 'no antialiasing', antialiased=False, fontsize=16)
+ax.text(0.5, 0.4, 'antialiased, and None', antialiased=True)
+ax.text(4, 0.4, 'antialiased None', antialiased=None)
+ax.text(6.5, 3.4, 'RGB as a list', color=[0.1, 0.5, 0.2])
+ax.text(6.5, 2.8, 'RGBA as a tuple', c=(0.8, 0.1, 0.2, 0.5))
+ax.text(6.5, 2.2, 'c wins over color', color='red', c='tab:purple')
+ax.text(6.5, 1.6, 'color None is the default', color=None)
+ax.text(6.5, 1.0, 'usetex, wrap False', usetex=False, wrap=False, transform_rotates_text=False)
+ax.text(6.5, 0.4, 'usetex None', usetex=None, wrap=None, transform_rotates_text=None)
+ax.text(float('nan'), 5, 'at no place')
+ax.text(5, float('inf'), 'nor here')
+ax.text(3, 6, '')
+
+if __name__ == "__main__":
+    plt.show()

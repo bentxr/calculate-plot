@@ -1,0 +1,9 @@
+{"version": 1,
+ "rc": {"ytick.labelleft": false, "xtick.labelbottom": false, "ytick.direction": "out", "xtick.direction": "in"},
+ "calls": [
+  {"call": "subplots", "kwargs": {"figsize": {"$tuple": [2.5, 4.0]}}, "as": ["fig", "ax"]},
+  {"on": "ax", "call": "set_xlim", "args": [0, 1]},
+  {"on": "ax", "call": "set_ylim", "args": [-3, 41]},
+  {"on": "ax", "call": "set_xlabel", "args": ["x"]},
+  {"on": "ax", "call": "set_ylabel", "args": ["y"]}
+]}

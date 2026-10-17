@@ -1,0 +1,8 @@
+{"version": 1, "calls": [
+  {"call": "subplots", "args": [1, 2], "kwargs": {"figsize": {"$tuple": [4.0, 2.5]}}, "as": ["fig", "axs"]},
+  {"on": "axs[0]", "call": "plot", "args": [[0, 1], [0, 1]], "kwargs": {"label": "a rather long legend label"}},
+  {"on": "axs[0]", "call": "legend", "kwargs": {"loc": "upper left"}},
+  {"on": "axs[1]", "call": "set_title", "args": ["A very long title for a narrow Axes"]},
+  {"on": "axs[1]", "call": "set_ylabel", "args": ["a very long y label, much longer than the short Axes is tall"]},
+  {"on": "fig", "call": "tight_layout"}
+]}

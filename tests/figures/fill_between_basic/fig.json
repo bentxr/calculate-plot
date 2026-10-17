@@ -1,0 +1,4 @@
+{"version": 1, "calls": [
+  {"call": "subplots", "kwargs": {"figsize": {"$tuple": [4.0, 3.0]}}, "as": ["fig", "ax"]},
+  {"on": "ax", "call": "fill_between", "args": [[0, 1, 2, 3, 4], [1, 3, 2, 4, 3], [0, 0.5, 1, 1.5, 1]], "kwargs": {"alpha": 0.4}}
+]}

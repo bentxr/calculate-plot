@@ -1,0 +1,6 @@
+{"version": 1, "calls": [
+  {"call": "subplots", "kwargs": {"figsize": {"$tuple": [5.0, 3.0]}}, "as": ["fig", "ax"]},
+  {"on": "ax", "call": "plot", "args": [[2, 3, 5, 7.5], [0.31, 0.29, 0.6, 0.45]], "kwargs": {"marker": "o"}},
+  {"on": "ax", "call": "set_xscale", "args": ["log"]},
+  {"on": "ax", "call": "set_yscale", "args": ["log"]}
+]}

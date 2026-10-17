@@ -1,0 +1,14 @@
+{"version": 1, "rc": {"mathtext.fontset": "stix"}, "calls": [
+  {"call": "subplots", "args": [], "kwargs": {"figsize": {"$tuple": [6.0, 4.5]}}, "as": ["fig", "ax"]},
+  {"on": "ax", "call": "set_xlim", "args": [0, 10]},
+  {"on": "ax", "call": "set_ylim", "args": [0, 10]},
+  {"on": "ax", "call": "text", "args": [0.5, 9, "the rcParams' fontset: $\\sum_{i}\\frac{x_i^2}{\\sqrt{\\alpha}}$"]},
+  {"on": "ax", "call": "text", "args": [0.5, 7.8, "dejavusans: $\\sum_{i}\\frac{x_i^2}{\\sqrt{\\alpha}}$"], "kwargs": {"math_fontfamily": "dejavusans"}},
+  {"on": "ax", "call": "text", "args": [0.5, 6.6, "dejavuserif: $\\sum_{i}\\frac{x_i^2}{\\sqrt{\\alpha}}$"], "kwargs": {"math_fontfamily": "dejavuserif"}},
+  {"on": "ax", "call": "text", "args": [0.5, 5.4, "cm: $\\sum_{i}\\frac{x_i^2}{\\sqrt{\\alpha}}$"], "kwargs": {"math_fontfamily": "cm"}},
+  {"on": "ax", "call": "text", "args": [0.5, 4.2, "stix: $\\sum_{i}\\frac{x_i^2}{\\sqrt{\\alpha}}$"], "kwargs": {"math_fontfamily": "stix"}},
+  {"on": "ax", "call": "text", "args": [0.5, 3.0, "stixsans: $\\sum_{i}\\frac{x_i^2}{\\sqrt{\\alpha}}$"], "kwargs": {"math_fontfamily": "stixsans"}},
+  {"on": "ax", "call": "text", "args": [0.5, 1.8, "custom: $\\sum_{i}\\frac{x_i^2}{\\sqrt{\\alpha}}$"], "kwargs": {"math_fontfamily": "custom"}},
+  {"on": "ax", "call": "text", "args": [0.5, 0.6, "None: $\\sum_{i}\\frac{x_i^2}{\\sqrt{\\alpha}}$"], "kwargs": {"math_fontfamily": null, "family": "serif"}},
+  {"on": "ax", "call": "set_title", "args": ["a title in the rcParams' fontset: $\\mathcal{L}=\\int\\hbar$"]}
+]}

@@ -1,0 +1,13 @@
+{"version": 1, "calls": [{"call": "subplots", "args": [1, 3], "kwargs": {"figsize": {"$tuple": [7.2, 2.6]}}, "as": ["fig", "axs"]},
+ {"call": "Polygon", "args": [[[0, 0], [1, 0.5], [0.5, 1]]], "kwargs": {"closed": true, "fc": "C2", "ec": "k", "lw": 2}, "as": "tri"},
+ {"on": "axs[0]", "call": "add_patch", "args": [{"$ref": "tri"}]},
+ {"call": "Polygon", "args": [[[0.1, 0.1], [0.9, 0.2], [0.8, 0.9], [0.1, 0.1]]], "kwargs": {"closed": false, "fill": false, "edgecolor": "C3", "hatch": "o"}, "as": "open"},
+ {"on": "axs[0]", "call": "add_patch", "args": [{"$ref": "open"}]},
+ {"call": "Polygon", "args": [[[-1, -1], [3, 0], [2, 4]]], "kwargs": {"label": "big", "alpha": 0.3, "color": "C4", "facecolor": "k"}, "as": "big"},
+ {"on": "axs[1]", "call": "add_patch", "args": [{"$ref": "big"}]},
+ {"on": "axs[1]", "call": "plot", "args": [[0, 1], [0, 1]]},
+ {"on": "axs[1]", "call": "legend"},
+ {"call": "Polygon", "args": [[[2, 2], [3, 5], [4, 2]]], "kwargs": {"color": "C1", "edgecolor": "nonsense", "fc": "C0"}, "as": "late"},
+ {"on": "axs[2]", "call": "add_patch", "args": [{"$ref": "late"}]},
+ {"on": "axs[2]", "call": "set_xlim", "args": [0, 6]},
+ {"on": "axs[2]", "call": "set_ylim", "args": [0, 6]}]}

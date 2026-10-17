@@ -1,0 +1,8 @@
+{"version": 1,
+ "calls": [
+  {"call": "subplots", "args": [], "kwargs": {"figsize": {"$tuple": [4.0, 3.0]}}, "as": ["fig", "ax"]},
+  {"on": "ax", "call": "axhline", "args": [1.0], "kwargs": {"c": "blue", "color": "red", "lw": 3.0, "linewidth": 1.0}},
+  {"on": "ax", "call": "axvline", "args": [0.5], "kwargs": {"ls": "--", "linestyle": ":", "color": "green", "marker": "o", "ms": 9.0, "markersize": 3.0, "mfc": "yellow", "markerfacecolor": "black", "mec": "red", "markeredgecolor": "black", "mew": 2.0, "markeredgewidth": 0.5, "aa": false, "antialiased": true}},
+  {"on": "ax", "call": "axhline", "args": [2.0], "kwargs": {"alpha": 0.5, "color": "C1", "zorder": 5, "c": "C2"}},
+  {"on": "ax", "call": "axhline", "args": [3.0], "kwargs": {"marker": "s", "ms": 12.0, "linestyle": "-.", "ls": ":"}}
+]}

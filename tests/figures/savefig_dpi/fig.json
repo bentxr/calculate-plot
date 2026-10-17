@@ -1,0 +1,7 @@
+{"version": 1,
+ "rc": {"savefig.dpi": 200},
+ "calls": [
+  {"call": "subplots", "kwargs": {"figsize": {"$tuple": [3.0, 2.0]}}, "as": ["fig", "ax"]},
+  {"on": "ax", "call": "plot", "args": [[0, 1, 2], [0, 1, 4], "o-"]},
+  {"on": "ax", "call": "set_title", "args": ["At 200 dpi"]}
+]}

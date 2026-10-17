@@ -1,0 +1,10 @@
+{"version": 1,
+ "rc": {"axes.grid": "yes", "axes.grid.which": "minor", "axes.grid.axis": "y"},
+ "calls": [
+  {"call": "subplots", "args": [1, 2], "kwargs": {"figsize": {"$tuple": [7.0, 3.0]}}, "as": ["fig", "axs"]},
+  {"on": "axs[0]", "call": "plot", "args": [[0, 1, 2, 3], [1, 3, 2, 5]]},
+  {"on": "axs[1]", "call": "plot", "args": [[1, 2, 3, 4], [1, 30, 200, 5000]]},
+  {"on": "axs[1]", "call": "set_yscale", "args": ["log"]},
+  {"on": "axs[1]", "call": "set_xscale", "args": ["log"]},
+  {"on": "axs[1]", "call": "grid", "args": [true], "kwargs": {"which": "major", "axis": "x"}}
+]}

@@ -1,0 +1,8 @@
+{"version": 1, "calls": [
+  {"call": "subplots", "args": [2, 2], "kwargs": {"sharex": "all", "sharey": "all"}, "as": ["fig", "axs"]},
+  {"on": "axs[1, 0]", "call": "set_xlim", "args": [0, 10]},
+  {"on": "axs[0, 0]", "call": "plot", "args": [[2, 30], [0, 1]]},
+  {"on": "axs[1, 1]", "call": "plot", "args": [[5, 6], [-4, 7]]},
+  {"on": "axs[0, 1]", "call": "set_ylim", "args": [-1, 1]},
+  {"on": "axs[1, 0]", "call": "plot", "args": [[1, 2], [50, 60]]}
+]}

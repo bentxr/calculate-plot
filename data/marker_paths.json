@@ -1,0 +1,176 @@
+{
+"_provenance": [
+"Derived from Matplotlib 3.11.2: lib/matplotlib/path.py (unit_regular_polygon, unit_regular_star)",
+"as lib/matplotlib/markers.py and lib/matplotlib/hatch.py use them, and a constant of markers.py, written by",
+"tools/oracle/make_marker_paths.py.",
+"Copyright (c) 2012- Matplotlib Development Team; All Rights Reserved",
+"Licence: LICENSES/Matplotlib.txt."
+],
+"paths": {
+"polygon5": {
+"vertices": [
+"0x1.1a62633145c07p-54",
+"0x1.0000000000000p+0",
+"-0x1.e6f0e134454ffp-1",
+"0x1.3c6ef372fe951p-2",
+"-0x1.2cf2304755a5fp-1",
+"-0x1.9e3779b97f4a7p-1",
+"0x1.2cf2304755a5cp-1",
+"-0x1.9e3779b97f4a9p-1",
+"0x1.e6f0e13445500p-1",
+"0x1.3c6ef372fe94bp-2",
+"0x1.60fafbfd97309p-52",
+"0x1.0000000000000p+0"
+],
+"codes": [
+1,
+2,
+2,
+2,
+2,
+79
+]
+},
+"polygon6": {
+"vertices": [
+"0x1.1a62633145c07p-54",
+"0x1.0000000000000p+0",
+"-0x1.bb67ae8584ca9p-1",
+"0x1.0000000000003p-1",
+"-0x1.bb67ae8584cacp-1",
+"-0x1.ffffffffffffbp-2",
+"-0x1.a79394c9e8a0ap-53",
+"-0x1.0000000000000p+0",
+"0x1.bb67ae8584ca8p-1",
+"-0x1.0000000000004p-1",
+"0x1.bb67ae8584caep-1",
+"0x1.ffffffffffff3p-2",
+"0x1.60fafbfd97309p-52",
+"0x1.0000000000000p+0"
+],
+"codes": [
+1,
+2,
+2,
+2,
+2,
+2,
+79
+]
+},
+"polygon8": {
+"vertices": [
+"0x1.1a62633145c07p-54",
+"0x1.0000000000000p+0",
+"-0x1.6a09e667f3bccp-1",
+"0x1.6a09e667f3bcdp-1",
+"-0x1.0000000000000p+0",
+"0x1.1a62633145c07p-53",
+"-0x1.6a09e667f3bcep-1",
+"-0x1.6a09e667f3bccp-1",
+"-0x1.a79394c9e8a0ap-53",
+"-0x1.0000000000000p+0",
+"0x1.6a09e667f3bcbp-1",
+"-0x1.6a09e667f3bcep-1",
+"0x1.0000000000000p+0",
+"-0x1.1a62633145c07p-52",
+"0x1.6a09e667f3bcep-1",
+"0x1.6a09e667f3bcbp-1",
+"0x1.60fafbfd97309p-52",
+"0x1.0000000000000p+0"
+],
+"codes": [
+1,
+2,
+2,
+2,
+2,
+2,
+2,
+2,
+79
+]
+},
+"star5": {
+"vertices": [
+"0x1.1a62633145c07p-54",
+"0x1.0000000000000p+0",
+"-0x1.cbcdfc86627c4p-3",
+"0x1.3c6ef2d6a1a57p-2",
+"-0x1.e6f0e134454ffp-1",
+"0x1.3c6ef372fe951p-2",
+"-0x1.73fd61220e7e3p-2",
+"-0x1.e3779aa90de20p-4",
+"-0x1.2cf2304755a5fp-1",
+"-0x1.9e3779b97f4a7p-1",
+"-0x1.4395691166b89p-54",
+"-0x1.87221858bc59cp-2",
+"0x1.2cf2304755a5cp-1",
+"-0x1.9e3779b97f4a9p-1",
+"0x1.73fd61220e7e2p-2",
+"-0x1.e3779aa90de29p-4",
+"0x1.e6f0e13445500p-1",
+"0x1.3c6ef372fe94bp-2",
+"0x1.cbcdfc86627c9p-3",
+"0x1.3c6ef2d6a1a56p-2",
+"0x1.60fafbfd97309p-52",
+"0x1.0000000000000p+0"
+],
+"codes": [
+1,
+2,
+2,
+2,
+2,
+2,
+2,
+2,
+2,
+2,
+79
+]
+},
+"star5_hatch": {
+"vertices": [
+"0x1.1a62633145c07p-54",
+"0x1.0000000000000p+0",
+"-0x1.2cf2304755a5dp-2",
+"0x1.9e3779b97f4a8p-2",
+"-0x1.e6f0e134454ffp-1",
+"0x1.3c6ef372fe951p-2",
+"-0x1.e6f0e13445500p-2",
+"-0x1.3c6ef372fe94dp-3",
+"-0x1.2cf2304755a5fp-1",
+"-0x1.9e3779b97f4a7p-1",
+"-0x1.a79394c9e8a0ap-54",
+"-0x1.0000000000000p-1",
+"0x1.2cf2304755a5cp-1",
+"-0x1.9e3779b97f4a9p-1",
+"0x1.e6f0e134454ffp-2",
+"-0x1.3c6ef372fe953p-3",
+"0x1.e6f0e13445500p-1",
+"0x1.3c6ef372fe94bp-2",
+"0x1.2cf2304755a60p-2",
+"0x1.9e3779b97f4a6p-2",
+"0x1.60fafbfd97309p-52",
+"0x1.0000000000000p+0"
+],
+"codes": [
+1,
+2,
+2,
+2,
+2,
+2,
+2,
+2,
+2,
+2,
+79
+]
+}
+},
+"constants": {
+"hexagon1_half_x": "0x1.bb67ae8584cabp-1"
+}
+}

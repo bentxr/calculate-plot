@@ -1,0 +1,6 @@
+{"version": 1,
+ "rc": {"savefig.bbox": "standard", "savefig.dpi": "figure"},
+ "calls": [
+  {"call": "subplots", "kwargs": {"figsize": {"$tuple": [3.0, 2.0]}}, "as": ["fig", "ax"]},
+  {"on": "ax", "call": "set_ylabel", "args": ["kept whole"]}
+]}

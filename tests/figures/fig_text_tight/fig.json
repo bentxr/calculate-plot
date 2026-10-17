@@ -1,0 +1,8 @@
+{"version": 1, "rc": {"savefig.bbox": "tight"}, "calls": [
+  {"call": "subplots", "args": [], "kwargs": {"figsize": {"$tuple": [5.0, 3.0]}}, "as": ["fig", "ax"]},
+  {"on": "ax", "call": "plot", "args": [[0, 1, 2], [0, 1, 4]]},
+  {"on": "fig", "call": "text", "args": [1.1, 0.5, "beyond the right edge"], "kwargs": {"fontsize": 14}},
+  {"on": "fig", "call": "text", "args": [0.5, -0.1, "below the figure"], "kwargs": {"ha": "center"}},
+  {"on": "fig", "call": "text", "args": [0.5, 1.5, "hidden far above"], "kwargs": {"visible": false}},
+  {"on": "fig", "call": "text", "args": [0.2, 1.2, ""]}
+]}

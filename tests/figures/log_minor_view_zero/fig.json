@@ -1,0 +1,1 @@
+{"version": 1, "calls": [{"call": "subplots", "args": [2, 2], "as": ["fig", "axs"]}, {"on": "axs[0, 1]", "call": "set", "kwargs": {"ylim": {"$tuple": [0, 1]}}}, {"on": "axs[0, 1]", "call": "hist", "args": [[-2.503]], "kwargs": {"log": true}}]}

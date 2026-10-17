@@ -1,0 +1,1 @@
+{"version": 1, "rc": {"savefig.bbox": "tight"}, "calls": [{"call": "subplots", "as": ["fig", "ax"]}, {"on": "ax", "call": "plot", "args": [[1, 2], [3, 1]]}, {"on": "ax", "call": "inset_axes", "args": [[0.8, 0.8, 0.4, 0.4]], "as": "ins"}, {"on": "ins", "call": "set_title", "args": ["over the edge"]}, {"on": "ax", "call": "set_aspect", "args": [0.5]}]}

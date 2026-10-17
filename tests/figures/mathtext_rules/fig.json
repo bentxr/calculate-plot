@@ -1,0 +1,10 @@
+{"version": 1, "calls": [
+  {"call": "subplots", "args": [], "kwargs": {"figsize": {"$tuple": [6.0, 4.5]}}, "as": ["fig", "ax"]},
+  {"on": "ax", "call": "plot", "args": [[0, 1, 2], [0, 1, 4]], "kwargs": {"label": "$\\hat{x}_i=\\frac{1}{2}$"}},
+  {"on": "ax", "call": "plot", "args": [[0, 1, 2], [4, 1, 0]], "kwargs": {"label": "$\\overline{AB}=\\left(\\frac{1}{2}\\right)$"}},
+  {"on": "ax", "call": "set_title", "args": ["$\\frac{a+b}{c}$ and $\\sqrt{x^2+1}$"]},
+  {"on": "ax", "call": "set_xlabel", "args": ["$\\sum_{i=0}^{n}\\frac{1}{i^2}$"]},
+  {"on": "ax", "call": "set_ylabel", "args": ["$\\sqrt[3]{\\frac{x}{y}}-\\underline{x}+\\binom{n}{k}$"]},
+  {"on": "fig", "call": "suptitle", "args": ["$\\genfrac{[}{]}{2}{0}{a}{b}$ over all"]},
+  {"on": "ax", "call": "legend", "args": []}
+]}

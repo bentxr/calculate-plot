@@ -1,0 +1,9 @@
+{"version": 1, "calls": [
+  {"call": "subplots", "args": [1, 2], "kwargs": {"figsize": {"$tuple": [7.0, 3.0]}}, "as": ["fig", "axs"]},
+  {"on": "axs[0]", "call": "plot", "args": [[0, 1, 2], [0, 1, 4]]},
+  {"on": "axs[0]", "call": "text", "args": [2.0, 2.0, "sticks out to the right"], "kwargs": {"fontsize": 12}},
+  {"on": "axs[1]", "call": "plot", "args": [[0, 1, 2], [4, 1, 0]]},
+  {"on": "axs[1]", "call": "text", "args": [1.0, 4.4, "above the axes\nin two lines"], "kwargs": {"ha": "center"}},
+  {"on": "axs[1]", "call": "text", "args": [1.0, -1.0, "clipped below"], "kwargs": {"clip_on": true}},
+  {"on": "fig", "call": "tight_layout", "args": []}
+]}

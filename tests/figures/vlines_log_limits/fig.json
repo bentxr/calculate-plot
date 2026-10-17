@@ -1,0 +1,16 @@
+{"version": 1,
+ "calls": [
+  {"call": "subplots", "args": [2, 2], "kwargs": {"figsize": {"$tuple": [8.0, 6.0]}}, "as": ["fig", "axs"]},
+  {"on": "axs[0, 0]", "call": "set_yscale", "args": ["log"]},
+  {"on": "axs[0, 0]", "call": "vlines", "args": [[1.0, 2.0, 3.0], 10.0, 1000.0]},
+  {"on": "axs[0, 1]", "call": "set_xscale", "args": ["log"]},
+  {"on": "axs[0, 1]", "call": "hlines", "args": [[1.0, 2.0, 3.0], 0.3, 7000.0], "kwargs": {"colors": "C1"}},
+  {"on": "axs[0, 1]", "call": "vlines", "args": [[10.0, 100.0, -10.0, 0.0], 1.5, 2.5]},
+  {"on": "axs[1, 0]", "call": "set_yscale", "args": ["log"]},
+  {"on": "axs[1, 0]", "call": "set_xscale", "args": ["log"]},
+  {"on": "axs[1, 0]", "call": "vlines", "args": [[3.0, 30.0, 0.0, -5.0], [-1.0, 0.0, 2.0, 5.0], [10.0, 100.0, 50.0, 70.0]]},
+  {"on": "axs[1, 0]", "call": "errorbar", "args": [[2.0, 20.0, 200.0], [5.0, 20.0, 60.0]], "kwargs": {"yerr": [1.0, 30.0, 10.0], "xerr": [0.5, 5.0, 300.0], "fmt": "o"}},
+  {"on": "axs[1, 1]", "call": "vlines", "args": [[1.0, 2.0, 3.0], 10.0, 1000.0]},
+  {"on": "axs[1, 1]", "call": "hlines", "args": [[100.0, 5.0], 1.5, 4.5]},
+  {"on": "axs[1, 1]", "call": "set_yscale", "args": ["log"]}
+]}

@@ -1,0 +1,4 @@
+/build/
+/tools/oracle/.venv/
+__pycache__/
+/emsdk-cache/

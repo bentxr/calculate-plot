@@ -1,0 +1,8 @@
+{"version": 1, "calls": [
+  {"call": "subplots", "kwargs": {"figsize": {"$tuple": [4.0, 3.0]}}, "as": ["fig", "ax"]},
+  {"on": "ax", "call": "plot", "args": [[0, 1, 2], [0, 1, 4]], "kwargs": {"label": "a", "marker": "^"}},
+  {"on": "ax", "call": "plot", "args": [[0, 1, 2], [0, 2, 3]], "kwargs": {"label": "bb"}},
+  {"on": "ax", "call": "plot", "args": [[0, 1, 2], [1, 1, 1]], "kwargs": {"label": "ccc", "ls": ":"}},
+  {"on": "ax", "call": "scatter", "args": [[0.5, 1.5], [3, 3.5]], "kwargs": {"c": [1, 2], "label": "mapped"}},
+  {"on": "ax", "call": "legend", "kwargs": {"loc": "center right", "ncols": 2, "fancybox": false, "markerfirst": false, "framealpha": 0.5, "fontsize": "small", "borderpad": 1.0, "edgecolor": "red", "title": "Two\ncolumns"}}
+]}

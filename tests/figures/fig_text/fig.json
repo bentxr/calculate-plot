@@ -1,0 +1,11 @@
+{"version": 1, "calls": [
+  {"call": "subplots", "args": [], "kwargs": {"figsize": {"$tuple": [6.0, 4.0]}}, "as": ["fig", "ax"]},
+  {"on": "ax", "call": "plot", "args": [[0, 1, 2], [0, 1, 4]]},
+  {"on": "fig", "call": "text", "args": [0.5, 0.02, "a note under the axes: $\\sigma=\\sqrt{\\frac{1}{N}\\sum_i x_i^2}$"], "kwargs": {"ha": "center", "color": "C0"}},
+  {"on": "fig", "call": "text", "args": [0.02, 0.5, "up the side"], "kwargs": {"rotation": "vertical", "va": "center", "fontsize": 14}},
+  {"on": "fig", "call": "text", "kwargs": {"x": 0.98, "y": 0.98, "s": "corner", "ha": "right", "va": "top", "alpha": 0.5, "zorder": 10}},
+  {"on": "fig", "call": "text", "args": [0.5, 0.5, "over the axes"], "kwargs": {"ha": "center", "fontsize": 30, "color": [0.5, 0.5, 0.5, 0.3]}},
+  {"on": "fig", "call": "text", "args": [1.2, 0.5, "off the figure"]},
+  {"on": "fig", "call": "text", "args": [0.3, 0.9, "hidden"], "kwargs": {"visible": false}},
+  {"on": "fig", "call": "suptitle", "args": ["with a suptitle"]}
+]}

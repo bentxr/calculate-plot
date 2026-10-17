@@ -1,0 +1,5 @@
+{"version": 1, "calls": [
+  {"call": "subplots", "kwargs": {"figsize": {"$tuple": [0.6, 3.0]}}, "as": ["fig", "ax"]},
+  {"on": "ax", "call": "set_ylabel", "args": ["a y label"]},
+  {"on": "fig", "call": "tight_layout"}
+]}

@@ -1,0 +1,144 @@
+calculate-plot: third-party notices
+===================================
+
+calculate-plot contains or is built from the third-party components listed below. Their licence
+texts are in the LICENSES directory and are shipped with every binary. The machine-readable list
+of every borrowed file, its origin and its licence is licensing/manifest.json; an automated test
+fails the build if anything listed there is missing.
+
+
+FreeType 2.14.3
+---------------
+This software is based in part on the work of the FreeType Team.
+Portions of this software are copyright (C) The FreeType Project (https://freetype.org).
+All rights reserved.
+Used under the FreeType License (LICENSES/FreeType-FTL.txt; LICENSES/FreeType-LICENSE.txt explains
+the choice of licence). Its BDF and PCF drivers are copyright (C) 2000-2002, 2011 Francesco Zappa
+Nardelli and Computing Research Labs, New Mexico State University (LICENSES/FreeType-BDF-README.txt,
+LICENSES/FreeType-PCF-README.txt). Its gzip module contains zlib 1.3, copyright (C) 1995-2024
+Jean-loup Gailly and Mark Adler, as modified by the FreeType project (LICENSES/zlib.txt).
+
+
+HarfBuzz 14.1.0
+---------------
+Copyright (C) 2010-2022 Google, Inc., and the other authors listed in LICENSES/HarfBuzz.txt.
+Its Universal Shaping Engine data is copyright (C) Microsoft Corporation (LICENSES/HarfBuzz-ms-use.txt).
+HarfBuzz contains tables derived from the Unicode Character Database, copyright (C) Unicode, Inc.
+(LICENSES/Unicode-3.0.txt).
+
+
+SheenBidi 3.0.0
+---------------
+Copyright (C) 2014-2026 Muhammad Tayyab Akram. Licensed under the Apache License, Version 2.0
+(LICENSES/SheenBidi.txt). Unmodified. It contains tables derived from the Unicode Character
+Database, copyright (C) Unicode, Inc. (LICENSES/Unicode-3.0.txt).
+
+
+libraqm 0.10.5
+--------------
+Copyright (C) 2015 Information Technology Authority (ITA) <foss@ita.gov.om>
+Copyright (C) 2016-2025 Khaled Hosny <khaled@aliftype.com>
+Licensed under the MIT License (LICENSES/libraqm.txt).
+
+
+Fonts (copied unmodified from Matplotlib 3.11.2, lib/matplotlib/mpl-data/fonts/ttf)
+--------------------------------------------------------------------------------
+DejaVu fonts 2.35 (LICENSES/DejaVu.txt):
+Copyright (c) 2003 by Bitstream, Inc. All Rights Reserved. Bitstream Vera is a trademark of Bitstream, Inc.
+Glyphs imported from Arev fonts: Copyright (c) 2006 by Tavmjong Bah. All Rights Reserved.
+DejaVu changes are in the public domain.
+
+STIX fonts 1.0.0: Copyright (c) 2001-2010 by the STI Pub Companies, consisting of the American
+Institute of Physics, the American Chemical Society, the American Mathematical Society, the American
+Physical Society, Elsevier, Inc., and The Institute of Electrical and Electronic Engineers, Inc.,
+with Reserved Font Name STIX Fonts; portions copyright (c) 1998-2003 by MicroPress, Inc., and
+(c) 1990 by Elsevier, Inc. Licensed under the SIL Open Font License 1.1. These are the TrueType
+conversions distributed with Matplotlib (LICENSES/STIX.txt explains the conversion).
+
+BaKoMa Computer Modern fonts 1.1: Copyright (C) 1994, 1995, Basil K. Malyshev. All Rights Reserved.
+Original fonts: http://www.ctan.org/tex-archive/fonts/cm/ps-type1/bakoma (LICENSES/BaKoMa.txt)
+
+Last Resort High-Efficiency font 16.000: Copyright (C) 2020-2024 Unicode, Inc. Licensed under the
+SIL Open Font License 1.1 (LICENSES/LastResort.txt).
+
+
+zlib 1.3.2
+----------
+Copyright (C) 1995-2026 Jean-loup Gailly and Mark Adler. Used unmodified, under the zlib licence
+(LICENSES/zlib-1.3.2.txt), to read and write PNG files.
+
+
+Matplotlib 3.11.2
+-----------------
+Parts of calculate-plot are derived from Matplotlib (https://matplotlib.org):
+Copyright (c) 2012- Matplotlib Development Team; All Rights Reserved
+Copyright (c) 2002-2011 John D. Hunter; All Rights Reserved
+Used under the Matplotlib License (LICENSES/Matplotlib.txt). The derived files name their origin, and
+licensing/changes/matplotlib.md summarises the changes made. calculate-plot is not affiliated with
+or endorsed by the Matplotlib project or NumFOCUS.
+Its colour names come from Matplotlib's data: the xkcd colour survey names (https://xkcd.com/color/rgb/)
+are in the public domain (CC0 1.0); the CSS4 names are those of the W3C's CSS colour specification.
+Its SVG writer comes from Matplotlib's copy of SimpleXMLWriter:
+Copyright (c) 2001-2004 by Fredrik Lundh (permission notice in LICENSES/SimpleXMLWriter.txt).
+
+
+Anti-Grain Geometry 2.4 (Matplotlib 3.11.2's copy)
+--------------------------------------------------
+Anti-Grain Geometry - Version 2.4
+Copyright (C) 2002-2005 Maxim Shemanarev (McSeem)
+Permission to copy, use, modify, sell and distribute this software is granted provided this
+copyright notice appears in all copies. (LICENSES/AGG.txt; Matplotlib's patches to it are under
+the Matplotlib License. Changes made here: licensing/changes/agg.md)
+
+
+NumPy 2.5.3
+-----------
+A few numeric routines are translated from NumPy: Copyright (c) 2005-2025, NumPy Developers.
+All rights reserved. Used under the BSD 3-Clause licence (LICENSES/NumPy.txt; changes:
+licensing/changes/numpy.md).
+
+
+OpenBLAS 0.3.34
+---------------
+The order of the arithmetic of a dot product is translated from OpenBLAS:
+Copyright (c) 2014, The OpenBLAS Project. All rights reserved. Used under the BSD 3-Clause licence
+(LICENSES/OpenBLAS.txt; changes: licensing/changes/openblas.md).
+
+
+cycler 0.12.1
+-------------
+The algebra of property cycles is translated from cycler: Copyright (c) 2015, matplotlib project.
+All rights reserved. Used under the BSD 3-Clause licence (LICENSES/cycler.txt; changes:
+licensing/changes/cycler.md).
+
+
+Solarized 1.0.0beta2
+--------------------
+The colours of the Solarize_Light2 style sheet are the Solarized palette:
+Copyright (c) 2011 Ethan Schoonover
+Used under the MIT licence (LICENSES/Solarized.txt; changes: licensing/changes/solarized.md).
+
+
+ColorBrewer as in Matplotlib 3.11.2
+-----------------------------------
+The colour sequences Accent, Dark2, Paired, Pastel1, Pastel2, Set1, Set2 and Set3 are ColorBrewer's
+qualitative colour schemes (https://colorbrewer2.org/):
+Copyright (c) 2002 Cynthia Brewer, Mark Harrower, and The Pennsylvania State University.
+Licensed under the Apache License, Version 2.0 (LICENSES/ColorBrewer.txt, LICENSES/Apache-2.0.txt;
+changes: licensing/changes/colorbrewer.md).
+
+
+FDLIBM 5.3
+----------
+The base-10 logarithm is derived from FDLIBM's e_log10.c:
+Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
+Developed at SunSoft, a Sun Microsystems, Inc. business. Permission to use, copy, modify, and
+distribute this software is freely granted, provided that this notice is preserved.
+(LICENSES/fdlibm.txt; changes: licensing/changes/fdlibm.md)
+
+
+Unicode Character Database 16.0.0
+---------------------------------
+data/unicode_letters.json lists code point ranges (letters, Greek capitals, digits) derived from
+the Unicode Character Database: Copyright (C) Unicode, Inc. All rights reserved. Used under the
+Unicode License V3 (LICENSES/Unicode-3.0.txt; changes: licensing/changes/unicode-data.md).

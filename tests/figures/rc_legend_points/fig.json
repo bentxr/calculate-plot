@@ -1,0 +1,15 @@
+{"version": 1,
+ "rc": {"legend.numpoints": 3, "legend.scatterpoints": 5, "legend.markerscale": 1.5},
+ "calls": [
+  {"call": "subplots", "args": [1, 2], "kwargs": {"figsize": {"$tuple": [7.0, 3.5]}}, "as": ["fig", "axs"]},
+  {"on": "axs[0]", "call": "plot", "args": [[0, 1, 2], [0, 1, 0], "o-"], "kwargs": {"label": "a line"}},
+  {"on": "axs[0]", "call": "plot", "args": [[0, 1, 2], [1, 2, 1]], "kwargs": {"label": "no marker", "linestyle": "--"}},
+  {"on": "axs[0]", "call": "scatter", "args": [[0, 1, 2], [2, 3, 2]], "kwargs": {"s": [20, 80, 300], "label": "sizes"}},
+  {"on": "axs[0]", "call": "vlines", "args": [[0.5, 1.5], 0, 3], "kwargs": {"label": "lines", "linestyles": "dotted"}},
+  {"on": "axs[0]", "call": "legend", "args": [], "kwargs": {"loc": "upper left"}},
+  {"on": "axs[1]", "call": "errorbar", "args": [[0, 1, 2], [0, 1, 0]], "kwargs": {"yerr": 0.2, "xerr": 0.1, "capsize": 3, "fmt": "s-", "label": "both"}},
+  {"on": "axs[1]", "call": "errorbar", "args": [[0, 1, 2], [1, 2, 1]], "kwargs": {"yerr": 0.2, "label": "no caps"}},
+  {"on": "axs[1]", "call": "errorbar", "args": [[0, 1, 2], [2, 3, 2]], "kwargs": {"xerr": 0.2, "fmt": "none", "capsize": 4, "label": "no line"}},
+  {"on": "axs[1]", "call": "scatter", "args": [[0, 1, 2], [3, 4, 3]], "kwargs": {"label": "one size"}},
+  {"on": "axs[1]", "call": "legend", "args": [], "kwargs": {"loc": "upper left", "ncols": 2}}
+]}

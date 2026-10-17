@@ -1,0 +1,5 @@
+{"version": 1, "rc": {"boxplot.vertical": false, "boxplot.medianprops.color": "r", "boxplot.flierprops.marker": "x", "boxplot.showmeans": true,
+ "boxplot.patchartist": true, "boxplot.whiskers": [10, 90], "boxplot.meanprops.markersize": 9, "boxplot.boxprops.linewidth": 2.5, "boxplot.capprops.linestyle": "--"},
+ "calls": [{"call": "subplots", "as": ["fig", "ax"]},
+ {"on": "ax", "call": "boxplot", "args": [[[1, 2, 3, 4, 5, 6, 7, 8, 20], [2.5, 3, 3.2, 4, 5, 6.1, 9, -4]]], "kwargs": {"label": "box"}},
+ {"on": "ax", "call": "legend"}]}

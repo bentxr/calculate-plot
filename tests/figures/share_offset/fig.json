@@ -1,0 +1,6 @@
+{"version": 1, "calls": [
+  {"call": "subplots", "args": [2, 2], "kwargs": {"sharex": true, "sharey": true, "figsize": {"$tuple": [6.0, 4.0]}}, "as": ["fig", "axs"]},
+  {"on": "axs[0, 0]", "call": "plot", "args": [[10000, 10001], [1000000, 3000000]]},
+  {"on": "axs[1, 1]", "call": "plot", "args": [[10000.5, 10002], [2000000, 5000000]]},
+  {"on": "axs[0, 1]", "call": "grid", "args": [true]}
+]}

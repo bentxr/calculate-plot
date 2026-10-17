@@ -1,0 +1,7 @@
+{"version": 1,
+ "rc": {"lines.color": "C3"},
+ "calls": [
+  {"call": "subplots", "args": [], "kwargs": {"figsize": {"$tuple": [4.0, 3.0]}}, "as": ["fig", "ax"]},
+  {"on": "ax", "call": "vlines", "args": [[1.5, 2.5], 0, 4], "kwargs": {"colors": "none"}},
+  {"on": "ax", "call": "hlines", "args": [[1.5, 2.5], 0, 4], "kwargs": {"color": "none"}}
+]}

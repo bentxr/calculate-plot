@@ -1,0 +1,13 @@
+{"version": 1, "calls": [
+  {"call": "subplots", "args": [2, 2], "kwargs": {"figsize": {"$tuple": [8.0, 6.0]}}, "as": ["fig", "axs"]},
+  {"on": "axs[0, 0]", "call": "set_xlabel", "args": ["red and large"], "kwargs": {"color": "red", "fontsize": "large", "fontweight": "bold"}},
+  {"on": "axs[0, 0]", "call": "set_ylabel", "args": ["level"], "kwargs": {"rotation": 0, "ha": "right", "labelpad": 10}},
+  {"on": "axs[0, 1]", "call": "set_xlabel", "args": ["placed with x"], "kwargs": {"x": 0.2, "style": "italic"}},
+  {"on": "axs[0, 1]", "call": "set_ylabel", "args": ["placed with y"], "kwargs": {"y": 0.9, "family": "monospace"}},
+  {"on": "axs[1, 0]", "call": "set_xlabel", "args": ["to the right"], "kwargs": {"loc": "right", "alpha": 0.6, "size": 8}},
+  {"on": "axs[1, 0]", "call": "set_ylabel", "args": ["at the top"], "kwargs": {"loc": "top", "c": "C4", "va": "bottom"}},
+  {"on": "axs[1, 1]", "call": "set_xlabel", "args": ["ha alone keeps the centre"], "kwargs": {"horizontalalignment": "left"}},
+  {"on": "axs[1, 1]", "call": "set_ylabel", "args": ["$\\sqrt{x^2+y^2}$\nturned 45"], "kwargs": {"rotation": 45, "ma": "center", "fontdict": null}},
+  {"on": "axs[1, 1]", "call": "set_xlabel", "args": ["set again: the colour stays"], "kwargs": {"color": "C2"}},
+  {"on": "axs[1, 1]", "call": "set_xlabel", "args": ["set again: the colour stays, the place is the loc's again"]}
+]}

@@ -1,0 +1,235 @@
+// Gate G4: matplotlib's default tick locator and formatter, ported, give exactly matplotlib's
+// ticks (bit for bit), labels and offset text, for 9135 view limits recorded from matplotlib.
+#include "axes/ticker.hpp"
+#include "support/json.hpp"
+#include "support/pynum.hpp"
+
+#include <gtest/gtest.h>
+
+#include <cmath>
+#include <cstdlib>
+#include <fstream>
+#include <sstream>
+
+namespace ax = calculate_plot::axes;
+namespace pn = calculate_plot::support;
+using calculate_plot::support::Json;
+
+namespace {
+
+std::vector<Json> oracle() {
+    std::ifstream in(std::string(CALCULATE_PLOT_SOURCE_DIR) + "/tests/oracle/ticker.json");
+    std::ostringstream text;
+    text << in.rdbuf();
+    auto json = calculate_plot::support::parseJson(text.str(), nullptr);
+    return json ? json->items() : std::vector<Json>{};
+}
+
+double hex(const Json& j) { return std::strtod(j.asString().c_str(), nullptr); }
+
+ax::MaxNLocator locatorFor(const Json& c) {
+    const std::string name = c.find("locator")->asString();
+    if (name == "auto") return ax::MaxNLocator::autoLocator();
+    ax::MaxNLocator l;
+    const Json& p = *c.find("params");
+    if (const Json* v = p.find("nbins")) l.nbins = int(v->asNumber());
+    if (const Json* v = p.find("integer")) l.integer = v->asBool();
+    if (const Json* v = p.find("symmetric")) l.symmetric = v->asBool();
+    if (const Json* v = p.find("prune")) l.prune = v->asString();
+    if (const Json* v = p.find("round_numbers")) l.roundNumbers = v->asBool();
+    if (const Json* v = p.find("steps")) {
+        std::vector<double> steps;
+        for (const Json& s : v->items()) steps.push_back(s.asNumber());
+        l.setSteps(steps);
+    }
+    return l;
+}
+
+std::string hexText(double v) {
+    char buffer[64];
+    std::snprintf(buffer, sizeof buffer, "%a", v);
+    return buffer;
+}
+
+}  // namespace
+
+TEST(Ticker, TickValuesMatchMatplotlibBitForBit) {
+    const auto cases = oracle();
+    ASSERT_GT(cases.size(), 10900u);
+    int mismatches = 0;
+    for (const auto& c : cases) {
+        const double vmin = hex(*c.find("vmin")), vmax = hex(*c.find("vmax"));
+        const auto ticks = locatorFor(c).tickValues(vmin, vmax);
+        const auto& want = c.find("ticks")->items();
+        bool same = ticks.size() == want.size();
+        for (std::size_t i = 0; same && i < ticks.size(); ++i) same = ticks[i] == hex(want[i]) && std::signbit(ticks[i]) == std::signbit(hex(want[i]));
+        if (!same && ++mismatches <= 10) {
+            std::string got, exp;
+            for (double t : ticks) got += hexText(t) + " ";
+            for (const auto& w : want) exp += w.asString() + " ";
+            ADD_FAILURE() << c.find("locator")->asString() << " [" << c.find("vmin")->asString() << ", "
+                          << c.find("vmax")->asString() << "]\n  ours:       " << got << "\n  matplotlib: " << exp;
+        }
+    }
+    EXPECT_EQ(mismatches, 0);
+}
+
+TEST(Ticker, LabelsAndOffsetMatchMatplotlib) {
+    int checked = 0, mismatches = 0;
+    for (const auto& c : oracle()) {
+        if (!c.find("labels")) continue;
+        std::vector<double> ticks;
+        for (const auto& t : c.find("ticks")->items()) ticks.push_back(hex(t));
+        ax::ScalarFormatter f;
+        f.setViewInterval(hex(*c.find("vmin")), hex(*c.find("vmax")));
+        f.setLocs(ticks);
+        const auto& labels = c.find("labels")->items();
+        std::string got, want;
+        for (std::size_t i = 0; i < ticks.size(); ++i) {
+            got += f(ticks[i]) + " | ";
+            want += labels[i].asString() + " | ";
+        }
+        got += "offset " + f.offsetText();
+        want += "offset " + c.find("offset")->asString();
+        if (got != want && ++mismatches <= 10)
+            ADD_FAILURE() << "[" << c.find("vmin")->asString() << ", " << c.find("vmax")->asString() << "]\n  ours:       "
+                          << got << "\n  matplotlib: " << want;
+        ++checked;
+    }
+    EXPECT_GT(checked, 1800);
+    EXPECT_EQ(mismatches, 0);
+}
+
+// The rcParams that shape the labels: axes.formatter.useoffset, .offset_threshold, .limits and
+// .use_mathtext, and axes.unicode_minus (tests/oracle/scalar_formatter.json, written by
+// tools/oracle/make_scalar_formatter_oracle.py).
+TEST(Ticker, LabelsAndOffsetFollowTheFormattersSettings) {
+    std::ifstream in(std::string(CALCULATE_PLOT_SOURCE_DIR) + "/tests/oracle/scalar_formatter.json", std::ios::binary);
+    std::ostringstream text;
+    text << in.rdbuf();
+    const auto cases = calculate_plot::support::parseJson(text.str(), nullptr);
+    ASSERT_TRUE(cases.has_value());
+    int checked = 0, mismatches = 0, mathtext = 0, offsets = 0;
+    for (const auto& c : cases->items()) {
+        ax::ScalarFormatter::Settings settings;
+        std::string rc;
+        for (const auto& [key, value] : c.find("rc")->members()) {
+            rc += key + " ";
+            if (key == "axes.formatter.useoffset") settings.useOffset = value.asBool();
+            else if (key == "axes.formatter.offset_threshold") settings.offsetThreshold = int(value.asInteger());
+            else if (key == "axes.formatter.limits") settings.powerLimits = {int(value[0].asInteger()), int(value[1].asInteger())};
+            else if (key == "axes.formatter.use_mathtext") settings.useMathText = value.asBool();
+            else if (key == "axes.unicode_minus") settings.unicodeMinus = value.asBool();
+            else FAIL() << key;
+        }
+        std::vector<double> ticks;
+        for (const auto& t : c.find("ticks")->items()) ticks.push_back(hex(t));
+        ax::ScalarFormatter f(settings);
+        f.setViewInterval(hex(*c.find("vmin")), hex(*c.find("vmax")));
+        f.setLocs(ticks);
+        const auto& labels = c.find("labels")->items();
+        std::string got, want;
+        for (std::size_t i = 0; i < ticks.size(); ++i) {
+            got += f(ticks[i]) + " | ";
+            want += labels[i].asString() + " | ";
+        }
+        got += "offset " + f.offsetText();
+        want += "offset " + c.find("offset")->asString();
+        if (got != want && ++mismatches <= 10)
+            ADD_FAILURE() << rc << "[" << c.find("vmin")->asString() << ", " << c.find("vmax")->asString() << "]\n  ours:       "
+                          << got << "\n  matplotlib: " << want;
+        ++checked;
+        mathtext += settings.useMathText;
+        offsets += !c.find("offset")->asString().empty();
+    }
+    EXPECT_EQ(checked, 2584);
+    EXPECT_EQ(offsets, 1838);
+    EXPECT_GT(mathtext, 100);
+    EXPECT_EQ(mismatches, 0);
+}
+
+// The minor ticks of linear axes (tests/oracle/minor_ticker.json, written by
+// tools/oracle/make_minor_ticker_oracle.py): AutoMinorLocator over the major ticks of the default
+// locator, and what Axis.get_minorticklocs keeps of them.
+TEST(Ticker, MinorTicksOfLinearAxesMatchMatplotlib) {
+    std::ifstream in(std::string(CALCULATE_PLOT_SOURCE_DIR) + "/tests/oracle/minor_ticker.json", std::ios::binary);
+    std::ostringstream text;
+    text << in.rdbuf();
+    const auto cases = calculate_plot::support::parseJson(text.str(), nullptr);
+    ASSERT_TRUE(cases.has_value());
+    const auto same = [](const std::vector<double>& got, const Json& want) {
+        if (got.size() != want.size()) return false;
+        for (std::size_t i = 0; i < got.size(); ++i) {
+            const double w = hex(want[i]);
+            if (std::isnan(w) ? !std::isnan(got[i]) : !(got[i] == w && std::signbit(got[i]) == std::signbit(w))) return false;
+        }
+        return true;
+    };
+    const auto show = [](const std::vector<double>& v) {
+        std::string out;
+        for (double x : v) out += hexText(x) + " ";
+        return out;
+    };
+    int checked = 0, wrong = 0, onMajor = 0, automatic = 0;
+    for (const auto& c : cases->items()) {
+        const double vmin = hex((*c.find("view"))[0]), vmax = hex((*c.find("view"))[1]);
+        ax::MaxNLocator locator = ax::MaxNLocator::autoLocator();
+        locator.tickSpace = int(c.find("tick_space")->asInteger());
+        const auto major = locator.tickValues(vmin, vmax);
+        ASSERT_TRUE(same(major, *c.find("major"))) << "case " << checked;
+        ax::AutoMinorLocator minor;
+        if (c.find("ndivs")->isNumber()) minor.ndivs = int(c.find("ndivs")->asInteger());
+        else ++automatic;
+        const auto raw = minor(major, vmin, vmax);
+        const auto kept = ax::withoutMajorTicks(raw, major, vmin, vmax);
+        if ((!same(raw, *c.find("raw")) || !same(kept, *c.find("minor"))) && ++wrong <= 8)
+            ADD_FAILURE() << "case " << checked << " [" << c.find("view")->items()[0].asString() << ", "
+                          << c.find("view")->items()[1].asString() << "] ndivs " << (minor.ndivs ? std::to_string(*minor.ndivs) : "auto")
+                          << "\n  ours:       " << show(raw) << "\n  kept:       " << show(kept);
+        onMajor += raw.size() != kept.size();
+        ++checked;
+    }
+    EXPECT_EQ(checked, 700);
+    EXPECT_EQ(wrong, 0);
+    EXPECT_EQ(onMajor, 636);
+    EXPECT_GT(automatic, 150);
+}
+
+// Fewer than two major ticks leave no minor ticks; several at the same place count once.
+TEST(Ticker, MinorTicksNeedTwoMajorOnes) {
+    const ax::AutoMinorLocator minor;
+    EXPECT_TRUE(minor({}, 0, 1).empty());
+    EXPECT_TRUE(minor({0.5}, 0, 1).empty());
+    EXPECT_TRUE(minor({0.5, 0.5, 0.5}, 0, 1).empty());
+    // np.unique: sorted, without repeats (a step of 1: five divisions)
+    EXPECT_EQ(minor({1.0, 0.0, 1.0, 0.0}, 0, 1), (std::vector<double>{0.0, 0.2, 0.4, 0.6000000000000001, 0.8, 1.0}));
+    EXPECT_EQ(minor({0.0, 1.0}, 1, 0), minor({0.0, 1.0}, 0, 1));  // the view in any order
+    // A view far wider than the major ticks are apart would take more ticks than can be drawn: no
+    // more than a million are made
+    EXPECT_EQ(minor({0.0, 1e-12}, 0, 1).size(), 1000000u);
+}
+
+TEST(PythonNumbers, FloorDivisionAndDivmod) {
+    EXPECT_EQ(pn::floorDivide(7.0, 2.0), 3.0);
+    EXPECT_EQ(pn::floorDivide(-7.0, 2.0), -4.0);
+    EXPECT_EQ(pn::floorDivide(7.0, -2.0), -4.0);
+    EXPECT_TRUE(std::signbit(pn::floorDivide(-0.5, 2.0)) && pn::floorDivide(-0.5, 2.0) == -1.0);
+    EXPECT_TRUE(std::signbit(pn::floorDivide(-0.0, 2.0)));  // 0 with the sign of the quotient
+    EXPECT_EQ(pn::floorDivide(1.0, 0.1), 9.0);              // as Python: 1 // 0.1 == 9.0
+    const auto [q, r] = pn::divmod(-7.5, 2.0);
+    EXPECT_EQ(q, -4.0);
+    EXPECT_EQ(r, 0.5);
+    EXPECT_TRUE(std::signbit(pn::divmod(4.0, -2.0).second));  // the remainder takes the divisor's sign
+}
+
+TEST(PythonNumbers, RoundingAndFormatting) {
+    EXPECT_EQ(pn::npRound(0.125, 2), 0.12);  // x * 100, rint, / 100
+    EXPECT_EQ(pn::npRound(2.675, 2), 2.68);  // NumPy multiplies first (Python's round(2.675, 2) is 2.67)
+    EXPECT_EQ(pn::pythonRound(2.675, 2), 2.67);
+    EXPECT_EQ(pn::pythonRound(0.30000000000000004, 10), 0.3);
+    EXPECT_EQ(pn::percentF(-0.0, 1), "-0.0");
+    EXPECT_EQ(pn::percentF(1234.5, 0), "1234");
+    EXPECT_EQ(pn::percentG(1.23456789012345, 10), "1.23456789");
+    EXPECT_EQ(pn::percentG(1e-5, 10), "1e-05");
+    EXPECT_EQ(pn::percentG(123456789012.0, 10), "1.23456789e+11");
+}

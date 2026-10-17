@@ -1,0 +1,10 @@
+{"version": 1, "rc": {"axes.prop_cycle": "cycler(color=['r', 'g', 'b']) + cycler(linestyle=['-', '--', ':'])"}, "calls": [
+ {"call": "subplots", "as": ["fig", "ax"]},
+ {"on": "ax", "call": "fill", "args": [[0, 1, 2], [0, 1, 0]], "kwargs": {"edgecolor": "k"}},
+ {"on": "ax", "call": "fill", "args": [[0, 1, 2], [1, 2, 1]], "kwargs": {"edgecolor": "k"}},
+ {"on": "ax", "call": "bar", "args": [[3, 4], [1, 2]], "kwargs": {"edgecolor": "k"}},
+ {"on": "ax", "call": "fill", "args": [[5, 6, 7], [0, 1, 0]], "kwargs": {"color": "C5", "edgecolor": "k"}},
+ {"on": "ax", "call": "fill", "args": [[5, 6, 7], [1, 2, 1]], "kwargs": {"linestyle": ":", "edgecolor": "k"}},
+ {"on": "ax", "call": "fill", "args": [[8, 9, 10], [0, 1, 0], "m"], "kwargs": {"edgecolor": "k", "linewidth": 2}},
+ {"on": "ax", "call": "fill_between", "args": [[0, 10], [3.6, 3.9], 3.4]},
+ {"on": "ax", "call": "plot", "args": [[0, 10], [2.5, 2.5]]}]}

@@ -1,0 +1,1 @@
+{"version": 1, "rc": {"backend_fallback": false}, "calls": [{"call": "figure", "kwargs": {"figsize": {"$tuple": [3.2, 2.4]}, "dpi": 100}, "as": "fig1"}, {"on": "fig1", "call": "add_axes", "args": [{"$tuple": [0.15, 0.15, 0.8, 0.8]}], "as": "ax1"}, {"on": "ax1", "call": "plot", "args": [[0, 1, 2, 3], [0, 1, 4, 9]]}]}

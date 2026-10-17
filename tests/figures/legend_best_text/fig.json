@@ -1,0 +1,10 @@
+{"version": 1, "calls": [
+  {"call": "subplots", "args": [1, 2], "kwargs": {"figsize": {"$tuple": [8.0, 3.5]}}, "as": ["fig", "axs"]},
+  {"on": "axs[0]", "call": "plot", "args": [[0, 1, 2], [0, 1, 4]], "kwargs": {"label": "a curve"}},
+  {"on": "axs[0]", "call": "text", "args": [0.05, 3.7, "a text where the legend would go"]},
+  {"on": "axs[0]", "call": "legend", "args": []},
+  {"on": "axs[1]", "call": "plot", "args": [[0, 1, 2], [4, 1, 0]], "kwargs": {"label": "another"}},
+  {"on": "axs[1]", "call": "text", "args": [1.0, 3.5, "text"], "kwargs": {"fontsize": 30}},
+  {"on": "axs[1]", "call": "axhspan", "args": [3.0, 4.0], "kwargs": {"alpha": 0.2}},
+  {"on": "axs[1]", "call": "legend", "args": [], "kwargs": {"loc": "best"}}
+]}

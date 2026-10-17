@@ -1,0 +1,14 @@
+{"version": 1,
+ "rc": {"grid.color": "#00000060", "grid.alpha": 0.9},
+ "calls": [
+  {"call": "subplots", "args": [2, 2], "kwargs": {"figsize": {"$tuple": [5.0, 4.0]}}, "as": ["fig", "axs"]},
+  {"on": "axs[0, 0]", "call": "grid", "args": [], "kwargs": {"color": "blue"}},
+  {"on": "axs[0, 1]", "call": "grid", "args": [], "kwargs": {"color": "#ff000080"}},
+  {"on": "axs[0, 1]", "call": "grid", "args": [], "kwargs": {"color": "green", "ls": "--"}},
+  {"on": "axs[0, 1]", "call": "grid", "args": [], "kwargs": {"linestyle": ":", "lw": 2.0}},
+  {"on": "axs[1, 0]", "call": "grid", "args": [], "kwargs": {"alpha": 0.3}},
+  {"on": "axs[1, 0]", "call": "grid", "args": [], "kwargs": {"c": "#ff000080"}},
+  {"on": "axs[1, 1]", "call": "grid", "args": [], "kwargs": {"alpha": 0.3, "which": "both"}},
+  {"on": "axs[1, 1]", "call": "grid", "args": [], "kwargs": {"color": "#0000ff40", "which": "minor"}},
+  {"on": "axs[1, 1]", "call": "set_yscale", "args": ["log"]}
+]}

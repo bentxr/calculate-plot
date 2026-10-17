@@ -1,0 +1,1 @@
+{"version": 1, "rc": {"savefig.bbox": "tight"}, "calls": [{"call": "subplots", "as": ["fig", "ax"]}, {"on": "ax", "call": "pie", "args": [[10]]}]}

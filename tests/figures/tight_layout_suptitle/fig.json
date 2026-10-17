@@ -1,0 +1,11 @@
+{"version": 1, "calls": [
+  {"call": "subplots", "args": [1, 3], "kwargs": {"figsize": {"$tuple": [7.0, 3.0]}}, "as": ["fig", "axs"]},
+  {"on": "axs[0]", "call": "plot", "args": [[0, 1, 2], [1000000, 2000000, 3000000]]},
+  {"on": "axs[1]", "call": "plot", "args": [[10000, 10001], [0, 1]]},
+  {"on": "axs[1]", "call": "set_xlabel", "args": ["a long x label that is wide"]},
+  {"on": "axs[1]", "call": "set_title", "args": ["Middle"], "kwargs": {"loc": "left"}},
+  {"on": "axs[2]", "call": "set_ylabel", "args": ["right panel"]},
+  {"on": "axs[2]", "call": "set_title", "args": ["Third"]},
+  {"on": "fig", "call": "suptitle", "args": ["Overall title"]},
+  {"on": "fig", "call": "tight_layout", "kwargs": {"pad": 0.5, "w_pad": 2.0, "h_pad": 0.3}}
+]}

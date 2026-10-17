@@ -1,0 +1,9 @@
+{"version": 1, "calls": [
+  {"call": "subplots", "args": [3, 2], "kwargs": {"sharex": "col", "sharey": true, "figsize": {"$tuple": [5.0, 5.0]}}, "as": ["fig", "axs"]},
+  {"on": "axs[0, 0]", "call": "plot", "args": [[0, 1, 2], [0, 1000, 4000]]},
+  {"on": "axs[2, 1]", "call": "errorbar", "args": [[1, 2, 3], [100, 200, 150]], "kwargs": {"yerr": 50}},
+  {"on": "axs[1, 0]", "call": "set_ylabel", "args": ["middle"]},
+  {"on": "axs[2, 0]", "call": "set_xlabel", "args": ["left column"]},
+  {"on": "fig", "call": "suptitle", "args": ["Shared"]},
+  {"on": "fig", "call": "tight_layout"}
+]}

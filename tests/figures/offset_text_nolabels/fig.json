@@ -1,0 +1,6 @@
+{"version": 1,
+ "rc": {"xtick.labelbottom": false, "ytick.labelleft": false},
+ "calls": [
+  {"call": "subplots", "as": ["fig", "ax"]},
+  {"on": "ax", "call": "plot", "args": [[10000, 10001], [1000000, 3000000]]}
+]}

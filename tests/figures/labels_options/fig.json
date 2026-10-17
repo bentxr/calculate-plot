@@ -1,0 +1,9 @@
+{"version": 1, "calls": [
+  {"call": "subplots", "kwargs": {"figsize": {"$tuple": [4.0, 3.0]}, "dpi": 120}, "as": ["fig", "ax"]},
+  {"on": "ax", "call": "set_title", "args": ["Pulled in"], "kwargs": {"pad": -20}},
+  {"on": "ax", "call": "set_title", "args": ["right side"], "kwargs": {"loc": "right"}},
+  {"on": "ax", "call": "set_xlabel", "args": ["x"], "kwargs": {"loc": "right", "labelpad": 10}},
+  {"on": "ax", "call": "set_ylabel", "args": ["y (m/s)"], "kwargs": {"loc": "top"}},
+  {"on": "ax", "call": "set_xlim", "args": [5, -5]},
+  {"on": "ax", "call": "set_ylim", "kwargs": {"top": 2.5}}
+]}

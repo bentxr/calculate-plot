@@ -1,0 +1,10 @@
+{"version": 1, "rc": {"savefig.bbox": "tight"}, "calls": [
+  {"call": "subplots", "args": [], "kwargs": {"figsize": {"$tuple": [5.0, 3.5]}}, "as": ["fig", "ax"]},
+  {"on": "ax", "call": "plot", "args": [[0, 1, 2], [0, 1, 4]]},
+  {"on": "ax", "call": "text", "args": [2.0, 4.0, "this text reaches far out to the right of the figure"], "kwargs": {"fontsize": 14}},
+  {"on": "ax", "call": "text", "args": [-0.4, -1.5, "and this one below, to the left"], "kwargs": {"rotation": 20}},
+  {"on": "ax", "call": "text", "args": [1.0, 9.0, "clipped: it does not count"], "kwargs": {"clip_on": true}},
+  {"on": "ax", "call": "text", "args": [1.0, 12.0, "hidden: it does not count"], "kwargs": {"visible": false}},
+  {"on": "ax", "call": "text", "args": [-5.0, 2.0, ""]},
+  {"on": "ax", "call": "text", "args": [{"$float": "nan"}, 2.0, "nowhere"]}
+]}

@@ -1,0 +1,1 @@
+{"version": 1, "calls": [{"call": "subplots", "as": ["fig", "ax"]}, {"on": "ax", "call": "loglog"}, {"on": "ax", "call": "set_yticks", "args": [[1]]}, {"on": "ax", "call": "axhspan", "args": [0.829, 0.829]}]}

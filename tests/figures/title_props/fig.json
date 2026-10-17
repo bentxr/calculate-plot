@@ -1,0 +1,12 @@
+{"version": 1, "calls": [
+  {"call": "subplots", "args": [2, 3], "kwargs": {"figsize": {"$tuple": [10.0, 6.0]}}, "as": ["fig", "axs"]},
+  {"on": "axs[0, 0]", "call": "set_title", "args": ["big red bold"], "kwargs": {"fontsize": 16, "color": "red", "fontweight": "bold"}},
+  {"on": "axs[0, 1]", "call": "set_title", "args": ["italic serif, left"], "kwargs": {"loc": "left", "style": "italic", "family": "serif", "alpha": 0.5}},
+  {"on": "axs[0, 1]", "call": "set_title", "args": ["right, turned"], "kwargs": {"loc": "right", "rotation": 15, "c": "C2", "size": "small"}},
+  {"on": "axs[0, 2]", "call": "set_title", "args": ["moved with x and y"], "kwargs": {"x": 0.3, "y": 0.8, "ha": "left", "va": "top"}},
+  {"on": "axs[1, 0]", "call": "set_title", "args": ["size, then fontsize: the last wins"], "kwargs": {"size": 20, "fontsize": 9, "color": "C0", "c": "C1"}},
+  {"on": "axs[1, 1]", "call": "set_title", "args": ["centre asked to end here"], "kwargs": {"horizontalalignment": "right", "verticalalignment": "center", "pad": 12}},
+  {"on": "axs[1, 1]", "call": "set_title", "args": ["$x$ unparsed, rough"], "kwargs": {"loc": "left", "parse_math": null, "antialiased": null, "y": 0.5}},
+  {"on": "axs[1, 0]", "call": "set_xlabel", "args": ["$y$ unparsed, rough"], "kwargs": {"parse_math": null, "antialiased": null}},
+  {"on": "axs[1, 2]", "call": "set_title", "args": ["$\\frac{a}{b}$ in STIX, two\nlines to the right"], "kwargs": {"math_fontfamily": "stix", "ma": "right", "linespacing": 1.6, "zorder": 0.5, "fontdict": null}}
+]}

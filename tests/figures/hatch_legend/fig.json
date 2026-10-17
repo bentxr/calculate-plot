@@ -1,0 +1,9 @@
+{"version": 1,
+ "calls": [
+  {"call": "subplots", "as": ["fig", "ax"]},
+  {"on": "ax", "call": "fill_between", "args": [[0, 1, 2, 3], [0, 1, 0.5, 2], [2, 3, 3, 4]], "kwargs": {"hatch": "//", "label": "band"}},
+  {"on": "ax", "call": "fill_between", "args": [[0, 1, 2, 3], [-1, -2, -1, -3]], "kwargs": {"hatch": "x", "alpha": 0.5, "color": "C2", "label": "half"}},
+  {"on": "ax", "call": "fill_between", "args": [[0, 1, 2, 3], [4, 5, 4, 5], 6], "kwargs": {"hatch": "o", "edgecolor": "C3", "facecolor": "none", "label": "rings"}},
+  {"on": "ax", "call": "axhspan", "args": [-4, -3.5], "kwargs": {"hatch": "*", "label": "span"}},
+  {"on": "ax", "call": "legend", "kwargs": {"loc": "upper left"}}
+ ]}

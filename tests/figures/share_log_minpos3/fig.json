@@ -1,0 +1,7 @@
+{"version": 1, "calls": [
+  {"call": "subplots", "args": [3, 1], "kwargs": {"sharex": true, "figsize": {"$tuple": [4.0, 6.0]}}, "as": ["fig", "axs"]},
+  {"on": "axs[0]", "call": "plot", "args": [[0, 10, 100], [0, 1, 2]]},
+  {"on": "axs[1]", "call": "plot", "args": [[-1, 0.5, 20], [0, 1, 2]]},
+  {"on": "axs[2]", "call": "scatter", "args": [[0, 3, 40], [0, 1, 2]]},
+  {"on": "axs[0]", "call": "set_xscale", "args": ["log"]}
+]}

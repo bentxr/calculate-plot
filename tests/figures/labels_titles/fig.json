@@ -1,0 +1,7 @@
+{"version": 1, "calls": [
+  {"call": "subplots", "kwargs": {"figsize": {"$tuple": [4.0, 3.0]}}, "as": ["fig", "ax"]},
+  {"on": "ax", "call": "set_title", "args": ["Measured signal"]},
+  {"on": "ax", "call": "set_title", "args": ["(a)"], "kwargs": {"loc": "left"}},
+  {"on": "ax", "call": "set_xlabel", "args": ["time (s)"]},
+  {"on": "ax", "call": "set_ylabel", "args": ["voltage (V)"]}
+]}
