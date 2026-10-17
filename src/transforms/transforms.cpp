@@ -226,8 +226,9 @@ double LogTransform::transform1d(double v) const {
     double out;
     if (base_ == 10) out = support::log10(v);
     else if (base_ == 2) out = std::log2(v);
+    else if (base_ == 2.718281828459045) out = std::log(v);  // (np.e: np.log)
     else out = std::log(v) / std::log(base_);
-    if (v <= 0) out = -1000;
+    if (clip_ && v <= 0) out = -1000;
     return out;
 }
 

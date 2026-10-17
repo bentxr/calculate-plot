@@ -104,8 +104,8 @@ private:
 struct AxisScaleOptions {
     double base = 10, linthresh = 2, linscale = 1;
     std::optional<std::vector<double>> subs;
-    // logit's nonpositive ('mask' unless clip), one_half and use_overline
-    bool clip = false, useOverline = false;
+    // logit's nonpositive ('mask' unless clip), one_half and use_overline; log's nonpositive ('clip' unless not)
+    bool clip = false, useOverline = false, logClip = true;
     std::string oneHalf = "\\frac{1}{2}";
 };
 

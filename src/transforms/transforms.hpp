@@ -106,7 +106,8 @@ bool equal(const Transform& a, const Transform& b);
 // inside BlendedGenericTransform.
 class LogTransform : public Transform {
 public:
-    explicit LogTransform(double base) : base_(base) {}
+    // `clip`: nonpositive='clip' (-1000 for what is not positive); else 'mask' (NaN and -inf stay)
+    explicit LogTransform(double base, bool clip = true) : base_(base), clip_(clip) {}
     Matrix matrix() const override { return {}; }  // get_affine(): IdentityTransform
     bool isAffine() const override { return false; }
     bool isAffine2DBase() const override { return false; }
@@ -117,6 +118,7 @@ public:
 
 private:
     double base_;
+    bool clip_;
 };
 
 // InvertedLogTransform: the base to the power of its coordinate; like LogTransform, one direction of

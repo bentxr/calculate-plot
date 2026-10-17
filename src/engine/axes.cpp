@@ -529,15 +529,19 @@ void Axis::setScale(const std::string& name, const ScaleOptions& options) {
     const bool classic = rc_.boolean("_internal.classic_mode");
     if (name == "log") {  // LogScale.set_default_locators_and_formatters
         logLocator = axes::LogLocator();
+        logLocator.base = options.base;
         logLocator.classic = classic;
         if (classic) logLocator.numticks = 15;
         logMinorLocator = logLocator;
         logMinorLocator.subs.clear();
         logMinorLocator.autoSubs = true;
+        if (options.subs) logMinorLocator.subs = *options.subs, logMinorLocator.autoSubs = false;
         logFormatter = axes::LogFormatterSciNotation();
+        logFormatter.base = options.base;
         logFormatter.minExponent = int(rc_.number("axes.formatter.min_exponent"));
         if (classic) logFormatter.minorThresholds = {0, 0};
         logMinorFormatter = logFormatter;
+        logMinorFormatter.labelOnlyBase = options.subs.has_value();
     } else if (name == "symlog") {  // SymmetricalLogScale.set_default_locators_and_formatters
         symlogLocator = axes::SymmetricalLogLocator();
         symlogLocator.base = options.base, symlogLocator.linthresh = options.linthresh;
@@ -584,7 +588,7 @@ void Axis::setScale(const std::string& name, const ScaleOptions& options) {
 }
 
 transforms::TransformPtr Axis::scaleTransform() const {
-    if (scale_ == "log") return std::make_shared<transforms::LogTransform>(10.0);
+    if (scale_ == "log") return std::make_shared<transforms::LogTransform>(scaleOptions_.base, scaleOptions_.logClip);
     if (scale_ == "symlog")
         return std::make_shared<transforms::SymmetricalLogTransform>(scaleOptions_.base, scaleOptions_.linthresh, scaleOptions_.linscale);
     if (scale_ == "logit") return std::make_shared<transforms::LogitTransform>(scaleOptions_.clip);
@@ -592,13 +596,13 @@ transforms::TransformPtr Axis::scaleTransform() const {
 }
 
 double Axis::scaleForward(double v) const {
-    if (scale_ == "log") return transforms::LogTransform(10.0).transform1d(v);
+    if (scale_ == "log") return transforms::LogTransform(scaleOptions_.base, scaleOptions_.logClip).transform1d(v);
     if (scale_ == "symlog") return transforms::SymmetricalLogTransform(scaleOptions_.base, scaleOptions_.linthresh, scaleOptions_.linscale).transform1d(v);
     if (scale_ == "logit") return transforms::LogitTransform(scaleOptions_.clip).transform1d(v);
     return v;
 }
 double Axis::scaleInverse(double v) const {
-    if (scale_ == "log") return transforms::LogTransform(10.0).inverse1d(v);
+    if (scale_ == "log") return transforms::LogTransform(scaleOptions_.base).inverse1d(v);
     if (scale_ == "symlog") return transforms::SymmetricalLogTransform(scaleOptions_.base, scaleOptions_.linthresh, scaleOptions_.linscale).inverse1d(v);
     if (scale_ == "logit") return transforms::LogitTransform::inverse1d(v);
     return v;
@@ -947,7 +951,7 @@ std::vector<Tick*> Axis::updateTicks() {
         // get_minorticklocs: the minor locations a major one covers go (within this axis' limits)
         const auto locs = axes::withoutMajorTicks(logMinorLocator.tickValues(ownerView[0], ownerView[1]),
                                                   owner.fixedLocs ? *owner.fixedLocs : logLocator.tickValues(ownerView[0], ownerView[1]),
-                                                  view[0], view[1], 10.0);
+                                                  view[0], view[1], scaleOptions_.base);
         logMinorFormatter.setLocs(ownerView[0], ownerView[1]);
         const std::vector<Tick*> minor = minorTicks(locs.size());
         for (std::size_t i = 0; i < locs.size(); ++i) {

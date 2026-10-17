@@ -246,6 +246,8 @@ it comes from in its first lines. The changes, as a whole:
   LogisticTransform, ticker.py's LogitLocator (major and minor, nonsingular, MaxNLocator's view_limits) and
   LogitFormatter (set_locs' choice of minor labels, _format_value, _is_decade), with nonpositive, one_half and
   use_overline.
+  Log scales take base, subs and nonpositive (LogTransform's mask, np.log for base e; the minor formatter labels
+  only bases when subs are given), also through loglog / semilogx / semilogy.
   Bar labels: Axes.bar_label (BarContainer.datavalues, orientation and errorbar kept with the container,
   LineCollection.get_segments, Patch.get_window_extent, Bbox.intersection) and cbook._auto_format_str, with
   Python's % formatting and str.format of one number ported in src/support/pyformat.cpp (our own code: the

@@ -1459,8 +1459,11 @@ TEST(SubplotCalls, AxesAtARect) {
     EXPECT_EQ(error(R"({"call": "axes", "args": [[0.1, 0.1, 0.5, 0.5]], "kwargs": {"facecolor": "r"}})"),
               "plt.axes: keyword arguments are not supported yet");
     EXPECT_EQ(error(R"({"call": "plot", "args": [[1, 2]]}, {"call": "waitforbuttonpress"})"), "unsupported call: plt.waitforbuttonpress");
-    EXPECT_EQ(draw(kSubplots + R"({"on": "axs[0]", "call": "loglog", "args": [[1, 2]], "kwargs": {"base": 2}})").error,
-              "axs[0].loglog: the keywords of the log scale are not supported yet");
+    EXPECT_EQ(draw(kSubplots + R"({"on": "axs[0]", "call": "loglog", "args": [[1, 2]], "kwargs": {"base": 2}})").error, "");
+    EXPECT_EQ(draw(kSubplots + R"({"on": "axs[0]", "call": "loglog", "args": [[1, 2]], "kwargs": {"basex": 2}})").error,
+              "axs[0].loglog: LogScale.__init__() got an unexpected keyword argument 'basex'");
+    EXPECT_EQ(draw(kSubplots + R"({"on": "axs[0]", "call": "set_xscale", "args": ["log"], "kwargs": {"base": 1}})").error,
+              "axs[0].set_xscale: The log base cannot be <= 0 or == 1");
 }
 
 // bar and barh: their arguments broadcast together; labels one per bar or one for all.

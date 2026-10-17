@@ -901,21 +901,32 @@ private:
         const std::string where = call.on + "." + call.method;
         if (call.method == "loglog" || call.method == "semilogx" || call.method == "semilogy") {
             // set_xscale('log') and / or set_yscale('log') with the scale's keywords, then plot with the rest
+            // (dx: base, subs, nonpositive and their x forms, which LogScale refuses; dy likewise)
             static const char* const scaleKeywords[] = {"base", "subs", "nonpositive", "basex", "subsx", "nonposx",
                                                         "basey", "subsy", "nonposy"};
-            for (const auto& kw : call.kwargs)
-                if (std::find(std::begin(scaleKeywords), std::end(scaleKeywords), kw.first) != std::end(scaleKeywords))
-                    return *error = where + ": the keywords of the log scale are not supported yet", false;
+            const auto isScaleKeyword = [&](const std::string& k) {
+                return std::find(std::begin(scaleKeywords), std::end(scaleKeywords), k) != std::end(scaleKeywords);
+            };
             for (const char* scale : {"set_xscale", "set_yscale"}) {
-                if ((call.method == "semilogx" && scale[4] == 'y') || (call.method == "semilogy" && scale[4] == 'x')) continue;
+                const bool x = scale[4] == 'x';
+                if ((call.method == "semilogx" && !x) || (call.method == "semilogy" && x)) continue;
                 model::Call c;
                 c.on = call.on;
                 c.method = scale;
                 c.args = {Json::string("log")};
+                for (const auto& kw : call.kwargs) {
+                    const std::string& k = kw.first;
+                    if (k == "base" || k == "subs" || k == "nonpositive") c.kwargs.push_back(kw);
+                    else if (k == (x ? "basex" : "basey") || k == (x ? "subsx" : "subsy") || k == (x ? "nonposx" : "nonposy"))
+                        return *error = where + ": LogScale.__init__() got an unexpected keyword argument '" + k + "'", false;
+                }
                 if (!axesCall(ax, c, error)) return false;
             }
             model::Call c = call;
             c.method = "plot";
+            c.kwargs.clear();
+            for (const auto& kw : call.kwargs)
+                if (!isScaleKeyword(kw.first)) c.kwargs.push_back(kw);
             return axesCall(ax, c, error);
         }
         if (call.method == "set_xticks" || call.method == "set_yticks") {
@@ -1250,6 +1261,19 @@ private:
                 if (name == "symlog" && (key == "base" || key == "linthresh" || key == "linscale")) {
                     if (!readNumber(value, &n)) return *error = where + ": " + key + " must be a number", false;
                     (key == "base" ? options.base : key == "linthresh" ? options.linthresh : options.linscale) = n;
+                } else if (name == "log" && key == "base") {
+                    if (!readNumber(value, &n)) return *error = where + ": base must be a number", false;
+                    if (n <= 0 || n == 1) return *error = where + ": The log base cannot be <= 0 or == 1", false;
+                    options.base = n;
+                } else if (name == "log" && key == "subs") {
+                    std::vector<double> subs;
+                    if (value.isNull()) continue;
+                    if (!numbers(value, &subs) || subs.empty()) return *error = where + ": subs must be a list of numbers or None", false;
+                    options.subs = subs;
+                } else if (name == "log" && key == "nonpositive") {
+                    if (!value.isString() || (value.asString() != "mask" && value.asString() != "clip"))
+                        return *error = where + ": " + repr(value) + " is not a valid value for nonpositive; supported values are 'clip', 'mask'", false;
+                    options.logClip = value.asString() == "clip";
                 } else if (name == "logit" && key == "nonpositive") {
                     if (!value.isString() || (value.asString() != "mask" && value.asString() != "clip"))
                         return *error = where + ": " + repr(value) + " is not a valid value for nonpositive; supported values are 'mask', 'clip'", false;
