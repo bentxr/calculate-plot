@@ -57,7 +57,7 @@ TEST(PyLambda, ValuesAreNumpys) {
             }
         }
     }
-    EXPECT_EQ(checked, 127 * 135);
+    EXPECT_EQ(checked, 138 * 147);
 }
 
 TEST(PyLambda, WhatPythonRaisesIsRefused) {
@@ -86,6 +86,13 @@ TEST(PyLambda, WhatIsNotPortedIsRefused) {
     EXPECT_EQ(error, "np.tanh is not supported");
     EXPECT_FALSE(PyLambda::parse("np.pi", &error));
     EXPECT_EQ(error, "the function does not use x");
+    // what is not understood is named with its position (counted from 1)
+    EXPECT_FALSE(PyLambda::parse("x $ 2", &error));
+    EXPECT_EQ(error, "unexpected $ at position 3");
+    EXPECT_FALSE(PyLambda::parse("x * $", &error));
+    EXPECT_EQ(error, "unexpected $ at position 5");
+    EXPECT_FALSE(PyLambda::parse("x + )", &error));
+    EXPECT_EQ(error, "unexpected ) at position 5");
 }
 
 TEST(PyLambda, KnowsWhetherItUsesNumpy) {
@@ -121,5 +128,5 @@ TEST(PyLambda, MaskedValuesAreNumpys) {
             }
         }
     }
-    EXPECT_EQ(checked, 127 * 135);
+    EXPECT_EQ(checked, 138 * 147);
 }
