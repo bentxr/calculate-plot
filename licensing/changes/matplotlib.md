@@ -242,6 +242,10 @@ it comes from in its first lines. The changes, as a whole:
   Symlog: scale.py's SymmetricalLogScale, SymmetricalLogTransform and its inverse (NumPy's elementwise formulas
   for one value), ticker.py's SymmetricalLogLocator (tick_values, view_limits) and LogFormatter.set_locs' symlog
   branch; set_xscale / set_yscale with base, linthresh, linscale and subs.
+  Logit: scale.py's LogitScale (limit_range_for_scale, val_in_range), LogitTransform (mask, clip) and
+  LogisticTransform, ticker.py's LogitLocator (major and minor, nonsingular, MaxNLocator's view_limits) and
+  LogitFormatter (set_locs' choice of minor labels, _format_value, _is_decade), with nonpositive, one_half and
+  use_overline.
   Bar labels: Axes.bar_label (BarContainer.datavalues, orientation and errorbar kept with the container,
   LineCollection.get_segments, Patch.get_window_extent, Bbox.intersection) and cbook._auto_format_str, with
   Python's % formatting and str.format of one number ported in src/support/pyformat.cpp (our own code: the

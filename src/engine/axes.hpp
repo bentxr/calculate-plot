@@ -104,6 +104,9 @@ private:
 struct AxisScaleOptions {
     double base = 10, linthresh = 2, linscale = 1;
     std::optional<std::vector<double>> subs;
+    // logit's nonpositive ('mask' unless clip), one_half and use_overline
+    bool clip = false, useOverline = false;
+    std::string oneHalf = "\\frac{1}{2}";
 };
 
 class Axis : public Artist {
@@ -165,6 +168,8 @@ public:
     axes::ScalarFormatter formatter;
     axes::LogLocator logLocator, logMinorLocator;
     axes::SymmetricalLogLocator symlogLocator, symlogMinorLocator;
+    axes::LogitLocator logitLocator, logitMinorLocator;
+    axes::LogitFormatter logitFormatter, logitMinorFormatter;
     std::optional<axes::AutoMinorLocator> minorLocator;  // of a linear scale, if rcParams["xtick.minor.visible"]
     axes::LogFormatterSciNotation logFormatter, logMinorFormatter;
     // NullFormatter() set as the major or the minor formatter: no labels, no offset text. The scale's

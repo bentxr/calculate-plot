@@ -55,6 +55,34 @@ private:
     std::optional<std::set<double>> sublabels_;
 };
 
+// LogitLocator(minor): decades towards 0 and 1 (10^-k, 1 - 10^-k) and one half, subsampled to the tick space;
+// minor: the multiples between them; a MaxNLocator of steps 1, 2, 5, 10 when few decades are in view.
+struct LogitLocator {
+    bool minor = false;
+    std::optional<int> tickSpace;                              // the axis' get_tick_space()
+    double minpos = std::numeric_limits<double>::infinity();   // the axis' get_minpos()
+    std::vector<double> tickValues(double vmin, double vmax) const;
+    std::pair<double, double> nonsingular(double vmin, double vmax) const;
+    std::pair<double, double> viewLimits(double vmin, double vmax, bool roundNumbers) const;  // MaxNLocator's
+};
+
+// LogitFormatter(minor, one_half, use_overline): labels as 10^{-k}, 1-10^{-k} and one half, other values with
+// the precision their neighbours need; minor labels only for the best spaced few ticks.
+class LogitFormatter {
+public:
+    bool minor = false, useOverline = false;
+    std::string oneHalf = "\\frac{1}{2}";
+    int minorThreshold = 25, minorNumber = 6;
+    void setLocs(const std::vector<double>& locs);
+    std::string operator()(double x) const;
+
+private:
+    std::string formatValue(double x, const std::vector<double>& locs, bool sciNotation) const;
+    std::string oneMinus(const std::string& s) const { return useOverline ? "\\overline{" + s + "}" : "1-" + s; }
+    std::vector<double> locs_;
+    std::vector<double> labelled_;
+};
+
 // Axis.get_minorticklocs for a log scale: the minor ticks not within 1e-5 of the view (in log space)
 // of a major tick.
 std::vector<double> withoutMajorTicks(const std::vector<double>& minor, const std::vector<double>& major,

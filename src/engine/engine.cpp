@@ -1241,7 +1241,8 @@ private:
             const Json* nameJson = call.args.empty() ? keyword(call, "value") : &call.args[0];
             if (call.args.size() > 1 || !nameJson || !nameJson->isString()) return *error = where + ": give the scale's name", false;
             const std::string name = nameJson->asString();
-            if (name != "linear" && name != "log" && name != "symlog") return *error = where + ": the " + name + " scale is not supported yet", false;
+            if (name != "linear" && name != "log" && name != "symlog" && name != "logit")
+                return *error = where + ": the " + name + " scale is not supported yet", false;
             AxisScaleOptions options;
             for (const auto& [key, value] : call.kwargs) {
                 if (key == "value") continue;
@@ -1249,6 +1250,16 @@ private:
                 if (name == "symlog" && (key == "base" || key == "linthresh" || key == "linscale")) {
                     if (!readNumber(value, &n)) return *error = where + ": " + key + " must be a number", false;
                     (key == "base" ? options.base : key == "linthresh" ? options.linthresh : options.linscale) = n;
+                } else if (name == "logit" && key == "nonpositive") {
+                    if (!value.isString() || (value.asString() != "mask" && value.asString() != "clip"))
+                        return *error = where + ": " + repr(value) + " is not a valid value for nonpositive; supported values are 'mask', 'clip'", false;
+                    options.clip = value.asString() == "clip";
+                } else if (name == "logit" && key == "one_half") {
+                    if (!value.isString()) return *error = where + ": one_half must be a string", false;
+                    options.oneHalf = value.asString();
+                } else if (name == "logit" && key == "use_overline") {
+                    if (!value.isBool()) return *error = where + ": use_overline must be True or False", false;
+                    options.useOverline = value.asBool();
                 } else if (name == "symlog" && key == "subs") {
                     std::vector<double> subs;
                     if (value.isNull()) continue;

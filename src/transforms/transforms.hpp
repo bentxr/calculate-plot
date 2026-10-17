@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <memory>
 #include <optional>
 #include <utility>
@@ -165,6 +166,36 @@ public:
 
 private:
     SymmetricalLogTransform forward_;
+};
+
+// scale.LogitTransform(nonpositive): log10(p / (1 - p)); 'clip' puts what is outside (0, 1) at -1000 and
+// 1000, 'mask' leaves NaN and the infinities; LogisticTransform is its inverse.
+class LogitTransform : public Transform {
+public:
+    explicit LogitTransform(bool clip) : clip_(clip) {}
+    Matrix matrix() const override { return {}; }
+    bool isAffine() const override { return false; }
+    bool isAffine2DBase() const override { return false; }
+    double transform1d(double v) const;
+    static double inverse1d(double v) { return 1.0 / (1 + std::pow(10.0, -v)); }  // 1 / (1 + 10 ** -v)
+    bool clip() const { return clip_; }
+    TransformPtr inverted() const override;
+
+private:
+    bool clip_;
+};
+
+class LogisticTransform : public Transform {
+public:
+    explicit LogisticTransform(bool clip) : clip_(clip) {}
+    Matrix matrix() const override { return {}; }
+    bool isAffine() const override { return false; }
+    bool isAffine2DBase() const override { return false; }
+    double transform1d(double v) const { return LogitTransform::inverse1d(v); }
+    TransformPtr inverted() const override { return std::make_shared<LogitTransform>(clip_); }
+
+private:
+    bool clip_;
 };
 
 class Affine2D : public Transform {

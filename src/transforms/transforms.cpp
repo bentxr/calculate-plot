@@ -211,6 +211,8 @@ std::array<double, 2> BlendedAffine2D::transformNonAffine(double x, double y) co
         if (const auto* power = dynamic_cast<const InvertedLogTransform*>(&t)) return *out = power->transform1d(v), true;
         if (const auto* symlog = dynamic_cast<const SymmetricalLogTransform*>(&t)) return *out = symlog->transform1d(v), true;
         if (const auto* inverse = dynamic_cast<const InvertedSymmetricalLogTransform*>(&t)) return *out = inverse->transform1d(v), true;
+        if (const auto* logit = dynamic_cast<const LogitTransform*>(&t)) return *out = logit->transform1d(v), true;
+        if (const auto* logistic = dynamic_cast<const LogisticTransform*>(&t)) return *out = logistic->transform1d(v), true;
         return false;
     };
     double rx = 0, ry = 0;
@@ -249,6 +251,17 @@ double SymmetricalLogTransform::inverse1d(double v) const {
     const double sign = std::isnan(v) ? v : v > 0 ? 1.0 : v < 0 ? -1.0 : 0.0;
     return sign * linthresh_ * std::exp((absA / linthresh_ - linscaleAdj) * std::log(base_));
 }
+
+double LogitTransform::transform1d(double v) const {
+    double out = support::log10(v / (1 - v));
+    if (clip_) {
+        if (v <= 0) out = -1000;
+        if (1 <= v) out = 1000;
+    }
+    return out;
+}
+
+TransformPtr LogitTransform::inverted() const { return std::make_shared<LogisticTransform>(clip_); }
 
 TransformPtr SymmetricalLogTransform::inverted() const {
     return std::make_shared<InvertedSymmetricalLogTransform>(base_, linthresh_, linscale_);

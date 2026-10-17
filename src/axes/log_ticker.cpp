@@ -13,6 +13,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
 #include <tuple>
 
 namespace calculate_plot::axes {
@@ -303,6 +304,165 @@ std::string LogFormatterSciNotation::operator()(double x) const {
                std::to_string((long long)e) + "}}$";
     }
     return "$\\mathdefault{" + sign + baseText + "^{" + std::to_string((long long)fx) + "}}$";
+}
+
+namespace {
+
+// _is_decade(x, rtol): log10 of |x| close to an integer (np.isclose with atol 1e-8)
+bool isDecade(double x, double rtol) {
+    if (!std::isfinite(x)) return false;
+    if (x == 0.0) return true;
+    const double lx = std::log(std::fabs(x)) / std::log(10.0);
+    const double r = std::nearbyint(lx);
+    return std::fabs(lx - r) <= 1e-8 + rtol * std::fabs(r);
+}
+
+}  // namespace
+
+std::pair<double, double> LogitLocator::nonsingular(double vmin, double vmax) const {
+    const double standardMinpos = 1e-7;
+    if (vmin > vmax) std::swap(vmin, vmax);
+    if (!std::isfinite(vmin) || !std::isfinite(vmax) || vmax <= 0 || vmin >= 1) {
+        // the initial range (no data yet, or none between 0 and 1: matplotlib warns)
+        vmin = standardMinpos, vmax = 1 - standardMinpos;
+    } else {
+        double mp = minpos;
+        if (!std::isfinite(mp)) mp = standardMinpos;
+        if (vmin <= 0) vmin = mp;
+        if (vmax >= 1) vmax = 1 - mp;
+        if (vmin == vmax) {  // (both from the old vmin)
+            const double v = vmin;
+            vmin = 0.1 * v, vmax = 1 - 0.1 * v;
+        }
+    }
+    return {vmin, vmax};
+}
+
+std::vector<double> LogitLocator::tickValues(double vmin, double vmax) const {
+    int nbins = 9;
+    if (tickSpace) nbins = *tickSpace < 2 ? 2 : *tickSpace;
+    // ideal_ticks: 10 ** b below, 1 - 10 ** -b above, one half at 0 (Python's int ** negative int is pow)
+    const auto ideal = [](long long b) { return b < 0 ? std::pow(10.0, double(b)) : b > 0 ? 1 - std::pow(10.0, double(-b)) : 0.5; };
+    std::tie(vmin, vmax) = nonsingular(vmin, vmax);
+    const long long binf = (long long)(vmin < 0.5 ? std::floor(support::log10(vmin)) : vmin < 0.9 ? 0 : -std::ceil(support::log10(1 - vmin)));
+    const long long bsup = (long long)(vmax <= 0.5 ? std::ceil(support::log10(vmax)) : vmax <= 0.9 ? 1 : -std::floor(support::log10(1 - vmax)));
+    const long long numideal = bsup - binf - 1;
+    std::vector<double> ticklocs;
+    if (numideal >= 2) {
+        if (numideal > nbins) {
+            const long long factor = (long long)std::ceil(double(numideal) / double(nbins));
+            for (long long b = binf; b <= bsup; ++b)
+                if ((pyMod(b, factor) != 0) == minor) ticklocs.push_back(ideal(b));
+            return ticklocs;
+        }
+        if (minor) {
+            for (long long b = binf; b < bsup; ++b) {
+                if (b < -1) {
+                    for (int k = 2; k < 10; ++k) ticklocs.push_back(double(k) * std::pow(10.0, double(b)));
+                } else if (b == -1) {
+                    for (int k = 2; k < 5; ++k) ticklocs.push_back(double(k) / 10);
+                } else if (b == 0) {
+                    for (int k = 6; k < 9; ++k) ticklocs.push_back(double(k) / 10);
+                } else {
+                    for (int k = 9; k >= 2; --k) ticklocs.push_back(1 - double(k) * std::pow(10.0, double(-b - 1)));
+                }
+            }
+            return ticklocs;
+        }
+        for (long long b = binf; b <= bsup; ++b) ticklocs.push_back(ideal(b));
+        return ticklocs;
+    }
+    if (minor) return {};
+    MaxNLocator m;
+    m.nbins = 0;  // 'auto'
+    m.setSteps({1, 2, 5, 10});
+    m.tickSpace = tickSpace;
+    return m.tickValues(vmin, vmax);
+}
+
+std::pair<double, double> LogitLocator::viewLimits(double vmin, double vmax, bool roundNumbers) const {
+    MaxNLocator m;
+    m.nbins = 0;
+    m.setSteps({1, 2, 5, 10});
+    m.tickSpace = tickSpace;
+    m.roundNumbers = roundNumbers;
+    return m.viewLimits(vmin, vmax);
+}
+
+void LogitFormatter::setLocs(const std::vector<double>& locs) {
+    locs_ = locs;
+    labelled_.clear();
+    if (!minor) return;
+    const auto special = [](double x) {
+        const double two = 2 * x;
+        return isDecade(x, 1e-7) || isDecade(1 - x, 1e-7) || (isCloseToInt(two) && (long long)std::nearbyint(two) == 1);
+    };
+    if (std::all_of(locs.begin(), locs.end(), special)) return;
+    if ((int)locs.size() >= minorThreshold) return;
+    if ((int)locs.size() < minorNumber) {
+        labelled_ = locs;
+        return;
+    }
+    // the ticks with the most room on their tighter side (then in all): diff of -log(1 / x - 1)
+    const std::size_t n = locs.size();
+    std::vector<double> diff;
+    for (std::size_t i = 0; i + 1 < n; ++i) diff.push_back(-std::log(1 / locs[i + 1] - 1) - -std::log(1 / locs[i] - 1));
+    const double inf = std::numeric_limits<double>::infinity();
+    std::vector<double> pessimistic(n), sum(n);
+    for (std::size_t i = 0; i < n; ++i) {
+        const double before = i == 0 ? inf : diff[i - 1], after = i + 1 == n ? inf : diff[i];
+        pessimistic[i] = std::min(before, after);  // np.minimum (NaN-propagating; none here)
+        sum[i] = (i == 0 ? 0 : diff[i - 1]) + (i + 1 == n ? 0 : diff[i]);
+    }
+    std::vector<std::size_t> order(n);
+    for (std::size_t i = 0; i < n; ++i) order[i] = i;
+    std::stable_sort(order.begin(), order.end(), [&](std::size_t a, std::size_t b) {
+        return pessimistic[a] < pessimistic[b] || (pessimistic[a] == pessimistic[b] && sum[a] < sum[b]);
+    });
+    for (std::size_t k = n - std::size_t(minorNumber); k < n; ++k) labelled_.push_back(locs[order[k]]);
+}
+
+std::string LogitFormatter::formatValue(double x, const std::vector<double>& locs, bool sciNotation) const {
+    long long exponent = 0;
+    int minPrecision = 1;
+    if (sciNotation) exponent = (long long)std::floor(support::log10(x)), minPrecision = 0;
+    // x * 10 ** -exponent: an int when the power is not negative
+    const double value = -exponent >= 0 ? x * std::pow(10.0, double(-exponent)) : x * std::pow(10.0, double(-exponent));
+    int precision = minPrecision;
+    if (locs.size() >= 2) {
+        std::vector<double> d;
+        for (double l : locs) d.push_back(std::fabs(l - x));
+        std::sort(d.begin(), d.end());
+        double p = -support::log10(d[1]) + double(exponent);
+        precision = isCloseToInt(p) ? int(std::nearbyint(p)) : int(std::ceil(p));
+        if (precision < minPrecision) precision = minPrecision;
+    }
+    char mantissa[512];
+    std::snprintf(mantissa, sizeof mantissa, "%.*f", precision, value);
+    if (!sciNotation) return mantissa;
+    return std::string(mantissa) + "\\cdot10^{" + std::to_string(exponent) + "}";
+}
+
+std::string LogitFormatter::operator()(double x) const {
+    if (minor && std::find(labelled_.begin(), labelled_.end(), x) == labelled_.end()) return "";
+    if (x <= 0 || x >= 1) return "";
+    std::string s;
+    if (isCloseToInt(2 * x) && std::nearbyint(2 * x) == 1) {
+        s = oneHalf;
+    } else if (x < 0.5 && isDecade(x, 1e-7)) {
+        s = "10^{" + std::to_string((long long)std::nearbyint(support::log10(x))) + "}";
+    } else if (x > 0.5 && isDecade(1 - x, 1e-7)) {
+        s = oneMinus("10^{" + std::to_string((long long)std::nearbyint(support::log10(1 - x))) + "}");
+    } else if (x < 0.1) {
+        s = formatValue(x, locs_, true);
+    } else if (x > 0.9) {
+        std::vector<double> complement;
+        for (double l : locs_) complement.push_back(1 - l);
+        s = oneMinus(formatValue(1 - x, complement, true));
+    } else {
+        s = formatValue(x, locs_, false);
+    }
+    return "$\\mathdefault{" + s + "}$";
 }
 
 std::vector<double> withoutMajorTicks(const std::vector<double>& minor, const std::vector<double>& major,
