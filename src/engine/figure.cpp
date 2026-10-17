@@ -6,6 +6,8 @@
 
 #include "engine/figure.hpp"
 
+#include "support/raised.hpp"
+
 #include "engine/axes.hpp"
 #include "engine/text.hpp"
 
@@ -48,8 +50,12 @@ Figure::Figure(const rc::Params& rc, const FigureOptions& o) : Artist(rc), subpl
 
 Figure::~Figure() = default;
 
-std::vector<Axes*> Figure::subplots(int nrows, int ncols, const std::string& sharex, const std::string& sharey) {
+std::vector<Axes*> Figure::subplots(int nrows, int ncols, const std::string& sharex, const std::string& sharey, const GridSpec* ratios) {
     gridspecs.push_back(std::make_unique<GridSpec>(nrows, ncols));
+    if (ratios) {  // width_ratios / height_ratios
+        gridspecs.back()->widthRatios = ratios->widthRatios, gridspecs.back()->widthRatiosInt = ratios->widthRatiosInt;
+        gridspecs.back()->heightRatios = ratios->heightRatios, gridspecs.back()->heightRatiosInt = ratios->heightRatiosInt;
+    }
     const GridSpec& gs = *gridspecs.back();
     std::vector<Axes*> out;
     // GridSpecBase.subplots: each Axes shares with the first one of the grid, of its row or of its column
@@ -113,6 +119,17 @@ void Figure::draw(Renderer& renderer) {
         for (auto& child : ax->childAxes) child->applyAspect();
     }
     renderer.openGroup("figure", gid);
+    // the layout engine places the Axes (a ValueError it raises is ignored there)
+    if (!axes.empty() && layoutEngine && !layoutOff) {
+        std::string error;
+        if (layoutEngine->kind == LayoutEngine::Kind::Constrained) {
+            if (!executeConstrainedLayout(*this, renderer, layoutEngine->constrained, &error)) support::noteRaised(error);
+        } else if (layoutEngine->kind == LayoutEngine::Kind::Tight) {
+            // TightLayoutEngine.execute: get_tight_layout_figure, then subplots_adjust with what it gives
+            if (const auto adjustment = tightLayoutParameters(*this, renderer, layoutEngine->tight))
+                if (!subplotsAdjust(*this, *adjustment, &error)) support::noteRaised(error);
+        }
+    }
     patch->draw(renderer);
     for (Artist* a : artists) a->draw(renderer);
     renderer.closeGroup("figure");
@@ -247,6 +264,19 @@ private:
     transforms::BboxPtr boxout_;
 };
 
+// print_figure's figure._cm_set(layout_engine='none') while it prints: the layout is not done again
+class LayoutOff {
+public:
+    explicit LayoutOff(Figure& figure) : figure_(figure), was_(figure.layoutOff) { figure.layoutOff = true; }
+    ~LayoutOff() { figure_.layoutOff = was_; }
+    LayoutOff(const LayoutOff&) = delete;
+    LayoutOff& operator=(const LayoutOff&) = delete;
+
+private:
+    Figure& figure_;
+    bool was_;
+};
+
 // The tight box of the figure as `renderer` measures it, grown by the pad (Bbox.padded), in inches.
 std::array<double, 4> paddedTightBbox(Figure& figure, Renderer& renderer, double pad) {
     const auto p = figure.tightbbox(renderer).points();
@@ -266,15 +296,20 @@ std::string drawAggTrace(Figure& figure, const std::string& locale, const std::s
         return AggTraceRenderer(size[0], size[1], figure.dpi, figure.rc(), locale, fontDirectory);
     };
     std::optional<AdjustedBbox> adjusted;
-    if (o.tight) {
-        // The figure becomes its tight box, measured with the renderer of the save. (matplotlib
-        // first draws the figure with drawing disabled to place the artists; get_tightbbox places
-        // what it measures, so nothing here depends on that draw.)
+    if (figure.layoutEngine || o.tight) {
+        // print_figure draws the figure once with drawing disabled, with the renderer of the save: its layout
+        // engine places the Axes there. Then a tight save makes the figure its tight box.
         AggTraceRenderer layout = renderer();
-        const auto inches = paddedTightBbox(figure, layout, o.pad);
+        figure.draw(layout);
         if (!layout.error().empty()) return *error = layout.error(), std::string();
-        adjusted.emplace(figure, inches);
+        if (!support::raised().empty()) return *error = support::raised(), std::string();
+        if (o.tight) {
+            const auto inches = paddedTightBbox(figure, layout, o.pad);
+            if (!layout.error().empty()) return *error = layout.error(), std::string();
+            adjusted.emplace(figure, inches);
+        }
     }
+    const LayoutOff off(figure);  // (the layout is done)
     AggTraceRenderer final = renderer();
     final.clear();
     figure.draw(final);
@@ -308,15 +343,22 @@ std::string drawSvgTrace(Figure& figure, const std::string& locale, const std::s
         return SvgTraceRenderer(inches[2] * 72, inches[3] * 72, dpi, figure.rc(), locale, fontDirectory, metadata, hashsalt);
     };
     std::optional<AdjustedBbox> adjusted;
-    if (o.tight) {
+    if (figure.layoutEngine || o.tight) {
         // print_figure gets its renderer from print_svg, which leaves the figure at 72 dpi: the
-        // artists are measured there (FigureCanvasSVG.fixed_dpi is 72)
+        // figure is drawn with drawing disabled (its layout engine placing the Axes) and measured there
+        // (FigureCanvasSVG.fixed_dpi is 72)
         SvgTraceRenderer layout = renderer();
-        const auto inches = paddedTightBbox(figure, layout, o.pad);
+        figure.draw(layout);
         if (!layout.error().empty()) return *error = layout.error(), std::string();
-        adjusted.emplace(figure, inches);
+        if (!support::raised().empty()) return *error = support::raised(), std::string();
+        if (o.tight) {
+            const auto inches = paddedTightBbox(figure, layout, o.pad);
+            if (!layout.error().empty()) return *error = layout.error(), std::string();
+            adjusted.emplace(figure, inches);
+        }
         figure.setDpi(o.dpi);  // print_figure sets the dpi again before printing
     }
+    const LayoutOff off(figure);  // (the layout is done)
     SvgTraceRenderer final = renderer();
     figure.draw(final);
     *error = final.error();

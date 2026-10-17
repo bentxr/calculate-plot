@@ -169,9 +169,7 @@ const std::vector<std::string>& Params::inertKeys() {
         "axes3d.depthshade_minalpha", "axes3d.grid", "axes3d.mouserotationstyle", "axes3d.snap_rotation",
         "axes3d.trackballborder", "axes3d.trackballsize", "axes3d.xaxis.panecolor", "axes3d.yaxis.panecolor",
         "axes3d.zaxis.panecolor", "backend_fallback", "contour.algorithm", "contour.corner_mask", "contour.linewidth",
-        "contour.negative_linestyle", "docstring.hardcopy", "figure.constrained_layout.h_pad",
-        "figure.constrained_layout.hspace", "figure.constrained_layout.w_pad", "figure.constrained_layout.wspace",
-        "figure.frameon", "figure.labelsize", "figure.labelweight", "figure.max_open_warning", "figure.raise_window",
+        "contour.negative_linestyle", "docstring.hardcopy", "figure.frameon", "figure.labelsize", "figure.labelweight", "figure.max_open_warning", "figure.raise_window",
         "image.aspect", "image.composite_image", "image.interpolation",
         "image.interpolation_stage", "image.lut", "image.origin", "image.resample", "interactive", "keymap.back",
         "keymap.copy", "keymap.forward", "keymap.fullscreen", "keymap.grid", "keymap.grid_minor", "keymap.help",
@@ -187,8 +185,7 @@ const std::vector<std::string>& Params::inertKeys() {
 
 const std::vector<std::string>& Params::unsupportedKeys() {
     static const std::vector<std::string> keys = {
-        "axes.formatter.use_locale", "backend", "date.converter", "date.epoch",
-        "figure.autolayout", "figure.constrained_layout.use", "figure.hooks", "font.enable_last_resort",
+        "axes.formatter.use_locale", "backend", "date.converter", "date.epoch", "figure.hooks", "font.enable_last_resort",
         "path.effects", "path.sketch", "path.snap", "text.hinting_factor", "text.kerning_factor", "text.usetex",
         "timezone"};
     return keys;

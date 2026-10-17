@@ -67,7 +67,7 @@ either drawn as Matplotlib draws it, or not at all.
 
 | Kind | Calls |
 |---|---|
-| Figures and layout | `figure`, `subplots`, `add_subplot`, `add_axes`, `subplots_adjust`, `tight_layout`, `suptitle`, `text`, shared axes, `twinx`, `twiny`, `secondary_xaxis`, `secondary_yaxis`, `inset_axes`, `indicate_inset_zoom`, `set_aspect` |
+| Figures and layout | `figure`, `subplots`, `add_subplot`, `add_axes`, `subplots_adjust`, `tight_layout`, the constrained, compressed and tight layout engines, `suptitle`, `text`, shared axes, `twinx`, `twiny`, `secondary_xaxis`, `secondary_yaxis`, `inset_axes`, `indicate_inset_zoom`, `set_aspect` |
 | Lines and markers | `plot` (with format strings), `step`, `scatter`, `errorbar`, `axhline`, `axvline`, `hlines`, `vlines` |
 | Areas | `fill`, `fill_between`, `fill_betweenx`, `stairs`, `axhspan`, `axvspan`, `Polygon` |
 | Statistics | `bar`, `barh`, `bar_label`, `hist` (every histogram type and bin rule), `boxplot`, `violinplot`, `stem` |

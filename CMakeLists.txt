@@ -69,6 +69,7 @@ add_library(calculate-plot STATIC
     src/engine/engine.cpp
     src/engine/figure.cpp
     src/engine/tight_layout.cpp
+    src/engine/constrained_layout.cpp
     src/engine/gc.cpp
     src/engine/gridspec.cpp
     src/engine/hatch.cpp
@@ -120,8 +121,7 @@ target_include_directories(calculate-plot
     PUBLIC  ${PROJECT_SOURCE_DIR}/include
     PRIVATE ${PROJECT_SOURCE_DIR}/src)
 # Matplotlib's renderer, ported: its headers keep upstream's style, so they are system headers here,
-# and the files that instantiate its templates get the warnings matplotlib's own build accepts.
-target_include_directories(calculate-plot SYSTEM PRIVATE ${PROJECT_SOURCE_DIR}/src/agg)
+target_include_directories(calculate-plot SYSTEM PRIVATE ${PROJECT_SOURCE_DIR}/src/agg ${PROJECT_SOURCE_DIR}/extern/kiwi)
 set_source_files_properties(src/agg/backend_agg.cpp src/render/replay.cpp src/text/ft2font.cpp src/text/text_render.cpp
     src/svg/svg_renderer.cpp src/render/svg_replay.cpp
     PROPERTIES COMPILE_OPTIONS

@@ -341,8 +341,6 @@ TEST(RcParams, KeysThatAreNotHonouredYetTakeOnlyTheirDefault) {
     const std::pair<const char*, const char*> other[] = {
         {"axes.formatter.use_locale", "true"},
         {"date.converter", "\"concise\""},
-        {"figure.autolayout", "true"},
-        {"figure.constrained_layout.use", "true"},
         {"figure.hooks", "[\"os:getcwd\"]"},
         {"font.enable_last_resort", "false"},
         {"path.effects", "[1]"},
@@ -367,10 +365,9 @@ TEST(RcParams, KeysThatAreNotHonouredYetTakeOnlyTheirDefault) {
     }
     Params p = Params::defaults();
     std::string error;
-    EXPECT_TRUE(p.set("figure.autolayout", json("\"no\""), &error)) << error;
     EXPECT_TRUE(p.set("path.sketch", json("\"None\""), &error)) << error;
-    EXPECT_FALSE(p.set("figure.autolayout", json("\"maybe\""), &error));
-    EXPECT_EQ(error, "the value given for figure.autolayout is not valid: cannot convert the value to bool");
+    EXPECT_FALSE(p.set("path.snap", json("\"maybe\""), &error));
+    EXPECT_EQ(error, "the value given for path.snap is not valid: cannot convert the value to bool");
     // a value of another kind than the default is not the default
     EXPECT_FALSE(p.set("text.kerning_factor", json("0"), &error));
     EXPECT_EQ(error, "rcParams[\"text.kerning_factor\"] is not supported yet");
@@ -391,7 +388,7 @@ TEST(RcParams, KeysThatAreNotHonouredYetTakeOnlyTheirDefault) {
 TEST(RcParams, KeysOfWhatIsNotDrawnTakeWhatMatplotlibTakes) {
     Params p = Params::defaults();
     std::string error;
-    EXPECT_EQ(Params::inertKeys().size(), 87u);
+    EXPECT_EQ(Params::inertKeys().size(), 83u);
     // (boxplot's keys are read now; they still take any value their validators take)
     EXPECT_TRUE(p.set("boxplot.whiskers", json("[5, 95]"), &error)) << error;
     EXPECT_TRUE(p.set("boxplot.whiskers", json("2.5"), &error)) << error;

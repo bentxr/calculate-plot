@@ -1,0 +1,1 @@
+{"version": 1, "calls": [{"call": "subplots", "args": [2, 2], "kwargs": {"layout": "tight", "figsize": {"$tuple": [5.0, 4.0]}}, "as": ["fig", "axs"]}, {"on": "axs[0, 0]", "call": "plot", "args": [[0, 1, 2, 3], [1, 1, 3, 2]]}, {"on": "axs[1, 1]", "call": "plot", "args": [[0, 1, 2, 3], [1, 100, 3, 2]]}, {"on": "axs[0, 1]", "call": "set_title", "args": ["tight engine"]}]}

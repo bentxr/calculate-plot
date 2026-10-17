@@ -114,6 +114,13 @@ All rights reserved. Used under the BSD 3-Clause licence, which applies to all o
 (LICENSES/dateutil.txt; changes: licensing/changes/dateutil.md).
 
 
+kiwisolver 1.5.1
+----------------
+The constraint solver of the constrained layout is kiwisolver's C++ core:
+Copyright (c) 2013-2026, Nucleic Development Team. All rights reserved.
+Used under the BSD 3-Clause licence (LICENSES/kiwisolver.txt; changes: licensing/changes/kiwisolver.md).
+
+
 cycler 0.12.1
 -------------
 The algebra of property cycles is translated from cycler: Copyright (c) 2015, matplotlib project.

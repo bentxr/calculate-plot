@@ -1876,3 +1876,42 @@ INSTANTIATE_TEST_SUITE_P(
         // the limits through the function: NaN at the limits with margins (-0.05, 1.05) when the Axes is drawn
         Refusal{R"j({"on": "axs[0]", "call": "plot", "args": [[0, 1], [0, 1]]}, {"on": "axs[0]", "call": "secondary_yaxis", "args": ["right", {"$tuple": [{"$lambda": "np.sqrt(x)"}, {"$lambda": "x ** 2"}]}]})j",
                 "Axis limits cannot be NaN or Inf"}));
+
+// Layout engines: what Figure and set_layout_engine refuse, and what is not ported
+class LayoutEngineRefusals : public testing::TestWithParam<Refusal> {};
+
+TEST_P(LayoutEngineRefusals, NameTheCallAndTheReason) {
+    const auto drawing = draw(GetParam().call);
+    EXPECT_EQ(drawing.error, GetParam().error);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    Engine, LayoutEngineRefusals,
+    testing::Values(
+        Refusal{R"({"call": "subplots", "kwargs": {"layout": "loose"}, "as": ["fig", "ax"]})",
+                "plt.subplots: Invalid value for 'layout': 'loose'"},
+        Refusal{R"({"call": "figure", "kwargs": {"layout": 3}})", "plt.figure: a layout engine object is not supported yet"},
+        Refusal{R"({"call": "subplots", "kwargs": {"constrained_layout": "yes"}, "as": ["fig", "ax"]})",
+                "plt.subplots: constrained_layout must be True, False or a dict"},
+        Refusal{R"({"call": "subplots", "kwargs": {"constrained_layout": {"$dict": {"pad": 1}}}, "as": ["fig", "ax"]})",
+                "plt.subplots: got an unexpected keyword argument 'pad'"},
+        Refusal{R"({"call": "subplots", "kwargs": {"tight_layout": {"$dict": {"hspace": 1}}}, "as": ["fig", "ax"]})",
+                "plt.subplots: got an unexpected keyword argument 'hspace'"},
+        Refusal{R"({"call": "subplots", "kwargs": {"layout": "constrained"}, "as": ["fig", "ax"]}, {"on": "fig", "call": "set_layout_engine", "args": ["constrained"], "kwargs": {"h_pad": "big"}})",
+                "fig.set_layout_engine: h_pad must be a finite number"},
+        Refusal{R"({"call": "subplots", "args": [1, 2], "kwargs": {"width_ratios": [1, 2, 3]}, "as": ["fig", "axs"]})",
+                "plt.subplots: Expected the given number of width ratios to match the number of columns of the grid"},
+        Refusal{R"({"call": "subplots", "args": [2, 1], "kwargs": {"height_ratios": [1, -2]}, "as": ["fig", "axs"]})",
+                "plt.subplots: height ratios must be positive numbers"}));
+
+// A figure with the constrained layout ignores subplots_adjust; tight_layout() replaces the engine
+TEST(LayoutEngineCalls, SubplotsAdjustIsIgnoredUnderTheConstrainedLayout) {
+    EXPECT_EQ(draw(R"({"call": "subplots", "kwargs": {"layout": "constrained"}, "as": ["fig", "ax"]},
+                     {"on": "fig", "call": "subplots_adjust", "kwargs": {"left": 0.9, "right": 0.1}})")
+                  .error,
+              "");
+    EXPECT_EQ(draw(R"({"call": "subplots", "kwargs": {"layout": "tight"}, "as": ["fig", "ax"]},
+                     {"on": "fig", "call": "subplots_adjust", "kwargs": {"left": 0.9, "right": 0.1}})")
+                  .error,
+              "fig.subplots_adjust: left cannot be >= right");
+}

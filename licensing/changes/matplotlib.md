@@ -266,6 +266,15 @@ it comes from in its first lines. The changes, as a whole:
   secondary_yaxis; the other axis' NullLocator is an empty FixedLocator (the same ticks and limits). Functions
   are figure files' {"$lambda": ...} only (a Transform is refused), and calls on a secondary axis other than
   its labels, tick_params, ticks, colour and alignment are refused.
+  Layout engines: layout_engine.py's ConstrainedLayoutEngine (compress too), TightLayoutEngine and
+  PlaceHolderLayoutEngine, Figure.set_layout_engine and the layout, constrained_layout and tight_layout
+  keywords of Figure, run by Figure.draw; print_figure's draw with drawing disabled before a save (the layout
+  done there, then turned off while printing). _constrained_layout.py (do_constrained_layout,
+  make_layoutgrids for the figure and its gridspecs, get_margin_from_padding, make_layout_margins,
+  make_margin_suptitles for the suptitle, match_submerged_margins, check_no_collapsed_axes, reposition_axes,
+  compress_fixed_aspect, reset_margins) and _layoutgrid.py's LayoutGrid, over kiwisolver's C++ solver with the
+  expressions built as kiwisolver's Python module builds them. Not ported: subfigures, colorbars, figure
+  legends, supxlabel / supylabel, nested gridspecs, Axes out of the layout.
   Bar labels: Axes.bar_label (BarContainer.datavalues, orientation and errorbar kept with the container,
   LineCollection.get_segments, Patch.get_window_extent, Bbox.intersection) and cbook._auto_format_str, with
   Python's % formatting and str.format of one number ported in src/support/pyformat.cpp (our own code: the

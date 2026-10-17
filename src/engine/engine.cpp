@@ -625,10 +625,131 @@ private:
                 return false;
             }
             options.frameon = value.asBool();
+        } else if (name == "layout" || name == "constrained_layout" || name == "tight_layout") {
+            (name == "layout" ? layoutKeywords_.layout : name == "tight_layout" ? layoutKeywords_.tight : layoutKeywords_.constrained) = &value;
         } else {
             *error = where + ": unsupported keyword " + name;
             return false;
         }
+        return true;
+    }
+
+    // Figure.__init__'s layout, constrained_layout and tight_layout keywords (read after the others)
+    struct LayoutKeywords {
+        const Json* layout = nullptr;
+        const Json* constrained = nullptr;
+        const Json* tight = nullptr;
+    };
+    LayoutKeywords layoutKeywords_;
+
+    bool figureLayout(const std::string& where, std::string* error) {
+        const LayoutKeywords k = layoutKeywords_;
+        layoutKeywords_ = LayoutKeywords();
+        const auto given = [](const Json* v) { return v && !v->isNull(); };
+        const auto dictItems = [](const Json& v) {
+            std::vector<std::pair<std::string, const Json*>> items;
+            for (const auto& [key, value] : v.members()[0].second.members()) items.emplace_back(key, &value);
+            return items;
+        };
+        const auto isDict = [](const Json& v) { return v.isObject() && v.members().size() == 1 && v.members()[0].first == "$dict"; };
+        if (given(k.layout)) return setLayoutEngine(k.layout, {}, false, where, error);
+        if (given(k.tight)) {  // (tight_layout=False too sets the tight engine)
+            if (!setLayoutEngine(nullptr, {}, false, where, error, "tight")) return false;
+            return !isDict(*k.tight) || setLayoutEngine(nullptr, dictItems(*k.tight), true, where, error, "tight");
+        }
+        if (given(k.constrained)) {
+            if (isDict(*k.constrained))
+                return setLayoutEngine(nullptr, {}, false, where, error, "constrained") &&
+                       setLayoutEngine(nullptr, dictItems(*k.constrained), true, where, error, "constrained");
+            if (!k.constrained->isBool()) return *error = where + ": constrained_layout must be True, False or a dict", false;
+            return !k.constrained->asBool() || setLayoutEngine(nullptr, {}, false, where, error, "constrained");
+        }
+        return setLayoutEngine(nullptr, {}, false, where, error);
+    }
+
+    // Figure.set_layout_engine(layout, **kwargs) (`set`: get_layout_engine().set(**kwargs) on the engine there is,
+    // whose kind is `name`); `name` stands for a layout given as text
+    bool setLayoutEngine(const Json* layout, const std::vector<std::pair<std::string, const Json*>>& kwargs, bool set,
+                         const std::string& where, std::string* error, const std::string& name = std::string()) {
+        Figure& fig = gcf();
+        std::string kind = name;
+        if (kind.empty()) {
+            if (!layout || layout->isNull()) {
+                if (rc_.boolean("figure.autolayout")) kind = "tight";
+                else if (rc_.boolean("figure.constrained_layout.use")) kind = "constrained";
+                else return fig.layoutEngine.reset(), true;
+            } else if (!layout->isString()) {
+                return *error = where + ": a layout engine object is not supported yet", false;
+            } else {
+                kind = layout->asString();
+            }
+        }
+        LayoutEngine e;
+        if (set) e = *fig.layoutEngine;
+        const auto number = [&](const std::string& key, const Json& v, double* out) {
+            if (!readNumber(v, out) || !std::isfinite(*out)) return *error = where + ": " + key + " must be a finite number", false;
+            return true;
+        };
+        const auto rect = [&](const Json& v, std::array<double, 4>* out) {
+            const Json* seq = sequence(v);
+            if (!seq || seq->size() != 4) return *error = where + ": rect must be four numbers", false;
+            for (std::size_t i = 0; i < 4; ++i)
+                if (!number("rect", (*seq)[i], &(*out)[i])) return false;
+            return true;
+        };
+        if (kind == "tight") {
+            if (!set) e = LayoutEngine{LayoutEngine::Kind::Tight, {}, {}, true}, e.tight.rect = std::array<double, 4>{0, 0, 1, 1};
+            for (const auto& [key, value] : kwargs) {
+                if (value->isNull()) continue;  // (None leaves the setting as it is)
+                double n = 0;
+                if (key == "pad") {
+                    if (!number(key, *value, &n)) return false;
+                    e.tight.pad = n;
+                } else if (key == "h_pad" || key == "w_pad") {
+                    if (!number(key, *value, &n)) return false;
+                    (key == "h_pad" ? e.tight.hPad : e.tight.wPad) = n;
+                } else if (key == "rect") {
+                    std::array<double, 4> r{};
+                    if (!rect(*value, &r)) return false;
+                    e.tight.rect = r;
+                } else {
+                    return *error = where + ": got an unexpected keyword argument '" + key + "'", false;
+                }
+            }
+        } else if (kind == "constrained" || kind == "compressed") {
+            if (!set) {
+                e = LayoutEngine{LayoutEngine::Kind::Constrained, {}, {}, false};
+                e.constrained.wPad = rc_.number("figure.constrained_layout.w_pad");
+                e.constrained.hPad = rc_.number("figure.constrained_layout.h_pad");
+                e.constrained.wspace = rc_.number("figure.constrained_layout.wspace");
+                e.constrained.hspace = rc_.number("figure.constrained_layout.hspace");
+                e.constrained.compress = kind == "compressed";
+            }
+            for (const auto& [key, value] : kwargs) {
+                if (key == "compress" && !set && kind == "constrained") {
+                    if (!value->isBool()) return *error = where + ": compress must be True or False", false;
+                    e.constrained.compress = value->asBool();
+                    continue;
+                }
+                if (value->isNull()) continue;
+                double n = 0;
+                if (key == "h_pad" || key == "w_pad" || key == "hspace" || key == "wspace") {
+                    if (!number(key, *value, &n)) return false;
+                    (key == "h_pad" ? e.constrained.hPad : key == "w_pad" ? e.constrained.wPad : key == "hspace" ? e.constrained.hspace
+                                                                                                       : e.constrained.wspace) = n;
+                } else if (key == "rect") {
+                    if (!rect(*value, &e.constrained.rect)) return false;
+                } else {
+                    return *error = where + ": got an unexpected keyword argument '" + key + "'", false;
+                }
+            }
+        } else if (kind == "none") {
+            if (!fig.layoutEngine) return true;
+            e = LayoutEngine{LayoutEngine::Kind::Placeholder, {}, {}, fig.layoutEngine->adjustCompatible};
+        } else {
+            return *error = where + ": Invalid value for 'layout': " + repr(*layout), false;
+        }
+        fig.layoutEngine = e;
         return true;
     }
 
@@ -639,10 +760,12 @@ private:
             return false;
         }
         FigureOptions options;
+        layoutKeywords_ = LayoutKeywords();
         for (const auto& [name, value] : call.kwargs)
             if (!figureKeyword(name, value, options, "plt.figure", error)) return false;
         figure_ = std::make_unique<Figure>(rc_, options);
         if (!figure_->subplotpars.valid(error)) return *error = "plt.figure: " + *error, false;
+        if (!figureLayout("plt.figure", error)) return false;
         axes_.clear();
         figureNames_.clear();
         current_ = nullptr;
@@ -661,6 +784,9 @@ private:
         FigureOptions options;
         bool squeeze = true;
         std::string sharex = "none", sharey = "none";
+        layoutKeywords_ = LayoutKeywords();
+        GridSpec ratios(1, 1);  // (width_ratios and height_ratios: the grid's)
+        const Json* ratioValues[2] = {nullptr, nullptr};
         for (const auto& [name, value] : call.kwargs) {
             if (name == "nrows" || name == "ncols") {
                 // "Number of rows must be a positive integer": an int, not a float that is whole
@@ -679,15 +805,37 @@ private:
                 if (share != "all" && share != "row" && share != "col" && share != "none")
                     return *error = "plt.subplots: " + name + " must be True, False, 'all', 'row', 'col' or 'none'", false;
                 (name == "sharex" ? sharex : sharey) = share;
+            } else if (name == "width_ratios" || name == "height_ratios") {
+                if (!value.isNull()) ratioValues[name == "width_ratios" ? 0 : 1] = &value;
             } else if (!figureKeyword(name, value, options, "plt.subplots", error)) {
                 return false;
             }
         }
         const int nrows = int(grid[0]), ncols = int(grid[1]);
         if (nrows < 1 || ncols < 1) return *error = "plt.subplots: nrows and ncols must be positive", false;
+        // GridSpec.set_width_ratios / set_height_ratios: one positive number for each column (row)
+        for (int k = 0; k < 2; ++k) {
+            if (!ratioValues[k]) continue;
+            const Json* seq = sequence(*ratioValues[k]);
+            const int n = k == 0 ? ncols : nrows;
+            if (!seq || int(seq->size()) != n)
+                return *error = std::string("plt.subplots: Expected the given number of ") + (k == 0 ? "width" : "height") +
+                                " ratios to match the number of " + (k == 0 ? "columns" : "rows") + " of the grid",
+                       false;
+            auto& values = k == 0 ? ratios.widthRatios : ratios.heightRatios;
+            auto& ints = k == 0 ? ratios.widthRatiosInt : ratios.heightRatiosInt;
+            for (const Json& r : seq->items()) {
+                double v = 0;
+                if (!readNumber(r, &v) || !std::isfinite(v) || !(v > 0))
+                    return *error = std::string("plt.subplots: ") + (k == 0 ? "width" : "height") + " ratios must be positive numbers", false;
+                values.push_back(v);
+                ints.push_back(r.isNumber() && r.isInteger());
+            }
+        }
         figure_ = std::make_unique<Figure>(rc_, options);
         if (!figure_->subplotpars.valid(error)) return *error = "plt.subplots: " + *error, false;
-        const std::vector<Axes*> made = figure_->subplots(nrows, ncols, sharex, sharey);
+        if (!figureLayout("plt.subplots", error)) return false;
+        const std::vector<Axes*> made = figure_->subplots(nrows, ncols, sharex, sharey, &ratios);
         axes_.clear();
         figureNames_.clear();
         current_ = made.back();  // (each add_subplot makes its Axes the current one)
@@ -918,6 +1066,8 @@ private:
             for (const char* name : {"x", "y"})
                 if (const Json* v = keyword(call, name); v && !v->isNull() && !readNumber(*v, name[0] == 'x' ? &x : &y))
                     return *error = where + ": " + name + " must be a number", false;
+            const Json* yGiven = keyword(call, "y");
+            const bool autopos = !yGiven || yGiven->isNull();  // (a layout engine places it)
             // normalize_kwargs: every alias as its property (the two together are an error); then the
             // defaults for what is not given, and Figure.text
             static const std::pair<const char*, const char*> aliases[] = {
@@ -954,6 +1104,7 @@ private:
             label->transform = figure_->transSubfigure;
             label->figure = figure_.get();
             figure_->suptitle = label.get();
+            figure_->suptitleAutopos = autopos;
             figure_->texts.push_back(std::move(label));
             return true;
         }
@@ -961,6 +1112,8 @@ private:
             // subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=None, hspace=None)
             const char* names[6] = {"left", "bottom", "right", "top", "wspace", "hspace"};
             if (!keywords(call, {"left", "bottom", "right", "top", "wspace", "hspace"}, error)) return false;
+            // a layout engine that does not take it (the constrained one): a warning, and nothing done
+            if (figure_->layoutEngine && !figure_->layoutEngine->adjustCompatible) return true;
             std::optional<double> v[6];
             for (std::size_t i = 0; i < 6; ++i) {
                 const Json* a = argument(call, i, names[i]);
@@ -1000,7 +1153,20 @@ private:
                 o.rect = rect;
             }
             if (!tightLayout(*figure_, o, options_.locale, options_.fontDirectory, error)) return *error = where + ": " + *error, false;
+            // (the TightLayoutEngine set for it, then set_layout_engine('none'): a placeholder taking subplots_adjust)
+            figure_->layoutEngine = LayoutEngine{LayoutEngine::Kind::Placeholder, {}, {}, true};
             return true;
+        }
+        if (call.method == "set_layout_engine") {
+            // set_layout_engine(layout=None, **kwargs)
+            if (call.args.size() > 1) return *error = where + ": takes one positional argument", false;
+            const Json* layout = argument(call, 0, "layout");
+            std::vector<std::pair<std::string, const Json*>> kwargs;
+            for (const auto& [name, value] : call.kwargs)
+                if (name != "layout") kwargs.emplace_back(name, &value);
+            if (!kwargs.empty() && !(layout && layout->isString()))
+                return *error = where + ": keyword arguments go with a layout given by name", false;
+            return setLayoutEngine(layout, kwargs, false, where, error);
         }
         *error = "unsupported call: " + where;
         return false;

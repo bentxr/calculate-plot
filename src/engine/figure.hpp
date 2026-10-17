@@ -5,6 +5,9 @@
 // Licence: LICENSES/Matplotlib.txt. Changes: licensing/changes/matplotlib.md
 #pragma once
 
+#include "engine/constrained_layout.hpp"
+#include "engine/tight_layout.hpp"
+
 #include "engine/artist.hpp"
 #include "engine/gridspec.hpp"
 #include "engine/trace_renderer.hpp"
@@ -26,6 +29,15 @@ struct FigureOptions {
 
 class Axes;
 
+// The figure's layout engine (Figure.set_layout_engine): constrained (or compressed), tight, or the
+// placeholder that fig.tight_layout() and layout='none' leave
+struct LayoutEngine {
+    enum class Kind { Constrained, Tight, Placeholder } kind = Kind::Placeholder;
+    ConstrainedLayoutParams constrained;
+    TightLayoutOptions tight;
+    bool adjustCompatible = true;  // subplots_adjust is taken (not with the constrained layout)
+};
+
 class Figure : public Artist {
 public:
     Figure(const rc::Params& rc, const FigureOptions& options);
@@ -45,6 +57,9 @@ public:
     std::vector<std::unique_ptr<GridSpec>> gridspecs;  // kept alive for the axes' subplot specs
     std::vector<std::unique_ptr<Artist>> texts;         // figure texts (suptitle)
     Artist* suptitle = nullptr;
+    bool suptitleAutopos = true;  // (its y was not given: a layout places it)
+    std::optional<LayoutEngine> layoutEngine;
+    bool layoutOff = false;  // print_figure's layout_engine='none' while it prints (the layout is done)
 
     // FigureCanvasBase.get_width_height(physical=True): the canvas in whole pixels, int(size + 1e-8)
     // of the figure's box (its upper corner).
@@ -57,7 +72,7 @@ public:
     // Figure.subplots(nrows, ncols, sharex=, sharey=): the axes in row-major order. The sharing is
     // "none", "all", "row" or "col".
     std::vector<Axes*> subplots(int nrows, int ncols, const std::string& sharex = "none",
-                                const std::string& sharey = "none");
+                                const std::string& sharey = "none", const GridSpec* ratios = nullptr);
     // Figure.add_subplot(nrows, ncols, index): an Axes in cells num1 ... num2 (row-major, from 0) of a
     // grid of that shape: the one an Axes of the figure already uses (GridSpec._check_gridspec_exists),
     // or a new one.
