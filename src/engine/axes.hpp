@@ -294,6 +294,18 @@ public:
     void applyAspect();
     bool aspectFrozen = false;  // (adjust_bbox makes apply_aspect a no-op while a tight save draws)
     std::shared_ptr<transforms::Bbox> originalPosition;  // get_position(original=True)
+    // _TransformedBoundsLocator(bounds, transform): the position at draw time, the bounds through the transform
+    // and back from transSubfigure (an inset)
+    struct Locator {
+        std::array<double, 4> bounds;  // x0, y0, width, height
+        transforms::TransformPtr transform;
+    };
+    std::optional<Locator> locator;
+    std::array<double, 4> locatorPosition() const;  // locator(self, renderer).get_points()
+    // inset_axes(bounds, zorder=5): a child Axes (drawn with this one's artists) at bounds in this Axes'
+    // coordinates
+    Axes* insetAxes(const std::array<double, 4>& bounds, double z);
+    std::vector<std::unique_ptr<Axes>> childAxes;
 
     // Axes.set_title(label, loc=, pad=, y=)
     Text& setTitle(const std::string& label, const std::string& loc, std::optional<double> pad, std::optional<double> y);

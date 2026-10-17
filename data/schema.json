@@ -7229,6 +7229,33 @@
    ]
   },
   {
+   "on": "axes",
+   "call": "inset_axes",
+   "parameters": [
+    {
+     "name": "bounds",
+     "positional": true,
+     "valid": "[x0, y0, width, height]",
+     "kind": "other",
+     "required": true
+    },
+    {
+     "name": "transform",
+     "positional": false,
+     "valid": "`.Transform`",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "zorder",
+     "positional": false,
+     "valid": "number",
+     "kind": "other",
+     "default": 5
+    }
+   ]
+  },
+  {
    "on": "axis",
    "call": "set_major_formatter",
    "parameters": [

@@ -959,6 +959,28 @@ private:
             ax.updateTwinnedPatchVisibility();
             return true;
         }
+        if (call.method == "inset_axes") {
+            // inset_axes(bounds, *, transform=None, zorder=5, **kwargs)
+            const Json* b = argument(call, 0, "bounds");
+            const Json* seq = b ? sequence(*b) : nullptr;
+            std::array<double, 4> bounds{};
+            if (!seq || seq->size() != 4) return *error = where + ": bounds must be [x0, y0, width, height]", false;
+            for (std::size_t i = 0; i < 4; ++i)
+                if (!readNumber((*seq)[i], &bounds[i])) return *error = where + ": bounds must be [x0, y0, width, height]", false;
+            if (call.args.size() > 1) return *error = where + ": takes 1 positional argument", false;
+            double z = 5;
+            for (const auto& [name, value] : call.kwargs) {
+                if (name == "bounds") continue;
+                if (name == "zorder") {
+                    if (!readFinite(value, &z)) return *error = where + ": zorder must be a finite number", false;
+                } else if (name == "transform") {
+                    if (!value.isNull()) return *error = where + ": a transform other than None is not supported yet", false;
+                } else {
+                    return *error = where + ": " + name + " is not supported yet", false;
+                }
+            }
+            return nameResult(call, ax.insetAxes(bounds, z), error);
+        }
         if (call.method == "twinx" || call.method == "twiny") {
             for (const auto& [name, value] : call.kwargs)
                 if (!(name == "delta_zorder" && value.isNumber() && value.asNumber() == 0) && !(name == "axes_class" && value.isNull()))

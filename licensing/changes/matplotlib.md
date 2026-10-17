@@ -232,6 +232,9 @@ it comes from in its first lines. The changes, as a whole:
   Twin axes: Axes.twinx / twiny and pyplot's, _make_twin_axes (add_subplot of the same cells, sharex/sharey with
   the other's limits and scale), _update_twinned_axes_patch_visibility; XAxis/YAxis set_ticks_position,
   tick_top/bottom/left/right, set_label_position, set_offset_position and the x offset text on top.
+  Insets: Axes.inset_axes, add_child_axes and _TransformedBoundsLocator (the position at draw time), child Axes
+  drawn among their parent's artists and counted in its tight box, and _update_title_position over the child Axes
+  and twins (the top of an x axis whose ticks or label are on top).
   Bar labels: Axes.bar_label (BarContainer.datavalues, orientation and errorbar kept with the container,
   LineCollection.get_segments, Patch.get_window_extent, Bbox.intersection) and cbook._auto_format_str, with
   Python's % formatting and str.format of one number ported in src/support/pyformat.cpp (our own code: the

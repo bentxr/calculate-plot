@@ -67,7 +67,7 @@ const std::map<std::string, std::string>& leastArguments() {
         {"hlines", "[[1], 0, 1]"},        {"vlines", "[[1], 0, 1]"},        {"set_title", "[\"a\"]"},
         {"set_xlabel", "[\"a\"]"},      {"set_ylabel", "[\"a\"]"},      {"set_xlim", "[]"},
         {"set_ylim", "[]"},           {"set_xscale", "[\"log\"]"},    {"set_yscale", "[\"log\"]"},
-        {"add_axes", "[[0.1, 0.1, 0.8, 0.8]]"}, {"suptitle", "[\"a\"]"},
+        {"add_axes", "[[0.1, 0.1, 0.8, 0.8]]"}, {"suptitle", "[\"a\"]"},  {"inset_axes", "[[0.5, 0.5, 0.4, 0.4]]"},
         {"set_major_formatter", "[{\"$new\": \"NullFormatter\"}]"},
         {"set_minor_formatter", "[{\"$new\": \"NullFormatter\"}]"}};
     return args;

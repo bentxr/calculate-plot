@@ -1102,26 +1102,32 @@ void Axes::updateTitlePosition(Renderer& renderer) {
     if (!autotitlepos_) return;
     Text* titles[3] = {title.get(), leftTitle.get(), rightTitle.get()};
     if (titles[0]->text.empty() && titles[1]->text.empty() && titles[2]->text.empty()) return;
-    // The Axes to clear are this one alone (no twins, children or aligned titles yet): the top of
-    // its x axis when the ticks are on top (or the label: nothing can put it there yet), of its box
-    // otherwise.
+    // The Axes to clear: this one, its child Axes and its twins (no aligned titles yet); the children are
+    // placed first. Of each, the top of its x axis when the ticks or the label are on top, else of its box.
+    std::vector<Axes*> axs{this};
+    for (auto& child : childAxes) axs.push_back(child.get());
+    if (twinned)
+        for (Axes* a : *twinned)
+            if (a != this) axs.push_back(a);
+    for (auto& child : childAxes) child->applyAspect();
     double top = -std::numeric_limits<double>::infinity();
-    {
+    for (Axes* a : axs) {
         std::optional<transforms::Bbox> bb;
-        const std::string ticks = xaxis->ticksPosition();
-        if (ticks == "top" || ticks == "unknown") bb = xaxis->tightbbox(renderer, false);
+        const std::string ticks = a->xaxis->ticksPosition();
+        if (ticks == "top" || ticks == "unknown" || a->xaxis->labelPosition == "top") bb = a->xaxis->tightbbox(renderer, false);
         // ax.spines.get("outline", ax).get_window_extent(): the Axes' own box
-        const auto p = bb ? bb->points() : bbox->points();
+        const auto p = bb ? bb->points() : a->bbox->points();
         const double ymax = std::max(p[1], p[3]);
         if (ymax > top) top = ymax;
     }
     for (Text* t : titles) {
         t->y = 1.0;
-        if (!t->text.empty()) {
-            yaxis->tightbbox(renderer, false);  // updates the offset text
-            if (yaxis->offsetText.visible && !yaxis->offsetText.text.empty()) {
-                // a title that meets the y axis' offset text goes above it
-                const auto bb = yaxis->offsetText.windowExtent(renderer).points();
+        for (Axes* a : t->text.empty() ? std::vector<Axes*>{} : axs) {
+            Axis& ya = *a->yaxis;
+            ya.tightbbox(renderer, false);  // updates the offset text
+            if (ya.offsetText.visible && !ya.offsetText.text.empty()) {
+                // a title that meets a y axis' offset text goes above it
+                const auto bb = ya.offsetText.windowExtent(renderer).points();
                 const auto tb = t->windowExtent(renderer).points();
                 const double x0 = std::max(std::min(tb[0], tb[2]), std::min(bb[0], bb[2]));
                 const double x1 = std::min(std::max(tb[0], tb[2]), std::max(bb[0], bb[2]));
@@ -1589,9 +1595,31 @@ void Axes::setPosition(const transforms::BboxBase& pos) {
     originalPosition->setPoints(pos.points());
 }
 
+std::array<double, 4> Axes::locatorPosition() const {
+    const auto box = std::make_shared<transforms::TransformedBbox>(
+        transforms::Bbox::fromBounds(locator->bounds[0], locator->bounds[1], locator->bounds[2], locator->bounds[3]),
+        transforms::subtract(locator->transform, figure.transSubfigure));
+    return box->points();
+}
+
+Axes* Axes::insetAxes(const std::array<double, 4>& bounds, double z) {
+    // the bounds through the locator once (with no renderer) are its original position
+    Locator loc{bounds, transAxes};
+    const auto box = std::make_shared<transforms::TransformedBbox>(
+        transforms::Bbox::fromBounds(bounds[0], bounds[1], bounds[2], bounds[3]), transforms::subtract(transAxes, figure.transSubfigure));
+    const auto p = box->points();
+    childAxes.push_back(std::make_unique<Axes>(rc_, figure, transforms::Bbox::fromBounds(p[0], p[1], p[2] - p[0], p[3] - p[1]), std::nullopt));
+    Axes* inset = childAxes.back().get();
+    inset->zorder = z;
+    inset->locator = loc;
+    inset->label = "inset_axes";
+    return inset;
+}
+
 void Axes::applyAspect() {
     if (aspectFrozen) return;
-    const auto original = originalPosition->points();
+    // apply_aspect(locator(self, renderer) if locator else None)
+    const auto original = locator ? locatorPosition() : originalPosition->points();
     if (!aspect) {  // 'auto': the original position
         position->setPoints(original);
         return;
@@ -1674,6 +1702,8 @@ std::optional<transforms::Bbox> Axes::tightbbox(Renderer& renderer, bool forLayo
     if (axisOn && frameOn)
         for (auto& s : spines)
             if (s->visible) extra(s->windowExtent());
+    for (auto& child : childAxes)  // (the child Axes come before the legend in get_children)
+        if (child->visible) extra(child->tightbbox(renderer, false));
     if (legend && legend->visible) extra(static_cast<Legend&>(*legend).tightbbox(renderer));
     if (patch->visible) {
         // Patch.get_window_extent: the path's extents (its MOVETO and LINETO vertices) through its transform
@@ -1710,6 +1740,7 @@ void Axes::draw(Renderer& renderer) {
     }
     updateTitlePosition(renderer);
     for (Text* t : {title.get(), leftTitle.get(), rightTitle.get()}) artists.push_back(t);
+    for (auto& child : childAxes) artists.push_back(child.get());
     if (legend) artists.push_back(legend.get());
     std::stable_sort(artists.begin(), artists.end(), [](const Artist* a, const Artist* b) { return a->zorder < b->zorder; });
     if (axisOn && frameOn) artists.insert(artists.begin(), patch.get());
