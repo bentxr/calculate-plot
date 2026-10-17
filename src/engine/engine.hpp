@@ -1,5 +1,6 @@
 #pragma once
 
+#include "engine/navigation.hpp"
 #include "model/figure_model.hpp"
 #include "text/text_render.h"
 
@@ -28,6 +29,16 @@ AggDrawing drawAgg(const model::Figure& figure, const DrawOptions& options);
 // With a canvas of `size` logical pixels, the figure is first resized to it as FigureCanvasQT.resizeEvent does.
 AggDrawing drawScreen(const model::Figure& figure, double ratio, const DrawOptions& options,
                       std::optional<std::array<double, 2>> size = std::nullopt);
+
+// A gesture of the navigation toolbar on the figure drawn on a screen of `ratio` device pixels per logical pixel in
+// a canvas of `size` logical pixels: the set_xlim / set_ylim calls it makes, by the names the file gives the Axes
+// (none: the toolbar does nothing).
+struct NavigationResult {
+    std::vector<model::Call> calls;
+    std::string error;
+};
+NavigationResult navigate(const model::Figure& figure, double ratio, std::array<double, 2> size, const NavigationGesture& gesture,
+                          const DrawOptions& options);
 
 // Runs a figure file's calls without drawing the figure: what they refuse, or "".
 std::string runCalls(const model::Figure& figure, const DrawOptions& options);

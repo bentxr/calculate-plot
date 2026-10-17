@@ -72,6 +72,7 @@ add_library(calculate-plot STATIC
     src/engine/constrained_layout.cpp
     src/engine/gc.cpp
     src/engine/gridspec.cpp
+    src/engine/navigation.cpp
     src/engine/hatch.cpp
     src/engine/legend.cpp
     src/engine/lines.cpp

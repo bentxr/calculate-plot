@@ -505,6 +505,8 @@
     "src/engine/hatch.hpp",
     "src/engine/inset.cpp",
     "src/engine/inset.hpp",
+    "src/engine/navigation.cpp",
+    "src/engine/navigation.hpp",
     "src/engine/legend.cpp",
     "src/engine/legend.hpp",
     "src/engine/lines.cpp",

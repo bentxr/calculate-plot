@@ -75,4 +75,22 @@ struct Canvas {
 // placed stays where it is in figure fractions. Sizes and ratios must be positive and finite.
 Image drawCanvas(std::string_view figureFile, const Canvas& canvas, const std::string& fontDirectory, std::string* error);
 
+// A gesture of matplotlib's navigation toolbar (NavigationToolbar2) on a canvas, from the press to the release, in
+// logical pixels from the widget's top-left. Pan: the left button moves the view, the right one zooms it about the
+// press point; Zoom: the rectangle from the press to the release, in with the left button, out with the right.
+// Keys as matplotlib names them: "x" or "y" keep the gesture to one direction, "control" keeps the aspect (pan)
+// and "shift" snaps a pan to an axis; others are no key.
+struct Gesture {
+    enum class Tool { Pan, Zoom } tool = Tool::Pan;
+    int button = 1;   // 1 left, 3 right (2 does nothing, as in the toolbar)
+    std::string key;  // "", "x", "y", "control", "shift"
+    double fromX = 0, fromY = 0, toX = 0, toY = 0;
+};
+
+// The figure file after the gesture: the view each moved Axes is left with, as set_xlim / set_ylim calls at the end
+// of its calls (by the names the file gives the Axes). The same file when the toolbar would do nothing (a press
+// outside every Axes, a zoom of less than 5 pixels, the middle button).
+std::string navigate(std::string_view figureFile, const Canvas& canvas, const Gesture& gesture, const std::string& fontDirectory,
+                     std::string* error);
+
 }  // namespace calculate_plot

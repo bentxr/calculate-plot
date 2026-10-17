@@ -7,6 +7,7 @@ FetchContent_MakeAvailable(googletest)
 
 add_executable(calculate-plot-tests
     test_api.cpp
+    test_navigation.cpp
     test_base64.cpp
     test_cli.cpp
     test_colormap.cpp

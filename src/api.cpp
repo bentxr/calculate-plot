@@ -268,6 +268,49 @@ Image drawScreen(std::string_view figureFile, double devicePixelRatio, const std
     return Image{image->width, image->height, std::vector<std::uint8_t>(image->rgba.begin(), image->rgba.end())};
 }
 
+std::string navigate(std::string_view figureFile, const Canvas& canvas, const Gesture& gesture, const std::string& fontDirectory,
+                     std::string* error) {
+    std::string why;
+    const auto figure = parsed(figureFile, &why);
+    if (!figure) return *error = why, std::string();
+    const double ratio = canvas.devicePixelRatio;
+    if (!(ratio > 0) || ratio > 16) return *error = "the device pixel ratio must be above 0 and at most 16", std::string();
+    if (!(canvas.width > 0) || !(canvas.height > 0) || !std::isfinite(canvas.width) || !std::isfinite(canvas.height))
+        return *error = "the canvas size must be positive and finite", std::string();
+    engine::NavigationGesture g;
+    g.zoom = gesture.tool == Gesture::Tool::Zoom;
+    g.button = gesture.button;
+    g.key = gesture.key;
+    g.fromX = gesture.fromX, g.fromY = gesture.fromY, g.toX = gesture.toX, g.toY = gesture.toY;
+    engine::DrawOptions options;
+    options.fontDirectory = fontDirectory;
+    const auto result = engine::navigate(*figure, ratio, {canvas.width, canvas.height}, g, options);
+    if (!result.error.empty()) return *error = result.error, std::string();
+    error->clear();
+    if (result.calls.empty()) return std::string(figureFile);
+    // the file as it was, its calls followed by the new ones
+    const auto document = support::parseJson(figureFile, nullptr);
+    support::JsonWriter w;
+    w.beginObject();
+    for (const auto& [key, value] : document->members()) {
+        w.key(key);
+        if (key != "calls") {
+            write(w, value);
+            continue;
+        }
+        w.beginArray();
+        for (const Json& call : value.items()) write(w, call);
+        for (const model::Call& call : result.calls) {
+            w.beginObject().key("on").value(call.on).key("call").value(call.method).key("args").beginArray();
+            for (const Json& a : call.args) a.isNull() ? (void)w.null() : (void)w.value(a.asNumber());
+            w.endArray().endObject();
+        }
+        w.endArray();
+    }
+    w.endObject();
+    return w.text();
+}
+
 Image drawCanvas(std::string_view figureFile, const Canvas& canvas, const std::string& fontDirectory, std::string* error) {
     std::string why;
     const auto figure = parsed(figureFile, &why);

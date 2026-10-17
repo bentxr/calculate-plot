@@ -5454,6 +5454,14 @@ private:
     std::map<std::string, std::pair<Axes*, std::size_t>> barContainers_;
     std::set<std::string> figureNames_;  // what the figure file calls the figure
     Axes* current_ = nullptr;            // the figure's current Axes (gca), if any
+
+public:
+    // A name the figure file gives the Axes (the first in order), or "".
+    std::string nameOf(const Axes* ax) const {
+        for (const auto& [name, a] : axes_)
+            if (a == ax) return name;
+        return std::string();
+    }
 };
 
 }  // namespace
@@ -5494,7 +5502,9 @@ std::string runFigure(const model::Figure& model, const DrawOptions& options, Dr
     }
     Figure* figure = executor.currentFigure();
     if (!figure) return "the figure file makes no figure";
-    const std::string error = draw(*figure);
+    std::string error;
+    if constexpr (std::is_invocable_v<Draw, Figure&, const Executor&>) error = draw(*figure, executor);
+    else error = draw(*figure);
     if (!error.empty()) return error;
     if (transforms::singularMatrixSeen()) return singular;
     return support::raised();
@@ -5520,6 +5530,26 @@ AggDrawing drawScreen(const model::Figure& model, double ratio, const DrawOption
         std::string error;
         out.trace = drawScreenTrace(figure, ratio, options.locale, options.fontDirectory, &error, size);
         return error;
+    });
+    return out;
+}
+
+NavigationResult navigate(const model::Figure& model, double ratio, std::array<double, 2> size, const NavigationGesture& gesture,
+                          const DrawOptions& options) {
+    NavigationResult out;
+    out.error = runFigure(model, options, [&](Figure& figure, const Executor& executor) {
+        std::string error;
+        drawScreenTrace(figure, ratio, options.locale, options.fontDirectory, &error, size);  // (the layout, the aspects)
+        if (!error.empty()) return error;
+        for (const LimitChange& change : navigate(figure, ratio, gesture)) {
+            model::Call call;
+            call.on = executor.nameOf(change.axes);
+            if (call.on.empty()) return std::string("the Axes under the pointer has no name in the figure file");
+            call.method = change.x ? "set_xlim" : "set_ylim";
+            for (const auto& v : {change.lo, change.hi}) call.args.push_back(v ? support::Json::real(*v) : support::Json());
+            out.calls.push_back(std::move(call));
+        }
+        return std::string();
     });
     return out;
 }
