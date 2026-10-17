@@ -5,6 +5,7 @@
 #include "model/figure_model.hpp"
 #include "rc/rc_params.hpp"
 #include "rc/styles.hpp"
+#include "support/c_locale.hpp"
 #include "support/json.hpp"
 #include "support/json_writer.hpp"
 
@@ -95,6 +96,7 @@ Json withMember(const Json& call, const std::string& key, std::optional<Json> va
 }  // namespace
 
 std::vector<FigureCall> figureCalls(std::string_view figureFile, std::string* error) {
+    const support::CLocale cLocale;
     const auto d = open(figureFile, error);
     if (!d) return {};
     std::vector<FigureCall> out;
@@ -118,6 +120,7 @@ std::vector<FigureCall> figureCalls(std::string_view figureFile, std::string* er
 
 std::string setKeyword(std::string_view figureFile, std::size_t call, const std::string& name, const std::string& value,
                        const std::vector<std::string>& aliases, std::string* error) {
+    const support::CLocale cLocale;
     auto d = open(figureFile, error);
     if (!d) return std::string();
     if (call >= d->calls.size()) return *error = "the figure file has no call " + std::to_string(call), std::string();
@@ -144,6 +147,7 @@ std::string setKeyword(std::string_view figureFile, std::size_t call, const std:
 }
 
 std::string setArgument(std::string_view figureFile, std::size_t call, std::size_t position, const std::string& value, std::string* error) {
+    const support::CLocale cLocale;
     auto d = open(figureFile, error);
     if (!d) return std::string();
     if (call >= d->calls.size()) return *error = "the figure file has no call " + std::to_string(call), std::string();
@@ -175,6 +179,7 @@ std::string setArgument(std::string_view figureFile, std::size_t call, std::size
 }
 
 std::string appendCall(std::string_view figureFile, const std::string& callText, std::string* error) {
+    const support::CLocale cLocale;
     auto d = open(figureFile, error);
     if (!d) return std::string();
     const auto c = parseValue(callText, error);
@@ -185,6 +190,7 @@ std::string appendCall(std::string_view figureFile, const std::string& callText,
 }
 
 std::string removeCall(std::string_view figureFile, std::size_t call, std::string* error) {
+    const support::CLocale cLocale;
     auto d = open(figureFile, error);
     if (!d) return std::string();
     if (call >= d->calls.size()) return *error = "the figure file has no call " + std::to_string(call), std::string();
@@ -193,9 +199,13 @@ std::string removeCall(std::string_view figureFile, std::size_t call, std::strin
     return close(*d, calls, error);
 }
 
-std::vector<std::string> styleNames() { return rc::styleNames(); }
+std::vector<std::string> styleNames() {
+    const support::CLocale cLocale;
+    return rc::styleNames();
+}
 
 std::string setStyle(std::string_view figureFile, const std::string& style, std::string* error) {
+    const support::CLocale cLocale;
     auto d = open(figureFile, error);
     if (!d) return std::string();
     std::optional<Json> v;
@@ -217,6 +227,7 @@ std::string setStyle(std::string_view figureFile, const std::string& style, std:
 }
 
 std::vector<std::string> axesNames(std::string_view figureFile, const std::string& fontDirectory, std::string* error) {
+    const support::CLocale cLocale;
     std::string why;
     const auto figure = model::parseFigure(figureFile, &why);
     if (!figure) return *error = why, std::vector<std::string>();
@@ -228,6 +239,7 @@ std::vector<std::string> axesNames(std::string_view figureFile, const std::strin
 }
 
 std::string checkFigure(std::string_view figureFile, const std::string& fontDirectory) {
+    const support::CLocale cLocale;
     std::string why;
     const auto figure = model::parseFigure(figureFile, &why);
     if (!figure) return why;

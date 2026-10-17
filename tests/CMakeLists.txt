@@ -34,6 +34,7 @@ add_executable(calculate-plot-tests
     test_json.cpp
     test_json_writer.cpp
     test_licensing.cpp
+    test_locale.cpp
     test_log_ticker.cpp
     test_fontconfig.cpp
     test_mathtext.cpp

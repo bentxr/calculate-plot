@@ -27,6 +27,9 @@ std::vector<LicenceText> licenceTexts();
 //
 // The fonts are matplotlib's (fonts/ttf of the source tree): they are read from `fontDirectory`, or
 // from the bytes useFontBytes gives for a file name.
+//
+// Every function may be called from several threads at once, and gives the same answer whatever locale the
+// application set (numbers are read and written with a decimal point, as Python does).
 
 // Where the fonts' bytes come from, for an application that holds the font files itself (as
 // resources): the bytes of a file by its name, or empty to look in the font directory. Set it once,

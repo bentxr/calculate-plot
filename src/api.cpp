@@ -7,6 +7,7 @@
 #include "render/replay.hpp"
 #include "render/svg_replay.hpp"
 #include "support/embedded.hpp"
+#include "support/c_locale.hpp"
 #include "support/json.hpp"
 #include "support/json_writer.hpp"
 #include "text/text_render.h"
@@ -137,6 +138,7 @@ std::string sample(const Json& entry) {
 }  // namespace
 
 std::string schema(const std::string& fontDirectory) {
+    const support::CLocale cLocale;
     const auto doc = support::parseJson(embedded::file("data/schema.json"), nullptr);
     if (!doc) return {};
     engine::DrawOptions options;
@@ -200,6 +202,7 @@ std::string schema(const std::string& fontDirectory) {
 void useFontBytes(std::function<std::string_view(std::string_view fileName)> bytes) { text::setFontBytes(std::move(bytes)); }
 
 std::string drawPng(std::string_view figureFile, const std::string& fontDirectory, std::string* error) {
+    const support::CLocale cLocale;
     std::string why;
     const auto figure = parsed(figureFile, &why);
     if (!figure) return *error = why, std::string();
@@ -214,6 +217,7 @@ std::string drawPng(std::string_view figureFile, const std::string& fontDirector
 }
 
 std::string drawSvg(std::string_view figureFile, const std::string& fontDirectory, std::string* error) {
+    const support::CLocale cLocale;
     std::string why;
     const auto figure = parsed(figureFile, &why);
     if (!figure) return *error = why, std::string();
@@ -228,6 +232,7 @@ std::string drawSvg(std::string_view figureFile, const std::string& fontDirector
 }
 
 std::string exportPython(std::string_view figureFile, std::string* error) {
+    const support::CLocale cLocale;
     std::string why;
     const auto figure = parsed(figureFile, &why);
     if (!figure) return *error = why, std::string();
@@ -236,6 +241,7 @@ std::string exportPython(std::string_view figureFile, std::string* error) {
 }
 
 Image drawScreen(std::string_view figureFile, double devicePixelRatio, const std::string& fontDirectory, std::string* error) {
+    const support::CLocale cLocale;
     std::string why;
     const auto figure = parsed(figureFile, &why);
     if (!figure) return *error = why, Image{};
@@ -250,6 +256,7 @@ Image drawScreen(std::string_view figureFile, double devicePixelRatio, const std
 
 std::string navigate(std::string_view figureFile, const Canvas& canvas, const Gesture& gesture, const std::string& fontDirectory,
                      std::string* error) {
+    const support::CLocale cLocale;
     std::string why;
     const auto figure = parsed(figureFile, &why);
     if (!figure) return *error = why, std::string();
@@ -293,6 +300,7 @@ std::string navigate(std::string_view figureFile, const Canvas& canvas, const Ge
 
 std::vector<std::string> pointerTexts(std::string_view figureFile, const Canvas& canvas, const std::vector<std::pair<double, double>>& points,
                                       const std::string& fontDirectory, std::string* error) {
+    const support::CLocale cLocale;
     std::string why;
     const auto figure = parsed(figureFile, &why);
     if (!figure) return *error = why, std::vector<std::string>();
@@ -311,6 +319,7 @@ std::vector<std::string> pointerTexts(std::string_view figureFile, const Canvas&
 }
 
 Image drawCanvas(std::string_view figureFile, const Canvas& canvas, const std::string& fontDirectory, std::string* error) {
+    const support::CLocale cLocale;
     std::string why;
     const auto figure = parsed(figureFile, &why);
     if (!figure) return *error = why, Image{};
