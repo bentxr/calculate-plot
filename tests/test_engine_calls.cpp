@@ -1915,3 +1915,13 @@ TEST(LayoutEngineCalls, SubplotsAdjustIsIgnoredUnderTheConstrainedLayout) {
                   .error,
               "fig.subplots_adjust: left cannot be >= right");
 }
+
+// Twinned Axes take adjustable 'datalim', where an aspect changes the data limits: not ported
+TEST(TwinCalls, AspectsOfTwinsAreRefused) {
+    EXPECT_EQ(draw(kSubplots + R"({"on": "axs[0]", "call": "set_aspect", "args": [2]}, {"on": "axs[0]", "call": "twinx"})").error,
+              "axs[0].twinx: twins of an Axes with an aspect (adjustable 'datalim') are not supported yet");
+    EXPECT_EQ(draw(kSubplots + R"({"on": "axs[0]", "call": "pie", "args": [[1, 2]]}, {"on": "axs[0]", "call": "twiny"})").error,
+              "axs[0].twiny: twins of an Axes with an aspect (adjustable 'datalim') are not supported yet");
+    EXPECT_EQ(draw(kSubplots + R"({"on": "axs[0]", "call": "twinx"}, {"on": "axs[0]", "call": "pie", "args": [[1, 2]]})").error,
+              "axs[0].pie: a pie on twinned Axes (adjustable 'datalim') is not supported yet");
+}

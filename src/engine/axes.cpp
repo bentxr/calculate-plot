@@ -645,7 +645,7 @@ double Axis::sharedMinpos() const {
 std::pair<double, double> Axis::locatorNonsingular(double v0, double v1) {
     if (tickerAxis().dateTickers && !tickerAxis().fixedLocs) return tickerAxis().dateLocator.nonsingular(v0, v1);
     if (scale_ == "logit" && !tickerAxis().fixedLocs) {
-        logitLocator.minpos = minpos();  // LogitLocator.nonsingular: its axis' get_minpos()
+        logitLocator.minpos = tickerAxis().minpos();  // LogitLocator.nonsingular: its axis' get_minpos() (the last to set the scale)
         return logitLocator.nonsingular(v0, v1);
     }
     // (set_ticks put a FixedLocator in the log scale's LogLocator's place)
@@ -960,7 +960,9 @@ std::vector<Tick*> Axis::updateTicks() {
         } else if (owner.dateTickers) {
             for (double v : locs) {
                 std::string text, error;
-                if (!owner.dateFormatter.format(v, owner.dateLocator.unit(), &text, &error)) support::noteRaised(error);
+                // (set_ticks gave the formatter the FixedLocator, which has no unit: _get_unit raises, the unit is a day)
+                const double unit = owner.fixedLocs ? 1.0 : owner.dateLocator.unit();
+                if (!owner.dateFormatter.format(v, unit, &text, &error)) support::noteRaised(error);
                 labels.push_back(text);
             }
         } else if (logScale() || scale_ == "symlog") {
@@ -1619,6 +1621,8 @@ void Axes::share(bool x, Axes& other) {
 
 Axes* Axes::twin(bool x, std::string* error) {
     if (!subplotSpec) return *error = "a twin of an Axes without a subplot spec is not supported yet", nullptr;
+    // (the twins' adjustable becomes 'datalim': an aspect then changes the data limits, which is not ported)
+    if (aspect) return *error = "twins of an Axes with an aspect (adjustable 'datalim') are not supported yet", nullptr;
     // _make_twin_axes: add_subplot(ss, sharex=self) (or sharey)
     Axes* t = figure.addSubplot(*subplotSpec);
     Axis& mine = x ? *xaxis : *yaxis;
@@ -1626,7 +1630,7 @@ Axes* Axes::twin(bool x, std::string* error) {
     t->share(x, *this);
     // sharex: other's limits (emit=False, auto=other's), then other's scale
     const auto lim = mine.viewInterval();
-    theirs.setScale(mine.scale());
+    theirs.setScale(mine.scale(), mine.scaleOptions());  // (the same scale: its base, functions...)
     t->updateTransScale();
     theirs.setLim(lim[0], lim[1], mine.autoscaleOn, false);
     // (set_adjustable('datalim') on both: what an aspect would change is refused for twins)

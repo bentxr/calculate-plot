@@ -3904,6 +3904,8 @@ private:
     // no ticks and limits of 1.25 around the centre
     bool pie(Axes& ax, const model::Call& call, std::string* error) {
         const std::string where = call.on + ".pie";
+        // (pie sets the aspect 'equal', which twinned Axes would meet by their data limits: not ported)
+        if (ax.twinned) return *error = where + ": a pie on twinned Axes (adjustable 'datalim') is not supported yet", false;
         static const char* const names[] = {"x", "explode", "labels", "colors", "autopct", "pctdistance", "shadow", "labeldistance",
                                             "startangle", "radius", "counterclock", "wedgeprops", "textprops", "center", "frame",
                                             "rotatelabels", "normalize", "hatch"};

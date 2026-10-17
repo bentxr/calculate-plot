@@ -1,0 +1,1 @@
+{"version": 1, "calls": [{"call": "subplots", "args": [2, 1], "kwargs": {"sharey": true, "figsize": {"$tuple": [4.0, 5.0]}}, "as": ["fig", "axs"]}, {"on": "axs[0]", "call": "plot", "args": [[1, 2, 3], [0.4, 0.6, 0.9]]}, {"on": "axs[1]", "call": "plot", "args": [[1, 2, 3, 4], [0.001, 0.5, 0.3, 1.5]]}, {"on": "axs[1]", "call": "set_yscale", "args": ["logit"]}]}
