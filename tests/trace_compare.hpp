@@ -22,9 +22,18 @@ inline constexpr bool kReferenceLibm = true;
 inline constexpr bool kReferenceLibm = false;
 #endif
 
-inline bool sameNumber(double a, double b) {
+// The oracles' C library is glibc 2.44. Earlier glibc versions (2.39 on the CI machines) give other last bits for
+// sinh, cosh, asinh and atanh on some inputs; only figure files' functions ({"$lambda"}) use them.
+#if defined(__GLIBC__) && (__GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 44))
+inline constexpr bool kReferenceHyperbolic = true;
+#else
+inline constexpr bool kReferenceHyperbolic = false;
+#endif
+
+// Equal with the sign of zero; within 1e-12 (relative) when the libm is not the reference (`exact` false).
+inline bool sameNumber(double a, double b, bool exact = kReferenceLibm) {
     if (a == b) return std::signbit(a) == std::signbit(b);
-    if (kReferenceLibm) return false;
+    if (exact) return false;
     return std::fabs(a - b) <= 1e-12 * std::max({1.0, std::fabs(a), std::fabs(b)});
 }
 

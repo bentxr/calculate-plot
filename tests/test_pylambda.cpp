@@ -30,6 +30,15 @@ const Json& oracle() {
 
 double hex(const Json& v) { return std::strtod(v.asString().c_str(), nullptr); }
 
+// Whether a body's values must equal NumPy's to the last bit here: with the reference libm, and for the hyperbolic
+// functions with its version (see trace_compare.hpp).
+bool exactHere(const std::string& body) {
+    using namespace calculate_plot::testing_support;
+    const bool hyperbolic = body.find("sinh") != std::string::npos || body.find("cosh") != std::string::npos ||
+                            body.find("arctanh") != std::string::npos;
+    return kReferenceLibm && (!hyperbolic || kReferenceHyperbolic);
+}
+
 }  // namespace
 
 TEST(PyLambda, ValuesAreNumpys) {
@@ -51,7 +60,7 @@ TEST(PyLambda, ValuesAreNumpys) {
             ASSERT_EQ(got.size(), want.size()) << body;
             for (std::size_t i = 0; i < got.size(); ++i) {
                 const double w = hex(want[i]);
-                EXPECT_TRUE((std::isnan(got[i]) && std::isnan(w)) || calculate_plot::testing_support::sameNumber(got[i], w))
+                EXPECT_TRUE((std::isnan(got[i]) && std::isnan(w)) || calculate_plot::testing_support::sameNumber(got[i], w, exactHere(body)))
                     << body << " at x = " << arrays[k][i] << ": " << got[i] << " instead of " << w;
                 ++checked;
             }
@@ -122,7 +131,7 @@ TEST(PyLambda, MaskedValuesAreNumpys) {
             const Json& want = (*c.find("masked"))[k];
             for (std::size_t i = 0; i < got.size(); ++i) {
                 const double w = hex(want[i]);
-                EXPECT_TRUE((std::isnan(got[i]) && std::isnan(w)) || calculate_plot::testing_support::sameNumber(got[i], w))
+                EXPECT_TRUE((std::isnan(got[i]) && std::isnan(w)) || calculate_plot::testing_support::sameNumber(got[i], w, exactHere(body)))
                     << body << " (masked) at x = " << arrays[k][i] << ": " << got[i] << " instead of " << w;
                 ++checked;
             }
