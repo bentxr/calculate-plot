@@ -25,3 +25,8 @@ where the bin rules treat them otherwise):
 - arr_interp (np.interp without period, left or right) and binary_search_with_guess from
   numpy/_core/src/multiarray/compiled_base.c, for float64 arrays; the slopes are computed where they are used
   (NumPy precomputes them when there are fewer of them than points, with the same quotient).
+- fast_scalar_power from numpy/_core/src/multiarray/number.c (an array raised to a scalar 2, -1 or 0.5 is
+  np.square, np.reciprocal or np.sqrt of it) and npy_deg2rad / npy_rad2deg from
+  numpy/_core/src/npymath/npy_math_internal.h.src, in the evaluation of the restricted functions of figure files
+  (src/support/pylambda.*: NumPy's elementwise float64 arithmetic and its functions as the C library computes
+  them, with Python's own arithmetic for the parts without the array).

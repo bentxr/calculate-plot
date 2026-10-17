@@ -112,6 +112,7 @@ add_library(calculate-plot STATIC
     src/support/histogram.cpp
     src/support/pynum.cpp
     src/support/log10.cpp
+    src/support/pylambda.cpp
     src/support/pyformat_round.cpp
     src/support/pysum.cpp
     src/support/sha256.cpp)

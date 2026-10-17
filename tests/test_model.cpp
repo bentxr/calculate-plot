@@ -202,3 +202,23 @@ TEST(FigureModel, ADictHasStringKeysInItsOrder) {
         EXPECT_FALSE(refused(json).empty()) << bad;
     }
 }
+
+// {"$lambda": "<body>"} is a function of x, `lambda x: <body>`, in the restricted form of support::PyLambda;
+// numpy is imported when a body uses it.
+TEST(FigureModel, AFunctionIsTheBodyOfALambda) {
+    const auto f = parsed(R"j({"version":1,"calls":[{"call":"subplots","as":["fig","ax"]},
+        {"on":"ax","call":"secondary_xaxis","args":["top"],"kwargs":{"functions":{"$tuple":[{"$lambda":"x * 1.8 + 32"},{"$lambda":"(x - 32) / 1.8"}]}}}]})j");
+    const std::string script = m::exportPython(f, "x");
+    EXPECT_NE(script.find("ax.secondary_xaxis('top', functions=(lambda x: x * 1.8 + 32, lambda x: (x - 32) / 1.8))"), std::string::npos)
+        << script;
+    EXPECT_EQ(script.find("import numpy"), std::string::npos);
+    const auto g = parsed(R"j({"version":1,"calls":[{"call":"subplots","as":["fig","ax"]},
+        {"on":"ax","call":"set_xscale","args":["function"],"kwargs":{"functions":[{"$lambda":"np.sqrt(x)"},{"$lambda":"x ** 2"}]}}]})j");
+    EXPECT_NE(m::exportPython(g, "x").find("import numpy as np\n"), std::string::npos) << m::exportPython(g, "x");
+    EXPECT_NE(m::exportPython(g, "x").find("functions=[lambda x: np.sqrt(x), lambda x: x ** 2]"), std::string::npos);
+    for (const char* bad : {R"j({"$lambda":"y"})j", R"j({"$lambda":1})j", R"j({"$lambda":"x","b":2})j",
+                            R"j({"$lambda":"np.tanh(x)"})j", R"j({"$lambda":"x\n+1"})j"}) {
+        const std::string json = std::string(R"j({"version":1,"calls":[{"call":"figure","args":[)j") + bad + "]}]}";
+        EXPECT_NE(refused(json).find("$lambda"), std::string::npos) << bad;
+    }
+}

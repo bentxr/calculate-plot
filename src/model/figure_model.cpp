@@ -1,5 +1,7 @@
 #include "model/figure_model.hpp"
 
+#include "support/pylambda.hpp"
+
 #include "axes/dates.hpp"
 
 #include "support/pyformat.hpp"
@@ -82,6 +84,13 @@ bool validValue(const Json& v, const std::set<std::string>& known, std::string* 
             if (error) *error = "{\"$datetime\": ...} must be a date and time as YYYY-MM-DDTHH:MM:SS (a year from 1 to 9999)";
             return false;
         }
+        if (v.members()[0].first == "$lambda") {
+            const Json& body = v.members()[0].second;
+            std::string why = "it must be text";
+            if (v.members().size() == 1 && body.isString() && support::PyLambda::parse(body.asString(), &why)) return true;
+            if (error) *error = "{\"$lambda\": ...} must be the body of a function of x (" + why + ")";
+            return false;
+        }
         if (v.members()[0].first == "$dict") {
             const Json& d = v.members()[0].second;
             if (v.members().size() != 1 || !d.isObject()) {
@@ -94,7 +103,7 @@ bool validValue(const Json& v, const std::set<std::string>& known, std::string* 
         }
         if (v.members().size() != 1 || v.members()[0].first != "$tuple" || !v.members()[0].second.isArray()) {
             if (error)
-                *error = "an object value must be {\"$tuple\": [...]}, {\"$dict\": {...}}, {\"$float\": ...}, {\"$new\": ...} or {\"$ref\": ...}, not " +
+                *error = "an object value must be {\"$tuple\": [...]}, {\"$dict\": {...}}, {\"$float\": ...}, {\"$new\": ...}, {\"$ref\": ...}, {\"$datetime\": ...} or {\"$lambda\": ...}, not " +
                          (v.members().empty() ? std::string("{}") : v.members()[0].first);
             return false;
         }
@@ -122,6 +131,7 @@ std::string python(const Json& v) {
         if (v.members()[0].first == "$float") return "float('" + v.members()[0].second.asString() + "')";
         if (v.members()[0].first == "$new") return "plt." + v.members()[0].second.asString() + "()";
         if (v.members()[0].first == "$ref") return v.members()[0].second.asString();
+        if (v.members()[0].first == "$lambda") return "lambda x: " + v.members()[0].second.asString();
         if (v.members()[0].first == "$datetime") {  // repr(datetime.datetime): the seconds only when not 0
             axes::dates::DateTime dt;
             axes::dates::parseIso(v.members()[0].second.asString(), &dt);
@@ -229,30 +239,37 @@ std::optional<Figure> parseFigure(std::string_view json, std::string* error) {
     return figure;
 }
 
-// Whether a value holds a {"$datetime": ...} anywhere
-bool usesDatetime(const Json& v) {
+// Whether a value holds a {"$datetime": ...} anywhere; or a {"$lambda": ...} that uses NumPy
+bool uses(const Json& v, bool datetime) {
     if (v.isArray()) {
         for (const Json& item : v.items())
-            if (usesDatetime(item)) return true;
+            if (uses(item, datetime)) return true;
         return false;
     }
     if (!v.isObject()) return false;
-    for (const auto& [key, value] : v.members())
-        if (key == "$datetime" || usesDatetime(value)) return true;
+    for (const auto& [key, value] : v.members()) {
+        if (datetime && key == "$datetime") return true;
+        if (!datetime && key == "$lambda" && value.isString()) {
+            std::string why;
+            const auto f = support::PyLambda::parse(value.asString(), &why);
+            if (f && f->usesNumpy()) return true;
+        }
+        if (uses(value, datetime)) return true;
+    }
     return false;
 }
 
 std::string exportPython(const Figure& figure, std::string_view version) {
-    bool datetimes = false;
+    bool datetimes = false, numpy = false;
     for (const auto& call : figure.calls) {
-        for (const auto& a : call.args) datetimes = datetimes || usesDatetime(a);
-        for (const auto& kw : call.kwargs) datetimes = datetimes || usesDatetime(kw.second);
+        for (const auto& a : call.args) datetimes = datetimes || uses(a, true), numpy = numpy || uses(a, false);
+        for (const auto& kw : call.kwargs) datetimes = datetimes || uses(kw.second, true), numpy = numpy || uses(kw.second, false);
     }
     std::string out = "# Written by calculate-plot " + std::string(version) +
                       ": this script draws the same figure with Matplotlib 3.11.2.\n" +
                       std::string(datetimes ? "import datetime\n" : "") +
                       "import locale\n\n"
-                      "import matplotlib.pyplot as plt\n\n"
+                      "import matplotlib.pyplot as plt\n" + std::string(numpy ? "import numpy as np\n" : "") + "\n"
                       // HarfBuzz takes the language of a text that sets none from LC_CTYPE, the first
                       // time it shapes one; the measuring of a text never uses the text's own language,
                       // so rcParams["text.language"] alone would not do.

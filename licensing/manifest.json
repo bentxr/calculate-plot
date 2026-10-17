@@ -572,6 +572,8 @@
    "vendored": [],
    "derived": [
     "src/support/histogram.cpp",
+    "src/support/pylambda.cpp",
+    "src/support/pylambda.hpp",
     "src/support/pynum.cpp"
    ],
    "header": [

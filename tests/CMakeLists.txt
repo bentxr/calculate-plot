@@ -26,6 +26,7 @@ add_executable(calculate-plot-tests
     test_violin.cpp
     test_bezier.cpp
     test_symlog.cpp
+    test_pylambda.cpp
     test_logit.cpp
     test_dates.cpp
     test_json.cpp
