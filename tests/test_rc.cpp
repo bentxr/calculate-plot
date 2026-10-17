@@ -340,6 +340,7 @@ TEST(RcParams, AxisbelowIsABoolOrLine) {
 TEST(RcParams, KeysThatAreNotHonouredYetTakeOnlyTheirDefault) {
     const std::pair<const char*, const char*> other[] = {
         {"axes.formatter.use_locale", "true"},
+        {"date.converter", "\"concise\""},
         {"figure.autolayout", "true"},
         {"figure.constrained_layout.use", "true"},
         {"figure.hooks", "[\"os:getcwd\"]"},
@@ -350,9 +351,10 @@ TEST(RcParams, KeysThatAreNotHonouredYetTakeOnlyTheirDefault) {
         {"text.hinting_factor", "8"},
         {"text.kerning_factor", "6"},
         {"text.usetex", "true"},
+        {"timezone", "\"Europe/Madrid\""},
     };
     const auto& listed = Params::unsupportedKeys();
-    EXPECT_EQ(listed.size(), std::size(other) + 1);  // and the backend, which takes nothing
+    EXPECT_EQ(listed.size(), std::size(other) + 2);  // and the backend, which takes nothing, and date.epoch
     const Params defaults = Params::defaults();
     for (const auto& [key, value] : other) {
         EXPECT_NE(std::find(listed.begin(), listed.end(), key), listed.end()) << key;
@@ -377,6 +379,11 @@ TEST(RcParams, KeysThatAreNotHonouredYetTakeOnlyTheirDefault) {
     EXPECT_FALSE(p.set("text.kerning_factor", json("0"), &error));
     EXPECT_FALSE(p.set("backend", json("\"agg\""), &error));
     EXPECT_EQ(error, "the choice of a backend is not supported yet");
+    // date.epoch: its default only (its validator, np.datetime64 of the text, is not ported)
+    EXPECT_FALSE(p.set("date.epoch", json("\"2000-01-01T00:00:00\""), &error));
+    EXPECT_EQ(error, "a date is not supported yet");
+    EXPECT_FALSE(p.set("date.epoch", json("\"1970-01-01\""), &error));
+    EXPECT_TRUE(p.set("date.epoch", json("\"1970-01-01T00:00:00\""), &error)) << error;
 }
 
 // The keys of what is not drawn at all (animations, box plots, images, PDF output, the windows of
@@ -384,7 +391,7 @@ TEST(RcParams, KeysThatAreNotHonouredYetTakeOnlyTheirDefault) {
 TEST(RcParams, KeysOfWhatIsNotDrawnTakeWhatMatplotlibTakes) {
     Params p = Params::defaults();
     std::string error;
-    EXPECT_EQ(Params::inertKeys().size(), 98u);
+    EXPECT_EQ(Params::inertKeys().size(), 87u);
     // (boxplot's keys are read now; they still take any value their validators take)
     EXPECT_TRUE(p.set("boxplot.whiskers", json("[5, 95]"), &error)) << error;
     EXPECT_TRUE(p.set("boxplot.whiskers", json("2.5"), &error)) << error;

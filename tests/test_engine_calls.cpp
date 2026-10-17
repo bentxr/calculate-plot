@@ -1753,3 +1753,79 @@ TEST(AnnotateCalls, ArrowStylesAreCheckedAsMatplotlibChecksThem) {
     EXPECT_EQ(draw(kSubplots + R"({"on": "axs[0]", "call": "annotate", "args": ["t", [0.5, 0.5]], "kwargs": {"arrowprops": [1]}})").error,
               "axs[0].annotate: arrowprops must be a dict ({\"$dict\": {...}}) or None");
 }
+
+// Dates ({"$datetime": ...}) are taken where matplotlib's units reach the data of the calls ported
+// with them; anywhere else they are refused, as are lists that mix dates with numbers.
+class DateRefusals : public testing::TestWithParam<Refusal> {};
+
+TEST_P(DateRefusals, NameTheCallAndTheReason) {
+    const auto drawing = draw(kSubplots + GetParam().call);
+    EXPECT_EQ(drawing.error, GetParam().error);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    Engine, DateRefusals,
+    testing::Values(
+        Refusal{R"({"on": "axs[0]", "call": "bar", "args": [[{"$datetime": "2020-01-01T00:00:00"}], [1]]})",
+                "axs[0].bar: dates are not supported yet"},
+        Refusal{R"({"on": "axs[0]", "call": "errorbar", "args": [[{"$datetime": "2020-01-01T00:00:00"}], [1]]})",
+                "axs[0].errorbar: dates are not supported yet"},
+        Refusal{R"({"on": "axs[0]", "call": "text", "args": [{"$datetime": "2020-01-01T00:00:00"}, 1, "a"]})",
+                "axs[0].text: dates are not supported yet"},
+        Refusal{R"({"on": "fig", "call": "text", "args": [{"$datetime": "2020-01-01T00:00:00"}, 1, "a"]})",
+                "fig.text: dates are not supported yet"},
+        Refusal{R"({"call": "bar", "args": [[{"$datetime": "2020-01-01T00:00:00"}], [1]]})",
+                "plt.bar: dates are not supported yet"},
+        Refusal{R"({"on": "axs[0]", "call": "set", "kwargs": {"xlim": [{"$datetime": "2020-01-01T00:00:00"}, {"$datetime": "2020-01-02T00:00:00"}]}})",
+                "axs[0].set: dates are not supported yet"},
+        Refusal{R"({"on": "axs[0]", "call": "plot", "args": [[1, 2], [1, 2]], "kwargs": {"linewidth": {"$datetime": "2020-01-01T00:00:00"}}})",
+                "axs[0].plot: dates are not supported yet outside the data"},
+        Refusal{R"({"on": "axs[0]", "call": "scatter", "args": [[1], [1], [{"$datetime": "2020-01-01T00:00:00"}]]})",
+                "axs[0].scatter: dates are not supported yet outside the data"},
+        Refusal{R"({"on": "axs[0]", "call": "axvline", "args": [1], "kwargs": {"ymin": {"$datetime": "2020-01-01T00:00:00"}}})",
+                "axs[0].axvline: dates are not supported yet outside the data"},
+        Refusal{R"({"on": "axs[0]", "call": "axhspan", "args": [0, 1, {"$datetime": "2020-01-01T00:00:00"}]})",
+                "axs[0].axhspan: dates are not supported yet outside the data"},
+        Refusal{R"({"on": "axs[0]", "call": "plot", "args": [[{"$datetime": "2020-01-01T00:00:00"}, 2], [1, 2]]})",
+                "axs[0].plot: a list that mixes dates with numbers is not supported yet"},
+        Refusal{R"({"on": "axs[0]", "call": "plot", "args": [[1, {"$datetime": "2020-01-01T00:00:00"}], [1, 2]]})",
+                "axs[0].plot: a list that mixes dates with numbers is not supported yet"},
+        Refusal{R"({"on": "axs[0]", "call": "axvspan", "args": [1, {"$datetime": "2020-01-01T00:00:00"}]})",
+                "axs[0].axvspan: a list that mixes dates with numbers is not supported yet"},
+        Refusal{R"({"on": "axs[0]", "call": "set_xlim", "args": [{"$datetime": "2020-01-01T00:00:00"}, 18000]})",
+                "axs[0].set_xlim: a list that mixes dates with numbers is not supported yet"},
+        Refusal{R"({"on": "axs[0]", "call": "fill_between", "args": [[1, 2], [{"$datetime": "2020-01-01T00:00:00"}, {"$float": "nan"}]]})",
+                "axs[0].fill_between: a list that mixes dates with numbers is not supported yet"},
+        // num2date of a tick before year 1 (matplotlib raises it when the axis is drawn)
+        Refusal{R"({"on": "axs[0]", "call": "plot", "args": [[{"$datetime": "0001-06-01T00:00:00"}, {"$datetime": "0900-01-01T00:00:00"}], [1, 2]]})",
+                "Date ordinal -735421.1 converts to a date outside years 0001 to 9999 (using epoch 1970-01-01T00:00:00), "
+                "but Matplotlib dates must be between year 0001 and 9999."}));
+
+// The DateConverter's settings that are not ported: the concise converter, another epoch, a time zone.
+TEST(DateCalls, RcSettingsNotPortedAreRefused) {
+    for (const auto& [rc, error] : std::vector<std::pair<std::string, std::string>>{
+             {R"("date.converter": "concise")", "rcParams[\"date.converter\"] is not supported yet"},
+             {R"("timezone": "Europe/Madrid")", "rcParams[\"timezone\"] is not supported yet"},
+             {R"("date.epoch": "2000-01-01T00:00:00")", "a date is not supported yet"}}) {
+        std::string why;
+        const auto figure = calculate_plot::model::parseFigure(R"({"version": 1, "rc": {)" + rc + R"(}, "calls": []})", &why);
+        if (!figure) {
+            EXPECT_NE(why.find(error), std::string::npos) << why;
+            continue;
+        }
+        calculate_plot::engine::DrawOptions options;
+        options.fontDirectory = std::string(CALCULATE_PLOT_SOURCE_DIR) + "/fonts/ttf";
+        const auto drawing = calculate_plot::engine::drawAgg(*figure, options);
+        EXPECT_NE(drawing.error.find(error), std::string::npos) << drawing.error;
+    }
+    // their defaults are taken
+    std::string why;
+    const auto figure = calculate_plot::model::parseFigure(
+        R"({"version": 1, "rc": {"date.converter": "auto", "timezone": "UTC", "date.epoch": "1970-01-01T00:00:00"}, "calls": [)" +
+            kSubplots.substr(0, kSubplots.size() - 1) + "]}",
+        &why);
+    ASSERT_TRUE(figure.has_value()) << why;
+    calculate_plot::engine::DrawOptions options;
+    options.fontDirectory = std::string(CALCULATE_PLOT_SOURCE_DIR) + "/fonts/ttf";
+    EXPECT_EQ(calculate_plot::engine::drawAgg(*figure, options).error, "");
+}

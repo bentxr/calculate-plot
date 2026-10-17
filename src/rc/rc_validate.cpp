@@ -666,7 +666,11 @@ Validated apply(const std::string& key, const std::string& name, const Json& s) 
         // validate_cycler: a Cycler object, which a figure file cannot hold, or the text that makes one
         {"cycler", [](const Json& v) { return v.isString() ? cyclerFromText(v.asString(), cycleValues) : refused("the value is not a cycler"); }},
         // numpy reads the date; the names of the backends are those of the Python modules there are
-        {"date", [](const Json&) { return unsupported("a date"); }},
+        // _validate_date: np.datetime64(s) parses it (not ported); the default epoch is taken as it is written
+        {"date", [](const Json& v) {
+             if (v.isString() && v.asString() == "1970-01-01T00:00:00") return taken(v);
+             return unsupported("a date");
+         }},
         {"backend", [](const Json&) { return unsupported("the choice of a backend"); }},
     };
     if (name == "joinstyle") return validateEnum(key, {"miter", "round", "bevel"}, s);

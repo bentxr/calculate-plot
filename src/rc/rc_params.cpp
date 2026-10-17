@@ -159,7 +159,7 @@ std::vector<Json> Params::colorCycle() const {
 }
 
 const std::vector<std::string>& Params::inertKeys() {
-    // Animations, 3D axes, box plots, contours, dates, images, the keys and windows of the interactive
+    // Animations, 3D axes, box plots, contours, images, the keys and windows of the interactive
     // backends, PDF, PGF and PostScript output, and the like. And figure.frameon, which pyplot's figures
     // never read (pyplot.figure has its own frameon=True).
     static const std::vector<std::string> keys = {
@@ -169,10 +169,7 @@ const std::vector<std::string>& Params::inertKeys() {
         "axes3d.depthshade_minalpha", "axes3d.grid", "axes3d.mouserotationstyle", "axes3d.snap_rotation",
         "axes3d.trackballborder", "axes3d.trackballsize", "axes3d.xaxis.panecolor", "axes3d.yaxis.panecolor",
         "axes3d.zaxis.panecolor", "backend_fallback", "contour.algorithm", "contour.corner_mask", "contour.linewidth",
-        "contour.negative_linestyle", "date.autoformatter.day", "date.autoformatter.hour",
-        "date.autoformatter.microsecond", "date.autoformatter.minute", "date.autoformatter.month",
-        "date.autoformatter.second", "date.autoformatter.year", "date.converter", "date.epoch",
-        "date.interval_multiples", "docstring.hardcopy", "figure.constrained_layout.h_pad",
+        "contour.negative_linestyle", "docstring.hardcopy", "figure.constrained_layout.h_pad",
         "figure.constrained_layout.hspace", "figure.constrained_layout.w_pad", "figure.constrained_layout.wspace",
         "figure.frameon", "figure.labelsize", "figure.labelweight", "figure.max_open_warning", "figure.raise_window",
         "image.aspect", "image.composite_image", "image.interpolation",
@@ -183,16 +180,17 @@ const std::vector<std::string>& Params::inertKeys() {
         "pdf.fonttype", "pdf.inheritcolor", "pdf.use14corefonts", "pgf.preamble", "pgf.rcfonts", "pgf.texsystem",
         "polaraxes.grid", "ps.distiller.res", "ps.fonttype", "ps.papersize", "ps.useafm", "ps.usedistiller",
         "savefig.directory", "savefig.format", "savefig.orientation", "text.latex.engine", "text.latex.preamble",
-        "timezone", "tk.window_focus", "toolbar", "webagg.address", "webagg.open_in_browser", "webagg.port",
+        "tk.window_focus", "toolbar", "webagg.address", "webagg.open_in_browser", "webagg.port",
         "webagg.port_retries"};
     return keys;
 }
 
 const std::vector<std::string>& Params::unsupportedKeys() {
     static const std::vector<std::string> keys = {
-        "axes.formatter.use_locale", "backend",
+        "axes.formatter.use_locale", "backend", "date.converter", "date.epoch",
         "figure.autolayout", "figure.constrained_layout.use", "figure.hooks", "font.enable_last_resort",
-        "path.effects", "path.sketch", "path.snap", "text.hinting_factor", "text.kerning_factor", "text.usetex"};
+        "path.effects", "path.sketch", "path.snap", "text.hinting_factor", "text.kerning_factor", "text.usetex",
+        "timezone"};
     return keys;
 }
 

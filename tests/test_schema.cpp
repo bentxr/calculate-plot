@@ -92,3 +92,16 @@ TEST(Schema, WhatCannotBeToldIsCounted) {
     EXPECT_EQ(refused, 163);
     EXPECT_EQ(unknown, 80) << unknowns;  // objects and dicts a figure file does not hold (data, fontdict, prop...)
 }
+
+// Each call says whether its data take dates ({"$datetime": ...}), as the engine answers a probe
+TEST(Schema, CallsSayWhetherTheirDataTakeDates) {
+    std::set<std::string> withDates;
+    for (const Json& call : schemaJson().find("calls")->items()) {
+        const Json* dates = call.find("dates");
+        ASSERT_TRUE(dates && dates->isBool()) << call.find("call")->asString();
+        if (dates->asBool()) withDates.insert(call.find("on")->asString() + "." + call.find("call")->asString());
+    }
+    EXPECT_EQ(withDates, (std::set<std::string>{"axes.plot", "axes.step", "axes.scatter", "axes.fill_between", "axes.fill_betweenx",
+                                                "axes.axhline", "axes.axvline", "axes.axhspan", "axes.axvspan", "axes.hlines",
+                                                "axes.vlines", "axes.set_xlim", "axes.set_ylim"}));
+}

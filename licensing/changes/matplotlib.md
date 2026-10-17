@@ -76,8 +76,8 @@ it comes from in its first lines. The changes, as a whole:
   is_color_like, translated to C++ over the values of a figure file (JSON) instead of Python objects; which key has
   which validator is a table written by tools/oracle/make_rcdefaults.py. The stored values are JSON values (a tuple
   is a list). Text that matplotlib reads with ast.literal_eval is read by calculate-plot's own reader of Python
-  literals (src/support/pyliteral), which leaves some spellings unread; dates and backend names are not validated
-  but refused as not supported. The error messages are calculate-plot's.
+  literals (src/support/pyliteral), which leaves some spellings unread; dates (but the default epoch as it is
+  written) and backend names are not validated but refused as not supported. The error messages are calculate-plot's.
   path.py's Path (vertices, codes and the simplification settings),
   backend_bases.py's GraphicsContextBase and the RendererBase interface, artist.py's Artist (clip settings),
   patches.py's Patch and Rectangle, lines.py's dash patterns and figure.py's Figure (its boxes, transforms and
@@ -251,7 +251,12 @@ it comes from in its first lines. The changes, as a whole:
   Dates (src/axes/dates.*, with dateutil): dates.py's date2num and num2date (through datetime64[us], the default
   epoch, UTC only), AutoDateLocator.get_locator and its YearLocator, RRuleLocator and MicrosecondLocator (with
   ticker.py's MultipleLocator and _Edge_integer), DateLocator.nonsingular, AutoDateFormatter and DateFormatter
-  with datetime.strftime's directives for dates in the C locale.
+  with datetime.strftime's directives for dates in the C locale. The axes' units for dates: Axis.update_units
+  with the DateConverter (_update_axisinfo the first time: the date tickers unless a FixedLocator is set) where
+  _process_unit_info and plot's _plot_args call it (plot, step, scatter, fill_between(x), axhline / axvline after
+  their bounds are read, axhspan / axvspan, hlines / vlines, set_xlim / set_ylim); a call is refused when it holds
+  dates elsewhere or a list mixing dates with numbers; rcParams date.converter 'concise', another date.epoch and a
+  timezone other than UTC are refused.
   Bar labels: Axes.bar_label (BarContainer.datavalues, orientation and errorbar kept with the container,
   LineCollection.get_segments, Patch.get_window_extent, Bbox.intersection) and cbook._auto_format_str, with
   Python's % formatting and str.format of one number ported in src/support/pyformat.cpp (our own code: the

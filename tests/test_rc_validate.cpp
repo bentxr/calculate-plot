@@ -115,10 +115,10 @@ TEST(RcValidate, EveryKeyTakesAndStoresWhatMatplotlibDoes) {
     // What is not known here is counted, key by key, so that it cannot grow unseen.
     std::string keys;
     for (const auto& [key, n] : unsupportedKeys) keys += key + " " + std::to_string(n) + "\n";
-    EXPECT_EQ(taken, 45414) << keys;
+    EXPECT_EQ(taken, 45415) << keys;
     EXPECT_EQ(refused, 165753);
-    EXPECT_EQ(unsupported, 2742);  // 631 each for the backend and date.epoch; text outside ASCII; 10 cyclers
-    EXPECT_EQ(unsupportedTaken, 603);
+    EXPECT_EQ(unsupported, 2741);  // 631 for the backend, 630 for date.epoch (its default is taken); text outside ASCII; 10 cyclers
+    EXPECT_EQ(unsupportedTaken, 602);
     EXPECT_EQ(taken + refused + unsupported, 631 * 339);
 }
 

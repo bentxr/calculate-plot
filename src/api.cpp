@@ -11,6 +11,7 @@
 #include "support/json_writer.hpp"
 #include "text/text_render.h"
 
+#include <functional>
 #include <map>
 
 namespace calculate_plot {
@@ -74,11 +75,13 @@ const std::map<std::string, std::string>& leastArguments() {
 }
 
 // A figure file that makes the call, with `keyword` set to `value` (JSON) when there is one
-std::string probe(const std::string& on, const std::string& call, const std::string& keyword, const std::string& value) {
+std::string probe(const std::string& on, const std::string& call, const std::string& keyword, const std::string& value,
+                  const std::string& givenArgs = std::string()) {
     std::string args = "[]";
     const auto it = leastArguments().find(call);
     if (it != leastArguments().end()) args = it->second;
     if (call == "text") args = on == "figure" ? "[0.5, 0.5, \"a\"]" : "[0, 0, \"a\"]";
+    if (!givenArgs.empty()) args = givenArgs;
     std::string kwargs = keyword.empty() ? "{}" : "{\"" + keyword + "\": " + value + "}";
     std::string setup, receiver;
     if (on != "plt") {
@@ -91,6 +94,34 @@ std::string probe(const std::string& on, const std::string& call, const std::str
     }
     return R"({"version": 1, "calls": [)" + setup + "{" + receiver + R"("call": ")" + call + R"(", "args": )" + args +
            R"(, "kwargs": )" + kwargs + "}]}";
+}
+
+// The probe's arguments with a date for every number: whether the call's data take dates. (The calls
+// without numbers in their least arguments are given some.)
+std::string withDates(const std::string& call) {
+    static const std::map<std::string, std::string> given = {
+        {"axhline", "[0]"}, {"axvline", "[0]"}, {"set_xlim", "[0, 1]"}, {"set_ylim", "[0, 1]"}};
+    std::string args = "[]";
+    if (const auto it = given.find(call); it != given.end()) args = it->second;
+    else if (const auto least = leastArguments().find(call); least != leastArguments().end()) args = least->second;
+    const auto parsed = support::parseJson(args, nullptr);
+    if (!parsed) return {};
+    bool any = false;
+    std::function<void(const Json&, support::JsonWriter&)> copy = [&](const Json& v, support::JsonWriter& w) {
+        if (v.isNumber()) {
+            any = true;
+            w.beginObject().key("$datetime").value("2020-01-01T00:00:00").endObject();
+        } else if (v.isArray()) {
+            w.beginArray();
+            for (const Json& item : v.items()) copy(item, w);
+            w.endArray();
+        } else {
+            write(w, v);
+        }
+    };
+    support::JsonWriter w;
+    copy(*parsed, w);
+    return any ? w.text() : std::string();
 }
 
 // A value to try a property with: by its name for some, else by its kind
@@ -143,6 +174,10 @@ std::string schema(const std::string& fontDirectory) {
     for (const Json& call : doc->find("calls")->items()) {
         const std::string on = call.find("on")->asString(), name = call.find("call")->asString();
         w.beginObject();
+        const std::string dated = withDates(name);
+        const Json takes = dated.empty() ? Json::boolean(false) : outcome(probe(on, name, "", "", dated));
+        w.key("dates");
+        write(w, Json::boolean(takes.isBool() && takes.asBool()));
         for (const auto& [k, v] : call.members()) {
             if (k != "parameters" && k != "properties") {
                 w.key(k);

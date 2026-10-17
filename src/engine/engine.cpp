@@ -1,6 +1,7 @@
 #include "engine/engine.hpp"
 
 #include "agg/path_text.h"
+#include "axes/dates.hpp"
 #include "engine/annotation.hpp"
 #include "engine/arrows.hpp"
 #include "engine/axes.hpp"
@@ -38,7 +39,29 @@ const Json* sequence(const Json& v) {
     return nullptr;
 }
 
+// A date of a figure file: {"$datetime": "YYYY-MM-DDTHH:MM:SS[.ffffff]"}
+bool isDatetime(const Json& v) { return v.isObject() && v.members().size() == 1 && v.members()[0].first == "$datetime"; }
+
+// How many dates a value holds, at any depth
+std::size_t datetimes(const Json& v) {
+    if (isDatetime(v)) return 1;
+    std::size_t n = 0;
+    if (v.isArray())
+        for (const Json& item : v.items()) n += datetimes(item);
+    if (v.isObject())
+        for (const auto& member : v.members()) n += datetimes(member.second);
+    return n;
+}
+
+// A number, or a date as its day number (date2num: what the axes' DateConverter makes of it; which
+// calls take dates is decided before, see Executor::datesTaken)
 bool readNumber(const Json& v, double* out) {
+    if (isDatetime(v)) {
+        axes::dates::DateTime d;
+        if (!v.members()[0].second.isString() || !axes::dates::parseIso(v.members()[0].second.asString(), &d)) return false;
+        *out = axes::dates::date2num(d);
+        return true;
+    }
     if (v.isObject() && v.members().size() == 1 && v.members()[0].first == "$float") {
         const std::string& f = v.members()[0].second.asString();
         *out = f == "nan" ? std::numeric_limits<double>::quiet_NaN()
@@ -77,6 +100,12 @@ public:
 
     bool run(const model::Call& call, std::string* error) {
         if (!positionalArguments(call, error)) return false;
+        // dates go only to the Axes' calls (datesTaken says which of those take them)
+        std::size_t dates = 0;
+        for (const Json& a : call.args) dates += datetimes(a);
+        for (const auto& kw : call.kwargs) dates += datetimes(kw.second);
+        if (dates > 0 && (call.on.empty() ? pyplotOfAxes().count(call.method) == 0 : axes_.count(call.on) == 0))
+            return *error = (call.on.empty() ? std::string("plt") : call.on) + "." + call.method + ": dates are not supported yet", false;
         if (call.on.empty() && call.method == "figure") return figure(call, error);
         if (call.on.empty() && call.method == "subplots") return subplots(call, error);
         if (call.on.empty()) {
@@ -112,13 +141,7 @@ public:
                 return addAxes(call, rect, error);
             }
             // the pyplot functions of the current Axes and of the current figure
-            static const std::map<std::string, std::string> ofAxes = {
-                {"plot", "plot"}, {"scatter", "scatter"}, {"fill_between", "fill_between"}, {"fill_betweenx", "fill_betweenx"}, {"errorbar", "errorbar"},
-                {"axhline", "axhline"}, {"axvline", "axvline"}, {"axhspan", "axhspan"}, {"axvspan", "axvspan"},
-                {"hlines", "hlines"}, {"vlines", "vlines"}, {"grid", "grid"}, {"legend", "legend"}, {"text", "text"},
-                {"title", "set_title"}, {"xlabel", "set_xlabel"}, {"ylabel", "set_ylabel"}, {"xlim", "set_xlim"},
-                {"ylim", "set_ylim"}, {"xscale", "set_xscale"}, {"yscale", "set_yscale"}, {"bar", "bar"}, {"barh", "barh"},
-                {"hist", "hist"}, {"fill", "fill"}, {"step", "step"}, {"stairs", "stairs"}, {"stem", "stem"}, {"boxplot", "boxplot"}, {"violinplot", "violinplot"}, {"pie", "pie"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}};
+            const auto& ofAxes = pyplotOfAxes();
             static const std::map<std::string, std::string> ofFigure = {
                 {"suptitle", "suptitle"}, {"figtext", "text"}, {"subplots_adjust", "subplots_adjust"}, {"tight_layout", "tight_layout"}};
             const auto a = ofAxes.find(call.method);
@@ -147,6 +170,117 @@ public:
         }
         *error = "unsupported call: " + (call.on.empty() ? "plt" : call.on) + "." + call.method;
         return false;
+    }
+
+    // The pyplot functions of the current Axes, with the Axes' methods they call
+    static const std::map<std::string, std::string>& pyplotOfAxes() {
+        static const std::map<std::string, std::string> ofAxes = {
+            {"plot", "plot"}, {"scatter", "scatter"}, {"fill_between", "fill_between"}, {"fill_betweenx", "fill_betweenx"}, {"errorbar", "errorbar"},
+            {"axhline", "axhline"}, {"axvline", "axvline"}, {"axhspan", "axhspan"}, {"axvspan", "axvspan"},
+            {"hlines", "hlines"}, {"vlines", "vlines"}, {"grid", "grid"}, {"legend", "legend"}, {"text", "text"},
+            {"title", "set_title"}, {"xlabel", "set_xlabel"}, {"ylabel", "set_ylabel"}, {"xlim", "set_xlim"},
+            {"ylim", "set_ylim"}, {"xscale", "set_xscale"}, {"yscale", "set_yscale"}, {"bar", "bar"}, {"barh", "barh"},
+            {"hist", "hist"}, {"fill", "fill"}, {"step", "step"}, {"stairs", "stairs"}, {"stem", "stem"}, {"boxplot", "boxplot"}, {"violinplot", "violinplot"}, {"pie", "pie"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}};
+        return ofAxes;
+    }
+
+    // The data of a call ported with units, as matplotlib passes them through the axes' units
+    // (_process_unit_info, or update_units in plot's _plot_args), in its order: each a list of parts
+    // taken together (on the x axis or not). nullopt for a call not ported with units.
+    struct UnitData {
+        bool onX;
+        std::vector<const Json*> parts;
+    };
+    std::optional<std::vector<UnitData>> unitData(const model::Call& call) {
+        const std::string& m = call.method;
+        std::vector<UnitData> out;
+        const auto one = [&](bool onX, std::size_t i, const char* name) {
+            if (const Json* v = argument(call, i, name)) out.push_back({onX, {v}});
+        };
+        if (m == "plot" || m == "step") {  // (x, y, fmt) groups
+            std::size_t i = 0;
+            while (i < call.args.size()) {  // as plot() reads them
+                std::vector<const Json*> group;
+                for (std::size_t k = i; k < std::min(i + 2, call.args.size()); ++k) group.push_back(&call.args[k]);
+                i += group.size();
+                if (i < call.args.size() && call.args[i].isString()) group.push_back(&call.args[i++]);
+                if (group.size() > 1 && group.back()->isString()) group.pop_back();
+                if (group.size() == 2) out.push_back({true, {group[0]}});
+                out.push_back({false, {group.back()}});
+            }
+        } else if (m == "scatter") {
+            one(true, 0, "x");
+            one(false, 1, "y");
+        } else if (m == "fill_between" || m == "fill_betweenx") {
+            const bool x = m == "fill_between";
+            one(x, 0, x ? "x" : "y");
+            one(!x, 1, x ? "y1" : "x1");
+            one(!x, 2, x ? "y2" : "x2");
+        } else if (m == "axvline" || m == "axhline") {
+            one(m == "axvline", 0, m == "axvline" ? "x" : "y");
+        } else if (m == "axvspan" || m == "axhspan") {  // [xmin, xmax] together
+            const bool x = m == "axvspan";
+            UnitData d{x, {}};
+            for (std::size_t i = 0; i < 2; ++i)
+                if (const Json* v = argument(call, i, x ? (i ? "xmax" : "xmin") : (i ? "ymax" : "ymin"))) d.parts.push_back(v);
+            out.push_back(d);
+        } else if (m == "vlines" || m == "hlines") {
+            const bool x = m == "vlines";
+            one(x, 0, x ? "x" : "y");
+            one(!x, 1, x ? "ymin" : "xmin");
+            one(!x, 2, x ? "ymax" : "xmax");
+        } else if (m == "set_xlim" || m == "set_ylim") {  // (v0, v1) together
+            const bool x = m == "set_xlim";
+            UnitData d{x, {}};
+            if (call.args.size() == 1 && sequence(call.args[0])) {
+                for (const Json& v : sequence(call.args[0])->items()) d.parts.push_back(&v);
+            } else {
+                for (std::size_t i = 0; i < 2; ++i)
+                    if (const Json* v = argument(call, i, x ? (i ? "right" : "left") : (i ? "top" : "bottom"))) d.parts.push_back(v);
+            }
+            out.push_back(d);
+        } else {
+            return std::nullopt;
+        }
+        return out;
+    }
+
+    // Whether the call takes the dates it holds: only in its data, and not mixed with numbers in one list
+    // (matplotlib picks the converter by the first finite value, then converts or breaks by the
+    // others' types: not ported)
+    bool datesTaken(const model::Call& call, std::string* error) {
+        std::size_t all = 0;
+        for (const Json& a : call.args) all += datetimes(a);
+        for (const auto& kw : call.kwargs) all += datetimes(kw.second);
+        if (all == 0) return true;
+        const std::string where = call.on + "." + call.method;
+        const auto data = unitData(call);
+        if (!data) return *error = where + ": dates are not supported yet", false;
+        std::size_t inData = 0;
+        for (const UnitData& d : *data) {
+            std::size_t n = 0, values = 0;
+            for (const Json* part : d.parts) {
+                n += datetimes(*part);
+                const Json* seq = sequence(*part);
+                if (!seq) values += !part->isNull();
+                else
+                    for (const Json& item : seq->items()) values += !item.isNull();
+            }
+            if (n > 0 && n != values) return *error = where + ": a list that mixes dates with numbers is not supported yet", false;
+            inData += n;
+        }
+        if (inData != all) return *error = where + ": dates are not supported yet outside the data", false;
+        return true;
+    }
+
+    // Axis.update_units of the call's data that are dates: the axis takes the DateConverter (and the
+    // first time its tickers), as matplotlib does before the data are added
+    void markDateUnits(Axes& ax, const model::Call& call) {
+        const auto data = unitData(call);
+        if (!data) return;
+        for (const UnitData& d : *data)
+            for (const Json* part : d.parts)
+                if (datetimes(*part) > 0) (d.onX ? *ax.xaxis : *ax.yaxis).setDateUnits();
     }
 
     // Axis.set_major_formatter / set_minor_formatter, with NullFormatter() so far. The formatter is the
@@ -899,6 +1033,7 @@ private:
 
     bool axesCall(Axes& ax, const model::Call& call, std::string* error) {
         const std::string where = call.on + "." + call.method;
+        if (!datesTaken(call, error)) return false;
         if (call.method == "loglog" || call.method == "semilogx" || call.method == "semilogy") {
             // set_xscale('log') and / or set_yscale('log') with the scale's keywords, then plot with the rest
             // (dx: base, subs, nonpositive and their x forms, which LogScale refuses; dy likewise)
@@ -1197,6 +1332,7 @@ private:
             const char* lo = isX ? "left" : "bottom";
             const char* hi = isX ? "right" : "top";
             if (!keywords(call, {lo, hi}, error)) return false;
+            markDateUnits(ax, call);  // (_set_lim: _process_unit_info first)
             Axis& axis = isX ? *ax.xaxis : *ax.yaxis;
             const Json* given[2] = {call.args.size() > 0 ? &call.args[0] : keyword(call, lo),
                                     call.args.size() > 1 ? &call.args[1] : keyword(call, hi)};
@@ -1393,6 +1529,7 @@ private:
         const std::string where = call.on + ".plot";
         // Line2D properties by their full names (aliases normalised)
         if (!givenOnce(call, lineAliases(), where, error)) return false;
+        markDateUnits(ax, call);  // (_plot_args: update_units of each group's x and y, before the lines are added)
         std::vector<std::pair<std::string, const Json*>> props;
         for (const auto& [name, value] : call.kwargs) props.emplace_back(fullName(name, lineAliases()), &value);
         std::vector<const Json*> args;
@@ -1466,6 +1603,7 @@ private:
     // Axes.scatter(x, y, s=None, c=None, *, marker=None, alpha=None, linewidths=None, edgecolors=None, ...)
     bool scatter(Axes& ax, const model::Call& call, std::string* error) {
         const std::string where = call.on + ".scatter";
+        markDateUnits(ax, call);
         const Json* x = call.args.size() > 0 ? &call.args[0] : keyword(call, "x");
         const Json* y = call.args.size() > 1 ? &call.args[1] : keyword(call, "y");
         const Json* s = call.args.size() > 2 ? &call.args[2] : keyword(call, "s");
@@ -1675,6 +1813,7 @@ private:
         const bool alongY = call.method == "fill_betweenx";
         const std::string where = call.on + "." + call.method;
         const char* const names[3] = {alongY ? "y" : "x", alongY ? "x1" : "y1", alongY ? "x2" : "y2"};
+        markDateUnits(ax, call);  // (_fill_between_process_units)
         const Json* xa = call.args.size() > 0 ? &call.args[0] : keyword(call, names[0]);
         const Json* y1a = call.args.size() > 1 ? &call.args[1] : keyword(call, names[1]);
         const Json* y2a = call.args.size() > 2 ? &call.args[2] : keyword(call, names[2]);
@@ -2675,6 +2814,7 @@ private:
         const auto view = axis.viewInterval();
         const double bmin = std::min(view[0], view[1]), bmax = std::max(view[0], view[1]);
         const bool rescale = at < bmin || at > bmax;
+        markDateUnits(ax, call);  // (after get_ybound / get_xbound, as matplotlib does)
         auto line = horizontal ? std::make_unique<Line2D>(rc_, std::vector<double>{lo, hi}, std::vector<double>{at, at})
                                : std::make_unique<Line2D>(rc_, std::vector<double>{at, at}, std::vector<double>{lo, hi});
         line->transform = horizontal ? ax.yaxisTransform : ax.xaxisTransform;
@@ -3936,6 +4076,7 @@ private:
     bool axspan(Axes& ax, const model::Call& call, std::string* error) {
         const std::string where = call.on + "." + call.method;
         const bool horizontal = call.method == "axhspan";
+        markDateUnits(ax, call);
         const char* names[4] = {horizontal ? "ymin" : "xmin", horizontal ? "ymax" : "xmax", horizontal ? "xmin" : "ymin",
                                 horizontal ? "xmax" : "ymax"};
         double v[4] = {0, 0, 0, 1};
@@ -4840,6 +4981,7 @@ private:
         const std::string where = call.on + "." + call.method;
         const bool vertical = call.method == "vlines";
         const char* names[3] = {vertical ? "x" : "y", vertical ? "ymin" : "xmin", vertical ? "ymax" : "xmax"};
+        markDateUnits(ax, call);
         std::vector<double> v[3];
         for (int i = 0; i < 3; ++i) {
             const Json* a = argument(call, std::size_t(i), names[i]);
