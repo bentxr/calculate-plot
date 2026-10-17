@@ -124,6 +124,10 @@ std::string appendCall(std::string_view figureFile, const std::string& call, std
 std::string removeCall(std::string_view figureFile, std::size_t call, std::string* error);
 // The figure's Axes (Figure.axes, in order) by the names the file gives them ("" for an Axes it does not name).
 std::vector<std::string> axesNames(std::string_view figureFile, const std::string& fontDirectory, std::string* error);
+// matplotlib's bundled style sheets by name (without "default", the defaults themselves).
+std::vector<std::string> styleNames();
+// The figure file's style (plt.style.use's argument: a name or a list of names as JSON text), or none when empty.
+std::string setStyle(std::string_view figureFile, const std::string& style, std::string* error);
 // The figure's calls run without drawing: what they refuse, or "" (what only a drawing finds is not seen).
 std::string checkFigure(std::string_view figureFile, const std::string& fontDirectory);
 

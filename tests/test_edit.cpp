@@ -5,6 +5,8 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
+
 namespace cp = calculate_plot;
 
 namespace {
@@ -112,4 +114,25 @@ TEST(Edit, AFigureIsCheckedWithoutDrawing) {
     ASSERT_EQ(error, "");
     EXPECT_EQ(cp::checkFigure(bad, fonts), "ax.plot: linewidth must be a finite number");
     EXPECT_NE(cp::checkFigure("{", fonts), "");
+}
+
+// matplotlib's bundled styles, and the figure file's style (plt.style.use) set, changed or removed.
+TEST(Edit, StylesAreNamedAndSet) {
+    const auto names = cp::styleNames();
+    ASSERT_EQ(names.size(), 31u);
+    EXPECT_NE(std::find(names.begin(), names.end(), "ggplot"), names.end());
+    EXPECT_NE(std::find(names.begin(), names.end(), "dark_background"), names.end());
+    EXPECT_EQ(std::find(names.begin(), names.end(), "default"), names.end());  // (the defaults are no style)
+    std::string error;
+    const std::string bmh = cp::setStyle(kFigure, R"("bmh")", &error);
+    ASSERT_EQ(error, "");
+    EXPECT_EQ(bmh.rfind(R"({"version":1,"style":"bmh","calls":)", 0), 0u) << bmh;
+    const std::string none = cp::setStyle(kFigure, "", &error);
+    ASSERT_EQ(error, "");
+    EXPECT_EQ(none.find("style"), std::string::npos) << none;
+    const std::string added = cp::setStyle(none, R"(["classic", "fast"])", &error);
+    ASSERT_EQ(error, "");
+    EXPECT_EQ(added.rfind(R"({"version":1,"style":["classic","fast"],"calls":)", 0), 0u) << added;
+    EXPECT_EQ(cp::setStyle(kFigure, R"("no such style")", &error), "");
+    EXPECT_NE(error, "");
 }

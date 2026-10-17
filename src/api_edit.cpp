@@ -3,6 +3,8 @@
 
 #include "engine/engine.hpp"
 #include "model/figure_model.hpp"
+#include "rc/rc_params.hpp"
+#include "rc/styles.hpp"
 #include "support/json.hpp"
 #include "support/json_writer.hpp"
 
@@ -189,6 +191,29 @@ std::string removeCall(std::string_view figureFile, std::size_t call, std::strin
     auto calls = d->calls;
     calls.erase(calls.begin() + std::ptrdiff_t(call));
     return close(*d, calls, error);
+}
+
+std::vector<std::string> styleNames() { return rc::styleNames(); }
+
+std::string setStyle(std::string_view figureFile, const std::string& style, std::string* error) {
+    auto d = open(figureFile, error);
+    if (!d) return std::string();
+    std::optional<Json> v;
+    if (!style.empty()) {
+        if (!(v = parseValue(style, error))) return std::string();
+        rc::Params probe = rc::Params::defaults();
+        if (!rc::useStyle(probe, *v, error)) return *error = "plt.style.use: " + *error, std::string();
+    }
+    // the style goes after the version, before the rcParams and the calls (the order figure files write)
+    std::vector<std::pair<std::string, Json>> members;
+    for (const auto& m : d->root.members()) {
+        if (m.first == "style") continue;
+        members.push_back(m);
+        if (m.first == "version" && v) members.emplace_back("style", *v);
+    }
+    Document styled;
+    styled.root = Json::object(std::move(members));
+    return close(styled, d->calls, error);
 }
 
 std::vector<std::string> axesNames(std::string_view figureFile, const std::string& fontDirectory, std::string* error) {
