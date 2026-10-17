@@ -13,6 +13,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <tuple>
 
 namespace calculate_plot::axes {
 
@@ -169,20 +170,99 @@ std::pair<double, double> LogLocator::viewLimits(double vmin, double vmax, bool 
     return {vmin, vmax};
 }
 
+std::vector<double> SymmetricalLogLocator::tickValues(double vmin, double vmax) const {
+    const double L = linthresh;
+    if (vmax < vmin) std::swap(vmin, vmax);
+    if (-L <= vmin && vmin < vmax && vmax <= L) {  // sorted({vmin, 0, vmax})
+        std::vector<double> out{vmin};
+        if (0 != vmin) out.push_back(0);
+        if (vmax != vmin && vmax != 0) out.push_back(vmax);
+        std::sort(out.begin(), out.end());
+        return out;
+    }
+    const bool hasA = vmin < -L, hasC = vmax > L;
+    const bool hasB = (hasA && vmax > -L) || (hasC && vmin < L);
+    const double b = base;
+    const auto logRange = [&](double lo, double hi) {
+        return std::pair<double, double>{std::floor(std::log(lo) / std::log(b)), std::ceil(std::log(hi) / std::log(b))};
+    };
+    double aLo = 0, aHi = 0, cLo = 0, cHi = 0;
+    if (hasA) std::tie(aLo, aHi) = logRange(std::fabs(std::min(-L, vmax)), std::fabs(vmin) + 1);
+    if (hasC) std::tie(cLo, cHi) = logRange(std::max(L, vmin), vmax + 1);
+    double total = (aHi - aLo) + (cHi - cLo);
+    if (hasB) total += 1;
+    const double stride = std::max(std::floor(total / (numticks - 1)), 1.0);  // max(total // (numticks - 1), 1)
+    // np.arange(lo, hi, stride): lo + i * stride, ceil((hi - lo) / stride) of them
+    const auto arange = [](double lo, double hi, double step) {
+        std::vector<double> out;
+        const double n = std::ceil((hi - lo) / step);
+        for (double i = 0; i < n; ++i) out.push_back(i == 0 ? lo : lo + i * step);
+        return out;
+    };
+    std::vector<double> decades;
+    if (hasA) {
+        auto e = arange(aLo, aHi, stride);
+        for (auto it = e.rbegin(); it != e.rend(); ++it) decades.push_back(-1 * std::pow(b, *it));
+    }
+    if (hasB) decades.push_back(0.0);
+    if (hasC)
+        for (double e : arange(cLo, cHi, stride)) decades.push_back(std::pow(b, e));
+    if (subs.size() > 1 || subs[0] != 1.0) {
+        std::vector<double> ticklocs;
+        for (double d : decades) {
+            if (d == 0) ticklocs.push_back(d);
+            else
+                for (double s : subs) ticklocs.push_back(s * d);
+        }
+        return ticklocs;
+    }
+    return decades;
+}
+
+std::pair<double, double> SymmetricalLogLocator::viewLimits(double vmin, double vmax, bool roundNumbers) const {
+    const double b = base;
+    if (vmax < vmin) std::swap(vmin, vmax);
+    if (roundNumbers) {
+        vmin = decadeLessEqual(vmin, b);
+        vmax = decadeGreaterEqual(vmax, b);
+        if (vmin == vmax) {
+            vmin = decadeLess(vmin, b);
+            vmax = decadeGreater(vmax, b);
+        }
+    }
+    return nonsingular(vmin, vmax);
+}
+
 void LogFormatterSciNotation::setLocs(double vmin, double vmax) {
     if (std::isinf(minorThresholds.first)) {
         sublabels_.reset();
         return;
     }
     if (vmin > vmax) std::swap(vmin, vmax);
-    if (vmin <= 0) {  // (linthresh is None: no symlog yet)
+    if (!linthresh && vmin <= 0) {
         sublabels_ = std::set<double>{1};
         return;
     }
     const double b = base;
-    const double lmin = mathLog(vmin, b), lmax = mathLog(vmax, b);
-    const double numticks = std::floor(lmax) - std::floor(std::nextafter(lmin, -std::numeric_limits<double>::infinity()));
-    const double numdec = std::fabs(lmax - lmin);
+    const double inf = std::numeric_limits<double>::infinity();
+    double numticks = 0, numdec = 0;
+    if (linthresh) {  // symlog: the decades of the logarithmic parts only
+        const double L = *linthresh;
+        if (vmin < -L) {
+            const double rhs = std::min(vmax, -L);
+            numticks += std::floor(mathLog(std::fabs(rhs), b)) - std::floor(std::nextafter(mathLog(std::fabs(vmin), b), -inf));
+            numdec += mathLog(vmin / rhs, b);
+        }
+        if (vmax > L) {
+            const double lhs = std::max(vmin, L);
+            numticks += std::floor(mathLog(vmax, b)) - std::floor(std::nextafter(mathLog(lhs, b), -inf));
+            numdec += mathLog(vmax / lhs, b);
+        }
+    } else {
+        const double lmin = mathLog(vmin, b), lmax = mathLog(vmax, b);
+        numticks = std::floor(lmax) - std::floor(std::nextafter(lmin, -inf));
+        numdec = std::fabs(lmax - lmin);
+    }
     if (numticks > minorThresholds.first) {
         sublabels_ = std::set<double>{1};
     } else if (numdec > minorThresholds.second) {

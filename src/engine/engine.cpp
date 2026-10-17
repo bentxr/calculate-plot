@@ -1238,11 +1238,33 @@ private:
         if (call.method == "hist") return hist(ax, call, error);
         if (call.method == "vlines" || call.method == "hlines") return lines(ax, call, error);
         if (call.method == "set_xscale" || call.method == "set_yscale") {
-            if (!call.kwargs.empty()) return *error = where + ": scale options are not supported yet", false;
-            if (call.args.size() != 1 || !call.args[0].isString()) return *error = where + ": give the scale's name", false;
-            const std::string name = call.args[0].asString();
-            if (name != "linear" && name != "log") return *error = where + ": the " + name + " scale is not supported yet", false;
-            ax.setScale(call.method == "set_xscale", name);
+            const Json* nameJson = call.args.empty() ? keyword(call, "value") : &call.args[0];
+            if (call.args.size() > 1 || !nameJson || !nameJson->isString()) return *error = where + ": give the scale's name", false;
+            const std::string name = nameJson->asString();
+            if (name != "linear" && name != "log" && name != "symlog") return *error = where + ": the " + name + " scale is not supported yet", false;
+            AxisScaleOptions options;
+            for (const auto& [key, value] : call.kwargs) {
+                if (key == "value") continue;
+                double n = 0;
+                if (name == "symlog" && (key == "base" || key == "linthresh" || key == "linscale")) {
+                    if (!readNumber(value, &n)) return *error = where + ": " + key + " must be a number", false;
+                    (key == "base" ? options.base : key == "linthresh" ? options.linthresh : options.linscale) = n;
+                } else if (name == "symlog" && key == "subs") {
+                    std::vector<double> subs;
+                    if (value.isNull()) continue;
+                    if (!numbers(value, &subs) || subs.empty()) return *error = where + ": subs must be a list of numbers or None", false;
+                    options.subs = subs;
+                } else {
+                    return *error = where + ": the " + name + " scale's option " + key + " is not supported yet", false;
+                }
+            }
+            // SymmetricalLogTransform's checks
+            if (name == "symlog") {
+                if (options.base <= 1.0) return *error = where + ": 'base' must be larger than 1", false;
+                if (options.linthresh <= 0.0) return *error = where + ": 'linthresh' must be positive", false;
+                if (options.linscale <= 0.0) return *error = where + ": 'linscale' must be positive", false;
+            }
+            ax.setScale(call.method == "set_xscale", name, options);
             return true;
         }
         *error = "unsupported call: " + where;

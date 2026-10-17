@@ -133,6 +133,40 @@ private:
     LogTransform log_;
 };
 
+// scale.SymmetricalLogTransform(base, linthresh, linscale): linear within linthresh of zero, logarithmic
+// outside; one direction of a blended transform, as LogTransform is.
+class SymmetricalLogTransform : public Transform {
+public:
+    SymmetricalLogTransform(double base, double linthresh, double linscale) : base_(base), linthresh_(linthresh), linscale_(linscale) {}
+    Matrix matrix() const override { return {}; }
+    bool isAffine() const override { return false; }
+    bool isAffine2DBase() const override { return false; }
+    double transform1d(double v) const;
+    double inverse1d(double v) const;  // InvertedSymmetricalLogTransform
+    double base() const { return base_; }
+    double linthresh() const { return linthresh_; }
+    double linscale() const { return linscale_; }
+    TransformPtr inverted() const override;
+
+private:
+    double base_, linthresh_, linscale_;
+};
+
+class InvertedSymmetricalLogTransform : public Transform {
+public:
+    InvertedSymmetricalLogTransform(double base, double linthresh, double linscale) : forward_(base, linthresh, linscale) {}
+    Matrix matrix() const override { return {}; }
+    bool isAffine() const override { return false; }
+    bool isAffine2DBase() const override { return false; }
+    double transform1d(double v) const { return forward_.inverse1d(v); }
+    TransformPtr inverted() const override {
+        return std::make_shared<SymmetricalLogTransform>(forward_.base(), forward_.linthresh(), forward_.linscale());
+    }
+
+private:
+    SymmetricalLogTransform forward_;
+};
+
 class Affine2D : public Transform {
 public:
     Affine2D() = default;

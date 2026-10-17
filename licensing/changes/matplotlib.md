@@ -239,6 +239,9 @@ it comes from in its first lines. The changes, as a whole:
   ConnectionPatch makes them with arc3 and '-', which two show, one compound path in the rectangle's style),
   Axes.indicate_inset / indicate_inset_zoom; Figure._get_draw_artists placing every Axes and its child Axes
   before the figure draws.
+  Symlog: scale.py's SymmetricalLogScale, SymmetricalLogTransform and its inverse (NumPy's elementwise formulas
+  for one value), ticker.py's SymmetricalLogLocator (tick_values, view_limits) and LogFormatter.set_locs' symlog
+  branch; set_xscale / set_yscale with base, linthresh, linscale and subs.
   Bar labels: Axes.bar_label (BarContainer.datavalues, orientation and errorbar kept with the container,
   LineCollection.get_segments, Patch.get_window_extent, Bbox.intersection) and cbook._auto_format_str, with
   Python's % formatting and str.format of one number ported in src/support/pyformat.cpp (our own code: the

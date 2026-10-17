@@ -512,8 +512,9 @@ void Axis::setLabelsOn(bool first, bool on) {
     offsetText.visible = majorTickKw_.label1On || majorTickKw_.label2On;
 }
 
-void Axis::setScale(const std::string& name) {
+void Axis::setScale(const std::string& name, const ScaleOptions& options) {
     scale_ = name;
+    scaleOptions_ = options;
     nullMajorFormatter = nullMinorFormatter = false;
     fixedLocs.reset();
     fixedLabels.reset();
@@ -531,6 +532,17 @@ void Axis::setScale(const std::string& name) {
         logFormatter.minExponent = int(rc_.number("axes.formatter.min_exponent"));
         if (classic) logFormatter.minorThresholds = {0, 0};
         logMinorFormatter = logFormatter;
+    } else if (name == "symlog") {  // SymmetricalLogScale.set_default_locators_and_formatters
+        symlogLocator = axes::SymmetricalLogLocator();
+        symlogLocator.base = options.base, symlogLocator.linthresh = options.linthresh;
+        symlogMinorLocator = symlogLocator;
+        if (options.subs) symlogMinorLocator.subs = *options.subs;
+        logFormatter = axes::LogFormatterSciNotation();
+        logFormatter.base = options.base;
+        logFormatter.linthresh = options.linthresh;  // (set_locs takes it from the axis' transform)
+        logFormatter.minExponent = int(rc_.number("axes.formatter.min_exponent"));
+        if (classic) logFormatter.minorThresholds = {0, 0};
+        nullMinorFormatter = true;  // NullFormatter()
     } else {
         locator = axes::MaxNLocator::autoLocator();
         if (classic) {
@@ -559,11 +571,21 @@ void Axis::setScale(const std::string& name) {
 
 transforms::TransformPtr Axis::scaleTransform() const {
     if (scale_ == "log") return std::make_shared<transforms::LogTransform>(10.0);
+    if (scale_ == "symlog")
+        return std::make_shared<transforms::SymmetricalLogTransform>(scaleOptions_.base, scaleOptions_.linthresh, scaleOptions_.linscale);
     return std::make_shared<transforms::IdentityTransform>();
 }
 
-double Axis::scaleForward(double v) const { return scale_ == "log" ? transforms::LogTransform(10.0).transform1d(v) : v; }
-double Axis::scaleInverse(double v) const { return scale_ == "log" ? transforms::LogTransform(10.0).inverse1d(v) : v; }
+double Axis::scaleForward(double v) const {
+    if (scale_ == "log") return transforms::LogTransform(10.0).transform1d(v);
+    if (scale_ == "symlog") return transforms::SymmetricalLogTransform(scaleOptions_.base, scaleOptions_.linthresh, scaleOptions_.linscale).transform1d(v);
+    return v;
+}
+double Axis::scaleInverse(double v) const {
+    if (scale_ == "log") return transforms::LogTransform(10.0).inverse1d(v);
+    if (scale_ == "symlog") return transforms::SymmetricalLogTransform(scaleOptions_.base, scaleOptions_.linthresh, scaleOptions_.linscale).inverse1d(v);
+    return v;
+}
 double Axis::minpos() const { return axes_.minpos[isX_ ? 0 : 1]; }
 
 double Axis::sharedMinpos() const {
@@ -586,6 +608,8 @@ std::pair<double, double> Axis::locatorViewLimits(double v0, double v1) {
         logLocator.minpos = sharedMinpos();
         return logLocator.viewLimits(v0, v1, rc_.text("axes.autolimit_mode") == "round_numbers");
     }
+    if (scale_ == "symlog" && !tickerAxis().fixedLocs)
+        return symlogLocator.viewLimits(v0, v1, rc_.text("axes.autolimit_mode") == "round_numbers");
     locator.tickSpace = tickerAxis().tickSpace();  // the locator's axis
     if (tickerAxis().fixedLocs) return axes::nonsingular(v0, v1);  // Locator.view_limits: _nonsingular
     return locator.viewLimits(v0, v1);
@@ -708,7 +732,7 @@ std::vector<Tick*> Axis::minorTicks(std::size_t count) {
 std::string Axis::offsetString() const {
     // NullFormatter.get_offset() is '' (a log scale's formatters have none either)
     const Axis& owner = tickerAxis();
-    if (scale_ == "log" || owner.nullMajorFormatter || owner.fixedLabels || owner.dictLabels) return std::string();
+    if (scale_ == "log" || scale_ == "symlog" || owner.nullMajorFormatter || owner.fixedLabels || owner.dictLabels) return std::string();
     return formatter.offsetText();
 }
 
@@ -723,7 +747,7 @@ std::string Axis::ticksPosition() const {
     // Axis._get_ticks_position over a major tick and, where the minor locator is not a NullLocator
     // (log scales), a minor one: what the ticks of a group show is what its keywords say
     std::vector<const TickSwitches*> groups{&majorTickKw_};
-    if (scale_ == "log") groups.push_back(&minorTickKw_);
+    if (scale_ == "log" || scale_ == "symlog") groups.push_back(&minorTickKw_);
     const auto all = [&](bool tick1, bool tick2, bool label1) {
         for (const TickSwitches* k : groups)
             if (k->tick1On != tick1 || k->tick2On != tick2 || k->label1On != label1 || k->label2On == label1) return false;
@@ -848,6 +872,8 @@ std::vector<Tick*> Axis::updateTicks() {
             logLocator.tickSpace = owner.tickSpace();
             logLocator.minpos = owner.minpos();
             locs = logLocator.tickValues(ownerView[0], ownerView[1]);
+        } else if (scale_ == "symlog") {
+            locs = owner.symlogLocator.tickValues(ownerView[0], ownerView[1]);
         } else {
             locator.tickSpace = owner.tickSpace();
             locs = locator.tickValues(ownerView[0], ownerView[1]);
@@ -864,7 +890,7 @@ std::vector<Tick*> Axis::updateTicks() {
                     if (at == v) found = text;
                 labels.push_back(found);
             }
-        } else if (scale_ == "log") {
+        } else if (scale_ == "log" || scale_ == "symlog") {
             logFormatter.setLocs(ownerView[0], ownerView[1]);
             for (double v : locs) labels.push_back(logFormatter(v));
         } else {
@@ -897,9 +923,29 @@ std::vector<Tick*> Axis::updateTicks() {
             ticks.push_back(minor[i]);
         }
     }
+    // SymmetricalLogLocator(subs) on a symlog scale, its labels empty (NullFormatter); the minor ticks within
+    // 1e-5 of the view (through the scale's transform) of a major one go
+    if (groupVisible(minorTickKw_) && scale_ == "symlog") {
+        const auto majorLocs = owner.fixedLocs ? *owner.fixedLocs : owner.symlogLocator.tickValues(ownerView[0], ownerView[1]);
+        double lo = scaleForward(view[0]), hi = scaleForward(view[1]);
+        if (lo > hi) std::swap(lo, hi);
+        const double tol = (hi - lo) * 1e-5;
+        std::vector<double> locs;
+        for (double m : owner.symlogMinorLocator.tickValues(ownerView[0], ownerView[1])) {
+            bool close = false;
+            for (double M : majorLocs) close = close || std::fabs(scaleForward(m) - scaleForward(M)) <= tol;
+            if (!close) locs.push_back(m);
+        }
+        const std::vector<Tick*> minor = minorTicks(locs.size());
+        for (std::size_t i = 0; i < locs.size(); ++i) {
+            minor[i]->updatePosition(locs[i]);
+            minor[i]->label1.text = minor[i]->label2.text = "";
+            ticks.push_back(minor[i]);
+        }
+    }
     // AutoMinorLocator on a linear scale that has one; its labels are empty (NullFormatter)
     // (every axis makes the same locator from the rcParams: this one's is as good as the owner's)
-    if (groupVisible(minorTickKw_) && scale_ != "log" && minorLocator) {
+    if (groupVisible(minorTickKw_) && scale_ == "linear" && minorLocator) {
         locator.tickSpace = owner.tickSpace();
         const auto majorLocs = owner.fixedLocs ? *owner.fixedLocs : locator.tickValues(ownerView[0], ownerView[1]);
         const auto locs = axes::withoutMajorTicks((*minorLocator)(majorLocs, ownerView[0], ownerView[1]), majorLocs, view[0], view[1]);
@@ -1542,7 +1588,7 @@ void Axes::updateTransScale() {
     transScale->set(transforms::blend(xaxis->scaleTransform(), yaxis->scaleTransform()));
 }
 
-void Axes::setScale(bool x, const std::string& name) {
+void Axes::setScale(bool x, const std::string& name, const AxisScaleOptions& options) {
     // Axis._set_axes_scale: every Axes sharing the axis takes the scale; each sets the shared tickers'
     // locators and formatters anew, so they end up belonging to the last one's axis.
     Axis& axis = x ? *xaxis : *yaxis;
@@ -1551,7 +1597,7 @@ void Axes::setScale(bool x, const std::string& name) {
     SharedAxes& group = *shared_[x ? 0 : 1];
     for (Axes* ax : group.members) {
         Axis& theirs = x ? *ax->xaxis : *ax->yaxis;
-        theirs.setScale(name);
+        theirs.setScale(name, options);
         group.tickerAxis = &theirs;
         ax->updateTransScale();
     }

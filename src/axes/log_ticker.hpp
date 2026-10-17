@@ -28,6 +28,16 @@ struct LogLocator {
     std::pair<double, double> viewLimits(double vmin, double vmax, bool roundNumbers) const;
 };
 
+// SymmetricalLogLocator(transform, subs): the decades on either side of the linear part and zero (its
+// subs times each decade), at most numticks of them
+struct SymmetricalLogLocator {
+    double base = 10.0, linthresh = 2.0;
+    std::vector<double> subs{1.0};
+    int numticks = 15;
+    std::vector<double> tickValues(double vmin, double vmax) const;
+    std::pair<double, double> viewLimits(double vmin, double vmax, bool roundNumbers) const;
+};
+
 // LogFormatterSciNotation(base, labelOnlyBase): mathtext labels such as $\mathdefault{10^{3}}$ or
 // $\mathdefault{2\times10^{3}}$.
 class LogFormatterSciNotation {
@@ -36,6 +46,7 @@ public:
     bool labelOnlyBase = false;
     std::pair<double, double> minorThresholds{1, 0.4};
     int minExponent = 0;  // rcParams["axes.formatter.min_exponent"]: below it a power is written out
+    std::optional<double> linthresh;  // the axis' transform's linthresh on a symlog scale
 
     void setLocs(double viewMin, double viewMax);  // set_locs: which multiples get labels
     std::string operator()(double x) const;

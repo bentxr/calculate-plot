@@ -209,6 +209,8 @@ std::array<double, 2> BlendedAffine2D::transformNonAffine(double x, double y) co
     const auto one = [](const Transform& t, double v, double* out) {
         if (const auto* log = dynamic_cast<const LogTransform*>(&t)) return *out = log->transform1d(v), true;
         if (const auto* power = dynamic_cast<const InvertedLogTransform*>(&t)) return *out = power->transform1d(v), true;
+        if (const auto* symlog = dynamic_cast<const SymmetricalLogTransform*>(&t)) return *out = symlog->transform1d(v), true;
+        if (const auto* inverse = dynamic_cast<const InvertedSymmetricalLogTransform*>(&t)) return *out = inverse->transform1d(v), true;
         return false;
     };
     double rx = 0, ry = 0;
@@ -228,6 +230,29 @@ double LogTransform::transform1d(double v) const {
 }
 
 TransformPtr LogTransform::inverted() const { return std::make_shared<InvertedLogTransform>(base_); }
+
+double SymmetricalLogTransform::transform1d(double v) const {
+    // linear within linthresh; else sign * linthresh * (linscale_adj - log(linthresh) / log(base) + log|v| / log(base))
+    const double linscaleAdj = linscale_ / (1.0 - 1.0 / base_);
+    const double logBase = std::log(base_);
+    const double absA = std::fabs(v);
+    if (absA <= linthresh_) return v * linscaleAdj;
+    const double sign = std::isnan(v) ? v : v > 0 ? 1.0 : v < 0 ? -1.0 : 0.0;  // np.sign
+    return sign * linthresh_ * (linscaleAdj - std::log(linthresh_) / logBase + std::log(absA) / logBase);
+}
+
+double SymmetricalLogTransform::inverse1d(double v) const {
+    const double linscaleAdj = linscale_ / (1.0 - 1.0 / base_);
+    const double invlinthresh = linthresh_ * linscaleAdj;  // (the forward transform of linthresh)
+    const double absA = std::fabs(v);
+    if (absA <= invlinthresh) return v / linscaleAdj;
+    const double sign = std::isnan(v) ? v : v > 0 ? 1.0 : v < 0 ? -1.0 : 0.0;
+    return sign * linthresh_ * std::exp((absA / linthresh_ - linscaleAdj) * std::log(base_));
+}
+
+TransformPtr SymmetricalLogTransform::inverted() const {
+    return std::make_shared<InvertedSymmetricalLogTransform>(base_, linthresh_, linscale_);
+}
 
 double LogTransform::inverse1d(double v) const {
     // InvertedLogTransform: np.exp2 for base 2, else np.exp(values * np.log(base))

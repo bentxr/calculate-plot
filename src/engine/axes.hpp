@@ -100,6 +100,12 @@ private:
     std::string tickdir_;
 };
 
+// A scale's options (set_xscale's keywords): symlog's base, linthresh, linscale and minor subs
+struct AxisScaleOptions {
+    double base = 10, linthresh = 2, linscale = 1;
+    std::optional<std::vector<double>> subs;
+};
+
 class Axis : public Artist {
 public:
     Axis(const rc::Params& rc, Axes& axes, bool isX);
@@ -139,8 +145,11 @@ public:
     // offset text; nullopt when there is none.
     std::optional<transforms::Bbox> tightbbox(Renderer& renderer, bool forLayoutOnly);
 
-    // The scale: "linear" or "log" (base 10). _set_scale sets the locators and formatters.
-    void setScale(const std::string& name);
+    // The scale: "linear", "log" (base 10) or "symlog" (with its options). _set_scale sets the locators and
+    // formatters.
+    using ScaleOptions = AxisScaleOptions;
+    void setScale(const std::string& name, const ScaleOptions& options = ScaleOptions());
+    const ScaleOptions& scaleOptions() const { return scaleOptions_; }
     const std::string& scale() const { return scale_; }
     transforms::TransformPtr scaleTransform() const;  // get_transform()
     double scaleForward(double v) const;               // the scale's transform of one value
@@ -155,6 +164,7 @@ public:
     axes::MaxNLocator locator = axes::MaxNLocator::autoLocator();
     axes::ScalarFormatter formatter;
     axes::LogLocator logLocator, logMinorLocator;
+    axes::SymmetricalLogLocator symlogLocator, symlogMinorLocator;
     std::optional<axes::AutoMinorLocator> minorLocator;  // of a linear scale, if rcParams["xtick.minor.visible"]
     axes::LogFormatterSciNotation logFormatter, logMinorFormatter;
     // NullFormatter() set as the major or the minor formatter: no labels, no offset text. The scale's
@@ -187,6 +197,7 @@ private:
     Axes& axes_;
     bool isX_;
     std::string scale_ = "linear";
+    ScaleOptions scaleOptions_;
     std::string tickPosition_ = "bottom";  // XAxis._tick_position: where the offset text goes
     TickSwitches majorTickKw_, minorTickKw_;
     std::vector<std::unique_ptr<Tick>> majorTicks_, minorTicks_;
@@ -261,7 +272,7 @@ public:
     void requestAutoscaleView(bool x, bool y);
     // update_datalim(xys): nothing unless some value is finite; then the data limits grow by the points
     void updateDatalim(const std::vector<std::array<double, 2>>& xys, bool updatex = true, bool updatey = true);
-    void setScale(bool x, const std::string& name);  // set_xscale / set_yscale
+    void setScale(bool x, const std::string& name, const AxisScaleOptions& options = AxisScaleOptions());  // set_xscale / set_yscale
     void unstaleViewLim();                            // what reading Axes.viewLim does first
     void clearStale(bool x) { (x ? staleX_ : staleY_) = false; }
     // Axes.sharex / sharey: this Axes joins `other`'s group, uses its tickers and takes its limits.
