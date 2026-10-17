@@ -58,6 +58,8 @@ add_library(calculate-plot STATIC
     src/version.cpp
     src/agg/agg_hooks.cpp
     src/axes/log_ticker.cpp
+    src/axes/dates.cpp
+    src/axes/dateutil.cpp
     src/axes/ticker.cpp
     src/colors/colormap.cpp
     src/colors/colors.cpp

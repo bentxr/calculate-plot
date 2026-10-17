@@ -13,6 +13,7 @@
 #include "engine/legend.hpp"
 #include "rc/rc_params.hpp"
 #include "support/pyformat.hpp"
+#include "support/raised.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -518,9 +519,23 @@ void Axis::setLabelsOn(bool first, bool on) {
     offsetText.visible = majorTickKw_.label1On || majorTickKw_.label2On;
 }
 
+void Axis::setDateUnits() {
+    if (dateUnits) return;  // (the converter is there: nothing new)
+    dateUnits = true;
+    Axis& owner = tickerAxis();  // set_major_locator / set_major_formatter: the tickers this axis shares
+    if (owner.fixedLocs) return;  // (isDefault_majloc: a FixedLocator someone set stays)
+    owner.dateTickers = true;
+    owner.dateLocator = axes::dates::AutoDateLocator();
+    owner.dateLocator.intervalMultiples = rc_.boolean("date.interval_multiples");
+    owner.dateFormatter = axes::dates::AutoDateFormatter();
+    static const char* const keys[7] = {"year", "month", "day", "hour", "minute", "second", "microsecond"};
+    for (std::size_t i = 0; i < 7; ++i) owner.dateFormatter.formats[i] = rc_.text(std::string("date.autoformatter.") + keys[i]);
+}
+
 void Axis::setScale(const std::string& name, const ScaleOptions& options) {
     scale_ = name;
     scaleOptions_ = options;
+    dateTickers = false;  // (the scale's own locators and formatters replace the date ones)
     nullMajorFormatter = nullMinorFormatter = false;
     fixedLocs.reset();
     fixedLabels.reset();
@@ -616,6 +631,7 @@ double Axis::sharedMinpos() const {
 }
 
 std::pair<double, double> Axis::locatorNonsingular(double v0, double v1) {
+    if (tickerAxis().dateTickers && !tickerAxis().fixedLocs) return tickerAxis().dateLocator.nonsingular(v0, v1);
     if (scale_ == "logit" && !tickerAxis().fixedLocs) {
         logitLocator.minpos = minpos();  // LogitLocator.nonsingular: its axis' get_minpos()
         return logitLocator.nonsingular(v0, v1);
@@ -629,6 +645,7 @@ std::pair<double, double> Axis::locatorNonsingular(double v0, double v1) {
 }
 
 std::pair<double, double> Axis::locatorViewLimits(double v0, double v1) {
+    if (tickerAxis().dateTickers && !tickerAxis().fixedLocs) return axes::nonsingular(v0, v1);  // Locator.view_limits
     if (scale_ == "log" && !tickerAxis().fixedLocs) {
         logLocator.minpos = sharedMinpos();
         return logLocator.viewLimits(v0, v1, rc_.text("axes.autolimit_mode") == "round_numbers");
@@ -761,7 +778,8 @@ std::vector<Tick*> Axis::minorTicks(std::size_t count) {
 std::string Axis::offsetString() const {
     // NullFormatter.get_offset() is '' (a log scale's formatters have none either)
     const Axis& owner = tickerAxis();
-    if (scale_ == "log" || scale_ == "symlog" || scale_ == "logit" || owner.nullMajorFormatter || owner.fixedLabels || owner.dictLabels)
+    if (scale_ == "log" || scale_ == "symlog" || scale_ == "logit" || owner.nullMajorFormatter || owner.fixedLabels || owner.dictLabels ||
+        owner.dateTickers)
         return std::string();
     return formatter.offsetText();
 }
@@ -898,6 +916,9 @@ std::vector<Tick*> Axis::updateTicks() {
         std::vector<double> locs;
         if (owner.fixedLocs) {
             locs = *owner.fixedLocs;
+        } else if (owner.dateTickers) {
+            std::string error;
+            if (!owner.dateLocator.ticks(ownerView[0], ownerView[1], &locs, &error)) support::noteRaised(error);
         } else if (scale_ == "log") {
             logLocator.tickSpace = owner.tickSpace();
             logLocator.minpos = owner.minpos();
@@ -923,6 +944,12 @@ std::vector<Tick*> Axis::updateTicks() {
                 for (const auto& [at, text] : *owner.dictLabels)
                     if (at == v) found = text;
                 labels.push_back(found);
+            }
+        } else if (owner.dateTickers) {
+            for (double v : locs) {
+                std::string text, error;
+                if (!owner.dateFormatter.format(v, owner.dateLocator.unit(), &text, &error)) support::noteRaised(error);
+                labels.push_back(text);
             }
         } else if (scale_ == "log" || scale_ == "symlog") {
             logFormatter.setLocs(ownerView[0], ownerView[1]);

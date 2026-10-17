@@ -1,5 +1,7 @@
 #include "model/figure_model.hpp"
 
+#include "axes/dates.hpp"
+
 #include "support/pyformat.hpp"
 #include "svg/svg_renderer.h"
 
@@ -73,6 +75,13 @@ bool validValue(const Json& v, const std::set<std::string>& known, std::string* 
             if (error) *error = "{\"$ref\": ...} must name the result of an earlier call, and nothing else";
             return false;
         }
+        if (v.members()[0].first == "$datetime") {
+            const Json& d = v.members()[0].second;
+            axes::dates::DateTime dt;
+            if (v.members().size() == 1 && d.isString() && axes::dates::parseIso(d.asString(), &dt)) return true;
+            if (error) *error = "{\"$datetime\": ...} must be a date and time as YYYY-MM-DDTHH:MM:SS (a year from 1 to 9999)";
+            return false;
+        }
         if (v.members()[0].first == "$dict") {
             const Json& d = v.members()[0].second;
             if (v.members().size() != 1 || !d.isObject()) {
@@ -113,6 +122,15 @@ std::string python(const Json& v) {
         if (v.members()[0].first == "$float") return "float('" + v.members()[0].second.asString() + "')";
         if (v.members()[0].first == "$new") return "plt." + v.members()[0].second.asString() + "()";
         if (v.members()[0].first == "$ref") return v.members()[0].second.asString();
+        if (v.members()[0].first == "$datetime") {  // repr(datetime.datetime): the seconds only when not 0
+            axes::dates::DateTime dt;
+            axes::dates::parseIso(v.members()[0].second.asString(), &dt);
+            std::string out = "datetime.datetime(" + std::to_string(dt.year) + ", " + std::to_string(dt.month) + ", " +
+                              std::to_string(dt.day) + ", " + std::to_string(dt.hour) + ", " + std::to_string(dt.minute);
+            if (dt.second || dt.microsecond) out += ", " + std::to_string(dt.second);
+            if (dt.microsecond) out += ", " + std::to_string(dt.microsecond);
+            return out + ")";
+        }
         if (v.members()[0].first == "$dict") {
             std::string out = "{";
             bool first = true;
@@ -211,9 +229,28 @@ std::optional<Figure> parseFigure(std::string_view json, std::string* error) {
     return figure;
 }
 
+// Whether a value holds a {"$datetime": ...} anywhere
+bool usesDatetime(const Json& v) {
+    if (v.isArray()) {
+        for (const Json& item : v.items())
+            if (usesDatetime(item)) return true;
+        return false;
+    }
+    if (!v.isObject()) return false;
+    for (const auto& [key, value] : v.members())
+        if (key == "$datetime" || usesDatetime(value)) return true;
+    return false;
+}
+
 std::string exportPython(const Figure& figure, std::string_view version) {
+    bool datetimes = false;
+    for (const auto& call : figure.calls) {
+        for (const auto& a : call.args) datetimes = datetimes || usesDatetime(a);
+        for (const auto& kw : call.kwargs) datetimes = datetimes || usesDatetime(kw.second);
+    }
     std::string out = "# Written by calculate-plot " + std::string(version) +
-                      ": this script draws the same figure with Matplotlib 3.11.2.\n"
+                      ": this script draws the same figure with Matplotlib 3.11.2.\n" +
+                      std::string(datetimes ? "import datetime\n" : "") +
                       "import locale\n\n"
                       "import matplotlib.pyplot as plt\n\n"
                       // HarfBuzz takes the language of a text that sets none from LC_CTYPE, the first

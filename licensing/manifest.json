@@ -538,7 +538,9 @@
     "data/color_sequences.json",
     "src/engine/hatch.hpp",
     "src/engine/hatch.cpp",
-    "data/schema.json"
+    "data/schema.json",
+    "src/axes/dates.hpp",
+    "src/axes/dates.cpp"
    ],
    "header": [
     "Copyright (c) 2012- Matplotlib Development Team; All Rights Reserved",
@@ -611,6 +613,36 @@
    ],
    "changes": "licensing/changes/openblas.md",
    "remarks": "The order of the arithmetic of ddot's x86_64 Haswell kernel, translated to C++, so that np.dot of float64 vectors (which NumPy's 'stone' bin rule takes) matches the reference machine's bit for bit."
+  },
+  {
+   "id": "dateutil",
+   "name": "dateutil",
+   "version": "2.9.0.post0",
+   "homepage": "https://github.com/dateutil/dateutil",
+   "use": "runtime",
+   "licence": "BSD-3-Clause",
+   "licenceFiles": [
+    {
+     "path": "LICENSES/dateutil.txt",
+     "upstream": "https://raw.githubusercontent.com/dateutil/dateutil/2.9.0.post0/LICENSE",
+     "sha256": "ba00f51a0d92823b5a1cde27d8b5b9d2321e67ed8da9bc163eff96d5e17e577e"
+    }
+   ],
+   "fetch": [],
+   "vendored": [],
+   "derived": [
+    "src/axes/dateutil.hpp",
+    "src/axes/dateutil.cpp"
+   ],
+   "header": [
+    "Copyright (c) 2003-2011 - Gustavo Niemeyer",
+    "LICENSES/dateutil.txt"
+   ],
+   "notices": [
+    "Copyright (c) 2003-2011 - Gustavo Niemeyer"
+   ],
+   "changes": "licensing/changes/dateutil.md",
+   "remarks": "relativedelta between two datetimes and the rrules matplotlib's date locators make, translated to C++ so that date ticks match matplotlib's (dateutil's LICENSE: the BSD licence applies to all of its code, even that also under Apache 2.0)."
   },
   {
    "id": "cycler",

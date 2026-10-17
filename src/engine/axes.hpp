@@ -4,6 +4,7 @@
 // Licence: LICENSES/Matplotlib.txt. Changes: licensing/changes/matplotlib.md
 #pragma once
 
+#include "axes/dates.hpp"
 #include "axes/log_ticker.hpp"
 #include "axes/ticker.hpp"
 #include "engine/artist.hpp"
@@ -170,6 +171,12 @@ public:
     axes::SymmetricalLogLocator symlogLocator, symlogMinorLocator;
     axes::LogitLocator logitLocator, logitMinorLocator;
     axes::LogitFormatter logitFormatter, logitMinorFormatter;
+    // Date units (the DateConverter's axisinfo): AutoDateLocator and AutoDateFormatter as the major tickers
+    // until a scale is set; `dateUnits` stays (the converter) once datetimes have come
+    bool dateUnits = false, dateTickers = false;
+    axes::dates::AutoDateLocator dateLocator;
+    axes::dates::AutoDateFormatter dateFormatter;
+    void setDateUnits();  // update_units with datetimes: the first time, _update_axisinfo
     std::optional<axes::AutoMinorLocator> minorLocator;  // of a linear scale, if rcParams["xtick.minor.visible"]
     axes::LogFormatterSciNotation logFormatter, logMinorFormatter;
     // NullFormatter() set as the major or the minor formatter: no labels, no offset text. The scale's

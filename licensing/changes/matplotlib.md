@@ -248,6 +248,10 @@ it comes from in its first lines. The changes, as a whole:
   use_overline.
   Log scales take base, subs and nonpositive (LogTransform's mask, np.log for base e; the minor formatter labels
   only bases when subs are given), also through loglog / semilogx / semilogy.
+  Dates (src/axes/dates.*, with dateutil): dates.py's date2num and num2date (through datetime64[us], the default
+  epoch, UTC only), AutoDateLocator.get_locator and its YearLocator, RRuleLocator and MicrosecondLocator (with
+  ticker.py's MultipleLocator and _Edge_integer), DateLocator.nonsingular, AutoDateFormatter and DateFormatter
+  with datetime.strftime's directives for dates in the C locale.
   Bar labels: Axes.bar_label (BarContainer.datavalues, orientation and errorbar kept with the container,
   LineCollection.get_segments, Patch.get_window_extent, Bbox.intersection) and cbook._auto_format_str, with
   Python's % formatting and str.format of one number ported in src/support/pyformat.cpp (our own code: the
