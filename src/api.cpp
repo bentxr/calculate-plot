@@ -11,6 +11,7 @@
 #include "support/json_writer.hpp"
 #include "text/text_render.h"
 
+#include <cmath>
 #include <functional>
 #include <map>
 
@@ -262,6 +263,22 @@ Image drawScreen(std::string_view figureFile, double devicePixelRatio, const std
     engine::DrawOptions options;
     options.fontDirectory = fontDirectory;
     const auto image = pixels(engine::drawScreen(*figure, devicePixelRatio, options), fontDirectory, &why);
+    if (!image) return *error = why, Image{};
+    error->clear();
+    return Image{image->width, image->height, std::vector<std::uint8_t>(image->rgba.begin(), image->rgba.end())};
+}
+
+Image drawCanvas(std::string_view figureFile, const Canvas& canvas, const std::string& fontDirectory, std::string* error) {
+    std::string why;
+    const auto figure = parsed(figureFile, &why);
+    if (!figure) return *error = why, Image{};
+    const double ratio = canvas.devicePixelRatio;
+    if (!(ratio > 0) || ratio > 16) return *error = "the device pixel ratio must be above 0 and at most 16", Image{};
+    if (!(canvas.width > 0) || !(canvas.height > 0) || !std::isfinite(canvas.width) || !std::isfinite(canvas.height))
+        return *error = "the canvas size must be positive and finite", Image{};
+    engine::DrawOptions options;
+    options.fontDirectory = fontDirectory;
+    const auto image = pixels(engine::drawScreen(*figure, ratio, options, std::array<double, 2>{canvas.width, canvas.height}), fontDirectory, &why);
     if (!image) return *error = why, Image{};
     error->clear();
     return Image{image->width, image->height, std::vector<std::uint8_t>(image->rgba.begin(), image->rgba.end())};

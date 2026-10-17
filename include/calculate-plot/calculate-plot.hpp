@@ -62,4 +62,17 @@ struct Image {
 Image drawScreen(std::string_view figureFile, double devicePixelRatio, const std::string& fontDirectory,
                  std::string* error);
 
+// A widget the figure is shown in: its size in logical pixels and the screen's device pixels per logical pixel.
+struct Canvas {
+    double width = 0;
+    double height = 0;
+    double devicePixelRatio = 1;
+};
+
+// The figure in a widget, as matplotlib's Qt canvas draws it there: the figure's dpi times the ratio, the figure
+// resized to the widget (Figure.set_size_inches(width * ratio / dpi, height * ratio / dpi)), then drawn without the
+// savefig settings. A layout engine places the Axes again at that size; what tight_layout() or subplots_adjust()
+// placed stays where it is in figure fractions. Sizes and ratios must be positive and finite.
+Image drawCanvas(std::string_view figureFile, const Canvas& canvas, const std::string& fontDirectory, std::string* error);
+
 }  // namespace calculate_plot

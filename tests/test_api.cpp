@@ -2,11 +2,14 @@
 // application gets from a figure file.
 #include "calculate-plot/calculate-plot.hpp"
 #include "png/png.hpp"
+#include "support/json.hpp"
+#include "support/sha256.hpp"
 
 #include <gtest/gtest.h>
 
 #include <filesystem>
 #include <fstream>
+#include <cmath>
 #include <map>
 #include <sstream>
 
@@ -91,6 +94,39 @@ TEST(Api, TheScreenDrawsAtTheDevicePixelRatio) {
     EXPECT_EQ(two.width, 2 * want.width);
     EXPECT_EQ(two.height, 2 * want.height);
     EXPECT_EQ(two.rgba.size(), std::size_t(two.width) * std::size_t(two.height) * 4);
+}
+
+// As matplotlib's Qt canvas on a widget of W x H logical pixels: the dpi times the ratio, then the figure resized to
+// the widget (set_size_inches(W * ratio / dpi, H * ratio / dpi)), its layout engine run again at that size.
+TEST(Api, TheCanvasDrawsTheFigureAtItsSize) {
+    calculate_plot::support::JsonError jsonError;
+    const auto oracle = calculate_plot::support::parseJson(readFile(fs::path(CALCULATE_PLOT_SOURCE_DIR) / "tests/oracle/screen.json"), &jsonError);
+    ASSERT_TRUE(oracle.has_value()) << jsonError.message;
+    std::size_t checked = 0;
+    for (const auto& c : oracle->find("cases")->items()) {
+        const auto number = [&c](const char* key) { return c.find(key)->asNumber(); };
+        const std::string name = c.find("case")->asString();
+        const cp::Canvas canvas{number("width"), number("height"), number("ratio")};
+        std::string error;
+        const auto image = cp::drawCanvas(readFile(kFigures / name / "fig.json"), canvas, kFonts, &error);
+        const std::string where = name + " " + std::to_string(canvas.width) + "x" + std::to_string(canvas.height) + "@" + std::to_string(canvas.devicePixelRatio);
+        EXPECT_EQ(error, "") << where;
+        EXPECT_EQ(image.width, int(number("buffer_width"))) << where;
+        EXPECT_EQ(image.height, int(number("buffer_height"))) << where;
+        const std::string bytes(image.rgba.begin(), image.rgba.end());
+        EXPECT_EQ(calculate_plot::support::sha256Hex(bytes), c.find("buffer_sha256")->asString()) << where;
+        ++checked;
+    }
+    EXPECT_EQ(checked, 60u);
+}
+
+TEST(Api, ACanvasOfNoSizeIsRefused) {
+    const std::string figure = readFile(kFigures / "corpus_legend_box" / "fig.json");
+    for (const cp::Canvas canvas : {cp::Canvas{0, 100, 1}, cp::Canvas{100, -1, 1}, cp::Canvas{100, 100, 0}, cp::Canvas{std::nan(""), 100, 1}}) {
+        std::string error;
+        EXPECT_EQ(cp::drawCanvas(figure, canvas, kFonts, &error).width, 0);
+        EXPECT_NE(error, "");
+    }
 }
 
 TEST(Api, WhatCannotBeDrawnSaysWhy) {

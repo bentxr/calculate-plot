@@ -25,7 +25,9 @@ AggDrawing drawAgg(const model::Figure& figure, const DrawOptions& options);
 
 // Runs a figure file's calls and draws the figure on a screen of `ratio` device pixels per logical
 // pixel, as matplotlib's Qt canvas does (drawScreenTrace).
-AggDrawing drawScreen(const model::Figure& figure, double ratio, const DrawOptions& options);
+// With a canvas of `size` logical pixels, the figure is first resized to it as FigureCanvasQT.resizeEvent does.
+AggDrawing drawScreen(const model::Figure& figure, double ratio, const DrawOptions& options,
+                      std::optional<std::array<double, 2>> size = std::nullopt);
 
 // Runs a figure file's calls without drawing the figure: what they refuse, or "".
 std::string runCalls(const model::Figure& figure, const DrawOptions& options);

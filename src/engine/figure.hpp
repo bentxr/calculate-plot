@@ -44,6 +44,7 @@ public:
     ~Figure() override;
     void draw(Renderer& renderer) override;
     void setDpi(double value);  // Figure.dpi = value: the boxes in pixels follow
+    void setSizeInches(double width, double height);  // set_size_inches(forward=False): bbox_inches.p1 = (w, h)
 
     double dpi;
     std::shared_ptr<transforms::Bbox> bboxInches;
@@ -90,9 +91,11 @@ public:
 std::string drawAggTrace(Figure& figure, const std::string& locale, const std::string& fontDirectory,
                          std::string* error);
 // FigureCanvasQTAgg's drawing on a screen of `ratio` device pixels per logical pixel: the figure at its
-// dpi times the ratio, drawn as FigureCanvasAgg.draw draws it (no savefig settings), into a trace.
+// dpi times the ratio (_set_device_pixel_ratio), resized to a widget of `size` logical pixels when given
+// (resizeEvent: set_size_inches(w * ratio / dpi, h * ratio / dpi, forward=False)), drawn as
+// FigureCanvasAgg.draw draws it (no savefig settings), into a trace.
 std::string drawScreenTrace(Figure& figure, double ratio, const std::string& locale, const std::string& fontDirectory,
-                            std::string* error);
+                            std::string* error, std::optional<std::array<double, 2>> size = std::nullopt);
 // Figure.savefig as an SVG, into a trace (render/svg_replay writes the SVG): print_figure as above,
 // then FigureCanvasSVG.print_svg: the figure is drawn at 72 dpi, its images at the dpi of the save.
 std::string drawSvgTrace(Figure& figure, const std::string& locale, const std::string& fontDirectory,

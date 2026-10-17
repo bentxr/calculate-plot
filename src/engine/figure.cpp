@@ -142,6 +142,11 @@ void Figure::setDpi(double value) {
     dpiScaleTrans->scale(dpi);
 }
 
+void Figure::setSizeInches(double width, double height) {
+    const auto p = bboxInches->points();
+    bboxInches->setPoints({p[0], p[1], width, height});
+}
+
 std::array<double, 2> Figure::canvasSize() const {
     const auto p = bbox->points();
     return {double(static_cast<long long>(std::max(p[0], p[2]) + 1e-8)), double(static_cast<long long>(std::max(p[1], p[3]) + 1e-8))};
@@ -318,8 +323,12 @@ std::string drawAggTrace(Figure& figure, const std::string& locale, const std::s
 }
 
 std::string drawScreenTrace(Figure& figure, double ratio, const std::string& locale, const std::string& fontDirectory,
-                            std::string* error) {
+                            std::string* error, std::optional<std::array<double, 2>> widget) {
     figure.setDpi(figure.dpi * ratio);  // _set_dpi(dpi * device_pixel_ratio)
+    if (widget) {
+        const double dpival = figure.dpi;
+        figure.setSizeInches((*widget)[0] * ratio / dpival, (*widget)[1] * ratio / dpival);
+    }
     const auto size = figure.canvasSize();
     AggTraceRenderer renderer(size[0], size[1], figure.dpi, figure.rc(), locale, fontDirectory);
     renderer.clear();
