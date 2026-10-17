@@ -1,0 +1,4 @@
+{"version": 1, "calls": [{"call": "subplots", "args": [3, 3], "kwargs": {"layout": "constrained", "figsize": {"$tuple": [1.2, 1.0]}}, "as": ["fig", "axs"]},
+ {"on": "axs[0, 0]", "call": "set_title", "args": ["a title much wider than the figure"]},
+ {"on": "axs[1, 1]", "call": "set_ylabel", "args": ["a label\nof\nmany\nlines"]},
+ {"on": "axs[2, 2]", "call": "plot", "args": [[0, 1], [0, 1]]}]}

@@ -1,0 +1,3 @@
+{"version": 1, "calls": [{"call": "figure", "kwargs": {"layout": "compressed"}, "as": "fig"},
+ {"on": "fig", "call": "add_axes", "args": [[0.1, 0.1, 0.5, 0.5]], "as": "ax"},
+ {"on": "ax", "call": "plot", "args": [[0, 1], [0, 1]]}, {"on": "ax", "call": "set_aspect", "args": ["equal"]}]}

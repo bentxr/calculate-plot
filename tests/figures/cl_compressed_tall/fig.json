@@ -1,0 +1,5 @@
+{"version": 1, "calls": [{"call": "subplots", "args": [3, 2], "kwargs": {"layout": "compressed", "figsize": {"$tuple": [3.0, 7.0]}}, "as": ["fig", "axs"]},
+ {"on": "axs[0, 0]", "call": "set_aspect", "args": ["equal"]}, {"on": "axs[0, 1]", "call": "set_aspect", "args": ["equal"]},
+ {"on": "axs[1, 0]", "call": "set_aspect", "args": ["equal"]}, {"on": "axs[1, 1]", "call": "set_aspect", "args": ["equal"]},
+ {"on": "axs[2, 0]", "call": "set_aspect", "args": ["equal"]}, {"on": "axs[2, 1]", "call": "set_aspect", "args": ["equal"]},
+ {"on": "axs[2, 1]", "call": "set_xlabel", "args": ["x"]}]}
