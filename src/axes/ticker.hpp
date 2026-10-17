@@ -14,6 +14,11 @@ namespace calculate_plot::axes {
 std::pair<double, double> nonsingular(double vmin, double vmax, double expander = 0.001, double tiny = 1e-15,
                                       bool increasing = true);
 
+// int() of Axis.get_tick_space()'s floor(length / size): Python raises for NaN (an Axes' box made NaN, say
+// by an aspect over limits a scale cannot take) and infinity; the port notes the error (support::raised)
+// and goes on with 9. Values beyond int's range are clamped (every user clamps them to a few bins).
+int tickSpaceCount(double space);
+
 // ticker.MaxNLocator (and AutoLocator, its default instance). nbins == 0 means "auto", which is 9
 // bins without an axis.
 struct MaxNLocator {
@@ -24,7 +29,7 @@ struct MaxNLocator {
     std::string prune;  // "", "lower", "upper" or "both"
     int minNTicks = 2;
     bool roundNumbers = false;
-    std::optional<int> tickSpace;  // the axis' get_tick_space(), when the locator has an axis  // rcParams["axes.autolimit_mode"] == "round_numbers"
+    std::optional<double> tickSpace;  // the axis' get_tick_space() before int() (see tickSpaceCount), when the locator has an axis
 
     static MaxNLocator autoLocator();
     void setSteps(const std::vector<double>& steps);

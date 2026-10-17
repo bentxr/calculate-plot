@@ -133,7 +133,7 @@ public:
     std::pair<std::vector<transforms::Bbox>, std::vector<transforms::Bbox>> ticklabelBboxes(
         const std::vector<Tick*>& ticks, Renderer& renderer);
     std::string ticksPosition() const;  // get_ticks_position: top, bottom, left, right, default, unknown
-    int tickSpace() const;              // get_tick_space: how many tick labels fit along the axis
+    double tickSpace() const;             // get_tick_space: how many tick labels fit along the axis
     void setMinorTickSwitches(const TickSwitches& switches);  // tick_params(which='minor')
     // set_tick_params(which, reset, **kwargs) with the keywords translated
     void setTickParams(const std::string& which, bool reset, const TickParams& params);

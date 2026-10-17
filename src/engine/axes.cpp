@@ -901,7 +901,7 @@ std::vector<Tick*> Axis::majorTicks(std::size_t count) {
     return out;
 }
 
-int Axis::tickSpace() const {
+double Axis::tickSpace() const {
     // Bbox.unit().transformed(transAxes - dpi_scale_trans): transAxes, then the inches' inverse
     const auto t = transforms::compose(axes_.transAxes, axes_.figure.dpiScaleTrans->inverted());
     const auto ll = t->transform(0, 0), ul = t->transform(0, 1), lr = t->transform(1, 0);
@@ -909,7 +909,8 @@ int Axis::tickSpace() const {
     // _get_tick_label_size: the major ticks' labelsize keyword, else rcParams[xtick.labelsize]
     const double labelsize = majorTickKw_.labelsize ? *majorTickKw_.labelsize : fontSizeOf(rc_, isX_ ? "xtick.labelsize" : "ytick.labelsize");
     const double size = labelsize * (isX_ ? 3 : 2);
-    if (size > 0) return int(std::floor(length / size));
+    // (the locators take int() of it: axes::tickSpaceCount)
+    if (size > 0) return std::floor(length / size);
     return 2147483647;
 }
 

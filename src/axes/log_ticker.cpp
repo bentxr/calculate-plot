@@ -76,7 +76,7 @@ double mathLog(double x, double base) { return std::log(x) / std::log(base); }
 }  // namespace
 
 std::vector<double> LogLocator::tickValues(double vmin, double vmax) const {
-    int nRequest = numticks ? *numticks : (tickSpace ? std::clamp(*tickSpace, 2, 9) : 9);
+    int nRequest = numticks ? *numticks : (tickSpace ? std::clamp(tickSpaceCount(*tickSpace), 2, 9) : 9);
     const double b = base;
     if (vmin <= 0.0) {
         vmin = minpos;
@@ -340,12 +340,20 @@ std::pair<double, double> LogitLocator::nonsingular(double vmin, double vmax) co
 
 std::vector<double> LogitLocator::tickValues(double vmin, double vmax) const {
     int nbins = 9;
-    if (tickSpace) nbins = *tickSpace < 2 ? 2 : *tickSpace;
+    if (tickSpace) nbins = std::max(tickSpaceCount(*tickSpace), 2);
     // ideal_ticks: 10 ** b below, 1 - 10 ** -b above, one half at 0 (Python's int ** negative int is pow)
     const auto ideal = [](long long b) { return b < 0 ? std::pow(10.0, double(b)) : b > 0 ? 1 - std::pow(10.0, double(-b)) : 0.5; };
     std::tie(vmin, vmax) = nonsingular(vmin, vmax);
-    const long long binf = (long long)(vmin < 0.5 ? std::floor(support::log10(vmin)) : vmin < 0.9 ? 0 : -std::ceil(support::log10(1 - vmin)));
-    const long long bsup = (long long)(vmax <= 0.5 ? std::ceil(support::log10(vmax)) : vmax <= 0.9 ? 1 : -std::floor(support::log10(1 - vmax)));
+    // int() of the bounds: nonsingular can leave vmax at 1 - minpos <= 0 (a minpos from 1 up), whose
+    // logarithm is NaN or -inf, and Python raises
+    const double finf = vmin < 0.5 ? std::floor(support::log10(vmin)) : vmin < 0.9 ? 0 : -std::ceil(support::log10(1 - vmin));
+    const double fsup = vmax <= 0.5 ? std::ceil(support::log10(vmax)) : vmax <= 0.9 ? 1 : -std::floor(support::log10(1 - vmax));
+    for (const double f : {finf, fsup}) {
+        if (std::isnan(f)) return support::noteRaised("cannot convert float NaN to integer"), std::vector<double>{};
+        if (std::isinf(f)) return support::noteRaised("cannot convert float infinity to integer"), std::vector<double>{};
+    }
+    const long long binf = (long long)finf;
+    const long long bsup = (long long)fsup;
     const long long numideal = bsup - binf - 1;
     std::vector<double> ticklocs;
     if (numideal >= 2) {

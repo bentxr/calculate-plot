@@ -8,6 +8,7 @@
 #include "support/log10.hpp"
 #include "support/pyformat.hpp"
 #include "support/pynum.hpp"
+#include "support/raised.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -145,9 +146,17 @@ std::vector<double> MaxNLocator::tickValues(double vmin, double vmax) const {
     return ticks;
 }
 
+int tickSpaceCount(double space) {
+    if (std::isnan(space)) return support::noteRaised("cannot convert float NaN to integer"), 9;
+    if (std::isinf(space)) return support::noteRaised("cannot convert float infinity to integer"), 9;
+    if (space >= double(std::numeric_limits<int>::max())) return std::numeric_limits<int>::max();
+    if (space <= double(std::numeric_limits<int>::min())) return std::numeric_limits<int>::min();
+    return int(space);
+}
+
 std::vector<double> MaxNLocator::rawTicks(double vmin, double vmax) const {
     // 'auto': np.clip(axis.get_tick_space(), max(1, min_n_ticks - 1), 9), or 9 without an axis
-    const int n = nbins == 0 ? (tickSpace ? std::clamp(*tickSpace, std::max(1, minNTicks - 1), 9) : 9) : nbins;
+    const int n = nbins == 0 ? (tickSpace ? std::clamp(tickSpaceCount(*tickSpace), std::max(1, minNTicks - 1), 9) : 9) : nbins;
     const auto [scale, offset] = scaleRange(vmin, vmax, n);
     const double vmin_ = vmin - offset;
     const double vmax_ = vmax - offset;

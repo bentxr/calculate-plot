@@ -11,6 +11,7 @@
 #include "rc/rc_params.hpp"
 #include "support/histogram.hpp"
 #include "support/pynum.hpp"
+#include "support/raised.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -245,6 +246,8 @@ transforms::Bbox Patch::windowExtent() const {
         }
         q.vertices = std::make_shared<std::vector<double>>(std::move(v));
         xys = bezierEnds(q);
+        // np.concatenate of no curves at all (every vertex NaN: a wedge on a logit axis left of 0)
+        if (xys.empty()) support::noteRaised("need at least one array to concatenate");
     } else {
         for (std::size_t k = 0; k < p.size(); ++k)
             if (!p.codes || (*p.codes)[k] == MOVETO || (*p.codes)[k] == LINETO)

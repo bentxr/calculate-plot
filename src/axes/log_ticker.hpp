@@ -20,7 +20,7 @@ struct LogLocator {
     bool autoSubs = false;
     std::optional<int> numticks;     // nullopt: 'auto' (from the axis' tick space)
     bool classic = false;            // rcParams["_internal.classic_mode"]: the historic choice of decades
-    std::optional<int> tickSpace;    // the axis' get_tick_space(), when the locator has an axis
+    std::optional<double> tickSpace;  // the axis' get_tick_space() before int(), when the locator has an axis
     double minpos = std::numeric_limits<double>::infinity();  // the axis' get_minpos()
 
     std::vector<double> tickValues(double vmin, double vmax) const;
@@ -59,7 +59,7 @@ private:
 // minor: the multiples between them; a MaxNLocator of steps 1, 2, 5, 10 when few decades are in view.
 struct LogitLocator {
     bool minor = false;
-    std::optional<int> tickSpace;                              // the axis' get_tick_space()
+    std::optional<double> tickSpace;                           // the axis' get_tick_space() before int()
     double minpos = std::numeric_limits<double>::infinity();   // the axis' get_minpos()
     std::vector<double> tickValues(double vmin, double vmax) const;
     std::pair<double, double> nonsingular(double vmin, double vmax) const;

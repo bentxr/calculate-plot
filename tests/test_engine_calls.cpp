@@ -862,6 +862,56 @@ TEST(RcCalls, ALogAxisWithNothingPositiveStopsTheDrawing) {
     EXPECT_EQ(error(plot), "");
 }
 
+// A logit axis whose smallest positive datum is 1 or more: LogitLocator.nonsingular puts the upper limit at
+// 1 - minpos (<= 0), and int() of its logarithm raises (it hung the port: a loop over 2**63 decades).
+TEST(RcCalls, ALogitAxisWithMinposFromOneUpStopsTheDrawing) {
+    const auto error = [](const std::string& calls) {
+        std::string parseError;
+        const auto figure = calculate_plot::model::parseFigure(
+            R"({"version": 1, "calls": [{"call": "subplots", "as": ["fig", "ax"]})" + calls + "]}", &parseError);
+        EXPECT_TRUE(figure.has_value()) << parseError;
+        if (!figure) return std::string("?");
+        calculate_plot::engine::DrawOptions options;
+        options.fontDirectory = std::string(CALCULATE_PLOT_SOURCE_DIR) + "/fonts/ttf";
+        const std::string agg = calculate_plot::engine::drawAgg(*figure, options).error;
+        EXPECT_EQ(calculate_plot::engine::drawSvg(*figure, options).error, agg);
+        return agg;
+    };
+    const auto logit = [](const char* xs, const char* lim) {
+        return std::string(R"(, {"on": "ax", "call": "plot", "args": [)") + xs + R"(, [1, 2]]}, {"on": "ax", "call": "set_xlim", "args": )" +
+               lim + R"(}, {"on": "ax", "call": "set_xscale", "args": ["logit"]})";
+    };
+    EXPECT_EQ(error(logit("[1.5, 3]", "[0.2, 2]")), "cannot convert float NaN to integer");
+    EXPECT_EQ(error(logit("[1.0, 3]", "[0.2, 2]")), "cannot convert float infinity to integer");
+    EXPECT_EQ(error(logit("[2, 3]", "[0.2, 0.9]")), "");
+}
+
+// A pie on a logit axis: its limits (-1.25, 1.25) have no logit, so the equal aspect leaves the Axes' box
+// NaN. A locator that asks the axis how many labels fit then raises (int() of NaN); with the ticks fixed by
+// the pie, tight_layout takes the wedges' extents, finds no finite curve and raises too.
+TEST(RcCalls, APieOnALogitAxisStopsTheDrawing) {
+    const auto error = [](const std::string& calls) {
+        std::string parseError;
+        const auto figure = calculate_plot::model::parseFigure(
+            R"({"version": 1, "calls": [{"call": "subplots", "as": ["fig", "ax"]})" + calls + "]}", &parseError);
+        EXPECT_TRUE(figure.has_value()) << parseError;
+        if (!figure) return std::string("?");
+        calculate_plot::engine::DrawOptions options;
+        options.fontDirectory = std::string(CALCULATE_PLOT_SOURCE_DIR) + "/fonts/ttf";
+        const std::string agg = calculate_plot::engine::drawAgg(*figure, options).error;
+        EXPECT_EQ(calculate_plot::engine::drawSvg(*figure, options).error, agg);
+        return agg;
+    };
+    // (a wedge wholly left of x = 0 has no finite point at all)
+    const std::string pie = R"(, {"on": "ax", "call": "pie", "args": [[9, 1, 0.5, 0.906, 8.433]]})";
+    const std::string logit = R"(, {"on": "ax", "call": "set_xscale", "args": ["logit"]})";
+    const std::string tight = R"(, {"on": "fig", "call": "tight_layout"})";
+    EXPECT_EQ(error(pie + logit), "cannot convert float NaN to integer");
+    EXPECT_EQ(error(logit + pie + tight), "fig.tight_layout: need at least one array to concatenate");
+    EXPECT_EQ(error(logit + pie), "");
+    EXPECT_EQ(error(logit + R"(, {"on": "ax", "call": "pie", "args": [[9, 1, 0.5]]})" + tight), "");
+}
+
 // One round marker with a size that is negative, nan or infinite: matplotlib takes the extents of
 // the marker's curves, finds none and breaks ("need at least one array to concatenate").
 TEST(CollectionCalls, OneCurvedMarkerOfNoFiniteSizeIsRefused) {
