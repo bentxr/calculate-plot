@@ -23,8 +23,11 @@ class PyLambda {
 public:
     // false and why when the text is not of that form
     static std::optional<PyLambda> parse(const std::string& text, std::string* error);
-    // f(x) for an array x; false and Python's error where Python raises one
-    bool apply(const std::vector<double>& x, std::vector<double>* out, std::string* error) const;
+    // f(x) for an array x; false and Python's error where Python raises one. `masked`: x is a masked array
+    // whose non-finite values are masked (scatter's offsets): NumPy's masked arithmetic then masks the
+    // non-finite results of divisions and powers and the domains of sqrt, log, log2, log10, tan, arcsin, arccos
+    // and arctanh; what is masked comes out as NaN.
+    bool apply(const std::vector<double>& x, std::vector<double>* out, std::string* error, bool masked = false) const;
     const std::string& text() const { return text_; }
     bool usesNumpy() const { return usesNumpy_; }
 

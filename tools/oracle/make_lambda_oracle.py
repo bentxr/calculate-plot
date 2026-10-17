@@ -58,13 +58,18 @@ UNSUPPORTED = ["x * 2 ** 60", "x * 9007199254740993", "x * (-8) ** (1 / 3)", "x 
 cases = []
 for body in TAKEN:
     f = eval("lambda x: " + body, {"np": np})
-    results = []
+    results, masked = [], []
     for arr in ARRAYS:
         with np.errstate(all="ignore"):
             r = f(np.array(arr, dtype=np.float64))
+            # as a scale's FuncTransform meets scatter's offsets: a masked array (its non-finite values masked),
+            # filled with NaN afterwards
+            m = np.ma.masked_invalid(np.array(arr, dtype=np.float64))
+            rm = np.ma.filled(np.ma.asarray(f(m)), np.nan)
         assert isinstance(r, np.ndarray) and r.dtype == np.float64, body
         results.append([h(v) for v in r])
-    cases.append({"body": body, "results": results})
+        masked.append([h(v) for v in rm])
+    cases.append({"body": body, "results": results, "masked": masked})
 errors = []
 for body in ERRORS:
     try:

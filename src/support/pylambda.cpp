@@ -7,6 +7,8 @@
 #include "support/log10.hpp"
 
 #include <cerrno>
+#include <cfloat>
+#include <limits>
 #include <cmath>
 #include <cstdlib>
 #include <map>
@@ -255,6 +257,7 @@ struct Value {
     long long integer = 0;
     double number = 0;
     std::vector<double> array;
+    std::vector<char> mask;  // a masked array's mask (empty: not masked)
     double scalar() const { return kind == Kind::Int ? double(integer) : number; }
     bool isScalar() const { return kind != Kind::Array; }
 };
@@ -302,6 +305,11 @@ bool binary(Kind op, const Value& a, const Value& b, Value* out, std::string* er
         if (!a.isScalar() && !b.isScalar() && a.array.size() != b.array.size()) return *error = "arrays of different sizes", false;
         out->kind = VK::Array;
         out->array.resize(n);
+        // a masked operand: the masks combine; np.ma's divide masks what is not finite and its domain
+        // (|a| * tiny >= |b|), its power what is not finite; add, subtract and multiply mask nothing new
+        const bool masked = !a.mask.empty() || !b.mask.empty();
+        if (masked) out->mask.assign(n, 0);
+        const auto maskOf = [](const Value& v, std::size_t i) { return !v.mask.empty() && v.mask[i]; };
         const auto at = [](const Value& v, std::size_t i) { return v.isScalar() ? v.scalar() : v.array[i]; };
         // fast_scalar_power: an array to the power of a scalar 2, -1 or 0.5 (any of Python's int and float
         // or NumPy's float64) is np.square, np.reciprocal or np.sqrt of it
@@ -321,6 +329,12 @@ bool binary(Kind op, const Value& a, const Value& b, Value* out, std::string* er
             default: r = fast == 2 ? x * x : fast == -1 ? 1.0 / x : fast == 5 ? std::sqrt(x) : std::pow(x, y); break;
             }
             out->array[i] = r;
+            if (masked) {
+                bool m = maskOf(a, i) || maskOf(b, i);
+                if (op == Kind::Divide) m = m || !std::isfinite(r) || std::fabs(x) * DBL_MIN >= std::fabs(y);
+                if (op == Kind::Power) m = m || !std::isfinite(r);
+                out->mask[i] = m;
+            }
         }
         return true;
     }
@@ -395,7 +409,7 @@ bool binary(Kind op, const Value& a, const Value& b, Value* out, std::string* er
     return true;
 }
 
-bool evaluate(const Node& n, const std::vector<double>& x, Value* out, std::string* error) {
+bool evaluate(const Node& n, const std::vector<double>& x, bool masked, Value* out, std::string* error) {
     switch (n.kind) {
     case Kind::Int:
         out->kind = VK::Int;
@@ -406,11 +420,15 @@ bool evaluate(const Node& n, const std::vector<double>& x, Value* out, std::stri
     case Kind::X:
         out->kind = VK::Array;
         out->array = x;
+        if (masked) {  // (np.ma.masked_invalid)
+            out->mask.resize(x.size());
+            for (std::size_t i = 0; i < x.size(); ++i) out->mask[i] = !std::isfinite(x[i]);
+        }
         return true;
     case Kind::Negate:
     case Kind::Plus: {
         Value a;
-        if (!evaluate(*n.a, x, &a, error)) return false;
+        if (!evaluate(*n.a, x, masked, &a, error)) return false;
         if (n.kind == Kind::Negate) {
             if (a.kind == VK::Int) a.integer = -a.integer;
             else if (a.kind == VK::Array)
@@ -422,19 +440,32 @@ bool evaluate(const Node& n, const std::vector<double>& x, Value* out, std::stri
     }
     case Kind::Function: {
         Value a;
-        if (!evaluate(*n.a, x, &a, error)) return false;
+        if (!evaluate(*n.a, x, masked, &a, error)) return false;
         const Fn f = functions().at(n.name);
         if (a.isScalar()) {
             *out = floatValue(f(a.scalar()), VK::NpFloat);
         } else {
-            for (double& v : a.array) v = f(v);
+            // a masked array: MaskedArray.__array_wrap__ masks the ufunc's domain (numpy.ma's ufunc_domain)
+            const std::string& fn = n.name;
+            const auto outside = [&fn](double v) {
+                if (fn == "sqrt") return v < 0.0;
+                if (fn == "log" || fn == "log2" || fn == "log10") return v <= 0.0;
+                if (fn == "tan") return std::fabs(std::cos(v)) < 1e-35;
+                if (fn == "arcsin" || fn == "arccos") return v > 1.0 || v < -1.0;
+                if (fn == "arctanh") return v > 1.0 - 1e-15 || v < -1.0 + 1e-15;
+                return false;
+            };
+            for (std::size_t i = 0; i < a.array.size(); ++i) {
+                if (!a.mask.empty() && outside(a.array[i])) a.mask[i] = 1;
+                a.array[i] = f(a.array[i]);
+            }
             *out = std::move(a);
         }
         return true;
     }
     default: {
         Value a, b;
-        if (!evaluate(*n.a, x, &a, error) || !evaluate(*n.b, x, &b, error)) return false;
+        if (!evaluate(*n.a, x, masked, &a, error) || !evaluate(*n.b, x, masked, &b, error)) return false;
         return binary(n.kind, a, b, out, error);
     }
     }
@@ -453,10 +484,12 @@ std::optional<PyLambda> PyLambda::parse(const std::string& text, std::string* er
     return f;
 }
 
-bool PyLambda::apply(const std::vector<double>& x, std::vector<double>* out, std::string* error) const {
+bool PyLambda::apply(const std::vector<double>& x, std::vector<double>* out, std::string* error, bool masked) const {
     Value v;
-    if (!evaluate(*root_, x, &v, error)) return false;
+    if (!evaluate(*root_, x, masked, &v, error)) return false;
     if (v.isScalar()) return *error = "the function does not use x", false;  // (parse refuses those)
+    for (std::size_t i = 0; i < v.mask.size(); ++i)
+        if (v.mask[i]) v.array[i] = std::numeric_limits<double>::quiet_NaN();  // filled(np.nan)
     *out = std::move(v.array);
     return true;
 }

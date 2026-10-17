@@ -94,3 +94,32 @@ TEST(PyLambda, KnowsWhetherItUsesNumpy) {
     EXPECT_TRUE(PyLambda::parse("np.sqrt(x)", &error)->usesNumpy());
     EXPECT_TRUE(PyLambda::parse("x * np.pi", &error)->usesNumpy());
 }
+
+// Over a masked array (scatter's offsets, their non-finite values masked) NumPy's masked arithmetic applies:
+// division and powers mask what is not finite, the domained functions mask their domain; masked is NaN.
+TEST(PyLambda, MaskedValuesAreNumpys) {
+    std::vector<std::vector<double>> arrays;
+    for (const Json& a : oracle().find("arrays")->items()) {
+        arrays.emplace_back();
+        for (const Json& v : a.items()) arrays.back().push_back(hex(v));
+    }
+    int checked = 0;
+    for (const Json& c : oracle().find("taken")->items()) {
+        const std::string body = c.find("body")->asString();
+        std::string error;
+        const auto f = PyLambda::parse(body, &error);
+        ASSERT_TRUE(f.has_value()) << body << ": " << error;
+        for (std::size_t k = 0; k < arrays.size(); ++k) {
+            std::vector<double> got;
+            ASSERT_TRUE(f->apply(arrays[k], &got, &error, true)) << body << ": " << error;
+            const Json& want = (*c.find("masked"))[k];
+            for (std::size_t i = 0; i < got.size(); ++i) {
+                const double w = hex(want[i]);
+                EXPECT_TRUE((std::isnan(got[i]) && std::isnan(w)) || calculate_plot::testing_support::sameNumber(got[i], w))
+                    << body << " (masked) at x = " << arrays[k][i] << ": " << got[i] << " instead of " << w;
+                ++checked;
+            }
+        }
+    }
+    EXPECT_EQ(checked, 127 * 135);
+}

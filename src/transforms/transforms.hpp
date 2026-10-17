@@ -83,6 +83,9 @@ public:
     virtual bool isAffine2DBase() const { return true; }
     // transform_non_affine of one point (the identity for affine transforms)
     virtual std::array<double, 2> transformNonAffine(double x, double y) const { return {x, y}; }
+    // the same of a point of a masked array whose coordinates are not masked (scatter's offsets): NumPy's
+    // masked arithmetic masks what the scales' functions leave outside their domains; masked is NaN
+    virtual std::array<double, 2> transformNonAffineMasked(double x, double y) const { return transformNonAffine(x, y); }
     std::array<double, 2> transform(double x, double y) const {
         const auto p = transformNonAffine(x, y);
         return apply(matrix(), p[0], p[1]);
@@ -149,6 +152,7 @@ public:
     bool isAffine() const override { return false; }
     bool isAffine2DBase() const override { return false; }
     double transform1d(double v) const;
+    double transform1dMasked(double v) const;  // of a value of a masked array
     TransformPtr inverted() const override { return std::make_shared<FuncTransform>(inverse_, forward_); }
 
 private:
@@ -280,6 +284,7 @@ public:
     bool isAffine() const override { return x_->isAffine() && y_->isAffine(); }
     bool isAffine2DBase() const override { return !generic_; }
     std::array<double, 2> transformNonAffine(double x, double y) const override;
+    std::array<double, 2> transformNonAffineMasked(double x, double y) const override;
     const TransformPtr& x() const { return x_; }
     const TransformPtr& y() const { return y_; }
     std::optional<bool> eq(const Transform& other) const override;  // _BlendedMixin.__eq__
@@ -306,6 +311,7 @@ public:
     bool isAffine() const override { return a_->isAffine() && b_->isAffine(); }
     bool isAffine2DBase() const override { return !generic_; }
     std::array<double, 2> transformNonAffine(double x, double y) const override;
+    std::array<double, 2> transformNonAffineMasked(double x, double y) const override;
     TransformPtr inverted() const override;
     const TransformPtr& a() const { return a_; }
     const TransformPtr& b() const { return b_; }
@@ -340,6 +346,7 @@ public:
     bool isAffine() const override { return child_->isAffine(); }
     bool isAffine2DBase() const override { return false; }
     std::array<double, 2> transformNonAffine(double x, double y) const override { return child_->transformNonAffine(x, y); }
+    std::array<double, 2> transformNonAffineMasked(double x, double y) const override { return child_->transformNonAffineMasked(x, y); }
     TransformPtr inverted() const override { return child_->inverted(); }
     std::optional<bool> eq(const Transform& other) const override { return child_->eq(other); }
 

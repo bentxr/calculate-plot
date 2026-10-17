@@ -206,6 +206,37 @@ std::array<double, 2> CompositeTransform::transformNonAffine(double x, double y)
     return b_->transformNonAffine(p[0], p[1]);
 }
 
+std::array<double, 2> CompositeTransform::transformNonAffineMasked(double x, double y) const {
+    if (a_->isAffine() && b_->isAffine()) return {x, y};
+    if (!a_->isAffine() && b_->isAffine()) return a_->transformNonAffineMasked(x, y);
+    const auto p = a_->transformNonAffineMasked(x, y);
+    const auto q = apply(a_->matrix(), p[0], p[1]);
+    return b_->transformNonAffineMasked(q[0], q[1]);
+}
+
+std::array<double, 2> BlendedAffine2D::transformNonAffineMasked(double x, double y) const {
+    if (x_->isAffine() && y_->isAffine()) return {x, y};
+    const double nan = std::numeric_limits<double>::quiet_NaN();
+    // one coordinate of a masked array: log10 (np.log) masks a value that is not positive and logit one outside
+    // (0, 1), and the mask outlives what clip writes there; symlog's values stay; a function is evaluated masked
+    std::function<bool(const Transform&, double, double*)> one = [&](const Transform& t, double v, double* out) {
+        if (const auto* log = dynamic_cast<const LogTransform*>(&t)) return *out = v <= 0 ? nan : log->transform1d(v), true;
+        if (const auto* logit = dynamic_cast<const LogitTransform*>(&t))
+            return *out = v <= 0 || v >= 1 ? nan : logit->transform1d(v), true;
+        if (const auto* f = dynamic_cast<const FuncTransform*>(&t)) return *out = f->transform1dMasked(v), true;
+        if (const auto* symlog = dynamic_cast<const SymmetricalLogTransform*>(&t)) return *out = symlog->transform1d(v), true;
+        if (const auto* c = dynamic_cast<const CompositeTransform*>(&t)) {
+            double mid = 0;
+            return one(*c->a(), v, &mid) && one(*c->b(), mid, out);
+        }
+        return false;
+    };
+    double rx = 0, ry = 0;
+    if (!one(*x_, x, &rx)) rx = x_->transformNonAffineMasked(x, y)[0];
+    if (!one(*y_, y, &ry)) ry = y_->transformNonAffineMasked(x, y)[1];
+    return {rx, ry};
+}
+
 std::array<double, 2> BlendedAffine2D::transformNonAffine(double x, double y) const {
     if (x_->isAffine() && y_->isAffine()) return {x, y};
     // a one-dimensional part transforms its own coordinate; a two-dimensional one gives its column
@@ -236,6 +267,13 @@ double FuncTransform::transform1d(double v) const {
     std::string error;
     // (the functions are tried when a scale takes them: only their parts without x can raise, and they did not)
     if (!forward_->apply({v}, &out, &error)) return std::numeric_limits<double>::quiet_NaN();
+    return out[0];
+}
+
+double FuncTransform::transform1dMasked(double v) const {
+    std::vector<double> out;
+    std::string error;
+    if (!forward_->apply({v}, &out, &error, true)) return std::numeric_limits<double>::quiet_NaN();
     return out[0];
 }
 

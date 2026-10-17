@@ -1045,7 +1045,16 @@ std::vector<Tick*> Axis::updateTicks() {
     // (every axis makes the same locator from the rcParams: this one's is as good as the owner's)
     if (groupVisible(minorTickKw_) && (scale_ == "linear" || scale_ == "function") && minorLocator) {
         locator.tickSpace = owner.tickSpace();
-        const auto majorLocs = owner.fixedLocs ? *owner.fixedLocs : locator.tickValues(ownerView[0], ownerView[1]);
+        // get_majorticklocs(): the major locator's (the date locator's on a date axis)
+        std::vector<double> majorLocs;
+        if (owner.fixedLocs) {
+            majorLocs = *owner.fixedLocs;
+        } else if (owner.dateTickers) {
+            std::string error;
+            if (!owner.dateLocator.ticks(ownerView[0], ownerView[1], &majorLocs, &error)) support::noteRaised(error);
+        } else {
+            majorLocs = locator.tickValues(ownerView[0], ownerView[1]);
+        }
         const auto locs = axes::withoutMajorTicks((*minorLocator)(majorLocs, ownerView[0], ownerView[1]), majorLocs, view[0], view[1]);
         const std::vector<Tick*> minor = minorTicks(locs.size());
         for (std::size_t i = 0; i < locs.size(); ++i) {
