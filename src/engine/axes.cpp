@@ -9,6 +9,7 @@
 #include "agg/path_text.h"
 #include "engine/annotation.hpp"
 #include "engine/figure.hpp"
+#include "engine/inset.hpp"
 #include "engine/legend.hpp"
 #include "rc/rc_params.hpp"
 #include "support/pyformat.hpp"
@@ -1679,6 +1680,8 @@ std::optional<transforms::Bbox> Axes::tightbbox(Renderer& renderer, bool forLayo
         // clip box. That lies inside the clip box, which is the patch's window extent, added below:
         // the union is the same either way.
         if (c->clipOn && c->clipBox && !c->clipPath && patch->visible) continue;
+        // an inset indicator is clipped by the Axes' patch (add_artist): fully clipped
+        if (dynamic_cast<const InsetIndicator*>(c.get())) continue;
         // (without a patch drawn: left out when the clip box is the Axes' box, _fully_clipped_to_axes)
         if (c->clipOn && c->clipBox && !c->clipPath && c->clipBox->points() == bbox->points()) continue;
         // (clip_on without a clip box or path, as an annotation's, clips nothing)

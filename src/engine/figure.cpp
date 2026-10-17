@@ -107,6 +107,11 @@ void Figure::draw(Renderer& renderer) {
     for (auto& a : axes) artists.push_back(a.get());
     for (auto& t : texts) artists.push_back(t.get());
     std::stable_sort(artists.begin(), artists.end(), [](const Artist* a, const Artist* b) { return a->zorder < b->zorder; });
+    // ... and each Axes, then its child Axes, placed (apply_aspect with its locator) before anything is drawn
+    for (auto& ax : axes) {
+        ax->applyAspect();
+        for (auto& child : ax->childAxes) child->applyAspect();
+    }
     renderer.openGroup("figure", gid);
     patch->draw(renderer);
     for (Artist* a : artists) a->draw(renderer);

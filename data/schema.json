@@ -7256,6 +7256,306 @@
    ]
   },
   {
+   "on": "axes",
+   "call": "indicate_inset",
+   "parameters": [
+    {
+     "name": "bounds",
+     "positional": true,
+     "valid": "[x0, y0, width, height], optional",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "inset_ax",
+     "positional": true,
+     "valid": "`.Axes`, optional",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "transform",
+     "positional": false,
+     "valid": "`.Transform`",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "facecolor",
+     "positional": false,
+     "valid": ":mpltype:`color`, default: 'none'",
+     "kind": "colour",
+     "default": "none"
+    },
+    {
+     "name": "edgecolor",
+     "positional": false,
+     "valid": ":mpltype:`color`, default: '0.5'",
+     "kind": "colour",
+     "default": "0.5"
+    },
+    {
+     "name": "alpha",
+     "positional": false,
+     "valid": "float or None, default: 0.5",
+     "kind": "number",
+     "default": 0.5
+    },
+    {
+     "name": "zorder",
+     "positional": false,
+     "valid": "float, default: 4.99",
+     "kind": "number",
+     "default": null
+    }
+   ],
+   "artist": "Rectangle",
+   "properties": [
+    {
+     "name": "capstyle",
+     "valid": "`.CapStyle` or {'butt', 'projecting', 'round'}",
+     "kind": "choice",
+     "choices": [
+      "butt",
+      "projecting",
+      "round"
+     ]
+    },
+    {
+     "name": "clip_on",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "color",
+     "valid": ":mpltype:`color`",
+     "kind": "colour"
+    },
+    {
+     "name": "edgegapcolor",
+     "valid": ":mpltype:`color` or None",
+     "kind": "colour"
+    },
+    {
+     "name": "fill",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "hatch",
+     "valid": "{'/', '\\\\', '|', '-', '+', 'x', 'o', 'O', '.', '*'}",
+     "kind": "choice",
+     "choices": [
+      "/",
+      "\\\\",
+      "|",
+      "-",
+      "+",
+      "x",
+      "o",
+      "O",
+      ".",
+      "*"
+     ]
+    },
+    {
+     "name": "hatch_linewidth",
+     "valid": "unknown",
+     "kind": "other"
+    },
+    {
+     "name": "hatchcolor",
+     "valid": ":mpltype:`color` or 'edge' or None",
+     "kind": "colour"
+    },
+    {
+     "name": "joinstyle",
+     "valid": "`.JoinStyle` or {'miter', 'round', 'bevel'}",
+     "kind": "choice",
+     "choices": [
+      "miter",
+      "round",
+      "bevel"
+     ]
+    },
+    {
+     "name": "label",
+     "valid": "object",
+     "kind": "text"
+    },
+    {
+     "name": "linestyle",
+     "valid": "{'-', '--', '-.', ':', '', ...} or (offset, on-off-seq)",
+     "kind": "choice",
+     "choices": [
+      "-",
+      "--",
+      "-.",
+      ":",
+      ""
+     ],
+     "aliases": [
+      "ls"
+     ]
+    },
+    {
+     "name": "linewidth",
+     "valid": "float or None",
+     "kind": "number",
+     "aliases": [
+      "lw"
+     ]
+    },
+    {
+     "name": "visible",
+     "valid": "bool",
+     "kind": "bool"
+    }
+   ]
+  },
+  {
+   "on": "axes",
+   "call": "indicate_inset_zoom",
+   "parameters": [
+    {
+     "name": "inset_ax",
+     "positional": true,
+     "valid": "`.Axes`",
+     "kind": "other",
+     "required": true
+    }
+   ],
+   "artist": "Rectangle",
+   "properties": [
+    {
+     "name": "alpha",
+     "valid": "float or None",
+     "kind": "number"
+    },
+    {
+     "name": "capstyle",
+     "valid": "`.CapStyle` or {'butt', 'projecting', 'round'}",
+     "kind": "choice",
+     "choices": [
+      "butt",
+      "projecting",
+      "round"
+     ]
+    },
+    {
+     "name": "clip_on",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "color",
+     "valid": ":mpltype:`color`",
+     "kind": "colour"
+    },
+    {
+     "name": "edgecolor",
+     "valid": ":mpltype:`color` or None",
+     "kind": "colour",
+     "aliases": [
+      "ec"
+     ]
+    },
+    {
+     "name": "edgegapcolor",
+     "valid": ":mpltype:`color` or None",
+     "kind": "colour"
+    },
+    {
+     "name": "facecolor",
+     "valid": ":mpltype:`color` or None",
+     "kind": "colour",
+     "aliases": [
+      "fc"
+     ]
+    },
+    {
+     "name": "fill",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "hatch",
+     "valid": "{'/', '\\\\', '|', '-', '+', 'x', 'o', 'O', '.', '*'}",
+     "kind": "choice",
+     "choices": [
+      "/",
+      "\\\\",
+      "|",
+      "-",
+      "+",
+      "x",
+      "o",
+      "O",
+      ".",
+      "*"
+     ]
+    },
+    {
+     "name": "hatch_linewidth",
+     "valid": "unknown",
+     "kind": "other"
+    },
+    {
+     "name": "hatchcolor",
+     "valid": ":mpltype:`color` or 'edge' or None",
+     "kind": "colour"
+    },
+    {
+     "name": "joinstyle",
+     "valid": "`.JoinStyle` or {'miter', 'round', 'bevel'}",
+     "kind": "choice",
+     "choices": [
+      "miter",
+      "round",
+      "bevel"
+     ]
+    },
+    {
+     "name": "label",
+     "valid": "object",
+     "kind": "text"
+    },
+    {
+     "name": "linestyle",
+     "valid": "{'-', '--', '-.', ':', '', ...} or (offset, on-off-seq)",
+     "kind": "choice",
+     "choices": [
+      "-",
+      "--",
+      "-.",
+      ":",
+      ""
+     ],
+     "aliases": [
+      "ls"
+     ]
+    },
+    {
+     "name": "linewidth",
+     "valid": "float or None",
+     "kind": "number",
+     "aliases": [
+      "lw"
+     ]
+    },
+    {
+     "name": "visible",
+     "valid": "bool",
+     "kind": "bool"
+    },
+    {
+     "name": "zorder",
+     "valid": "float",
+     "kind": "number"
+    }
+   ]
+  },
+  {
    "on": "axis",
    "call": "set_major_formatter",
    "parameters": [

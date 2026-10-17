@@ -514,6 +514,8 @@
     "src/engine/bezier.cpp",
     "src/engine/arrows.hpp",
     "src/engine/arrows.cpp",
+    "src/engine/inset.hpp",
+    "src/engine/inset.cpp",
     "src/text/font_manager.hpp",
     "src/text/font_manager.cpp",
     "data/fonts.json",

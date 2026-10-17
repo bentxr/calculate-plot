@@ -67,7 +67,7 @@ const std::map<std::string, std::string>& leastArguments() {
         {"hlines", "[[1], 0, 1]"},        {"vlines", "[[1], 0, 1]"},        {"set_title", "[\"a\"]"},
         {"set_xlabel", "[\"a\"]"},      {"set_ylabel", "[\"a\"]"},      {"set_xlim", "[]"},
         {"set_ylim", "[]"},           {"set_xscale", "[\"log\"]"},    {"set_yscale", "[\"log\"]"},
-        {"add_axes", "[[0.1, 0.1, 0.8, 0.8]]"}, {"suptitle", "[\"a\"]"},  {"inset_axes", "[[0.5, 0.5, 0.4, 0.4]]"},
+        {"add_axes", "[[0.1, 0.1, 0.8, 0.8]]"}, {"suptitle", "[\"a\"]"},  {"inset_axes", "[[0.5, 0.5, 0.4, 0.4]]"}, {"indicate_inset", "[[0, 0, 0.5, 0.5]]"}, {"indicate_inset_zoom", "[{\"$ref\": \"ins\"}]"},
         {"set_major_formatter", "[{\"$new\": \"NullFormatter\"}]"},
         {"set_minor_formatter", "[{\"$new\": \"NullFormatter\"}]"}};
     return args;
@@ -85,6 +85,8 @@ std::string probe(const std::string& on, const std::string& call, const std::str
         setup = R"({"call": "subplots", "as": ["fig", "ax"]}, )";
         // (bar_label labels the bars of a bar call the figure file names)
         if (call == "bar_label") setup += R"({"on": "ax", "call": "bar", "args": [[1, 2], [1, 2]], "as": "bars"}, )";
+        // (indicate_inset_zoom shows an inset Axes the figure file names)
+        if (call == "indicate_inset_zoom") setup += R"({"on": "ax", "call": "inset_axes", "args": [[0.5, 0.5, 0.4, 0.4]], "as": "ins"}, )";
         receiver = on == "figure" ? R"("on": "fig", )" : on == "axes" ? R"("on": "ax", )" : R"("on": "ax.xaxis", )";
     }
     return R"({"version": 1, "calls": [)" + setup + "{" + receiver + R"("call": ")" + call + R"(", "args": )" + args +

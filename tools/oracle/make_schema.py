@@ -76,6 +76,8 @@ CALLS = [
     ("axes", "twinx", Axes.twinx, None),
     ("axes", "twiny", Axes.twiny, None),
     ("axes", "inset_axes", Axes.inset_axes, None),
+    ("axes", "indicate_inset", Axes.indicate_inset, patches.Rectangle),
+    ("axes", "indicate_inset_zoom", Axes.indicate_inset_zoom, patches.Rectangle),
     ("axis", "set_major_formatter", axis.Axis.set_major_formatter, None),
     ("axis", "set_minor_formatter", axis.Axis.set_minor_formatter, None),
     ("axis", "set_tick_params", axis.Axis.set_tick_params, None),

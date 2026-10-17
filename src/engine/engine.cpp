@@ -5,6 +5,7 @@
 #include "engine/arrows.hpp"
 #include "engine/axes.hpp"
 #include "engine/figure.hpp"
+#include "engine/inset.hpp"
 #include "engine/legend.hpp"
 #include "engine/tight_layout.hpp"
 #include "engine/violin.hpp"
@@ -957,6 +958,65 @@ private:
             else if (readNumber(*b, &n)) ax.frameOn = n != 0;
             else return *error = where + ": b must be True or False", false;
             ax.updateTwinnedPatchVisibility();
+            return true;
+        }
+        if (call.method == "indicate_inset" || call.method == "indicate_inset_zoom") {
+            // indicate_inset(bounds=None, inset_ax=None, *, transform=None, facecolor='none', edgecolor='0.5',
+            // alpha=0.5, zorder=None, **kwargs); indicate_inset_zoom(inset_ax, **kwargs)
+            const bool zoom = call.method == "indicate_inset_zoom";
+            const Json* boundsJson = zoom ? nullptr : argument(call, 0, "bounds");
+            const Json* insetJson = zoom ? argument(call, 0, "inset_ax") : argument(call, 1, "inset_ax");
+            if (call.args.size() > (zoom ? 1u : 2u)) return *error = where + ": too many positional arguments", false;
+            std::optional<std::array<double, 4>> bounds;
+            if (boundsJson && !boundsJson->isNull()) {
+                const Json* seq = sequence(*boundsJson);
+                std::array<double, 4> b{};
+                if (!seq || seq->size() != 4) return *error = where + ": bounds must be [x0, y0, width, height]", false;
+                for (std::size_t i = 0; i < 4; ++i)
+                    if (!readNumber((*seq)[i], &b[i])) return *error = where + ": bounds must be [x0, y0, width, height]", false;
+                bounds = b;
+            }
+            Axes* inset = nullptr;
+            if (insetJson && !insetJson->isNull()) {
+                const bool ref = insetJson->isObject() && insetJson->members()[0].first == "$ref";
+                const auto it = ref ? axes_.find(insetJson->members()[0].second.asString()) : axes_.end();
+                if (it == axes_.end()) return *error = where + ": inset_ax must name an Axes ({\"$ref\": name})", false;
+                inset = it->second;
+            }
+            if (!bounds && !inset) return *error = where + ": At least one of bounds or inset_ax must be supplied", false;
+            ax.applyAspect();
+            if (!bounds) {
+                const auto xl = inset->xaxis->viewInterval(), yl = inset->yaxis->viewInterval();
+                bounds = std::array<double, 4>{xl[0], yl[0], xl[1] - xl[0], yl[1] - yl[0]};
+            }
+            auto indicator = std::make_unique<InsetIndicator>(rc_, ax, inset, inset ? std::nullopt : bounds);
+            Rectangle& r = indicator->rectangle;
+            r.x0 = (*bounds)[0], r.y0 = (*bounds)[1], r.width = (*bounds)[2], r.height = (*bounds)[3];
+            r.transform = ax.transData;
+            r.transformSet = true;
+            static const Json none = *support::parseJson("\"none\"", nullptr), grey = *support::parseJson("\"0.5\"", nullptr),
+                              half = *support::parseJson("0.5", nullptr), label = *support::parseJson("\"_indicate_inset\"", nullptr);
+            std::vector<std::pair<std::string, const Json*>> kwargs{{"facecolor", &none}, {"edgecolor", &grey}, {"alpha", &half}};
+            std::optional<double> z;
+            for (const auto& [name, value] : call.kwargs) {
+                if (name == "bounds" || name == "inset_ax") continue;
+                if (name == "transform") {
+                    if (!value.isNull()) return *error = where + ": a transform other than None is not supported yet", false;
+                } else if (name == "zorder") {
+                    double n = 0;
+                    if (!value.isNull() && !readFinite(value, &n)) return *error = where + ": zorder must be a number or None", false;
+                    if (!value.isNull()) z = n;
+                } else {
+                    bool replaced = false;
+                    for (auto& k : kwargs)
+                        if (k.first == name) k.second = &value, replaced = true;
+                    if (!replaced) kwargs.emplace_back(name, &value);
+                }
+            }
+            if (!patchConstructor(r, kwargs, where, error)) return false;
+            if (r.label.empty()) r.label = label.asString();
+            if (z) indicator->zorder = *z;
+            ax.children.push_back(std::move(indicator));
             return true;
         }
         if (call.method == "inset_axes") {

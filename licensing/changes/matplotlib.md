@@ -235,6 +235,10 @@ it comes from in its first lines. The changes, as a whole:
   Insets: Axes.inset_axes, add_child_axes and _TransformedBoundsLocator (the position at draw time), child Axes
   drawn among their parent's artists and counted in its tight box, and _update_title_position over the child Axes
   and twins (the top of an x axis whose ticks or label are on top).
+  Inset indicators: inset.py's InsetIndicator (src/engine/inset.*: the rectangle, the connectors as
+  ConnectionPatch makes them with arc3 and '-', which two show, one compound path in the rectangle's style),
+  Axes.indicate_inset / indicate_inset_zoom; Figure._get_draw_artists placing every Axes and its child Axes
+  before the figure draws.
   Bar labels: Axes.bar_label (BarContainer.datavalues, orientation and errorbar kept with the container,
   LineCollection.get_segments, Patch.get_window_extent, Bbox.intersection) and cbook._auto_format_str, with
   Python's % formatting and str.format of one number ported in src/support/pyformat.cpp (our own code: the
