@@ -1,0 +1,4 @@
+# ThreadSanitizer suppressions for the tests' thread run (tests/test_threads.cpp).
+# libraqm 0.10.5 keeps HarfBuzz's default Unicode functions in a function-level static that every call
+# overwrites with the same pointer (raqm.c, _raqm_unicode_script); the library is used unchanged.
+race:_raqm_unicode_script

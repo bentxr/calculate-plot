@@ -92,7 +92,7 @@ bool readable(const std::string& key, Kind want, Kind got) {
     return false;
 }
 
-std::set<std::string>* readLog = nullptr;
+thread_local std::set<std::string>* readLog = nullptr;
 
 }  // namespace
 

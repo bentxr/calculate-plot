@@ -55,6 +55,7 @@ add_executable(calculate-plot-tests
     test_text.cpp
     test_text_artist.cpp
     test_text_libraries.cpp
+    test_threads.cpp
     test_trace_renderer.cpp
     test_ticker.cpp
     test_transforms.cpp
@@ -69,6 +70,10 @@ target_compile_definitions(calculate-plot-tests PRIVATE
     CALCULATE_PLOT_VERSION_FOR_TESTS="${PROJECT_VERSION}"
     CALCULATE_PLOT_TEST_FONT="${PROJECT_SOURCE_DIR}/fonts/ttf/DejaVuSans.ttf")
 target_link_libraries(calculate-plot-tests PRIVATE calculate-plot cplot-cli calculate-plot-warnings GTest::gtest_main)
+if(NOT EMSCRIPTEN)
+    find_package(Threads REQUIRED)
+    target_link_libraries(calculate-plot-tests PRIVATE Threads::Threads)
+endif()
 if(EMSCRIPTEN)
     target_link_options(calculate-plot-tests PRIVATE
         -sALLOW_MEMORY_GROWTH=1 -sSTACK_SIZE=1048576 -sNODERAWFS=1)

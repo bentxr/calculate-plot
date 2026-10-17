@@ -62,7 +62,10 @@ target_link_libraries(calculate-plot-harfbuzz PUBLIC calculate-plot-freetype)
 add_library(calculate-plot-sheenbidi STATIC ${sheenbidi_SOURCE_DIR}/Source/SheenBidi.c)
 target_include_directories(calculate-plot-sheenbidi SYSTEM PUBLIC ${sheenbidi_SOURCE_DIR}/Headers)
 target_include_directories(calculate-plot-sheenbidi PRIVATE ${sheenbidi_SOURCE_DIR}/Source)
-target_compile_definitions(calculate-plot-sheenbidi PRIVATE SB_CONFIG_UNITY)
+# Without its pool of scratch buffers (ordinary memory instead): two threads taking and returning buffers at once can
+# be handed the same buffer (the pool's lock-free stack has no guard against a buffer returning between a read and a
+# swap), and figures are drawn on several threads.
+target_compile_definitions(calculate-plot-sheenbidi PRIVATE SB_CONFIG_UNITY SB_CONFIG_DISABLE_SCRATCH_MEMORY)
 
 # libraqm over SheenBidi.
 file(READ ${libraqm_SOURCE_DIR}/src/raqm-version.h.in raqm_version)

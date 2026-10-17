@@ -13,6 +13,7 @@
 
 #include <algorithm>
 #include <array>
+#include <mutex>
 
 namespace calculate_plot::text::mathtext {
 
@@ -473,6 +474,8 @@ bool isTexName(const std::string& name) { return tex2uni().count(name) != 0; }
 
 const std::set<std::u32string>& symbolSet(const std::string& name) {
     static std::map<std::string, std::set<std::u32string>> sets;
+    static std::mutex lock;  // (drawings on several threads; a set never changes once made)
+    std::lock_guard<std::mutex> making(lock);
     auto it = sets.find(name);
     if (it == sets.end()) {
         std::set<std::u32string> s;

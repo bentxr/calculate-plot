@@ -13,6 +13,7 @@
 #include <cstdio>
 #include <iterator>
 #include <map>
+#include <mutex>
 #include <set>
 #include <stdexcept>
 #include <string>
@@ -38,6 +39,14 @@ FT_Library ft2Library()
         return lib;
     }();
     return library;
+}
+
+// FreeType keeps the faces of a library in one list: opening and closing faces of the shared library
+// from several threads at once is serialised (each face is then used by one thread at a time).
+std::mutex& ft2LibraryLock()
+{
+    static std::mutex lock;
+    return lock;
 }
 
 // ft_outline_decomposer should be passed to FT_Outline_Decompose.
@@ -156,6 +165,7 @@ FT2Font::~FT2Font()
 bool FT2Font::open(const std::string &path, FT_Long face_index)
 {
     m_path = path;
+    std::lock_guard<std::mutex> opening(ft2LibraryLock());
     if (FT_Error code = FT_New_Face(ft2Library(), path.c_str(), face_index, &face)) {
         face = nullptr;
         fail("FT_New_Face", code);
@@ -172,6 +182,7 @@ bool FT2Font::open(const std::string &path, FT_Long face_index)
 bool FT2Font::openMemory(const std::string &path, std::string_view bytes, FT_Long face_index)
 {
     m_path = path;
+    std::lock_guard<std::mutex> opening(ft2LibraryLock());
     if (FT_Error code = FT_New_Memory_Face(ft2Library(), reinterpret_cast<const FT_Byte *>(bytes.data()),
                                            static_cast<FT_Long>(bytes.size()), face_index, &face)) {
         face = nullptr;
@@ -195,6 +206,7 @@ void FT2Font::close()
     glyphs.clear();
 
     if (face) {
+        std::lock_guard<std::mutex> closing(ft2LibraryLock());
         FT_Done_Face(face);
         face = nullptr;
     }

@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <limits>
 #include <map>
+#include <mutex>
 
 namespace calculate_plot::engine {
 
@@ -30,6 +31,8 @@ namespace {
 // rcParams of then: the figure's (MarkerStyle::set gives them those).
 const Path& pathOf(std::vector<double> vertices, std::vector<unsigned char> codes, bool closed, int which) {
     static std::map<int, Path> cache;
+    static std::mutex lock;  // (drawings on several threads; a path never changes once made)
+    std::lock_guard<std::mutex> making(lock);
     auto it = cache.find(which);
     if (it == cache.end()) it = cache.emplace(which, Path::make(std::move(vertices), std::move(codes), rc::Params::defaults(), closed)).first;
     return it->second;

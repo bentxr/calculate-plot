@@ -43,7 +43,7 @@ public:
     static const std::vector<std::string>& inertKeys();
     // The keys of what calculate-plot does not do yet: they take their default value and no other.
     static const std::vector<std::string>& unsupportedKeys();
-    // For the tests: every key read from now on is added to `log` (nullptr: to none).
+    // For the tests: every key read on this thread from now on is added to `log` (nullptr: to none).
     static void logReads(std::set<std::string>* log);
 
 private:
