@@ -5520,6 +5520,15 @@ AggDrawing drawAgg(const model::Figure& model, const DrawOptions& options) {
     return out;
 }
 
+std::vector<std::string> axesNames(const model::Figure& model, const DrawOptions& options, std::string* error) {
+    std::vector<std::string> names;
+    *error = runFigure(model, options, [&](Figure& figure, const Executor& executor) {
+        for (const auto& ax : figure.axes) names.push_back(executor.nameOf(ax.get()));
+        return std::string();
+    });
+    return names;
+}
+
 std::string runCalls(const model::Figure& model, const DrawOptions& options) {
     return runFigure(model, options, [](Figure&) { return std::string(); });
 }

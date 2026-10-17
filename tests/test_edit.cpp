@@ -88,3 +88,28 @@ TEST(Edit, WhatWouldNotBeAFigureFileIsRefused) {
     EXPECT_EQ(cp::removeCall(kFigure, 0, &error), "");  // the names it made are used later
     EXPECT_NE(error, "");
 }
+
+// The Axes an editor can target, by the names the file gives them, in the figure's order.
+TEST(Edit, TheNamesOfTheAxes) {
+    std::string error;
+    const std::string grid = R"({"version": 1, "calls": [{"call": "subplots", "args": [2, 2], "as": ["fig", "axs"]},)"
+                             R"( {"on": "axs[0, 1]", "call": "twinx", "as": "tw"}]})";
+    EXPECT_EQ(cp::axesNames(grid, std::string(CALCULATE_PLOT_SOURCE_DIR) + "/fonts/ttf", &error),
+              (std::vector<std::string>{"axs[0, 0]", "axs[0, 1]", "axs[1, 0]", "axs[1, 1]", "tw"}));
+    EXPECT_EQ(error, "");
+    EXPECT_EQ(cp::axesNames(kFigure, "", &error), (std::vector<std::string>{"ax"}));
+    // an Axes the file does not name has no name
+    EXPECT_EQ(cp::axesNames(R"({"version": 1, "calls": [{"call": "figure"}, {"call": "plot", "args": [[0, 1]]}]})", "", &error),
+              (std::vector<std::string>{""}));
+}
+
+// A check that runs the calls without drawing: what they refuse, or "".
+TEST(Edit, AFigureIsCheckedWithoutDrawing) {
+    const std::string fonts = std::string(CALCULATE_PLOT_SOURCE_DIR) + "/fonts/ttf";
+    EXPECT_EQ(cp::checkFigure(kFigure, fonts), "");
+    std::string error;
+    const std::string bad = cp::setKeyword(kFigure, 1, "linewidth", R"("wide")", {"lw"}, &error);
+    ASSERT_EQ(error, "");
+    EXPECT_EQ(cp::checkFigure(bad, fonts), "ax.plot: linewidth must be a finite number");
+    EXPECT_NE(cp::checkFigure("{", fonts), "");
+}

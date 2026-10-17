@@ -1,6 +1,7 @@
 // The public API's editing of figure files (include/calculate-plot/calculate-plot.hpp).
 #include "calculate-plot/calculate-plot.hpp"
 
+#include "engine/engine.hpp"
 #include "model/figure_model.hpp"
 #include "support/json.hpp"
 #include "support/json_writer.hpp"
@@ -188,6 +189,26 @@ std::string removeCall(std::string_view figureFile, std::size_t call, std::strin
     auto calls = d->calls;
     calls.erase(calls.begin() + std::ptrdiff_t(call));
     return close(*d, calls, error);
+}
+
+std::vector<std::string> axesNames(std::string_view figureFile, const std::string& fontDirectory, std::string* error) {
+    std::string why;
+    const auto figure = model::parseFigure(figureFile, &why);
+    if (!figure) return *error = why, std::vector<std::string>();
+    engine::DrawOptions options;
+    options.fontDirectory = fontDirectory;
+    auto names = engine::axesNames(*figure, options, error);
+    if (!error->empty()) return {};
+    return names;
+}
+
+std::string checkFigure(std::string_view figureFile, const std::string& fontDirectory) {
+    std::string why;
+    const auto figure = model::parseFigure(figureFile, &why);
+    if (!figure) return why;
+    engine::DrawOptions options;
+    options.fontDirectory = fontDirectory;
+    return engine::runCalls(*figure, options);
 }
 
 }  // namespace calculate_plot

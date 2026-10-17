@@ -48,6 +48,9 @@ struct PointerTexts {
 PointerTexts pointerTexts(const model::Figure& figure, double ratio, std::array<double, 2> size,
                           const std::vector<std::array<double, 2>>& points, const DrawOptions& options);
 
+// The names the figure file gives the figure's Axes, in Figure.axes' order ("" for an unnamed one).
+std::vector<std::string> axesNames(const model::Figure& figure, const DrawOptions& options, std::string* error);
+
 // Runs a figure file's calls without drawing the figure: what they refuse, or "".
 std::string runCalls(const model::Figure& figure, const DrawOptions& options);
 

@@ -122,5 +122,9 @@ std::string setArgument(std::string_view figureFile, std::size_t call, std::size
 // A call (JSON text of the call's object) added after the last; a call removed.
 std::string appendCall(std::string_view figureFile, const std::string& call, std::string* error);
 std::string removeCall(std::string_view figureFile, std::size_t call, std::string* error);
+// The figure's Axes (Figure.axes, in order) by the names the file gives them ("" for an Axes it does not name).
+std::vector<std::string> axesNames(std::string_view figureFile, const std::string& fontDirectory, std::string* error);
+// The figure's calls run without drawing: what they refuse, or "" (what only a drawing finds is not seen).
+std::string checkFigure(std::string_view figureFile, const std::string& fontDirectory);
 
 }  // namespace calculate_plot
