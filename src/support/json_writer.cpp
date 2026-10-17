@@ -1,5 +1,6 @@
 #include "support/json_writer.hpp"
 
+#include "support/json.hpp"
 #include "support/pyformat.hpp"
 
 #include <cmath>
@@ -111,6 +112,34 @@ JsonWriter& JsonWriter::raw(std::string_view json) {
     separator();
     out_ += json;
     return *this;
+}
+
+void writeJson(JsonWriter& w, const Json& v) {
+    switch (v.type()) {
+    case Json::Type::Null: w.null(); break;
+    case Json::Type::Bool: w.value(v.asBool()); break;
+    case Json::Type::Number: w.raw(v.numberText()); break;
+    case Json::Type::String: w.value(v.asString()); break;
+    case Json::Type::Array:
+        w.beginArray();
+        for (const Json& x : v.items()) writeJson(w, x);
+        w.endArray();
+        break;
+    case Json::Type::Object:
+        w.beginObject();
+        for (const auto& [k, x] : v.members()) {
+            w.key(k);
+            writeJson(w, x);
+        }
+        w.endObject();
+        break;
+    }
+}
+
+std::string toJsonText(const Json& v) {
+    JsonWriter w;
+    writeJson(w, v);
+    return w.text();
 }
 
 }  // namespace calculate_plot::support

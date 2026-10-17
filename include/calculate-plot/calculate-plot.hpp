@@ -100,4 +100,27 @@ std::string navigate(std::string_view figureFile, const Canvas& canvas, const Ge
 std::vector<std::string> pointerTexts(std::string_view figureFile, const Canvas& canvas, const std::vector<std::pair<double, double>>& points,
                                       const std::string& fontDirectory, std::string* error);
 
+// Editing a figure file. Values are JSON text as figure files write them; whatever is not edited keeps its exact
+// text. Each edit returns the new file, or "" and why when the result would not be a figure file (a call that is
+// not one, an object used before a call names it).
+
+// One call of a figure file: the object it is made on ("" for pyplot), its method, its arguments and keywords
+// (JSON text, in order) and the names its result gets.
+struct FigureCall {
+    std::string on, method;
+    std::vector<std::string> arguments;
+    std::vector<std::pair<std::string, std::string>> keywords;
+    std::vector<std::string> as;
+};
+std::vector<FigureCall> figureCalls(std::string_view figureFile, std::string* error);
+// Call `call`'s keyword `name` set to `value` (in the place of an alias of the same property, else last), or removed
+// with its aliases when `value` is empty.
+std::string setKeyword(std::string_view figureFile, std::size_t call, const std::string& name, const std::string& value,
+                       const std::vector<std::string>& aliases, std::string* error);
+// Call `call`'s positional argument `position` set to `value` (one past the last appends it).
+std::string setArgument(std::string_view figureFile, std::size_t call, std::size_t position, const std::string& value, std::string* error);
+// A call (JSON text of the call's object) added after the last; a call removed.
+std::string appendCall(std::string_view figureFile, const std::string& call, std::string* error);
+std::string removeCall(std::string_view figureFile, std::size_t call, std::string* error);
+
 }  // namespace calculate_plot

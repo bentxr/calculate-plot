@@ -33,4 +33,9 @@ private:
     bool afterKey_ = false;
 };
 
+class Json;
+// A parsed value written back: numbers as their source text, objects in their order
+void writeJson(JsonWriter& w, const Json& v);
+std::string toJsonText(const Json& v);
+
 }  // namespace calculate_plot::support

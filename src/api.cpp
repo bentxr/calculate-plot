@@ -38,27 +38,7 @@ std::optional<png::Image> pixels(const engine::AggDrawing& drawing, const std::s
 
 using support::Json;
 
-void write(support::JsonWriter& w, const Json& v) {
-    switch (v.type()) {
-    case Json::Type::Null: w.null(); break;
-    case Json::Type::Bool: w.value(v.asBool()); break;
-    case Json::Type::Number: w.raw(v.numberText()); break;
-    case Json::Type::String: w.value(v.asString()); break;
-    case Json::Type::Array:
-        w.beginArray();
-        for (const Json& x : v.items()) write(w, x);
-        w.endArray();
-        break;
-    case Json::Type::Object:
-        w.beginObject();
-        for (const auto& [k, x] : v.members()) {
-            w.key(k);
-            write(w, x);
-        }
-        w.endObject();
-        break;
-    }
-}
+void write(support::JsonWriter& w, const Json& v) { support::writeJson(w, v); }
 
 // The arguments a call needs at the least, as a figure file writes them
 const std::map<std::string, std::string>& leastArguments() {
