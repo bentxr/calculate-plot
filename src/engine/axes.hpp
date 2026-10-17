@@ -332,6 +332,25 @@ public:
     // coordinates
     Axes* insetAxes(const std::array<double, 4>& bounds, double z);
     std::vector<std::unique_ptr<Axes>> childAxes;
+    // secondary_xaxis / secondary_yaxis(location, functions): a child SecondaryAxis whose limits are the
+    // parent's through the forward function, at `location` ('top' / 'bottom' or 'right' / 'left', or a
+    // fraction of the parent's height or width); the functions are (forward, inverse)
+    Axes* secondaryAxis(bool x, const std::string& location, double pos, std::shared_ptr<const support::PyLambda> forward,
+                        std::shared_ptr<const support::PyLambda> inverse);
+    struct Secondary {
+        Axes* parent = nullptr;
+        bool x = true;  // _orientation
+        std::shared_ptr<const support::PyLambda> forward, inverse;  // _functions
+        std::optional<std::string> parentScale;  // _parentscale
+        bool ticksSet = false;                   // _ticks_set
+        std::array<std::string, 2> locstrings;  // _locstrings
+    };
+    std::optional<Secondary> secondary;
+    void setSecondaryLims();   // SecondaryAxis._set_lims
+    void setSecondaryScale();  // SecondaryAxis._set_scale
+    // SecondaryAxis.set_alignment(align): which side the spine, ticks and label are on
+    bool setAlignment(const std::string& align, std::string* error);
+    void setSecondaryColor(const colors::Spec& color);  // SecondaryAxis.set_color (with tick_params' colors)
 
     // Axes.set_title(label, loc=, pad=, y=)
     Text& setTitle(const std::string& label, const std::string& loc, std::optional<double> pad, std::optional<double> y);

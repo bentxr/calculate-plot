@@ -1034,6 +1034,38 @@ private:
     bool axesCall(Axes& ax, const model::Call& call, std::string* error) {
         const std::string where = call.on + "." + call.method;
         if (!datesTaken(call, error)) return false;
+        if (ax.secondary) {
+            // SecondaryAxis: its labels, tick parameters, ticks, colour and alignment
+            const std::string& m = call.method;
+            const bool x = ax.secondary->x;
+            if ((m == "set_xticks" && !x) || (m == "set_yticks" && x))
+                return *error = where + ": Cannot set " + (x ? "yticks on a secondary x-axis" : "xticks on a secondary y-axis"), false;
+            if (m == "set_color") {
+                const Json* c = argument(call, 0, "color");
+                colors::Spec spec;
+                if (!c || call.args.size() + call.kwargs.size() != 1 || !color(*c, &spec)) return *error = where + ": color must be a colour", false;
+                ax.setSecondaryColor(spec);
+                return true;
+            }
+            if (m == "set_alignment") {
+                const Json* a = argument(call, 0, "align");
+                if (!a || call.args.size() + call.kwargs.size() != 1 || !a->isString()) return *error = where + ": align must be a string", false;
+                if (!ax.setAlignment(a->asString(), error)) return *error = where + ": " + *error, false;
+                return true;
+            }
+            if (m == "set_xticks" || m == "set_yticks") {
+                if (!axesCallOn(ax, call, error)) return false;
+                ax.secondary->ticksSet = true;
+                return true;
+            }
+            if (m != "set_xlabel" && m != "set_ylabel" && m != "tick_params")
+                return *error = where + ": " + m + " on a secondary axis is not supported yet", false;
+        }
+        return axesCallOn(ax, call, error);
+    }
+
+    bool axesCallOn(Axes& ax, const model::Call& call, std::string* error) {
+        const std::string where = call.on + "." + call.method;
         if (call.method == "loglog" || call.method == "semilogx" || call.method == "semilogy") {
             // set_xscale('log') and / or set_yscale('log') with the scale's keywords, then plot with the rest
             // (dx: base, subs, nonpositive and their x forms, which LogScale refuses; dy likewise)
@@ -1186,6 +1218,45 @@ private:
                 }
             }
             return nameResult(call, ax.insetAxes(bounds, z), error);
+        }
+        if (call.method == "secondary_xaxis" || call.method == "secondary_yaxis") {
+            // secondary_xaxis(location, functions=None, *, transform=None, **kwargs)
+            const bool x = call.method == "secondary_xaxis";
+            if (call.args.size() > 2) return *error = where + ": takes 2 positional arguments", false;
+            for (const auto& [name, value] : call.kwargs) {
+                if (name == "location" || name == "functions") continue;
+                if (name == "transform") {
+                    if (!value.isNull()) return *error = where + ": a transform other than None is not supported yet", false;
+                } else {
+                    return *error = where + ": " + name + " is not supported yet", false;
+                }
+            }
+            const Json* loc = argument(call, 0, "location");
+            if (!loc) return *error = where + ": missing 1 required positional argument: 'location'", false;
+            const std::string one = x ? "top" : "right", two = x ? "bottom" : "left";
+            double pos = 0;
+            if (loc->isString() && (loc->asString() == one || loc->asString() == two)) pos = loc->asString() == one ? 1. : 0.;
+            else if (loc->isBool()) return *error = where + ": a location True or False is not supported yet", false;
+            else if (!readNumber(*loc, &pos))
+                return *error = where + ": " + call.method + " location must be either a float or \"" + (x ? "top\"/\"bottom\"" : "left\"/\"right\""),
+                       false;
+            // set_functions: a tuple of two functions, or None (the identity)
+            std::shared_ptr<const support::PyLambda> forward, inverse;
+            const Json* fns = argument(call, 1, "functions");
+            if (!fns || fns->isNull()) {
+                std::string unused;
+                forward = inverse = std::make_shared<const support::PyLambda>(*support::PyLambda::parse("x", &unused));
+            } else {
+                const bool tuple = fns->isObject() && fns->members().size() == 1 && fns->members()[0].first == "$tuple";
+                const Json* pair = tuple ? sequence(*fns) : nullptr;
+                const auto isFunction = [](const Json& v) { return v.isObject() && v.members().size() == 1 && v.members()[0].first == "$lambda"; };
+                if (!pair || pair->size() != 2 || !isFunction((*pair)[0]) || !isFunction((*pair)[1]))
+                    return *error = where + ": functions argument of secondary Axes must be a two-tuple of callable functions with the first "
+                                            "function being the transform and the second being the inverse",
+                           false;
+                if (!functionPair(*fns, &forward, &inverse, where, error)) return false;
+            }
+            return nameResult(call, ax.secondaryAxis(x, loc->isString() ? loc->asString() : std::string(), pos, forward, inverse), error);
         }
         if (call.method == "twinx" || call.method == "twiny") {
             for (const auto& [name, value] : call.kwargs)

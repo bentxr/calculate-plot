@@ -260,6 +260,12 @@ it comes from in its first lines. The changes, as a whole:
   Function scales: scale.py's FuncTransform, FuncScale and FuncScaleLog (FuncTransform + LogTransform, a LogScale
   for the locators, formatters and limit_range_for_scale), over the functions of figure files
   (src/support/pylambda.*); the 'log' name checks of Axis._set_lim and autoscale_view stay the log scale's only.
+  Secondary axes: axes/_secondary_axes.py's SecondaryAxis (location and its _TransformedBoundsLocator,
+  set_functions, _set_scale with the functions the other way round, _set_lims through the forward function,
+  set_alignment, set_color, set_xticks / set_yticks keeping their ticks) and Axes.secondary_xaxis /
+  secondary_yaxis; the other axis' NullLocator is an empty FixedLocator (the same ticks and limits). Functions
+  are figure files' {"$lambda": ...} only (a Transform is refused), and calls on a secondary axis other than
+  its labels, tick_params, ticks, colour and alignment are refused.
   Bar labels: Axes.bar_label (BarContainer.datavalues, orientation and errorbar kept with the container,
   LineCollection.get_segments, Patch.get_window_extent, Bbox.intersection) and cbook._auto_format_str, with
   Python's % formatting and str.format of one number ported in src/support/pyformat.cpp (our own code: the

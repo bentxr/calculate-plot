@@ -1767,7 +1767,99 @@ Axes* Axes::insetAxes(const std::array<double, 4>& bounds, double z) {
     return inset;
 }
 
+Axes* Axes::secondaryAxis(bool x, const std::string& location, double pos, std::shared_ptr<const support::PyLambda> forward,
+                          std::shared_ptr<const support::PyLambda> inverse) {
+    // SecondaryAxis.__init__: an Axes at [0, 1, 1, 0.0001] (x) or [0, 1, 0.0001, 1] (y) of the figure
+    childAxes.push_back(std::make_unique<Axes>(rc_, figure, x ? transforms::Bbox::fromBounds(0, 1., 1, 0.0001)
+                                                              : transforms::Bbox::fromBounds(0, 1., 0.0001, 1),
+                                               std::nullopt));
+    Axes* s = childAxes.back().get();
+    Secondary info;
+    info.parent = this;
+    info.x = x;
+    info.locstrings = x ? std::array<std::string, 2>{"top", "bottom"} : std::array<std::string, 2>{"right", "left"};
+    s->secondary = info;
+    // set_location: from x = 0 to 1 at y = pos (height 1e-10) in the parent's transAxes, or the other way
+    (void)location;
+    s->locator = Locator{x ? std::array<double, 4>{0, pos, 1., 1e-10} : std::array<double, 4>{pos, 0, 1e-10, 1}, transAxes};
+    // set_functions(functions): then _set_scale
+    s->secondary->forward = std::move(forward);
+    s->secondary->inverse = std::move(inverse);
+    s->setSecondaryScale();
+    // the other axis: NullLocator(), no ticks; only the spines of this axis
+    Axis& other = x ? *s->yaxis : *s->xaxis;
+    other.tickerAxis().fixedLocs = std::vector<double>{};
+    std::string unused;
+    other.setTicksPosition("none", &unused);
+    const char* otherSpines[2] = {x ? "left" : "top", x ? "right" : "bottom"};
+    for (const char* name : otherSpines) s->spine(name).visible = false;
+    for (const auto& name : s->secondary->locstrings) s->spine(name).visible = true;
+    if (pos < 0.5) std::swap(s->secondary->locstrings[0], s->secondary->locstrings[1]);
+    s->setAlignment(s->secondary->locstrings[0], &unused);
+    return s;
+}
+
+bool Axes::setAlignment(const std::string& align, std::string* error) {
+    auto& loc = secondary->locstrings;
+    if (align != loc[0] && align != loc[1])
+        return *error = support::pythonStrRepr(align) + " is not a valid value for align; supported values are " +
+                        support::pythonStrRepr(loc[0]) + ", " + support::pythonStrRepr(loc[1]),
+               false;
+    if (align == loc[1]) std::swap(loc[0], loc[1]);  // the orientation changes
+    spine(loc[0]).visible = true;
+    spine(loc[1]).visible = false;
+    Axis& axis = secondary->x ? *xaxis : *yaxis;
+    return axis.setTicksPosition(align, error) && axis.setLabelPosition(align, error);
+}
+
+void Axes::setSecondaryScale() {
+    // a log parent: functionlog of the functions the other way round; any other: function
+    const std::string pscale = (secondary->x ? *secondary->parent->xaxis : *secondary->parent->yaxis).scale();
+    if (secondary->parentScale && *secondary->parentScale == pscale) return;
+    Axis& axis = secondary->x ? *xaxis : *yaxis;
+    std::vector<double> ticks;
+    if (secondary->ticksSet && axis.tickerAxis().fixedLocs) ticks = *axis.tickerAxis().fixedLocs;  // get_ticklocs()
+    AxisScaleOptions options;
+    options.forward = secondary->inverse;
+    options.inverse = secondary->forward;
+    setScale(secondary->x, pscale == "log" ? "functionlog" : "function", options);
+    if (secondary->ticksSet) axis.tickerAxis().fixedLocs = ticks;  // set_major_locator(FixedLocator(ticks))
+    secondary->parentScale = pscale;
+}
+
+void Axes::setSecondaryLims() {
+    const Axis& parentAxis = secondary->x ? *secondary->parent->xaxis : *secondary->parent->yaxis;
+    const auto lims = parentAxis.viewInterval();  // get_xlim() / get_ylim()
+    const bool order = lims[0] < lims[1];
+    std::vector<double> out;
+    std::string error;
+    if (!secondary->forward->apply({lims[0], lims[1]}, &out, &error)) {
+        support::noteRaised(error);
+        return;
+    }
+    const bool neworder = out[0] < out[1];
+    if (neworder != order) std::swap(out[0], out[1]);  // the transform takes care of the flipping
+    // set_xlim(lims) / set_ylim(lims): _validate_converted_limits
+    if (!std::isfinite(out[0]) || !std::isfinite(out[1])) {
+        support::noteRaised("Axis limits cannot be NaN or Inf");
+        return;
+    }
+    (secondary->x ? *xaxis : *yaxis).setLim(out[0], out[1], false);
+}
+
+void Axes::setSecondaryColor(const colors::Spec& color) {
+    Axis& axis = secondary->x ? *xaxis : *yaxis;
+    TickParams p;
+    p.color = color;
+    p.labelcolor = color;
+    axis.setTickParams("major", false, p);
+    for (auto& sp : spines)
+        if (sp->axis == &axis) sp->setEdgecolor(color);  // Spine.set_color
+    axis.label.color = *colors::toRgba(color, std::nullopt, rc_, nullptr);
+}
+
 void Axes::applyAspect() {
+    if (secondary) setSecondaryLims();  // SecondaryAxis.apply_aspect: _set_lims first
     if (aspectFrozen) return;
     // apply_aspect(locator(self, renderer) if locator else None)
     const auto original = locator ? locatorPosition() : originalPosition->points();
@@ -1881,6 +1973,10 @@ std::optional<transforms::Bbox> Axes::tightbbox(Renderer& renderer, bool forLayo
 
 void Axes::draw(Renderer& renderer) {
     if (!visible) return;
+    if (secondary) {  // SecondaryAxis.draw: _set_lims, _set_scale
+        setSecondaryLims();
+        setSecondaryScale();
+    }
     unstaleViewLim();
     renderer.openGroup("axes", gid);
     applyAspect();

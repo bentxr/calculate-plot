@@ -7556,6 +7556,72 @@
    ]
   },
   {
+   "on": "axes",
+   "call": "secondary_xaxis",
+   "parameters": [
+    {
+     "name": "location",
+     "positional": true,
+     "valid": "{'top', 'bottom', 'left', 'right'} or float",
+     "kind": "choice",
+     "choices": [
+      "top",
+      "bottom",
+      "left",
+      "right"
+     ],
+     "required": true
+    },
+    {
+     "name": "functions",
+     "positional": true,
+     "valid": "2-tuple of func, or Transform with an inverse",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "transform",
+     "positional": false,
+     "valid": "`.Transform`, optional",
+     "kind": "other",
+     "default": null
+    }
+   ]
+  },
+  {
+   "on": "axes",
+   "call": "secondary_yaxis",
+   "parameters": [
+    {
+     "name": "location",
+     "positional": true,
+     "valid": "{'top', 'bottom', 'left', 'right'} or float",
+     "kind": "choice",
+     "choices": [
+      "top",
+      "bottom",
+      "left",
+      "right"
+     ],
+     "required": true
+    },
+    {
+     "name": "functions",
+     "positional": true,
+     "valid": "2-tuple of func, or Transform with an inverse",
+     "kind": "other",
+     "default": null
+    },
+    {
+     "name": "transform",
+     "positional": false,
+     "valid": "`.Transform`, optional",
+     "kind": "other",
+     "default": null
+    }
+   ]
+  },
+  {
    "on": "axis",
    "call": "set_major_formatter",
    "parameters": [

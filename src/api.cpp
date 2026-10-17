@@ -68,7 +68,7 @@ const std::map<std::string, std::string>& leastArguments() {
         {"hlines", "[[1], 0, 1]"},        {"vlines", "[[1], 0, 1]"},        {"set_title", "[\"a\"]"},
         {"set_xlabel", "[\"a\"]"},      {"set_ylabel", "[\"a\"]"},      {"set_xlim", "[]"},
         {"set_ylim", "[]"},           {"set_xscale", "[\"log\"]"},    {"set_yscale", "[\"log\"]"},
-        {"add_axes", "[[0.1, 0.1, 0.8, 0.8]]"}, {"suptitle", "[\"a\"]"},  {"inset_axes", "[[0.5, 0.5, 0.4, 0.4]]"}, {"indicate_inset", "[[0, 0, 0.5, 0.5]]"}, {"indicate_inset_zoom", "[{\"$ref\": \"ins\"}]"},
+        {"add_axes", "[[0.1, 0.1, 0.8, 0.8]]"}, {"suptitle", "[\"a\"]"},  {"inset_axes", "[[0.5, 0.5, 0.4, 0.4]]"}, {"indicate_inset", "[[0, 0, 0.5, 0.5]]"}, {"indicate_inset_zoom", "[{\"$ref\": \"ins\"}]"}, {"secondary_xaxis", "[\"top\"]"}, {"secondary_yaxis", "[\"right\"]"},
         {"set_major_formatter", "[{\"$new\": \"NullFormatter\"}]"},
         {"set_minor_formatter", "[{\"$new\": \"NullFormatter\"}]"}};
     return args;
@@ -137,7 +137,8 @@ std::string sample(const Json& entry) {
         {"height_ratios", "[1]"},     {"language", "\"en\""},          {"left", "0.25"},
         {"right", "0.75"},            {"bottom", "0.25"},                {"top", "0.75"},
         {"bins", "4"},                {"range", "[0, 3]"},               {"weights", "[1, 2, 1]"},
-        {"label", "\"a\""},          {"xytext", "[1, 1]"},              {"textcoords", "\"offset points\""}};
+        {"label", "\"a\""},          {"xytext", "[1, 1]"},              {"textcoords", "\"offset points\""},
+        {"functions", "{\"$tuple\": [{\"$lambda\": \"x\"}, {\"$lambda\": \"x\"}]}"}};
     const Json* choices = entry.find("choices");
     if (choices && choices->size()) return "\"" + (*choices)[0].asString() + "\"";
     if (const auto it = byName.find(name); it != byName.end()) return it->second;

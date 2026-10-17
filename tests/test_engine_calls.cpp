@@ -1848,3 +1848,31 @@ INSTANTIATE_TEST_SUITE_P(
                 "axs[0].set_xscale: The log base cannot be <= 0 or == 1"},
         Refusal{R"({"on": "axs[0]", "call": "set_xscale", "args": ["function"], "kwargs": {"functions": [{"$lambda": "x"}, {"$lambda": "x"}], "base": 2}})",
                 "axs[0].set_xscale: the function scale's option base is not supported yet"}));
+
+// secondary_xaxis / secondary_yaxis: what matplotlib refuses, and what is not ported
+INSTANTIATE_TEST_SUITE_P(
+    SecondaryAxes, DateRefusals,
+    testing::Values(
+        Refusal{R"({"on": "axs[0]", "call": "secondary_xaxis", "args": ["left"]})",
+                "axs[0].secondary_xaxis: secondary_xaxis location must be either a float or \"top\"/\"bottom\""},
+        Refusal{R"({"on": "axs[0]", "call": "secondary_yaxis", "args": ["top"]})",
+                "axs[0].secondary_yaxis: secondary_yaxis location must be either a float or \"left\"/\"right\""},
+        Refusal{R"({"on": "axs[0]", "call": "secondary_xaxis", "args": ["top", [{"$lambda": "x"}, {"$lambda": "x"}]]})",
+                "axs[0].secondary_xaxis: functions argument of secondary Axes must be a two-tuple of callable functions with the "
+                "first function being the transform and the second being the inverse"},
+        Refusal{R"({"on": "axs[0]", "call": "secondary_xaxis", "args": ["top"], "kwargs": {"functions": {"$tuple": [{"$lambda": "x"}]}}})",
+                "axs[0].secondary_xaxis: functions argument of secondary Axes must be a two-tuple of callable functions with the "
+                "first function being the transform and the second being the inverse"},
+        Refusal{R"({"on": "axs[0]", "call": "secondary_xaxis", "args": ["top"], "kwargs": {"transform": "ax.transData"}})",
+                "axs[0].secondary_xaxis: a transform other than None is not supported yet"},
+        Refusal{R"({"on": "axs[0]", "call": "secondary_xaxis", "args": ["top"], "kwargs": {"facecolor": "r"}})",
+                "axs[0].secondary_xaxis: facecolor is not supported yet"},
+        Refusal{R"({"on": "axs[0]", "call": "secondary_xaxis", "args": ["top"], "as": "s"}, {"on": "s", "call": "plot", "args": [[1, 2]]})",
+                "s.plot: plot on a secondary axis is not supported yet"},
+        Refusal{R"({"on": "axs[0]", "call": "secondary_xaxis", "args": ["top"], "as": "s"}, {"on": "s", "call": "set_yticks", "args": [[1, 2]]})",
+                "s.set_yticks: Cannot set yticks on a secondary x-axis"},
+        Refusal{R"({"on": "axs[0]", "call": "secondary_yaxis", "args": ["left"], "as": "s"}, {"on": "s", "call": "set_alignment", "args": ["top"]})",
+                "s.set_alignment: 'top' is not a valid value for align; supported values are 'left', 'right'"},
+        // the limits through the function: NaN at the limits with margins (-0.05, 1.05) when the Axes is drawn
+        Refusal{R"j({"on": "axs[0]", "call": "plot", "args": [[0, 1], [0, 1]]}, {"on": "axs[0]", "call": "secondary_yaxis", "args": ["right", {"$tuple": [{"$lambda": "np.sqrt(x)"}, {"$lambda": "x ** 2"}]}]})j",
+                "Axis limits cannot be NaN or Inf"}));
