@@ -1,0 +1,13 @@
+{"version": 1, "calls": [{"call": "figure", "kwargs": {"layout": "constrained", "figsize": {"$tuple": [7.0, 6.0]}}, "as": "fig"},
+ {"on": "fig", "call": "add_subplot", "args": [3, 3, {"$tuple": [1, 7]}], "as": "left"},
+ {"on": "fig", "call": "add_subplot", "args": [3, 3, 2], "as": "a"},
+ {"on": "fig", "call": "add_subplot", "args": [3, 3, 5], "as": "b"},
+ {"on": "fig", "call": "add_subplot", "args": [3, 3, 8], "as": "c"},
+ {"on": "fig", "call": "add_subplot", "args": [3, 3, {"$tuple": [3, 9]}], "as": "right"},
+ {"on": "left", "call": "plot", "args": [[0, 1], [0, 1]]}, {"on": "left", "call": "set_ylabel", "args": ["three rows"]},
+ {"on": "a", "call": "plot", "args": [[0, 1], [0, 1]]}, {"on": "a", "call": "set_title", "args": ["a"]},
+ {"on": "a", "call": "set_xlabel", "args": ["a's x label\nin two lines"]},
+ {"on": "b", "call": "plot", "args": [[0, 1], [0, 1]]}, {"on": "b", "call": "set_title", "args": ["b's title\nof three\nlines"]},
+ {"on": "b", "call": "set_xlabel", "args": ["b"]},
+ {"on": "c", "call": "plot", "args": [[0, 1], [0, 1]]}, {"on": "c", "call": "set_title", "args": ["c, two\nlines"]},
+ {"on": "right", "call": "plot", "args": [[0, 1], [1, 0]]}, {"on": "right", "call": "set_title", "args": ["also three rows"]}]}

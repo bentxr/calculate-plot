@@ -1,0 +1,6 @@
+{"version": 1, "calls": [{"call": "figure", "kwargs": {"layout": "compressed"}, "as": "fig"},
+ {"on": "fig", "call": "add_subplot", "args": [2, 2, 1], "as": "a"},
+ {"on": "fig", "call": "add_subplot", "args": [1, 2, 2], "as": "b"},
+ {"on": "a", "call": "plot", "args": [[0, 1], [0, 1]]}, {"on": "a", "call": "set_aspect", "args": ["equal"]},
+ {"on": "b", "call": "plot", "args": [[0, 2], [0, 1]]}, {"on": "b", "call": "set_aspect", "args": ["equal"]},
+ {"on": "b", "call": "set_title", "args": ["another gridspec"]}]}
