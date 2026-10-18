@@ -87,6 +87,8 @@ add_library(calculate-plot STATIC
     src/engine/inset.cpp
     src/engine/image.cpp
     src/engine/colorbar.cpp
+    src/contour/contour.cpp
+    src/contour/mpl2014.cpp
     src/engine/trace_renderer.cpp
     src/agg/backend_agg.cpp
     src/model/figure_model.cpp

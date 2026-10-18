@@ -662,6 +662,41 @@
    "remarks": "relativedelta between two datetimes and the rrules matplotlib's date locators make, translated to C++ so that date ticks match matplotlib's (dateutil's LICENSE: the BSD licence applies to all of its code, even that also under Apache 2.0)."
   },
   {
+   "id": "contourpy",
+   "name": "ContourPy",
+   "version": "1.4.0",
+   "homepage": "https://github.com/contourpy/contourpy",
+   "use": "runtime",
+   "licence": "BSD-3-Clause",
+   "licenceFiles": [
+    {
+     "path": "LICENSES/contourpy.txt",
+     "upstream": "https://raw.githubusercontent.com/contourpy/contourpy/v1.4.0/LICENSE",
+     "sha256": "11401c428c7014a75728e8679f9c000aacf262015aaba65a760d41aa1130b3af"
+    }
+   ],
+   "fetch": [],
+   "vendored": [],
+   "derived": [
+    "src/contour/common.h",
+    "src/contour/contour_generator.h",
+    "src/contour/mpl_kind_code.h",
+    "src/contour/mpl2014.h",
+    "src/contour/mpl2014.cpp",
+    "src/contour/contour.hpp",
+    "src/contour/contour.cpp"
+   ],
+   "header": [
+    "Copyright (c) 2021-2026, ContourPy Developers",
+    "LICENSES/contourpy.txt"
+   ],
+   "notices": [
+    "Copyright (c) 2021-2026, ContourPy Developers"
+   ],
+   "changes": "licensing/changes/contourpy.md",
+   "remarks": "The mpl2014 contour generator (the algorithm matplotlib's contour and contourf use by default) with its C++ kept, the pybind11 interface replaced by plain C++ types, and the Python-level argument handling translated to C++."
+  },
+  {
    "id": "kiwisolver",
    "name": "kiwisolver",
    "version": "1.5.1",

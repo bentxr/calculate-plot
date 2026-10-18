@@ -114,6 +114,13 @@ All rights reserved. Used under the BSD 3-Clause licence, which applies to all o
 (LICENSES/dateutil.txt; changes: licensing/changes/dateutil.md).
 
 
+ContourPy 1.4.0
+---------------
+Contour lines and filled contours are made by ContourPy's mpl2014 generator:
+Copyright (c) 2021-2026, ContourPy Developers. All rights reserved. Used under the BSD 3-Clause licence
+(LICENSES/contourpy.txt; changes: licensing/changes/contourpy.md).
+
+
 kiwisolver 1.5.1
 ----------------
 The constraint solver of the constrained layout is kiwisolver's C++ core:

@@ -14,6 +14,7 @@ add_executable(calculate-plot-tests
     test_colormap.cpp
     test_norms.cpp
     test_resample.cpp
+    test_contour.cpp
     test_colors.cpp
     test_figures.cpp
     test_engine_calls.cpp
