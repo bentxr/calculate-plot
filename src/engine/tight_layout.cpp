@@ -164,8 +164,9 @@ std::optional<SubplotsAdjustment> tightLayoutParameters(Figure& figure, Renderer
     // the Axes without one are left out (matplotlib warns).
     std::vector<Group> groups;
     for (auto& ax : figure.axes) {
-        if (!ax->subplotSpec || locallyModified(*ax->subplotSpec->gridspec)) continue;
-        const SubplotSpec& ss = *ax->subplotSpec;
+        if (!ax->subplotSpec) continue;
+        const SubplotSpec ss = ax->subplotSpec->topmost();  // (a colorbar made beside an Axes shares its cell)
+        if (locallyModified(*ss.gridspec)) continue;
         auto g = std::find_if(groups.begin(), groups.end(), [&](const Group& x) {
             return x.spec.gridspec == ss.gridspec && x.spec.num1 == ss.num1 && x.spec.num2 == ss.num2;
         });

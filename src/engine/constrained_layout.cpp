@@ -179,6 +179,13 @@ public:
         return {lefts_[c0].value() + m(Left, c0) + m(LeftCb, c0), bottoms_[r1].value() + m(Bottom, r1) + m(BottomCb, r1),
                 rights_[c1].value() - m(Right, c1) - m(RightCb, c1), tops_[r0].value() - m(Top, r0) - m(TopCb, r0)};
     }
+    // get_bbox_for_cb(rows, cols): the cells less their colorbar margins only
+    std::array<double, 4> bboxForCb(Span rows, Span cols) const {
+        const auto c0 = std::size_t(cols.start), c1 = std::size_t(cols.stop - 1), r0 = std::size_t(rows.start),
+                   r1 = std::size_t(rows.stop - 1);
+        return {lefts_[c0].value() + m(LeftCb, c0), bottoms_[r1].value() + m(BottomCb, r1), rights_[c1].value() - m(RightCb, c1),
+                tops_[r0].value() - m(TopCb, r0)};
+    }
     int nrows() const { return nrows_; }
     int ncols() const { return ncols_; }
 
@@ -314,7 +321,7 @@ public:
                 if (compress) {
                     if (!compressFixedAspect()) return true;  // (a ValueError, which Figure.draw ignores)
                     solver_.updateVariables();
-                    if (checkNoCollapsedAxes()) repositionAxes();
+                    if (checkNoCollapsedAxes()) repositionAxes(true);
                     if (figure_.suptitle && figure_.suptitleAutopos) {
                         auto& t = static_cast<Text&>(*figure_.suptitle);
                         t.y = figureGrid_->innerBbox(Span{0, 1}, Span{0, 1})[3] + hPad;
@@ -366,6 +373,32 @@ private:
             margin[Right] += bbox[2] - pos[2];
             margin[Bottom] += pos[1] - bbox[1];
             margin[Top] += bbox[3] - pos[3];
+            // margins for the colorbars (in the padding margins)
+            const Span rows = rowspan(*ax->subplotSpec), cols = colspan(*ax->subplotSpec);
+            for (Axes* cbax : ax->colorbars) {
+                const double pad = colorbarPad(*cbax);
+                const auto [cbRows, cbCols] = cbParentSpans(*cbax);
+                const std::string& loc = cbax->colorbarInfo->location;
+                const auto pb = posAndBbox(*cbax);
+                const auto& cbbbox = pb.second;
+                if (loc == "right") {
+                    if (cbCols.stop == cols.stop) margin[RightCb] += (cbbbox[2] - cbbbox[0]) + pad;
+                } else if (loc == "left") {
+                    if (cbCols.start == cols.start) margin[LeftCb] += (cbbbox[2] - cbbbox[0]) + pad;
+                } else if (loc == "top") {
+                    if (cbRows.start == rows.start) margin[TopCb] += (cbbbox[3] - cbbbox[1]) + pad;
+                } else {
+                    if (cbRows.stop == rows.stop) margin[BottomCb] += (cbbbox[3] - cbbbox[1]) + pad;
+                }
+                // colorbars wider (taller) than the parent box in the cross direction
+                if (loc == "top" || loc == "bottom") {
+                    if (cbCols.start == cols.start && cbbbox[0] < bbox[0]) margin[Left] += bbox[0] - cbbbox[0];
+                    if (cbCols.stop == cols.stop && cbbbox[2] > bbox[2]) margin[Right] += cbbbox[2] - bbox[2];
+                } else {
+                    if (cbRows.stop == rows.stop && cbbbox[1] < bbox[1]) margin[Bottom] += bbox[1] - cbbbox[1];
+                    if (cbRows.start == rows.start && cbbbox[3] > bbox[3]) margin[Top] += cbbbox[3] - bbox[3];
+                }
+            }
             gridOf(*ax).editOuterMarginMins(margin, rowspan(*ax->subplotSpec), colspan(*ax->subplotSpec));
         }
     }
@@ -456,13 +489,114 @@ private:
         return true;
     }
 
-    void repositionAxes() {
+    void repositionAxes(bool compress = false) {
         for (auto& ax : figure_.axes) {
             if (!ax->subplotSpec) continue;
             const auto b = gridOf(*ax).innerBbox(rowspan(*ax->subplotSpec), colspan(*ax->subplotSpec));
             const transforms::Bbox box(b);  // (through transFigure - transSubfigure, the identity)
             ax->setPosition(box);
+            // the colorbars of which this Axes is the first parent, the last made first
+            std::map<std::string, double> offset{{"left", 0}, {"right", 0}, {"bottom", 0}, {"top", 0}};
+            for (auto it = ax->colorbars.rbegin(); it != ax->colorbars.rend(); ++it)
+                if ((*it)->colorbarInfo->parents.front() == ax.get()) repositionColorbar(**it, &offset, compress);
         }
+    }
+
+    // get_cb_parent_spans: the rows and columns the colorbar's parents cover
+    std::pair<Span, Span> cbParentSpans(const Axes& cbax) {
+        Span rows{1 << 30, -(1 << 30)}, cols{1 << 30, -(1 << 30)};
+        for (const Axes* p : cbax.colorbarInfo->parents) {
+            const Span r = rowspan(*p->subplotSpec), c = colspan(*p->subplotSpec);
+            rows.start = std::min(rows.start, r.start), rows.stop = std::max(rows.stop, r.stop);
+            cols.start = std::min(cols.start, c.start), cols.stop = std::max(cols.stop, c.stop);
+        }
+        return {rows, cols};
+    }
+
+    // colorbar_get_pad: the pad as a fraction of the parents' inner box across the colorbar
+    double colorbarPad(const Axes& cbax) {
+        const auto [rows, cols] = cbParentSpans(cbax);
+        const auto b = gridOf(*cbax.colorbarInfo->parents.front()).innerBbox(rows, cols);
+        const std::string& loc = cbax.colorbarInfo->location;
+        const double size = loc == "right" || loc == "left" ? b[2] - b[0] : b[3] - b[1];
+        return cbax.colorbarInfo->pad * size;
+    }
+
+    // get_pos_and_bbox: the original position, and the tight box for the layout, in figure coordinates
+    std::pair<std::array<double, 4>, std::array<double, 4>> posAndBbox(Axes& ax) {
+        const auto pos = ax.originalPosition->points();
+        std::array<double, 4> bbox = pos;
+        if (const auto tight = ax.tightbbox(renderer_, true)) bbox = transformed(tight->points(), *figure_.transFigure->inverted());
+        return {pos, bbox};
+    }
+
+    // reposition_colorbar: beside the parents' cells, past their colorbar margin, the pad, and the colorbars put there
+    // already
+    void repositionColorbar(Axes& cbax, std::map<std::string, double>* offset, bool compress) {
+        const Axes::ColorbarInfo info = *cbax.colorbarInfo;
+        LayoutGrid& lg = gridOf(*info.parents.front());
+        const auto [rows, cols] = cbParentSpans(cbax);
+        const auto bboxparent = lg.bboxForCb(rows, cols);
+        auto pb = lg.innerBbox(rows, cols);
+        if (compress && info.parents.size() == 1) {
+            // the parent's actual position (after apply_aspect) across the colorbar
+            Axes& parent = *info.parents.front();
+            parent.applyAspect();
+            const auto actual = parent.position->points();
+            if (info.location == "left" || info.location == "right") pb = {pb[0], actual[1], pb[2], actual[3]};
+            else pb = {actual[0], pb[1], actual[2], pb[3]};
+        }
+        const auto pbb = posAndBbox(cbax);
+        const auto& cbpos = pbb.first;
+        const auto& cbbbox = pbb.second;
+        const double cbpad = colorbarPad(cbax);
+        const auto shrunk = [](const std::array<double, 4>& b, double mx, double my) {
+            return std::array<double, 4>{b[0], b[1], b[0] + mx * (b[2] - b[0]), b[1] + my * (b[3] - b[1])};
+        };
+        const auto anchored = [](const std::array<double, 4>& b, const std::array<double, 2>& c, const std::array<double, 4>& container) {
+            const double dx = (container[0] + c[0] * ((container[2] - container[0]) - (b[2] - b[0]))) - b[0];
+            const double dy = (container[1] + c[1] * ((container[3] - container[1]) - (b[3] - b[1]))) - b[1];
+            return std::array<double, 4>{b[0] + dx, b[1] + dy, b[2] + dx, b[3] + dy};
+        };
+        const auto translated = [](const std::array<double, 4>& b, double tx, double ty) {
+            return std::array<double, 4>{b[0] + tx, b[1] + ty, b[2] + tx, b[3] + ty};
+        };
+        std::array<double, 4> pbcb;
+        auto& off = *offset;
+        const double cbw = cbbbox[2] - cbbbox[0], cbh = cbbbox[3] - cbbbox[1];
+        if (info.location == "left" || info.location == "right") {
+            pbcb = anchored(shrunk(pb, info.fraction, info.shrink), info.anchor, pb);
+            const double lmargin = cbpos[0] - cbbbox[0];
+            if (info.location == "right") {
+                double dx = bboxparent[2] - pbcb[0] + off["right"];
+                dx += cbpad + lmargin;
+                off["right"] += cbw + cbpad;
+                pbcb = translated(pbcb, dx, 0);
+            } else {
+                double dx = bboxparent[0] - pbcb[0];
+                dx += -cbw - cbpad + lmargin - off["left"];
+                off["left"] += cbw + cbpad;
+                pbcb = translated(pbcb, dx, 0);
+            }
+        } else {
+            pbcb = anchored(shrunk(pb, info.shrink, info.fraction), info.anchor, pb);
+            const double bmargin = cbpos[1] - cbbbox[1];
+            if (info.location == "top") {
+                double dy = bboxparent[3] - pbcb[1] + off["top"];
+                dy += cbpad + bmargin;
+                off["top"] += cbh + cbpad;
+                pbcb = translated(pbcb, 0, dy);
+            } else {
+                double dy = bboxparent[1] - pbcb[1];
+                dy += -cbh - cbpad + bmargin - off["bottom"];
+                off["bottom"] += cbh + cbpad;
+                pbcb = translated(pbcb, 0, dy);
+            }
+        }
+        cbax.setPosition(transforms::Bbox(pbcb));
+        cbax.anchor = info.anchor;
+        cbax.boxAspect = info.location == "bottom" || info.location == "top" ? 1 / info.aspect : info.aspect;
+        cbax.aspect.reset();
     }
 
     // compress_fixed_aspect: false where it raises a ValueError

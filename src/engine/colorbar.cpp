@@ -505,11 +505,13 @@ private:
 
 }  // namespace
 
-bool makeColorbar(Figure& fig, const Mappable& mappable, Axes* cax, const std::vector<Axes*>& parentsIn, bool useGridspec,
+bool makeColorbar(Figure& fig, const Mappable& mappable, Axes* cax, const std::vector<Axes*>& parentsIn, bool useGridspecIn,
                   const ColorbarOptions& optionsIn, std::string* error) {
+    bool useGridspec = useGridspecIn;
     ColorbarOptions o = optionsIn;
     if (!mappable.cmap || !mappable.norm) return *error = "the mappable has no colormap", false;
-    if (fig.layoutEngine) return *error = "colorbars with a layout engine are not supported yet", false;
+    const bool constrained = fig.layoutEngine && fig.layoutEngine->kind == LayoutEngine::Kind::Constrained;
+    if (constrained) useGridspec = false;  // (the constrained layout places the colorbar itself)
     std::vector<Axes*> parents = parentsIn;
     std::optional<double> infoAspect;
     if (!cax) {
@@ -552,9 +554,11 @@ bool makeColorbar(Figure& fig, const Mappable& mappable, Axes* cax, const std::v
             parent->setSubplotspec(main);
             if (!o.panchorFalse) parent->anchor = panchor;
             cax = fig.addSubplot(cb);
+            parent->colorbars.push_back(cax);
+            cax->colorbarInfo = Axes::ColorbarInfo{{parent}, loc.location, o.shrink, o.fraction, o.aspect, pad, anchor, panchor};
         } else {
             // make_axes: the parents' box split; the parents shrunk into their part
-            const double pad = o.pad ? *o.pad : loc.pad;
+            const double pad = o.pad ? *o.pad : constrained ? 0.05 : loc.pad;
             std::vector<transforms::Bbox> boxes;
             for (Axes* a : parents) boxes.push_back(transforms::Bbox(a->originalPosition->points()));
             const auto u = transforms::unionOf(boxes).points();
@@ -584,6 +588,8 @@ bool makeColorbar(Figure& fig, const Mappable& mappable, Axes* cax, const std::v
                 if (!o.panchorFalse) a->anchor = panchor;
             }
             cax = fig.addAxesBox(pbcb);
+            for (Axes* a : parents) a->colorbars.push_back(cax);
+            cax->colorbarInfo = Axes::ColorbarInfo{parents, loc.location, o.shrink, o.fraction, o.aspect, pad, anchor, panchor};
         }
         cax->anchor = anchor;
         cax->boxAspect = horizontal ? 1.0 / o.aspect : o.aspect;

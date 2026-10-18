@@ -346,6 +346,15 @@ public:
     std::function<std::array<double, 4>(const std::array<double, 4>&)> colorbarLocator;
     // set_subplotspec: the Axes moved to these cells (its position follows)
     void setSubplotspec(const SubplotSpec& spec);
+    // the colorbars made beside this Axes (_colorbars), and of a colorbar's Axes what made it (_colorbar_info)
+    std::vector<Axes*> colorbars;
+    struct ColorbarInfo {
+        std::vector<Axes*> parents;
+        std::string location;
+        double shrink = 1, fraction = 0.15, aspect = 20, pad = 0.05;
+        std::array<double, 2> anchor{0.5, 0.5}, panchor{0.5, 0.5};
+    };
+    std::optional<ColorbarInfo> colorbarInfo;
     // spines added to the four (a colorbar's outline), drawn after them
     std::vector<std::unique_ptr<Artist>> extraSpines;
     bool aspectFrozen = false;  // (adjust_bbox makes apply_aspect a no-op while a tight save draws)

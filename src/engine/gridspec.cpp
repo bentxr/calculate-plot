@@ -103,4 +103,6 @@ std::shared_ptr<transforms::Bbox> SubplotSpec::position(const SubplotParams& fig
     return transforms::Bbox::fromExtents(left, bottom, right, top);
 }
 
+SubplotSpec SubplotSpec::topmost() const { return gridspec->parent ? gridspec->parent->topmost() : *this; }
+
 }  // namespace calculate_plot::engine

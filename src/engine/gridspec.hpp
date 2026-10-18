@@ -34,6 +34,8 @@ struct SubplotSpec {
     int num1, num2;
     // SubplotSpec.get_position: the block's box in figure coordinates.
     std::shared_ptr<transforms::Bbox> position(const SubplotParams& figureParams) const;
+    // get_topmost_subplotspec: of a cell of a sub-grid, the parent's topmost cells
+    SubplotSpec topmost() const;
 };
 
 class GridSpec {

@@ -2116,11 +2116,20 @@ std::optional<transforms::Bbox> Axes::tightbbox(Renderer& renderer, bool forLayo
             extra(p->windowExtent());  // Artist.get_tightbbox: Patch.get_window_extent
             continue;
         }
+        if (auto* col = dynamic_cast<Collection*>(c.get()); col && !c->clipOn) {
+            // Collection.get_window_extent: get_datalim(IdentityTransform()), the paths in display coordinates
+            const auto d = col->dataLim(std::make_shared<transforms::IdentityTransform>());
+            extra(transforms::Bbox(d.points));
+            continue;
+        }
         renderer.unsupported("tight boxes of artists not clipped to the Axes are not supported yet");
     }
-    if (axisOn && frameOn)
+    if (axisOn && frameOn) {
         for (auto& s : spines)
             if (s->visible) extra(s->windowExtent());
+        for (auto& s : extraSpines)
+            if (auto* p = dynamic_cast<Patch*>(s.get()); p && p->visible) extra(p->windowExtent());
+    }
     for (auto& child : childAxes)  // (the child Axes come before the legend in get_children)
         if (child->visible) extra(child->tightbbox(renderer, false));
     if (legend && legend->visible) extra(static_cast<Legend&>(*legend).tightbbox(renderer));
