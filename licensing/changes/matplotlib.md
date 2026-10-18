@@ -111,9 +111,11 @@ it comes from in its first lines. The changes, as a whole:
   'face', line widths, antialiasing, the draw with its single-path draw_markers optimisation and the hatch-colour
   probe call of draw_path_collection, the data limits of offset collections) and PathCollection (sizes), and
   axes/_axes.py's scatter with _parse_scatter_color_args and Axes.add_collection, translated to C++; the patches'
-  own colour cycle is kept apart from the lines'. colors.py's ListedColormap (with its under/over/bad entries),
-  Normalize and cm.py's ScalarMappable.to_rgba map scatter's values (data/colormaps.json holds viridis so far), with
-  Collection.update_scalarmappable's choice of mapped faces and edges. PolyCollection (closed polygons) and
+  own colour cycle is kept apart from the lines'. colors.py's Colormap.__call__, ListedColormap and
+  LinearSegmentedColormap (_create_lookup_table, resampled, reversed; under/over/bad entries) and cm.py's registry
+  with its reversed colormaps, and ScalarMappable.to_rgba, map scatter's values; data/colormaps.json holds every
+  registered colormap's colours or segment data (the channels _cm.py computes with functions as their 256 values,
+  so those are not resampled), with Collection.update_scalarmappable's choice of mapped faces and edges. PolyCollection (closed polygons) and
   FillBetweenPolyCollection (_make_verts, _make_verts_for_region without steps or interpolation yet, the data
   box), with Axes.fill_between's arguments and the collections' general paths transform. LineCollection (its
   defaults from lines.*), the vlines/hlines insertion (add_collection without autolimits, then the corners), and

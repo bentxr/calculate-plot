@@ -150,7 +150,12 @@ void Collection::draw(Renderer& renderer) {
         return;
     }
     beforeDraw();
-    updateScalarMappable();
+    std::string problem;
+    if (!updateScalarMappable(&problem)) {
+        renderer.unsupported(problem);
+        renderer.closeGroup(groupName);
+        return;
+    }
     // _prepare_points: non-affine parts of the transforms apply to the paths and offsets here
     const transforms::Matrix master = transform->matrix();
     std::vector<Path> drawPaths = paths;
@@ -284,7 +289,7 @@ void Collection::updateFrom(const Collection& o) {
     hatch = o.hatch;
 }
 
-void Collection::updateScalarMappable() {
+bool Collection::updateScalarMappable(std::string* error) {
     // _set_mappable_flags: faces are mapped unless 'none'; edges when they are 'face', or when the
     // face is 'none' and no edge colour was given
     bool faceMapped = false, edgeMapped = false;
@@ -297,7 +302,7 @@ void Collection::updateScalarMappable() {
         }
     }
     std::vector<colors::Rgba> mapped;
-    if (array) mapped = colors::mapColors(*array, norm, *cmap, alpha);
+    if (array && !colors::mapColors(*array, norm, *cmap, alpha, &mapped, error)) return false;
     if (faceMapped) facecolors_ = mapped;
     else applyFacecolor();
     if (edgeMapped) {
@@ -306,6 +311,7 @@ void Collection::updateScalarMappable() {
     } else {
         applyEdgecolor();
     }
+    return true;
 }
 
 PolyCollection::PolyCollection(const rc::Params& rc, const std::vector<std::vector<std::array<double, 2>>>& verts)

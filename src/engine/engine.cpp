@@ -2050,18 +2050,18 @@ private:
         collection->offsetTransform = ax.transData;
         if (alpha) collection->setAlpha(alpha);
         if (mapped) {  // set_cmap, set_norm(Normalize()), set_array(c), _scale_norm
-            collection->cmap = colors::ListedColormap::named(cmapName);
-            if (!collection->cmap) return *error = where + ": the colormap " + cmapName + " is not supported yet", false;
-            // the norm scales to the values that are not masked, and masked values map to 'bad'
-            std::vector<double> values = *mappedValues, unmasked;
-            for (std::size_t i = 0; i < n; ++i) {
-                if (bad[i]) values[i] = nan;
-                else unmasked.push_back(values[i]);
-            }
+            collection->cmap = colors::Colormap::named(cmapName);
+            if (!collection->cmap) return *error = where + ": '" + cmapName + "' is not a valid value for cmap", false;
+            // set_array of the masked values (masked: they map to 'bad'), set_clim, then autoscale_None
+            colors::MaskedArray values;
+            values.data = *mappedValues;
+            values.mask = bad;
+            colors::NormSpec spec;
+            spec.vmin = vmin;
+            spec.vmax = vmax;
+            if (!colors::Norm::make(spec, &collection->norm, error)) return *error = where + ": " + *error, false;
+            collection->norm.autoscaleNone(colors::processValue(values));
             collection->array = values;
-            collection->norm.vmin = vmin;
-            collection->norm.vmax = vmax;
-            if (!unmasked.empty()) collection->norm.autoscaleNone(unmasked);
         } else if (vmin || vmax || cmapName != rc_.text("image.cmap")) {
             // matplotlib warns that these are ignored without values to map
         }
