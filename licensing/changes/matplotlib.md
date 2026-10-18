@@ -309,6 +309,12 @@ it comes from in its first lines. The changes, as a whole:
   the lookup mesh of a non-affine transform given by the caller) translated to a C++ function without Python. The
   build defines MPL_FIX_AGG_IMAGE_FILTER_LUT_BUGS and MPL_FIX_AGG_INTERPOLATION_ENDPOINT_BUG for Agg, as matplotlib's
   meson build does.
+- **Colorbars** (src/engine/colorbar.cpp): colorbar.py's Colorbar (_process_values, _mesh, _proportional_y,
+  _uniform_y, _do_extends, _update_dividers, _add_solids, the scale and ticks of the long axis),
+  _ColorbarAxesLocator, _ColorbarSpine, make_axes and make_axes_gridspec, and figure.py's Figure.colorbar,
+  translated to C++; gridspec.py's GridSpecFromSubplotSpec, Axes.set_box_aspect and set_subplotspec, and
+  backend_mixed.py's MixedModeRenderer.start_rasterizing / stop_rasterizing (src/engine/figure.cpp) for rasterized
+  artists in SVG.
 - **Meshes** (src/engine/collections.cpp QuadMesh and PolyQuadMesh, src/engine/engine.cpp pcolormesh, pcolor,
   pcolorfast; src/engine/image.cpp PcolorImage): collections.py's _MeshData, PolyQuadMesh and QuadMesh (_convert_mesh_to_triangles for Gouraud shading, draw), backend_bases.py's RendererBase.draw_quad_mesh
   (the SVG renderer's path collection of the cells), axes/_axes.py's pcolormesh, pcolor, pcolorfast,

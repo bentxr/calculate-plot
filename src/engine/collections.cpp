@@ -475,6 +475,15 @@ LineCollection::LineCollection(const rc::Params& rc, const std::vector<std::vect
     }
 }
 
+void LineCollection::setSegments(const std::vector<std::vector<std::array<double, 2>>>& segments) {
+    paths.clear();
+    for (const auto& seg : segments) {
+        std::vector<double> v;
+        for (const auto& p : seg) v.push_back(p[0]), v.push_back(p[1]);
+        paths.push_back(Path::make(std::move(v), {}, rc_));
+    }
+}
+
 Collection::DataLim LineCollection::dataLim(const transforms::TransformPtr& transData) const {
     // Collection.get_datalim: the paths through the non-affine part of their transform, then
     // through data_trf = transform.get_affine() - transData, and get_path_collection_extents of

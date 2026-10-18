@@ -5,6 +5,7 @@
 #include "engine/annotation.hpp"
 #include "engine/arrows.hpp"
 #include "engine/axes.hpp"
+#include "engine/colorbar.hpp"
 #include "engine/figure.hpp"
 #include "engine/image.hpp"
 #include "engine/inset.hpp"
@@ -125,6 +126,13 @@ public:
                 return nameResult(call, t, error);
             }
             if (call.method == "subplot") return subplot(call, error);
+            if (call.method == "sca") {  // plt.sca(ax): the current Axes
+                const Json* a = call.args.empty() ? keyword(call, "ax") : &call.args[0];
+                Axes* target = a ? axesOf(*a) : nullptr;
+                if (!target || call.args.size() + call.kwargs.size() != 1) return *error = "plt.sca: give one Axes of the figure ({\"$ref\": name})", false;
+                current_ = target;
+                return true;
+            }
             if (call.method == "Polygon") return polygon(call, error);
             if (call.method == "axes") {
                 // plt.axes(arg=None, **kwargs): add_subplot() without a rect, else add_axes(rect)
@@ -145,7 +153,7 @@ public:
             const auto& ofAxes = pyplotOfAxes();
             static const std::map<std::string, std::string> ofFigure = {
                 {"suptitle", "suptitle"}, {"figtext", "text"}, {"subplots_adjust", "subplots_adjust"}, {"tight_layout", "tight_layout"},
-                {"figimage", "figimage"}};
+                {"figimage", "figimage"}, {"colorbar", "colorbar"}};
             const auto a = ofAxes.find(call.method);
             const auto f = ofFigure.find(call.method);
             if (a != ofAxes.end() || f != ofFigure.end()) {
@@ -842,12 +850,16 @@ private:
         const std::vector<Axes*> made = figure_->subplots(nrows, ncols, sharex, sharey, &ratios);
         axes_.clear();
         figureNames_.clear();
+        mappables_.clear();
+        currentImages_.clear();
         current_ = made.back();  // (each add_subplot makes its Axes the current one)
         if (call.as.empty()) return true;
         if (call.as.size() != 2) return *error = "plt.subplots returns (fig, axs): name both", false;
         figureNames_.insert(call.as[0]);
         // the names the returned array answers to: squeezed to a single Axes or a 1-d array when it can be
         const std::string& n = call.as[1];
+        axesArrays_.clear();
+        axesArrays_[n] = made;
         for (int r = 0; r < nrows; ++r)
             for (int c = 0; c < ncols; ++c) {
                 Axes* ax = made[std::size_t(r * ncols + c)];
@@ -1063,6 +1075,7 @@ private:
         if (call.method == "add_axes") return addAxes(call, call.args.empty() ? nullptr : &call.args[0], error);
         if (call.method == "text") return figureText(call, error);
         if (call.method == "figimage") return figimage(call, error);
+        if (call.method == "colorbar") return colorbar(call, error);
         if (call.method == "suptitle") {
             // FigureBase._suplabels with suptitle's info: (0.5, 0.98), centred, top, figure.titlesize/titleweight
             const Json* t = argument(call, 0, "t");
@@ -1607,7 +1620,7 @@ private:
         if (call.method == "annotate") return annotate(ax, call, error);
         if (call.method == "bar_label") return barLabel(ax, call, error);
         if (call.method == "plot") return plot(ax, call, error);
-        if (call.method == "scatter") return scatter(ax, call, error);
+        if (call.method == "scatter") return scatter(ax, call, error) && noteMappable(ax, call);
         if (call.method == "fill_between" || call.method == "fill_betweenx") return fillBetween(ax, call, error);
         if (call.method == "errorbar") return errorbar(ax, call, error);
         if (call.method == "legend") return legend(ax, call, error);
@@ -1625,12 +1638,12 @@ private:
         if (call.method == "stairs") return stairs(ax, call, error);
         if (call.method == "add_patch") return addPatch(ax, call, error);
         if (call.method == "hist") return hist(ax, call, error);
-        if (call.method == "imshow") return imshow(ax, call, error);
-        if (call.method == "matshow") return matshow(ax, call, error);
-        if (call.method == "spy") return spy(ax, call, error);
-        if (call.method == "pcolormesh") return pcolormesh(ax, call, error);
-        if (call.method == "pcolor") return pcolor(ax, call, error);
-        if (call.method == "pcolorfast") return pcolorfast(ax, call, error);
+        if (call.method == "imshow") return imshow(ax, call, error) && noteMappable(ax, call);
+        if (call.method == "matshow") return matshow(ax, call, error) && noteMappable(ax, call);
+        if (call.method == "spy") return spy(ax, call, error) && noteMappable(ax, call);
+        if (call.method == "pcolormesh") return pcolormesh(ax, call, error) && noteMappable(ax, call);
+        if (call.method == "pcolor") return pcolor(ax, call, error) && noteMappable(ax, call);
+        if (call.method == "pcolorfast") return pcolorfast(ax, call, error) && noteMappable(ax, call);
         if (call.method == "vlines" || call.method == "hlines") return lines(ax, call, error);
         if (call.method == "set_xscale" || call.method == "set_yscale") {
             const Json* nameJson = call.args.empty() ? keyword(call, "value") : &call.args[0];
@@ -4315,6 +4328,173 @@ private:
         return true;
     }
 
+
+    // The Axes a value names ({"$ref": "ax"} or {"$ref": "axs[0, 1]"}); nullptr for anything else
+    Axes* axesOf(const Json& v) {
+        if (!(v.isObject() && v.members().size() == 1 && v.members()[0].first == "$ref" && v.members()[0].second.isString())) return nullptr;
+        const auto it = axes_.find(v.members()[0].second.asString());
+        return it == axes_.end() ? nullptr : it->second;
+    }
+
+    // ScalarMappable of an artist: an image's or a collection's colormap and norm, the data, its scalar alpha
+    std::optional<Mappable> mappableOf(Artist* a, Axes* ax) {
+        Mappable m;
+        m.artist = a;
+        m.axes = ax;
+        if (auto* im = dynamic_cast<ImageBase*>(a)) {
+            m.cmap = &im->cmap;
+            m.norm = im->norm;
+            colors::MaskedArray raw;
+            raw.data = im->data().data;
+            raw.mask = im->data().mask;
+            raw.dtype = im->data().dtype;
+            m.array = raw;
+            if (!im->alphaArray) m.alpha = im->alpha;
+            return m;
+        }
+        if (auto* c = dynamic_cast<Collection*>(a)) {
+            if (!c->cmap) return std::nullopt;
+            m.cmap = &*c->cmap;
+            m.norm = c->norm;
+            m.array = c->array;
+            m.alpha = c->alpha;
+            return m;
+        }
+        return std::nullopt;
+    }
+
+    // After a call that made a mappable: its "as" name, and pyplot's current image (plt.sci) for pyplot's calls
+    bool noteMappable(Axes& ax, const model::Call& call) {
+        if (ax.children.empty()) return true;
+        const auto m = mappableOf(ax.children.back().get(), &ax);
+        if (!m) return true;
+        if (call.as.size() == 1) mappables_[call.as[0]] = *m;
+        if (call.on == "plt") currentImages_[&ax] = *m;
+        return true;
+    }
+
+    // Figure.colorbar(mappable, cax=None, ax=None, use_gridspec=True, **kwargs), and plt.colorbar(mappable=None,
+    // cax=None, ax=None, **kwargs) whose mappable is the current image (gci)
+    bool colorbar(const model::Call& call, std::string* error) {
+        const std::string where = (call.on.empty() ? std::string("plt") : call.on) + ".colorbar";
+        const bool pyplot = call.on == "plt" || call.on.empty();
+        static const char* const positional[] = {"mappable", "cax", "ax", "use_gridspec"};
+        if (call.args.size() > (pyplot ? 3u : 4u)) return *error = where + ": too many positional arguments", false;
+        for (std::size_t i = 0; i < call.args.size(); ++i)
+            if (keyword(call, positional[i])) return *error = where + ": got multiple values for argument '" + positional[i] + "'", false;
+        if (!call.as.empty()) return *error = where + ": naming the colorbar is not supported yet", false;
+        Figure& fig = gcf();
+        std::optional<Mappable> m;
+        const Json* mv = argument(call, 0, "mappable");
+        if (mv && !mv->isNull()) {
+            const bool ref = mv->isObject() && mv->members().size() == 1 && mv->members()[0].first == "$ref";
+            const auto it = ref ? mappables_.find(mv->members()[0].second.asString()) : mappables_.end();
+            if (it == mappables_.end()) return *error = where + ": the mappable must be an image or a collection the figure file named ({\"$ref\": name})", false;
+            m = it->second;
+        } else if (pyplot) {
+            // gci: the current Axes' current image, else the latest of the other Axes
+            const auto cur = currentImages_.find(&gca());
+            if (cur != currentImages_.end()) m = cur->second;
+            for (auto it = fig.axes.rbegin(); !m && it != fig.axes.rend(); ++it) {
+                const auto c = currentImages_.find(it->get());
+                if (c != currentImages_.end()) m = c->second;
+            }
+            if (!m) return *error = where + ": No mappable was found to use for colorbar creation. First define a mappable such as an image (with imshow) or a contour set (with contourf).", false;
+        } else {
+            return *error = where + ": missing 1 required positional argument: 'mappable'", false;
+        }
+        Axes* cax = nullptr;
+        if (const Json* c = argument(call, 1, "cax"); c && !c->isNull()) {
+            cax = axesOf(*c);
+            if (!cax) return *error = where + ": cax must be an Axes of the figure ({\"$ref\": name})", false;
+        }
+        std::vector<Axes*> parents;
+        if (const Json* a = argument(call, 2, "ax"); a && !a->isNull()) {
+            if (Axes* one = axesOf(*a)) {
+                parents = {one};
+            } else if (a->isObject() && a->members()[0].first == "$ref" && axesArrays_.count(a->members()[0].second.asString())) {
+                parents = axesArrays_[a->members()[0].second.asString()];
+            } else if (const Json* list = sequence(*a)) {
+                for (const Json& item : list->items()) {
+                    Axes* listed = axesOf(item);
+                    if (!listed) return *error = where + ": ax must be Axes of the figure ({\"$ref\": name}) or a list of them", false;
+                    parents.push_back(listed);
+                }
+            } else {
+                return *error = where + ": ax must be Axes of the figure ({\"$ref\": name}) or a list of them", false;
+            }
+        } else {
+            parents = {m->axes};
+        }
+        bool useGridspec = true;
+        if (const Json* g = pyplot ? keyword(call, "use_gridspec") : argument(call, 3, "use_gridspec"); g && !g->isNull()) {
+            if (!g->isBool()) return *error = where + ": use_gridspec must be True or False", false;
+            useGridspec = g->asBool();
+        }
+        ColorbarOptions o;
+        for (const auto& kw : call.kwargs) {
+            const std::string& name = kw.first;
+            const Json& value = kw.second;
+            double v = 0;
+            if (std::find(std::begin(positional), std::end(positional), name) != std::end(positional)) continue;
+            const auto text = [&](std::optional<std::string>* out) {
+                if (value.isNull()) return true;
+                if (!value.isString()) return *error = where + ": " + name + " must be a string", false;
+                return *out = value.asString(), true;
+            };
+            const auto pair = [&](std::optional<std::array<double, 2>>* out) {
+                const Json* p = sequence(value);
+                std::array<double, 2> a{};
+                if (!p || p->size() != 2 || !readNumber((*p)[0], &a[0]) || !readNumber((*p)[1], &a[1])) return false;
+                return *out = a, true;
+            };
+            if (name == "location" || name == "orientation" || name == "extend") {
+                if (!text(name == "location" ? &o.location : name == "orientation" ? &o.orientation : &o.extend)) return false;
+            } else if (name == "ticklocation" || name == "spacing" || name == "label") {
+                if (!value.isString()) return *error = where + ": " + name + " must be a string", false;
+                (name == "ticklocation" ? o.ticklocation : name == "spacing" ? o.spacing : o.label) = value.asString();
+            } else if (name == "extendrect" || name == "drawedges") {
+                if (!value.isBool()) return *error = where + ": " + name + " must be True or False", false;
+                (name == "extendrect" ? o.extendrect : o.drawedges) = value.asBool();
+            } else if (name == "extendfrac") {
+                if (value.isNull()) continue;
+                if (value.isString()) {
+                    std::string s = value.asString();
+                    for (char& ch : s) ch = char(std::tolower((unsigned char)ch));
+                    if (s != "auto") return *error = where + ": '" + s + "' is not a valid value for extendfrac; supported values are 'auto'", false;
+                    o.extendfracAuto = true;
+                } else if (readNumber(value, &v)) {
+                    o.extendfrac = std::array<double, 2>{v, v};
+                } else if (!pair(&o.extendfrac)) {
+                    return *error = where + ": invalid value for extendfrac", false;
+                }
+            } else if (name == "ticks") {
+                if (value.isNull()) continue;
+                std::vector<double> t;
+                if (!numbers(value, &t)) return *error = where + ": ticks must be a list of numbers (locators are not supported yet)", false;
+                o.ticks = t;
+            } else if (name == "fraction" || name == "shrink" || name == "aspect" || name == "pad") {
+                if (!readNumber(value, &v)) return *error = where + ": " + name + " must be a number", false;
+                if (name == "pad") o.pad = v;
+                else (name == "fraction" ? o.fraction : name == "shrink" ? o.shrink : o.aspect) = v;
+            } else if (name == "anchor" || name == "panchor") {
+                if (name == "panchor" && value.isBool() && !value.asBool()) {
+                    o.panchorFalse = true;
+                } else if (!pair(name == "anchor" ? &o.anchor : &o.panchor)) {
+                    return *error = where + ": " + name + " must be a pair of numbers", false;
+                }
+            } else if (name == "format" || name == "values" || name == "boundaries" || name == "cmap" || name == "norm") {
+                if (!value.isNull()) return *error = where + ": " + name + " is not supported yet", false;
+            } else if (name == "alpha") {
+                continue;  // (the mappable's alpha replaces it)
+            } else {
+                return *error = where + ": got an unexpected keyword argument '" + name + "'", false;
+            }
+        }
+        if (!makeColorbar(fig, *m, cax, parents, useGridspec, o, error)) return *error = where + ": " + *error, false;
+        return true;
+    }
+
     // The colorizer of an image or a collection: a colormap by name (or `cmapDefault`), and a norm by scale name or one the
     // figure file made ({"$ref"}, shared), else Normalize (or NoNorm with `noNorm`). `normObject`: a norm object.
     bool colorizer(colors::Colormap* cmapOut, std::shared_ptr<colors::Norm>* normOut, const Json* c, const Json* n,
@@ -4510,7 +4690,6 @@ private:
         if (ax.yaxis->autoscaleOn) ax.yaxis->setLim(e[2], e[3], std::nullopt);
         AxesImage* ref = im.get();
         ax.addImage(std::move(im));
-        if (!call.as.empty()) images_[call.as[0]] = ref;
         if (made) *made = ref;
         return true;
     }
@@ -6391,7 +6570,9 @@ private:
     // The patches plt.Polygon made, by the names the figure file gave them, until add_patch takes them
     std::map<std::string, std::unique_ptr<Polygon>> patches_;
     std::map<std::string, std::shared_ptr<colors::Norm>> norms_;  // the norms colors.* calls made
-    std::map<std::string, AxesImage*> images_;                    // the images named by "as"
+    std::map<std::string, Mappable> mappables_;             // the images and collections named by "as"
+    std::map<const Axes*, Mappable> currentImages_;         // pyplot's current image of each Axes (sci)
+    std::map<std::string, std::vector<Axes*>> axesArrays_;  // the arrays of Axes plt.subplots returned
     std::set<std::string> addedPatches_;
     // The containers bar calls returned, by name: their Axes and where in its containers they are
     std::map<std::string, std::pair<Axes*, std::size_t>> barContainers_;

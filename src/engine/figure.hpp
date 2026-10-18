@@ -82,6 +82,7 @@ public:
     Axes* addSubplot(const SubplotSpec& spec);  // add_subplot(ss): another Axes in those cells
     // Figure.add_axes((left, bottom, width, height)): an Axes at that position, in figure fractions
     Axes* addAxes(double left, double bottom, double width, double height);
+    Axes* addAxesBox(const std::array<double, 4>& points);  // add_axes(Bbox): the box itself as the position
 };
 
 // Figure.savefig as a PNG, into a trace: what FigureCanvasBase.print_figure sets for the save

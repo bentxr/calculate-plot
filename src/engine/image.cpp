@@ -668,8 +668,12 @@ void ImageBase::draw(Renderer& renderer) {
 
 void drawListCompositingImages(Renderer& renderer, const transforms::BboxPtr& parentBbox, const std::vector<Artist*>& artists) {
     const bool hasImages = std::any_of(artists.begin(), artists.end(), [](Artist* a) { return dynamic_cast<ImageBase*>(a); });
+    const auto drawOne = [&renderer](Artist* a) {
+        if (a->rasterized && renderer.rasterize) renderer.rasterize(*a);
+        else a->draw(renderer);
+    };
     if (renderer.optionImageNocomposite() || !hasImages) {
-        for (Artist* a : artists) a->draw(renderer);
+        for (Artist* a : artists) drawOne(a);
         return;
     }
     std::vector<ImageBase*> group;
@@ -730,7 +734,7 @@ void drawListCompositingImages(Renderer& renderer, const transforms::BboxPtr& pa
             group.push_back(im);
         } else {
             flush();
-            a->draw(renderer);
+            drawOne(a);
         }
     }
     flush();

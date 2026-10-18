@@ -496,6 +496,8 @@
     "src/engine/bezier.hpp",
     "src/engine/collections.cpp",
     "src/engine/collections.hpp",
+    "src/engine/colorbar.cpp",
+    "src/engine/colorbar.hpp",
     "src/engine/constrained_layout.cpp",
     "src/engine/constrained_layout.hpp",
     "src/engine/figure.cpp",

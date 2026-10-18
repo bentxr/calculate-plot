@@ -41,6 +41,8 @@ public:
     std::optional<std::array<double, 3>> sketch;
     double zorder = 0;
     std::string label;
+    // set_rasterized: drawn as an image by renderers that mix vector and raster output (SVG)
+    bool rasterized = false;
     transforms::TransformPtr transform = std::make_shared<transforms::IdentityTransform>();
     bool transformSet = false;  // is_transform_set()
     // sticky_edges: data values autoscaling margins do not cross (bars stand on their base)

@@ -14,6 +14,7 @@
 #include "engine/text.hpp"
 
 #include <array>
+#include <functional>
 #include <limits>
 #include <memory>
 #include <optional>
@@ -323,6 +324,15 @@ public:
     std::array<double, 2> anchor{0.5, 0.5};
     // apply_aspect(): the active position from the original one and the aspect
     void applyAspect();
+    // set_box_aspect: the height of the Axes' box over its width (adjustable then 'datalim'); unset: none
+    std::optional<double> boxAspect;
+    // a colorbar's _ColorbarAxesLocator: the position apply_aspect starts from, from the original one (it may
+    // change boxAspect too)
+    std::function<std::array<double, 4>(const std::array<double, 4>&)> colorbarLocator;
+    // set_subplotspec: the Axes moved to these cells (its position follows)
+    void setSubplotspec(const SubplotSpec& spec);
+    // spines added to the four (a colorbar's outline), drawn after them
+    std::vector<std::unique_ptr<Artist>> extraSpines;
     bool aspectFrozen = false;  // (adjust_bbox makes apply_aspect a no-op while a tight save draws)
     std::shared_ptr<transforms::Bbox> originalPosition;  // get_position(original=True)
     // _TransformedBoundsLocator(bounds, transform): the position at draw time, the bounds through the transform

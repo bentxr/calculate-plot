@@ -11,6 +11,7 @@
 #include "engine/axes.hpp"
 #include "engine/image.hpp"
 #include "engine/text.hpp"
+#include "render/replay.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -104,6 +105,11 @@ Axes* Figure::addSubplot(const SubplotSpec& spec) {
 
 Axes* Figure::addAxes(double left, double bottom, double width, double height) {
     axes.push_back(std::make_unique<Axes>(rc_, *this, transforms::Bbox::fromBounds(left, bottom, width, height), std::nullopt));
+    return axes.back().get();
+}
+
+Axes* Figure::addAxesBox(const std::array<double, 4>& points) {
+    axes.push_back(std::make_unique<Axes>(rc_, *this, std::make_shared<transforms::Bbox>(points), std::nullopt));
     return axes.back().get();
 }
 
@@ -370,7 +376,38 @@ std::string drawSvgTrace(Figure& figure, const std::string& locale, const std::s
         figure.setDpi(o.dpi);  // print_figure sets the dpi again before printing
     }
     const LayoutOff off(figure);  // (the layout is done)
+    const double imageDpi = figure.dpi;
     SvgTraceRenderer final = renderer();
+    // a rasterized artist: drawn by Agg at the dpi of the save (the figure's dpi switched meanwhile) on a canvas of
+    // the figure's size, then the part with any alpha placed as an image (rows bottom first)
+    final.rasterize = [&figure, &final, imageDpi, &locale, &fontDirectory](Artist& a) {
+        const double figdpi = figure.dpi;
+        figure.setDpi(imageDpi);
+        const auto inches = figure.bboxInches->points();
+        const double width = inches[2] * imageDpi, height = inches[3] * imageDpi;
+        AggTraceRenderer raster(width, height, imageDpi, figure.rc(), locale, fontDirectory);
+        raster.clear();
+        a.draw(raster);
+        figure.setDpi(figdpi);
+        if (!raster.error().empty()) return final.unsupported(raster.error());
+        const auto replayed = render::replayTrace(raster.trace());
+        if (!replayed.error.empty()) return final.unsupported(replayed.error);
+        const png::Image& img = replayed.image;
+        int x0 = img.width, x1 = -1, y0 = img.height, y1 = -1;  // cbook._get_nonzero_slices of the alpha
+        for (int y = 0; y < img.height; ++y)
+            for (int x = 0; x < img.width; ++x)
+                if (img.rgba[(std::size_t(y) * img.width + x) * 4 + 3] != 0) {
+                    x0 = std::min(x0, x), x1 = std::max(x1, x), y0 = std::min(y0, y), y1 = std::max(y1, y);
+                }
+        if (x1 < 0) return;
+        RgbaImage cropped;
+        cropped.width = x1 - x0 + 1;
+        cropped.height = y1 - y0 + 1;
+        for (int y = y1; y >= y0; --y)  // cropped_img[::-1]
+            for (int x = x0; x <= x1; ++x)
+                for (int k = 0; k < 4; ++k) cropped.rgba.push_back(img.rgba[(std::size_t(y) * img.width + x) * 4 + k]);
+        final.drawImage(final.newGc(), x0 * figdpi / imageDpi, (height - (y1 + 1)) * figdpi / imageDpi, cropped, std::nullopt);
+    };
     figure.draw(final);
     *error = final.error();
     return final.trace();

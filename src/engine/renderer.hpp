@@ -9,6 +9,7 @@
 #include "transforms/transforms.hpp"
 
 #include <array>
+#include <functional>
 #include <optional>
 #include <string>
 #include <vector>
@@ -17,6 +18,8 @@ namespace calculate_plot::rc { class Params; }
 namespace calculate_plot::text { class FontCache; }
 
 namespace calculate_plot::engine {
+
+class Artist;
 
 // The fonts of a text as the font manager found them (file names in the font directory, the
 // fallback chain in order) and its size in points: what RendererAgg takes from FontProperties.
@@ -108,6 +111,9 @@ public:
     virtual void unsupported(const std::string& what) = 0;
 
     GC newGc() const { return GC(rc()); }
+    // MixedModeRenderer's start_rasterizing / stop_rasterizing (the SVG backend): a rasterized artist drawn by Agg
+    // and placed as an image. Unset where rasterizing changes nothing (Agg draws the artist as any other).
+    std::function<void(Artist&)> rasterize;
     double pointsToPixels(double points) const { return points * dpi() / 72; }
 };
 

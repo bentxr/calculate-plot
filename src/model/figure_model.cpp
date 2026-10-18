@@ -87,9 +87,11 @@ bool validValue(const Json& v, const std::set<std::string>& known, std::string* 
         }
         if (v.members()[0].first == "$ref") {
             const Json& name = v.members()[0].second;
-            if (v.members().size() == 1 && name.isString() && isIdentifier(name.asString()) && known.count(name.asString()))
+            std::string base;
+            if (v.members().size() == 1 && name.isString() && isObjectReference(name.asString(), base) &&
+                name.asString().find('.') == std::string::npos && known.count(base))
                 return true;
-            if (error) *error = "{\"$ref\": ...} must name the result of an earlier call, and nothing else";
+            if (error) *error = "{\"$ref\": ...} must name the result of an earlier call (or an element of it), and nothing else";
             return false;
         }
         if (v.members()[0].first == "$datetime") {

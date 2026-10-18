@@ -140,6 +140,7 @@ private:
 class LineCollection : public Collection {
 public:
     LineCollection(const rc::Params& rc, const std::vector<std::vector<std::array<double, 2>>>& segments);
+    void setSegments(const std::vector<std::vector<std::array<double, 2>>>& segments);  // set_segments
     DataLim dataLim(const transforms::TransformPtr& transData) const override;  // the segments' extents
 };
 

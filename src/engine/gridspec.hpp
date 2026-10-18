@@ -51,6 +51,9 @@ public:
 
     int nrows, ncols;
     std::optional<double> left, bottom, right, top, wspace, hspace;  // overrides of the figure's
+    // GridSpecFromSubplotSpec (subgridspec): the grid laid out within that cell or block of a parent grid; the
+    // figure's spacing unless wspace / hspace are given
+    std::optional<SubplotSpec> parent;
     // Empty: all 1. Python sums them (sum()), whose result depends on which are ints.
     std::vector<double> widthRatios, heightRatios;
     std::vector<bool> widthRatiosInt, heightRatiosInt;

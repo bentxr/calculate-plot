@@ -1847,6 +1847,11 @@ Axes::TextTransform Axes::yaxisTextTransform(int which, double padPoints) {
             which == 1 ? "right" : "left"};
 }
 
+void Axes::setSubplotspec(const SubplotSpec& spec) {
+    subplotSpec = spec;
+    setPosition(*spec.position(figure.subplotpars));
+}
+
 void Axes::setPosition(const transforms::BboxBase& pos) {
     position->setPoints(pos.points());
     originalPosition->setPoints(pos.points());
@@ -1968,27 +1973,33 @@ void Axes::applyAspect() {
     if (secondary) setSecondaryLims();  // SecondaryAxis.apply_aspect: _set_lims first
     if (aspectFrozen) return;
     // apply_aspect(locator(self, renderer) if locator else None)
-    const auto original = locator ? locatorPosition() : originalPosition->points();
-    if (!aspect) {  // 'auto': the original position
+    auto original = locator ? locatorPosition() : originalPosition->points();
+    if (colorbarLocator) original = colorbarLocator(original);
+    if (!aspect && !boxAspect) {  // 'auto': the original position
         position->setPoints(original);
         return;
     }
     // fig_aspect: of Bbox.unit() through transSubfigure
     const auto f = figure.bbox->points();
     const double figAspect = (f[3] - f[1]) / (f[2] - f[0]);
-    // get_data_ratio: the bounds through the scales
-    const auto bound = [](const Axis& axis) {
-        const auto v = axis.viewInterval();
-        const double lo = v[0] < v[1] ? v[0] : v[1], hi = v[0] < v[1] ? v[1] : v[0];  // get_xbound
-        return std::array<double, 2>{axis.scaleForward(lo), axis.scaleForward(hi)};
-    };
-    const auto tx = bound(*xaxis), ty = bound(*yaxis);
-    const double xsize = std::max(std::fabs(tx[1] - tx[0]), 1e-30), ysize = std::max(std::fabs(ty[1] - ty[0]), 1e-30);
-    const double boxAspect = *aspect * (ysize / xsize);
+    double boxAspectValue = 0;
+    if (boxAspect) {
+        boxAspectValue = *boxAspect;  // adjustable 'datalim' with a box aspect (aspect 'auto')
+    } else {
+        // get_data_ratio: the bounds through the scales
+        const auto bound = [](const Axis& axis) {
+            const auto v = axis.viewInterval();
+            const double lo = v[0] < v[1] ? v[0] : v[1], hi = v[0] < v[1] ? v[1] : v[0];  // get_xbound
+            return std::array<double, 2>{axis.scaleForward(lo), axis.scaleForward(hi)};
+        };
+        const auto tx = bound(*xaxis), ty = bound(*yaxis);
+        const double xsize = std::max(std::fabs(tx[1] - tx[0]), 1e-30), ysize = std::max(std::fabs(ty[1] - ty[0]), 1e-30);
+        boxAspectValue = *aspect * (ysize / xsize);
+    }
     // Bbox.shrunk_to_aspect(box_aspect, pb, fig_aspect), then anchored(anchor, pb)
     const double w = original[2] - original[0], h = original[3] - original[1];
-    double H = w * boxAspect / figAspect, W = w;
-    if (!(H <= h)) W = h * figAspect / boxAspect, H = h;
+    double H = w * boxAspectValue / figAspect, W = w;
+    if (!(H <= h)) W = h * figAspect / boxAspectValue, H = h;
     // the shrunk box holds its corners; anchored reads its bounds back from them
     const double x1 = original[0] + W, y1 = original[1] + H;
     const double dx = (original[0] + anchor[0] * (w - (x1 - original[0]))) - original[0];
@@ -2089,8 +2100,10 @@ void Axes::draw(Renderer& renderer) {
     // get_children without the patch: children, spines, axes, titles; sorted by zorder (stable)
     std::vector<Artist*> artists;
     for (auto& c : children) artists.push_back(c.get());
-    if (axisOn && frameOn)
+    if (axisOn && frameOn) {
         for (auto& s : spines) artists.push_back(s.get());
+        for (auto& s : extraSpines) artists.push_back(s.get());
+    }
     if (axisOn) {
         artists.push_back(xaxis.get());
         artists.push_back(yaxis.get());

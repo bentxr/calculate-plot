@@ -68,7 +68,13 @@ std::vector<double> accumulated(int n, double total, double space, const std::ve
 GridSpec::Positions GridSpec::gridPositions(const SubplotParams& figureParams) const {
     SubplotParams p = figureParams;  // GridSpec.get_subplot_params: the figure's, updated with ours
     std::string ignored;
-    p.update(left, bottom, right, top, wspace, hspace, &ignored);
+    if (parent) {
+        // GridSpecFromSubplotSpec.get_subplot_params: the parent block's extents, the figure's spacing or ours
+        const auto box = parent->position(figureParams)->points();
+        p = SubplotParams{box[0], box[1], box[2], box[3], wspace.value_or(figureParams.wspace), hspace.value_or(figureParams.hspace)};
+    } else {
+        p.update(left, bottom, right, top, wspace, hspace, &ignored);
+    }
     const double totWidth = p.right - p.left;
     const double totHeight = p.top - p.bottom;
     const std::vector<double> cellHs = accumulated(nrows, totHeight, p.hspace, heightRatios, heightRatiosInt);

@@ -252,3 +252,16 @@ TEST(FigureModel, AnArrayMayHaveADtype) {
         EXPECT_NE(refused(json).find("$array"), std::string::npos) << bad;
     }
 }
+
+// A reference may name an element of an earlier result, as "on" does (colorbar(ax=axs[0])).
+TEST(FigureModel, AReferenceMayIndexAResult) {
+    const auto f = parsed(R"({"version":1,"calls":[{"call":"subplots","args":[1,2],"as":["fig","axs"]},
+        {"call":"Polygon","args":[[[0,0]]],"as":"im"},
+        {"on":"fig","call":"colorbar","args":[{"$ref":"im"}],"kwargs":{"ax":{"$ref":"axs[1]"}}}]})");
+    EXPECT_NE(m::exportPython(f, "x").find("fig.colorbar(im, ax=axs[1])"), std::string::npos) << m::exportPython(f, "x");
+    for (const char* bad : {R"({"$ref":"axs[1].figure"})", R"({"$ref":"bxs[1]"})", R"({"$ref":"axs[1"})"}) {
+        const std::string json = std::string(R"({"version":1,"calls":[{"call":"subplots","args":[1,2],"as":["fig","axs"]},)") +
+                                 R"({"on":"fig","call":"colorbar","kwargs":{"ax":)" + bad + R"(}}]})";
+        EXPECT_NE(refused(json).find("$ref"), std::string::npos) << bad;
+    }
+}
