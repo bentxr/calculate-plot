@@ -1,0 +1,1 @@
+{"version": 1, "calls": [{"call": "subplots", "kwargs": {"figsize": {"$tuple": [4.0, 3.0]}}, "as": ["fig", "ax"]}, {"on": "ax", "call": "pcolormesh", "args": [[1, 10, 100, 1000], [0, 1, 2], [[0, 2, 4], [1, 3, 5]]]}, {"on": "ax", "call": "set_xscale", "args": ["log"]}]}

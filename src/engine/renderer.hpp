@@ -78,6 +78,17 @@ public:
     // x, y: the text's origin in pixels from the top-left (flipy); angle in degrees.
     virtual void drawText(const GC& gc, double x, double y, const std::string& s, const FontSpec& font, double angle,
                           bool ismath, const TextOptions& mtext) = 0;
+    // draw_quad_mesh(gc, master_transform, mesh_width, mesh_height, coordinates, offsets, offsetTrans,
+    // facecolors, antialiased, edgecolors): RendererBase draws the quadrilaterals as a path collection
+    virtual void drawQuadMesh(const GC& gc, const transforms::Matrix& master, int meshWidth, int meshHeight,
+                              const std::vector<std::array<double, 2>>& coordinates,
+                              const std::vector<std::array<double, 2>>& offsets, const transforms::Matrix& offsetTrans,
+                              const std::vector<std::array<double, 4>>& facecolors, bool antialiased,
+                              const std::vector<std::array<double, 4>>& edgecolors);
+    // draw_gouraud_triangles(gc, triangles, colors, transform)
+    virtual void drawGouraudTriangles(const GC& gc, const std::vector<std::array<std::array<double, 2>, 3>>& triangles,
+                                      const std::vector<std::array<std::array<double, 4>, 3>>& colors,
+                                      const transforms::Matrix& transform) = 0;
     // option_image_nocomposite: images drawn one by one (Agg) rather than put together first (SVG)
     virtual bool optionImageNocomposite() const { return true; }
     virtual double imageMagnification() const { return 1.0; }  // get_image_magnification

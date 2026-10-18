@@ -7,6 +7,7 @@
 #include "engine/artist.hpp"
 
 #include <array>
+#include <memory>
 #include <optional>
 #include <string>
 #include <vector>
@@ -68,8 +69,13 @@ public:
 
     // ScalarMappable: the values mapped through the norm and the colormap (set_array)
     std::optional<colors::MaskedArray> array;
-    colors::Norm norm;
+    std::shared_ptr<colors::Norm> norm = std::make_shared<colors::Norm>();  // (shared when a norm object is given)
     std::optional<colors::Colormap> cmap;
+    // set_array of RGB(A) data (a QuadMesh's): the colours of the cells, 3 or 4 channels, as _pass_image_data
+    // takes them (floats in [0, 1], or uint8)
+    std::vector<colors::Rgba> rgbData;
+    int rgbChannels = 0;
+    bool rgbBytes = false;
 
     std::vector<colors::Rgba> facecolors() const { return facecolors_; }
     std::vector<colors::Rgba> edgecolors() const;  // get_edgecolor: the face colours for 'face'
@@ -81,12 +87,14 @@ public:
 
 protected:
     virtual void beforeDraw() {}
+    // false with the norm's error (raised at draw time)
+    bool updateScalarMappable(std::string* error);
+    const std::vector<colors::Rgba>& facecolorsResolved() const { return facecolors_; }
+    const std::vector<bool>& antialiaseds() const { return antialiaseds_; }
 
 private:
     void applyFacecolor();
     void applyEdgecolor();
-    // false with the norm's error (raised at draw time)
-    bool updateScalarMappable(std::string* error);
     std::vector<colors::Rgba> toRgbaArray(const ColorArg& c) const;
 
     CollectionDefaults defaults_;
@@ -172,6 +180,22 @@ struct ErrorbarContainer {
     Line2D* stemMarker = nullptr;
     Collection* stemLines = nullptr;
     Line2D* stemBaseline = nullptr;
+};
+
+// QuadMesh: an M x N grid of quadrilaterals from an (M + 1) x (N + 1) grid of corners (flat shading), or a
+// grid of colours at the corners themselves (gouraud).
+class QuadMesh : public Collection {
+public:
+    // `coordinates`: rows x cols points, row by row
+    QuadMesh(const rc::Params& rc, int rows, int cols, std::vector<std::array<double, 2>> coordinates, bool gouraud,
+             bool antialiased);
+    void draw(Renderer& renderer) override;
+    DataLim dataLim(const transforms::TransformPtr& transData) const override;
+
+private:
+    int rows_, cols_;
+    std::vector<std::array<double, 2>> coordinates_;
+    bool gouraud_, antialiased_;
 };
 
 }  // namespace calculate_plot::engine

@@ -1565,12 +1565,17 @@ void Axes::updateDatalim(const std::vector<std::array<double, 2>>& xys, bool upd
 }
 
 
-Collection& Axes::addCollection(std::unique_ptr<Collection> c) {
+Collection& Axes::addCollection(std::unique_ptr<Collection> c, bool autolim) {
     if (c->label.empty()) c->label = "_child" + std::to_string(children.size());
     c->figure = &figure;
     if (!c->transformSet) c->transform = transData;  // _set_artist_props
     c->clipBox = std::make_shared<transforms::TransformedBbox>(
         std::make_shared<transforms::Bbox>(std::array<double, 4>{0, 0, 1, 1}), patch->fullTransform());
+    if (!autolim) {
+        Collection& ref = *c;
+        children.push_back(std::move(c));
+        return ref;
+    }
     unstaleViewLim();
     // _update_collection_limits: the box's corners and its minpos (when finite)
     const auto d = c->dataLim(transData);

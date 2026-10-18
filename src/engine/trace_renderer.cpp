@@ -29,6 +29,19 @@ void TraceRenderer::writeImage(const RgbaImage& im) {
     events_.endObject();
 }
 
+void TraceRenderer::writeTriangles(const std::vector<std::array<std::array<double, 2>, 3>>& triangles,
+                                   const std::vector<std::array<std::array<double, 4>, 3>>& colors) {
+    std::vector<double> points, rgba;
+    for (const auto& t : triangles)
+        for (const auto& p : t) points.insert(points.end(), p.begin(), p.end());
+    for (const auto& c : colors)
+        for (const auto& v : c) rgba.insert(rgba.end(), v.begin(), v.end());
+    events_.key("points");
+    writeArray({triangles.size(), 3, 2}, points);
+    events_.key("colors");
+    writeArray({colors.size(), 3, 4}, rgba);
+}
+
 void TraceRenderer::writeMatrix(const transforms::Matrix& m) {
     writeNumbers({m.sx, m.shx, m.tx, m.shy, m.sy, m.ty});
 }
@@ -243,6 +256,51 @@ void AggTraceRenderer::drawImage(const GC& gc, double x, double y, const RgbaIma
     events_.key("y").value(y);
     events_.key("image");
     writeImage(im);
+    events_.endObject();
+}
+
+void AggTraceRenderer::drawQuadMesh(const GC& gc, const transforms::Matrix& master, int meshWidth, int meshHeight,
+                                    const std::vector<std::array<double, 2>>& coordinates,
+                                    const std::vector<std::array<double, 2>>& offsets, const transforms::Matrix& offsetTrans,
+                                    const std::vector<std::array<double, 4>>& facecolors, bool antialiased,
+                                    const std::vector<std::array<double, 4>>& edgecolors) {
+    const auto flat = [](const auto& rows) {
+        std::vector<double> out;
+        for (const auto& r : rows) out.insert(out.end(), r.begin(), r.end());
+        return out;
+    };
+    events_.beginObject();
+    events_.key("op").value("draw_quad_mesh");
+    events_.key("gc");
+    writeGc(gc);
+    events_.key("master_transform");
+    writeMatrix(master);
+    events_.key("mesh_width").value(static_cast<long long>(meshWidth));
+    events_.key("mesh_height").value(static_cast<long long>(meshHeight));
+    events_.key("coordinates");
+    writeArray({std::size_t(meshHeight + 1), std::size_t(meshWidth + 1), 2}, flat(coordinates));
+    events_.key("offsets");
+    writeArray({offsets.size(), 2}, flat(offsets));
+    events_.key("offset_transform");
+    writeMatrix(offsetTrans);
+    events_.key("facecolors");
+    writeArray({facecolors.size(), 4}, flat(facecolors));
+    events_.key("antialiased").value(antialiased);
+    events_.key("edgecolors");
+    writeArray({edgecolors.size(), 4}, flat(edgecolors));
+    events_.endObject();
+}
+
+void AggTraceRenderer::drawGouraudTriangles(const GC& gc, const std::vector<std::array<std::array<double, 2>, 3>>& triangles,
+                                            const std::vector<std::array<std::array<double, 4>, 3>>& colors,
+                                            const transforms::Matrix& transform) {
+    events_.beginObject();
+    events_.key("op").value("draw_gouraud_triangles");
+    events_.key("gc");
+    writeGc(gc);
+    writeTriangles(triangles, colors);
+    events_.key("transform");
+    writeMatrix(transform);
     events_.endObject();
 }
 
@@ -514,6 +572,21 @@ void SvgTraceRenderer::drawMarkers(const GC& gc, const Path& markerPath, const t
     events_.key("face");
     if (face) writeNumbers(*face);
     else events_.null();
+    events_.key("clip_transform");
+    writeClipTransform(gc);
+    events_.endObject();
+}
+
+void SvgTraceRenderer::drawGouraudTriangles(const GC& gc, const std::vector<std::array<std::array<double, 2>, 3>>& triangles,
+                                            const std::vector<std::array<std::array<double, 4>, 3>>& colors,
+                                            const transforms::Matrix& transform) {
+    events_.beginObject();
+    events_.key("op").value("draw_gouraud_triangles");
+    events_.key("gc");
+    writeSvgGc(gc);
+    writeTriangles(triangles, colors);
+    events_.key("transform");
+    writeMatrix(transform);
     events_.key("clip_transform");
     writeClipTransform(gc);
     events_.endObject();

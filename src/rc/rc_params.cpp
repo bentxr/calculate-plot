@@ -173,7 +173,7 @@ const std::vector<std::string>& Params::inertKeys() {
         "image.lut", "interactive", "keymap.back",
         "keymap.copy", "keymap.forward", "keymap.fullscreen", "keymap.grid", "keymap.grid_minor", "keymap.help",
         "keymap.home", "keymap.pan", "keymap.quit", "keymap.quit_all", "keymap.save", "keymap.xscale",
-        "keymap.yscale", "keymap.zoom", "macosx.window_mode", "pcolor.shading", "pcolormesh.snap", "pdf.compression",
+        "keymap.yscale", "keymap.zoom", "macosx.window_mode", "pdf.compression",
         "pdf.fonttype", "pdf.inheritcolor", "pdf.use14corefonts", "pgf.preamble", "pgf.rcfonts", "pgf.texsystem",
         "polaraxes.grid", "ps.distiller.res", "ps.fonttype", "ps.papersize", "ps.useafm", "ps.usedistiller",
         "savefig.directory", "savefig.format", "savefig.orientation", "text.latex.engine", "text.latex.preamble",

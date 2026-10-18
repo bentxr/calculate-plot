@@ -285,7 +285,7 @@ public:
     colors::Spec nextLineColor() { return nextColor(&cycleIndex_); }
     // Axes.add_collection(autolim=True): a pending autoscale runs first, then the data limits grow
     // by the collection's and an autoscale is requested.
-    Collection& addCollection(std::unique_ptr<Collection> collection);
+    Collection& addCollection(std::unique_ptr<Collection> collection, bool autolim = true);
     // vlines / hlines: add_collection(autolim=False), then the corners of the collection's data box
     // (nanmin / nanmax) grow the data limits and an autoscale is requested.
     Collection& addLinesCollection(std::unique_ptr<Collection> collection);

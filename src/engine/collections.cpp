@@ -293,7 +293,7 @@ bool Collection::updateScalarMappable(std::string* error) {
     // _set_mappable_flags: faces are mapped unless 'none'; edges when they are 'face', or when the
     // face is 'none' and no edge colour was given
     bool faceMapped = false, edgeMapped = false;
-    if (array) {
+    if (array || rgbChannels) {
         if (originalFacecolor_.kind != ColorArg::None) {
             faceMapped = true;
             if (originalEdgecolor_.kind == ColorArg::Face) edgeMapped = true;
@@ -302,7 +302,25 @@ bool Collection::updateScalarMappable(std::string* error) {
         }
     }
     std::vector<colors::Rgba> mapped;
-    if (array && !colors::mapColors(*array, norm, *cmap, alpha, &mapped, error)) return false;
+    if (rgbChannels) {
+        // Colorizer._pass_image_data(x, alpha): RGB gets the alpha (1 without one); RGBA keeps its own; NaN
+        // anywhere makes the cell transparent black; floats must lie in [0, 1]; uint8 is divided by 255 in float32
+        for (colors::Rgba c : rgbData) {
+            if (rgbChannels == 3) c[3] = rgbBytes ? std::trunc(alpha.value_or(1) * 255) : alpha.value_or(1);
+            if (!rgbBytes) {
+                bool nan = false;
+                for (int k = 0; k < rgbChannels; ++k) nan = nan || std::isnan(c[std::size_t(k)]);
+                if (nan) c = colors::Rgba{0, 0, 0, 0};
+                for (double v : c)
+                    if (v > 1 || v < 0) return *error = "Floating point image RGB values must be in the [0,1] range", false;
+            } else {
+                for (double& v : c) v = double(float(float(v) / 255.0f));
+            }
+            mapped.push_back(c);
+        }
+    } else if (array && !colors::mapColors(*array, *norm, *cmap, alpha, &mapped, error)) {
+        return false;
+    }
     if (faceMapped) facecolors_ = mapped;
     else applyFacecolor();
     if (edgeMapped) {
@@ -499,5 +517,115 @@ void PathCollection::setSizes(const std::vector<double>& sizes, double dpi) {
 }
 
 void PathCollection::beforeDraw() { setSizes(sizes_, figure->dpi); }
+
+}  // namespace calculate_plot::engine
+
+namespace calculate_plot::engine {
+
+void Renderer::drawQuadMesh(const GC& gc, const transforms::Matrix& master, int meshWidth, int meshHeight,
+                            const std::vector<std::array<double, 2>>& coordinates,
+                            const std::vector<std::array<double, 2>>& offsets, const transforms::Matrix& offsetTrans,
+                            const std::vector<std::array<double, 4>>& facecolors, bool antialiased,
+                            const std::vector<std::array<double, 4>>& edgecolors) {
+    // RendererBase.draw_quad_mesh: QuadMesh._convert_mesh_to_paths, then draw_path_collection with the gc's width
+    PathCollectionArgs a;
+    a.master = master;
+    const int cols = meshWidth + 1;
+    for (int r = 0; r < meshHeight; ++r)
+        for (int c = 0; c < meshWidth; ++c) {
+            const auto& p00 = coordinates[std::size_t(r) * cols + c];
+            const auto& p01 = coordinates[std::size_t(r) * cols + c + 1];
+            const auto& p11 = coordinates[std::size_t(r + 1) * cols + c + 1];
+            const auto& p10 = coordinates[std::size_t(r + 1) * cols + c];
+            a.paths.push_back(Path::make({p00[0], p00[1], p01[0], p01[1], p11[0], p11[1], p10[0], p10[1], p00[0], p00[1]}, {}, rc()));
+        }
+    a.offsets = offsets;
+    a.offsetTrans = offsetTrans;
+    a.facecolors = facecolors;
+    a.edgecolors = edgecolors;
+    a.linewidths = {gc.linewidth};
+    a.dashes = {};
+    a.antialiaseds = {antialiased};
+    a.urls = {std::nullopt};
+    drawPathCollection(gc, a);
+}
+
+QuadMesh::QuadMesh(const rc::Params& rc, int rows, int cols, std::vector<std::array<double, 2>> coordinates, bool gouraud,
+                   bool antialiased)
+    : Collection(rc), rows_(rows), cols_(cols), coordinates_(std::move(coordinates)), gouraud_(gouraud), antialiased_(antialiased) {
+    groupName = "QuadMesh";
+    offsets = {{0.0, 0.0}};  // get_offsets() without offsets
+    offsetTransform = std::make_shared<transforms::IdentityTransform>();
+}
+
+Collection::DataLim QuadMesh::dataLim(const transforms::TransformPtr&) const {
+    // _bbox.update_from_data_xy(coordinates) on a unit box that ignores itself; minpos of the positive values
+    DataLim d;
+    const double inf = std::numeric_limits<double>::infinity();
+    d.points = {inf, inf, -inf, -inf};
+    d.minpos = {inf, inf};
+    for (const auto& p : coordinates_) {
+        d.points[0] = std::min(d.points[0], p[0]), d.points[2] = std::max(d.points[2], p[0]);
+        d.points[1] = std::min(d.points[1], p[1]), d.points[3] = std::max(d.points[3], p[1]);
+        if (p[0] > 0) d.minpos[0] = std::min(d.minpos[0], p[0]);
+        if (p[1] > 0) d.minpos[1] = std::min(d.minpos[1], p[1]);
+    }
+    return d;
+}
+
+void QuadMesh::draw(Renderer& renderer) {
+    if (!visible) return;
+    renderer.openGroup(groupName, gid);
+    std::string problem;
+    if (!updateScalarMappable(&problem)) {
+        renderer.unsupported(problem);
+        renderer.closeGroup(groupName);
+        return;
+    }
+    // a transform that is not affine is applied to the coordinates; the identity is drawn with
+    std::vector<std::array<double, 2>> coords = coordinates_;
+    transforms::Matrix master = transform->matrix();
+    if (!transform->isAffine()) {
+        for (auto& p : coords) p = transform->transform(p[0], p[1]);
+        master = transforms::Matrix{};
+    }
+    GC gc = renderer.newGc();
+    gc.snap = snap;
+    setGcClip(gc);
+    gc.linewidth = linewidths().empty() ? 0.0 : linewidths()[0];
+    const auto& faces = facecolorsResolved();
+    if (gouraud_) {
+        // _convert_mesh_to_triangles: four triangles a cell, to its centre; a masked value makes the triangles
+        // that reach its corner go
+        std::vector<colors::Rgba> c = faces;
+        if (array)
+            for (std::size_t i = 0; i < c.size() && i < array->data.size(); ++i)
+                if (array->masked(i)) c[i][3] = std::numeric_limits<double>::quiet_NaN();
+        std::vector<std::array<std::array<double, 2>, 3>> triangles;
+        std::vector<std::array<std::array<double, 4>, 3>> colors;
+        for (int r = 0; r + 1 < rows_; ++r)
+            for (int k = 0; k + 1 < cols_; ++k) {
+                const std::size_t ia = std::size_t(r) * cols_ + k, ib = ia + 1, ic = ia + cols_ + 1, id = ia + cols_;
+                const auto centre2 = [&](std::size_t q) {
+                    return (((coords[ia][q] + coords[ib][q]) + coords[ic][q]) + coords[id][q]) / 4.0;
+                };
+                const auto centre4 = [&](std::size_t q) { return (((c[ia][q] + c[ib][q]) + c[ic][q]) + c[id][q]) / 4.0; };
+                const std::array<double, 2> pc{centre2(0), centre2(1)};
+                const std::array<double, 4> cc{centre4(0), centre4(1), centre4(2), centre4(3)};
+                const std::size_t corners[5] = {ia, ib, ic, id, ia};
+                for (int t = 0; t < 4; ++t) {
+                    if (std::isnan(cc[3])) continue;
+                    const std::size_t u = corners[t], v = corners[t + 1];
+                    triangles.push_back({coords[u], coords[v], pc});
+                    colors.push_back({c[u], c[v], cc});
+                }
+            }
+        renderer.drawGouraudTriangles(gc, triangles, colors, master);
+    } else {
+        renderer.drawQuadMesh(gc, master, cols_ - 1, rows_ - 1, coords, offsets, offsetTransform->matrix(), faces,
+                              antialiased_, edgecolors());
+    }
+    renderer.closeGroup(groupName);
+}
 
 }  // namespace calculate_plot::engine

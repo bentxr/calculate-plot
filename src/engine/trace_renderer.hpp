@@ -43,7 +43,9 @@ protected:
     void writeOptionalText(const std::optional<std::string>& text);
     void writeArray(const std::vector<std::size_t>& shape, const std::vector<double>& data);  // record.py's array()
     void writeCollectionFields(const PathCollectionArgs& args);
-    void writeImage(const RgbaImage& im);  // record.py's image(): the shape and base64 in lines of 16
+    void writeImage(const RgbaImage& im);
+    void writeTriangles(const std::vector<std::array<std::array<double, 2>, 3>>& triangles,
+                        const std::vector<std::array<std::array<double, 4>, 3>>& colors);  // points, colors  // record.py's image(): the shape and base64 in lines of 16
     int clipIndex(const ClipPath& clip);  // clip paths numbered by the identity of their Path
     std::string events();                 // the events array
 
@@ -75,6 +77,13 @@ public:
                   bool ismath, const TextOptions& mtext) override;
     void drawImage(const GC& gc, double x, double y, const RgbaImage& im,
                    const std::optional<transforms::Matrix>& transform) override;
+    void drawQuadMesh(const GC& gc, const transforms::Matrix& master, int meshWidth, int meshHeight,
+                      const std::vector<std::array<double, 2>>& coordinates, const std::vector<std::array<double, 2>>& offsets,
+                      const transforms::Matrix& offsetTrans, const std::vector<std::array<double, 4>>& facecolors,
+                      bool antialiased, const std::vector<std::array<double, 4>>& edgecolors) override;
+    void drawGouraudTriangles(const GC& gc, const std::vector<std::array<std::array<double, 2>, 3>>& triangles,
+                              const std::vector<std::array<std::array<double, 4>, 3>>& colors,
+                              const transforms::Matrix& transform) override;
     TextMetrics textWidthHeightDescent(const std::string& s, const FontSpec& font, bool ismath) override;
     std::string trace() override;
 
@@ -106,6 +115,9 @@ public:
     void drawImage(const GC& gc, double x, double y, const RgbaImage& im,
                    const std::optional<transforms::Matrix>& transform) override;
     bool optionImageNocomposite() const override;  // not rcParams["image.composite_image"]
+    void drawGouraudTriangles(const GC& gc, const std::vector<std::array<std::array<double, 2>, 3>>& triangles,
+                              const std::vector<std::array<std::array<double, 4>, 3>>& colors,
+                              const transforms::Matrix& transform) override;
     double imageMagnification() const override { return imageDpi_ / 72.0; }
     double mixedModeDpi() const override { return imageDpi_; }
     bool optionScaleImage() const override { return true; }
