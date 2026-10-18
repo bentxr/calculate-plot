@@ -51,6 +51,12 @@ struct PathCollectionArgs {
     std::vector<std::optional<std::string>> urls;
 };
 
+// An image to draw: RGBA bytes, row by row from the top (what draw_image takes, already resampled).
+struct RgbaImage {
+    int width = 0, height = 0;
+    std::vector<unsigned char> rgba;
+};
+
 // What artists draw with: matplotlib's RendererBase methods.
 class Renderer {
 public:
@@ -72,6 +78,10 @@ public:
     // x, y: the text's origin in pixels from the top-left (flipy); angle in degrees.
     virtual void drawText(const GC& gc, double x, double y, const std::string& s, const FontSpec& font, double angle,
                           bool ismath, const TextOptions& mtext) = 0;
+    // draw_image(gc, x, y, im, transform): x, y the lower left corner in pixels from the bottom; a transform
+    // (the SVG renderer's option_scale_image) maps the unit square of the image
+    virtual void drawImage(const GC& gc, double x, double y, const RgbaImage& im,
+                           const std::optional<transforms::Matrix>& transform) = 0;
     virtual TextMetrics textWidthHeightDescent(const std::string& s, const FontSpec& font, bool ismath) = 0;
     virtual bool flipy() const { return true; }
     // The fonts the renderer opened (matplotlib's get_font cache), for the font metrics of layouts.

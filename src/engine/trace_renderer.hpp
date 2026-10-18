@@ -43,6 +43,7 @@ protected:
     void writeOptionalText(const std::optional<std::string>& text);
     void writeArray(const std::vector<std::size_t>& shape, const std::vector<double>& data);  // record.py's array()
     void writeCollectionFields(const PathCollectionArgs& args);
+    void writeImage(const RgbaImage& im);  // record.py's image(): the shape and base64 in lines of 16
     int clipIndex(const ClipPath& clip);  // clip paths numbered by the identity of their Path
     std::string events();                 // the events array
 
@@ -72,6 +73,8 @@ public:
     // each glyph's bitmap (draw_text_image).
     void drawText(const GC& gc, double x, double y, const std::string& s, const FontSpec& font, double angle,
                   bool ismath, const TextOptions& mtext) override;
+    void drawImage(const GC& gc, double x, double y, const RgbaImage& im,
+                   const std::optional<transforms::Matrix>& transform) override;
     TextMetrics textWidthHeightDescent(const std::string& s, const FontSpec& font, bool ismath) override;
     std::string trace() override;
 
@@ -100,6 +103,8 @@ public:
     void drawPathCollection(const GC& gc, const PathCollectionArgs& args) override;
     void drawText(const GC& gc, double x, double y, const std::string& s, const FontSpec& font, double angle,
                   bool ismath, const TextOptions& mtext) override;
+    void drawImage(const GC& gc, double x, double y, const RgbaImage& im,
+                   const std::optional<transforms::Matrix>& transform) override;
     // TextToPath.get_text_width_height_descent: unhinted, at TextToPath.FONT_SCALE, scaled to the size.
     TextMetrics textWidthHeightDescent(const std::string& s, const FontSpec& font, bool ismath) override;
     std::string trace() override;

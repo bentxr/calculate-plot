@@ -1,0 +1,889 @@
+[
+ {
+  "image": [
+   [
+    [
+     156,
+     64,
+     249,
+     242
+    ],
+    [
+     16,
+     48,
+     51,
+     45
+    ],
+    [
+     148,
+     89,
+     123,
+     59
+    ],
+    [
+     243,
+     171,
+     170,
+     29
+    ],
+    [
+     40,
+     229,
+     80,
+     219
+    ]
+   ],
+   [
+    [
+     201,
+     0,
+     121,
+     138
+    ],
+    [
+     119,
+     27,
+     184,
+     66
+    ],
+    [
+     89,
+     106,
+     76,
+     116
+    ],
+    [
+     214,
+     119,
+     189,
+     237
+    ],
+    [
+     55,
+     66,
+     142,
+     48
+    ]
+   ],
+   [
+    [
+     176,
+     171,
+     173,
+     242
+    ],
+    [
+     108,
+     236,
+     249,
+     225
+    ],
+    [
+     77,
+     16,
+     220,
+     239
+    ],
+    [
+     84,
+     166,
+     43,
+     223
+    ],
+    [
+     217,
+     104,
+     200,
+     56
+    ]
+   ]
+  ],
+  "kwargs": {
+   "xo": 7,
+   "yo": 11,
+   "resize": false
+  },
+  "agg": [
+   {
+    "op": "draw_image",
+    "gc": {
+     "linewidth": 1.0,
+     "alpha": 1.0,
+     "forced_alpha": true,
+     "rgb": [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+     ],
+     "antialiased": true,
+     "capstyle": "butt",
+     "joinstyle": "round",
+     "dashes": [
+      0.0,
+      null
+     ],
+     "cliprect": null,
+     "clippath": null,
+     "snap": null,
+     "hatch": null,
+     "hatch_color": null,
+     "hatch_linewidth": 1.0,
+     "sketch": null
+    },
+    "x": 7.0,
+    "y": 11.0,
+    "image": {
+     "shape": [
+      3,
+      5,
+      4
+     ],
+     "base64": "sKut8mzs+eFNENzv\nVKUr39loyDjJAHmK\ndxu4QllqTHTWd73t\nN0KOMJxA+fIQMDMt\nlFl7O/Orqh0o5VDb"
+    }
+   }
+  ],
+  "svg": [
+   {
+    "op": "draw_image",
+    "gc": {
+     "linewidth": 1.0,
+     "alpha": 1.0,
+     "forced_alpha": true,
+     "rgb": [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+     ],
+     "antialiased": true,
+     "capstyle": "butt",
+     "joinstyle": "round",
+     "dashes": [
+      0.0,
+      null
+     ],
+     "cliprect": null,
+     "clippath": null,
+     "snap": null,
+     "hatch": null,
+     "hatch_color": null,
+     "hatch_linewidth": 1.0,
+     "sketch": null,
+     "url": null,
+     "gid": null,
+     "hatch_string": null,
+     "hatch_numpy": false,
+     "rgb_length": 4,
+     "clip_index": null
+    },
+    "x": 10.08,
+    "y": 15.84,
+    "image": {
+     "shape": [
+      3,
+      5,
+      4
+     ],
+     "base64": "sKut8mzs+eFNENzv\nVKUr39loyDjJAHmK\ndxu4QllqTHTWd73t\nN0KOMJxA+fIQMDMt\nlFl7O/Orqh0o5VDb"
+    },
+    "transform": null,
+    "clip_transform": null
+   }
+  ]
+ },
+ {
+  "image": [
+   [
+    [
+     248,
+     203,
+     208,
+     169
+    ],
+    [
+     12,
+     199,
+     182,
+     51
+    ]
+   ],
+   [
+    [
+     219,
+     34,
+     102,
+     195
+    ],
+    [
+     198,
+     5,
+     64,
+     242
+    ]
+   ],
+   [
+    [
+     144,
+     34,
+     87,
+     153
+    ],
+    [
+     0,
+     107,
+     64,
+     82
+    ]
+   ],
+   [
+    [
+     161,
+     43,
+     234,
+     199
+    ],
+    [
+     166,
+     234,
+     21,
+     186
+    ]
+   ]
+  ],
+  "kwargs": {
+   "xo": 0,
+   "yo": 0,
+   "resize": false,
+   "alpha": 0.5,
+   "origin": "upper"
+  },
+  "agg": [
+   {
+    "op": "draw_image",
+    "gc": {
+     "linewidth": 1.0,
+     "alpha": 0.5,
+     "forced_alpha": true,
+     "rgb": [
+      0.0,
+      0.0,
+      0.0,
+      0.5
+     ],
+     "antialiased": true,
+     "capstyle": "butt",
+     "joinstyle": "round",
+     "dashes": [
+      0.0,
+      null
+     ],
+     "cliprect": null,
+     "clippath": null,
+     "snap": null,
+     "hatch": null,
+     "hatch_color": null,
+     "hatch_linewidth": 1.0,
+     "sketch": null
+    },
+    "x": 0.0,
+    "y": 0.0,
+    "image": {
+     "shape": [
+      4,
+      2,
+      4
+     ],
+     "base64": "oSvqY6bqFV2QIldM\nAGtAKdsiZmHGBUB5\n+MvPVAzHthk="
+    }
+   }
+  ],
+  "svg": [
+   {
+    "op": "draw_image",
+    "gc": {
+     "linewidth": 1.0,
+     "alpha": 0.5,
+     "forced_alpha": true,
+     "rgb": [
+      0.0,
+      0.0,
+      0.0,
+      0.5
+     ],
+     "antialiased": true,
+     "capstyle": "butt",
+     "joinstyle": "round",
+     "dashes": [
+      0.0,
+      null
+     ],
+     "cliprect": null,
+     "clippath": null,
+     "snap": null,
+     "hatch": null,
+     "hatch_color": null,
+     "hatch_linewidth": 1.0,
+     "sketch": null,
+     "url": null,
+     "gid": null,
+     "hatch_string": null,
+     "hatch_numpy": false,
+     "rgb_length": 4,
+     "clip_index": null
+    },
+    "x": 0.0,
+    "y": 0.0,
+    "image": {
+     "shape": [
+      4,
+      2,
+      4
+     ],
+     "base64": "oSvqY6bqFV2QIldM\nAGtAKdsiZmHGBUB5\n+MvPVAzHthk="
+    },
+    "transform": null,
+    "clip_transform": null
+   }
+  ]
+ },
+ {
+  "image": [
+   [
+    [
+     227,
+     153,
+     139,
+     182
+    ]
+   ]
+  ],
+  "kwargs": {
+   "xo": 30,
+   "yo": 2,
+   "resize": false,
+   "origin": "lower"
+  },
+  "agg": [
+   {
+    "op": "draw_image",
+    "gc": {
+     "linewidth": 1.0,
+     "alpha": 1.0,
+     "forced_alpha": true,
+     "rgb": [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+     ],
+     "antialiased": true,
+     "capstyle": "butt",
+     "joinstyle": "round",
+     "dashes": [
+      0.0,
+      null
+     ],
+     "cliprect": null,
+     "clippath": null,
+     "snap": null,
+     "hatch": null,
+     "hatch_color": null,
+     "hatch_linewidth": 1.0,
+     "sketch": null
+    },
+    "x": 30.0,
+    "y": 2.0,
+    "image": {
+     "shape": [
+      1,
+      1,
+      4
+     ],
+     "base64": "45mLtg=="
+    }
+   }
+  ],
+  "svg": [
+   {
+    "op": "draw_image",
+    "gc": {
+     "linewidth": 1.0,
+     "alpha": 1.0,
+     "forced_alpha": true,
+     "rgb": [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+     ],
+     "antialiased": true,
+     "capstyle": "butt",
+     "joinstyle": "round",
+     "dashes": [
+      0.0,
+      null
+     ],
+     "cliprect": null,
+     "clippath": null,
+     "snap": null,
+     "hatch": null,
+     "hatch_color": null,
+     "hatch_linewidth": 1.0,
+     "sketch": null,
+     "url": null,
+     "gid": null,
+     "hatch_string": null,
+     "hatch_numpy": false,
+     "rgb_length": 4,
+     "clip_index": null
+    },
+    "x": 43.2,
+    "y": 2.88,
+    "image": {
+     "shape": [
+      1,
+      1,
+      4
+     ],
+     "base64": "45mLtg=="
+    },
+    "transform": null,
+    "clip_transform": null
+   }
+  ]
+ },
+ {
+  "image": [
+   [
+    [
+     185,
+     137,
+     136,
+     142
+    ],
+    [
+     185,
+     231,
+     208,
+     72
+    ],
+    [
+     224,
+     56,
+     167,
+     242
+    ],
+    [
+     248,
+     241,
+     204,
+     121
+    ],
+    [
+     29,
+     204,
+     210,
+     190
+    ],
+    [
+     145,
+     243,
+     90,
+     20
+    ],
+    [
+     247,
+     229,
+     174,
+     128
+    ],
+    [
+     245,
+     114,
+     244,
+     175
+    ],
+    [
+     249,
+     157,
+     81,
+     111
+    ]
+   ],
+   [
+    [
+     157,
+     74,
+     32,
+     235
+    ],
+    [
+     203,
+     209,
+     119,
+     26
+    ],
+    [
+     233,
+     103,
+     33,
+     195
+    ],
+    [
+     94,
+     225,
+     154,
+     246
+    ],
+    [
+     39,
+     61,
+     247,
+     228
+    ],
+    [
+     254,
+     177,
+     254,
+     17
+    ],
+    [
+     205,
+     53,
+     9,
+     48
+    ],
+    [
+     51,
+     19,
+     104,
+     175
+    ],
+    [
+     173,
+     79,
+     119,
+     177
+    ]
+   ],
+   [
+    [
+     190,
+     20,
+     175,
+     223
+    ],
+    [
+     44,
+     178,
+     64,
+     200
+    ],
+    [
+     70,
+     155,
+     69,
+     117
+    ],
+    [
+     187,
+     49,
+     45,
+     241
+    ],
+    [
+     203,
+     37,
+     145,
+     133
+    ],
+    [
+     112,
+     31,
+     113,
+     27
+    ],
+    [
+     155,
+     178,
+     126,
+     227
+    ],
+    [
+     183,
+     118,
+     235,
+     203
+    ],
+    [
+     51,
+     220,
+     108,
+     137
+    ]
+   ],
+   [
+    [
+     69,
+     198,
+     202,
+     74
+    ],
+    [
+     127,
+     38,
+     29,
+     48
+    ],
+    [
+     83,
+     1,
+     99,
+     18
+    ],
+    [
+     172,
+     192,
+     90,
+     231
+    ],
+    [
+     25,
+     14,
+     34,
+     184
+    ],
+    [
+     162,
+     199,
+     76,
+     174
+    ],
+    [
+     252,
+     127,
+     39,
+     124
+    ],
+    [
+     15,
+     177,
+     129,
+     62
+    ],
+    [
+     210,
+     192,
+     145,
+     49
+    ]
+   ],
+   [
+    [
+     76,
+     9,
+     33,
+     239
+    ],
+    [
+     121,
+     23,
+     200,
+     50
+    ],
+    [
+     154,
+     14,
+     189,
+     2
+    ],
+    [
+     149,
+     31,
+     111,
+     235
+    ],
+    [
+     169,
+     178,
+     241,
+     103
+    ],
+    [
+     65,
+     1,
+     207,
+     212
+    ],
+    [
+     130,
+     124,
+     55,
+     218
+    ],
+    [
+     192,
+     129,
+     173,
+     20
+    ],
+    [
+     251,
+     18,
+     43,
+     202
+    ]
+   ],
+   [
+    [
+     145,
+     56,
+     92,
+     38
+    ],
+    [
+     184,
+     104,
+     127,
+     66
+    ],
+    [
+     130,
+     70,
+     89,
+     203
+    ],
+    [
+     59,
+     120,
+     95,
+     254
+    ],
+    [
+     67,
+     25,
+     198,
+     75
+    ],
+    [
+     40,
+     225,
+     182,
+     111
+    ],
+    [
+     57,
+     197,
+     99,
+     110
+    ],
+    [
+     213,
+     103,
+     137,
+     226
+    ],
+    [
+     78,
+     80,
+     139,
+     139
+    ]
+   ]
+  ],
+  "kwargs": {
+   "xo": 15.5,
+   "yo": 3.25,
+   "resize": false
+  },
+  "agg": [
+   {
+    "op": "draw_image",
+    "gc": {
+     "linewidth": 1.0,
+     "alpha": 1.0,
+     "forced_alpha": true,
+     "rgb": [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+     ],
+     "antialiased": true,
+     "capstyle": "butt",
+     "joinstyle": "round",
+     "dashes": [
+      0.0,
+      null
+     ],
+     "cliprect": null,
+     "clippath": null,
+     "snap": null,
+     "hatch": null,
+     "hatch_color": null,
+     "hatch_linewidth": 1.0,
+     "sketch": null
+    },
+    "x": 15.5,
+    "y": 3.25,
+    "image": {
+     "shape": [
+      6,
+      9,
+      4
+     ],
+     "base64": "kThcJrhofkKCRlnL\nO3hf/kMZxkso4bZv\nOcVibtVnieJOUIuL\nTAkh73gXyDKaDr0C\nlR9v66my8WdBAc/U\ngnw32sCBrRT6EivK\nRcbKSn8mHTBTAWMS\nrMBa5xkOIriix0yu\n/H8nfA+xgT7SwJEx\nvRSv3yyyQMhGm0V1\nuzEt8cslkYVwH3Eb\nm7J+47d268sz3GyJ\nnUog68vRdxrpZyHD\nXuGa9ic89+T9sf0R\nzTUJMDMTaK+tT3ex\nuYmIjrnm0EjgOKfy\n+PHMeR3M0r6R8loU\n9+WugPRx9K/5nVFv"
+    }
+   }
+  ],
+  "svg": [
+   {
+    "op": "draw_image",
+    "gc": {
+     "linewidth": 1.0,
+     "alpha": 1.0,
+     "forced_alpha": true,
+     "rgb": [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+     ],
+     "antialiased": true,
+     "capstyle": "butt",
+     "joinstyle": "round",
+     "dashes": [
+      0.0,
+      null
+     ],
+     "cliprect": null,
+     "clippath": null,
+     "snap": null,
+     "hatch": null,
+     "hatch_color": null,
+     "hatch_linewidth": 1.0,
+     "sketch": null,
+     "url": null,
+     "gid": null,
+     "hatch_string": null,
+     "hatch_numpy": false,
+     "rgb_length": 4,
+     "clip_index": null
+    },
+    "x": 22.32,
+    "y": 4.680000000000001,
+    "image": {
+     "shape": [
+      5,
+      9,
+      4
+     ],
+     "base64": "kThcJrhofkKCRlnL\nO3hf/kMZxkso4bZv\nOcVibtVnieJOUIuL\nTAkh73gXyDKaDr0C\nlR9v66my8WdBAc/U\ngnw32sCBrRT6EivK\nRcbKSn8mHTBTAWMS\nrMBa5xkOIriix0yu\n/H8nfA+xgT7SwJEx\nvRSv3yyyQMhGm0V1\nuzEt8cslkYVwH3Eb\nm7J+47d268sz3GyJ\nnUog68vRdxrpZyHD\nXuGa9ic89+T9sf0R\nzTUJMDMTaK+tT3ex"
+    },
+    "transform": null,
+    "clip_transform": null
+   }
+  ]
+ }
+]

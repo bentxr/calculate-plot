@@ -19,6 +19,16 @@ void TraceRenderer::writeNumbers(const std::vector<double>& values) {
     events_.endArray();
 }
 
+void TraceRenderer::writeImage(const RgbaImage& im) {
+    events_.beginObject();
+    events_.key("shape").beginArray().value(static_cast<long long>(im.height)).value(static_cast<long long>(im.width)).value(4LL).endArray();
+    const std::string b64 = support::encodeBase64(std::string_view(reinterpret_cast<const char*>(im.rgba.data()), im.rgba.size()));
+    std::string lines;
+    for (std::size_t k = 0; k < b64.size(); k += 16) lines += (k ? "\n" : "") + b64.substr(k, 16);
+    events_.key("base64").value(lines);
+    events_.endObject();
+}
+
 void TraceRenderer::writeMatrix(const transforms::Matrix& m) {
     writeNumbers({m.sx, m.shx, m.tx, m.shy, m.sy, m.ty});
 }
@@ -219,6 +229,20 @@ void AggTraceRenderer::drawMarkers(const GC& gc, const Path& markerPath, const t
     writeMatrix(trans);
     events_.key("face");
     writeFace(face);
+    events_.endObject();
+}
+
+void AggTraceRenderer::drawImage(const GC& gc, double x, double y, const RgbaImage& im,
+                                 const std::optional<transforms::Matrix>& transform) {
+    if (transform) return unsupported("draw_image with a transform");  // (RendererAgg has no option_scale_image)
+    events_.beginObject();
+    events_.key("op").value("draw_image");
+    events_.key("gc");
+    writeGc(gc);
+    events_.key("x").value(x);
+    events_.key("y").value(y);
+    events_.key("image");
+    writeImage(im);
     events_.endObject();
 }
 
@@ -489,6 +513,24 @@ void SvgTraceRenderer::drawMarkers(const GC& gc, const Path& markerPath, const t
     writeMatrix(trans);
     events_.key("face");
     if (face) writeNumbers(*face);
+    else events_.null();
+    events_.key("clip_transform");
+    writeClipTransform(gc);
+    events_.endObject();
+}
+
+void SvgTraceRenderer::drawImage(const GC& gc, double x, double y, const RgbaImage& im,
+                                 const std::optional<transforms::Matrix>& transform) {
+    events_.beginObject();
+    events_.key("op").value("draw_image");
+    events_.key("gc");
+    writeSvgGc(gc);
+    events_.key("x").value(x);
+    events_.key("y").value(y);
+    events_.key("image");
+    writeImage(im);
+    events_.key("transform");
+    if (transform) writeMatrix(*transform);
     else events_.null();
     events_.key("clip_transform");
     writeClipTransform(gc);

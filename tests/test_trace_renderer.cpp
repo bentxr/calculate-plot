@@ -3,6 +3,7 @@
 #include "engine/trace_renderer.hpp"
 #include "rc/rc_params.hpp"
 #include "support/json.hpp"
+#include "support/base64.hpp"
 #include "trace_compare.hpp"
 
 #include <gtest/gtest.h>
@@ -232,3 +233,69 @@ TEST(AggTraceRenderer, SplitsBase64IntoShortLines) {
 }
 
 }  // namespace
+
+namespace {
+
+Json imageEvents() {
+    std::ifstream in(fs::path(CALCULATE_PLOT_SOURCE_DIR) / "tests/oracle/image_events.json", std::ios::binary);
+    std::ostringstream text;
+    text << in.rdbuf();
+    return *calculate_plot::support::parseJson(text.str(), nullptr);
+}
+
+// the pixels an event carries (the image as drawn: resampled, flipped, its alpha applied)
+RgbaImage imageOf(const Json& event) {
+    const Json& image = *event.find("image");
+    RgbaImage im;
+    im.height = int((*image.find("shape"))[0].asNumber());
+    im.width = int((*image.find("shape"))[1].asNumber());
+    std::string b64;
+    for (char ch : image.find("base64")->asString())
+        if (ch != '\n') b64 += ch;
+    const auto bytes = calculate_plot::support::decodeBase64(b64);
+    im.rgba.assign(bytes->begin(), bytes->end());
+    return im;
+}
+
+}  // namespace
+
+// fig.figimage's draw_image: the gc (its alpha forced), the position, the RGBA pixels in base64 lines.
+TEST(AggTraceRenderer, DrawsImagesAsMatplotlib) {
+    const auto rc = calculate_plot::rc::Params::defaults();
+    int checked = 0;
+    const Json cases = imageEvents();
+    for (const Json& c : cases.items()) {
+        AggTraceRenderer r(50, 40, 50, rc, "C.UTF-8", fonts());
+        GC gc(rc);
+        // _ImageBase.draw: gc.set_alpha(self._get_scalar_alpha()), 1.0 without a scalar alpha
+        const Json* alpha = c.find("kwargs")->find("alpha");
+        gc.setAlpha(alpha ? alpha->asNumber() : 1.0);
+        const Json want = (*c.find("agg"))[0];
+        r.drawImage(gc, want.find("x")->asNumber(), want.find("y")->asNumber(), imageOf(want), std::nullopt);
+        EXPECT_EQ(firstDifference(events(r)[0], want, "event"), "") << checked;
+        ++checked;
+    }
+    EXPECT_EQ(checked, 4);
+}
+
+TEST(SvgTraceRenderer, DrawsImagesAsMatplotlib) {
+    const auto rc = calculate_plot::rc::Params::defaults();
+    int checked = 0;
+    const Json cases = imageEvents();
+    for (const Json& c : cases.items()) {
+        SvgTraceRenderer r(72, 57.6, 50, rc, "C.UTF-8", fonts(), {}, "");
+        GC gc(rc);
+        // _ImageBase.draw: gc.set_alpha(self._get_scalar_alpha()), 1.0 without a scalar alpha
+        const Json* alpha = c.find("kwargs")->find("alpha");
+        gc.setAlpha(alpha ? alpha->asNumber() : 1.0);
+        const Json want = (*c.find("svg"))[0];
+        r.drawImage(gc, want.find("x")->asNumber(), want.find("y")->asNumber(), imageOf(want), std::nullopt);
+        const Json got = *calculate_plot::support::parseJson(r.trace(), nullptr)->find("events");
+        Json image;
+        for (const Json& e : got.items())
+            if (e.find("op")->asString() == "draw_image") image = e;
+        EXPECT_EQ(firstDifference(image, want, "event"), "") << checked;
+        ++checked;
+    }
+    EXPECT_EQ(checked, 4);
+}
