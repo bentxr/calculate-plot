@@ -115,6 +115,16 @@ std::optional<Colormap> Colormap::named(const std::string& name) {
     return std::nullopt;
 }
 
+Colormap Colormap::listed(const std::vector<Rgba>& colors, const std::string& name) {
+    Colormap m;
+    m.name_ = name;
+    m.listed_ = true;
+    m.colors_ = colors;
+    m.n_ = (long long)colors.size();
+    m.init();
+    return m;
+}
+
 bool Colormap::hasFunctionChannels() const {
     return std::any_of(channels_.begin(), channels_.end(), [](const Channel& c) { return !c.lut.empty(); });
 }

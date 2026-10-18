@@ -144,7 +144,8 @@ public:
             // the pyplot functions of the current Axes and of the current figure
             const auto& ofAxes = pyplotOfAxes();
             static const std::map<std::string, std::string> ofFigure = {
-                {"suptitle", "suptitle"}, {"figtext", "text"}, {"subplots_adjust", "subplots_adjust"}, {"tight_layout", "tight_layout"}};
+                {"suptitle", "suptitle"}, {"figtext", "text"}, {"subplots_adjust", "subplots_adjust"}, {"tight_layout", "tight_layout"},
+                {"figimage", "figimage"}};
             const auto a = ofAxes.find(call.method);
             const auto f = ofFigure.find(call.method);
             if (a != ofAxes.end() || f != ofFigure.end()) {
@@ -182,7 +183,7 @@ public:
             {"hlines", "hlines"}, {"vlines", "vlines"}, {"grid", "grid"}, {"legend", "legend"}, {"text", "text"},
             {"title", "set_title"}, {"xlabel", "set_xlabel"}, {"ylabel", "set_ylabel"}, {"xlim", "set_xlim"},
             {"ylim", "set_ylim"}, {"xscale", "set_xscale"}, {"yscale", "set_yscale"}, {"bar", "bar"}, {"barh", "barh"},
-            {"hist", "hist"}, {"fill", "fill"}, {"step", "step"}, {"stairs", "stairs"}, {"stem", "stem"}, {"boxplot", "boxplot"}, {"violinplot", "violinplot"}, {"pie", "pie"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}, {"imshow", "imshow"}};
+            {"hist", "hist"}, {"fill", "fill"}, {"step", "step"}, {"stairs", "stairs"}, {"stem", "stem"}, {"boxplot", "boxplot"}, {"violinplot", "violinplot"}, {"pie", "pie"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}, {"imshow", "imshow"}, {"matshow", "matshow"}, {"spy", "spy"}};
         return ofAxes;
     }
 
@@ -1061,6 +1062,7 @@ private:
         if (call.method == "gca") return noArguments(call, error) && nameResult(call, &gca(), error);
         if (call.method == "add_axes") return addAxes(call, call.args.empty() ? nullptr : &call.args[0], error);
         if (call.method == "text") return figureText(call, error);
+        if (call.method == "figimage") return figimage(call, error);
         if (call.method == "suptitle") {
             // FigureBase._suplabels with suptitle's info: (0.5, 0.98), centred, top, figure.titlesize/titleweight
             const Json* t = argument(call, 0, "t");
@@ -1624,6 +1626,8 @@ private:
         if (call.method == "add_patch") return addPatch(ax, call, error);
         if (call.method == "hist") return hist(ax, call, error);
         if (call.method == "imshow") return imshow(ax, call, error);
+        if (call.method == "matshow") return matshow(ax, call, error);
+        if (call.method == "spy") return spy(ax, call, error);
         if (call.method == "vlines" || call.method == "hlines") return lines(ax, call, error);
         if (call.method == "set_xscale" || call.method == "set_yscale") {
             const Json* nameJson = call.args.empty() ? keyword(call, "value") : &call.args[0];
@@ -4308,81 +4312,151 @@ private:
         return true;
     }
 
+    // The colorizer of an image: a colormap by name (or `cmapDefault`), and a norm by scale name or one the
+    // figure file made ({"$ref"}, shared), else Normalize (or NoNorm with `noNorm`). `normObject`: a norm object.
+    bool imageColorizer(ImageBase& im, const Json* c, const Json* n, const colors::Colormap* cmapDefault, bool noNorm,
+                        const std::string& where, bool* normObject, std::string* error) {
+        if (c && !c->isNull()) {
+            if (!c->isString()) return *error = where + ": cmap must be a colormap name", false;
+            const auto cmap = colors::Colormap::named(c->asString());
+            if (!cmap) return *error = where + ": '" + c->asString() + "' is not a valid value for cmap", false;
+            im.cmap = *cmap;
+        } else if (cmapDefault) {
+            im.cmap = *cmapDefault;
+        } else {
+            const auto cmap = colors::Colormap::named(rc_.text("image.cmap"));
+            if (!cmap) return *error = where + ": '" + rc_.text("image.cmap") + "' is not a valid value for cmap", false;
+            im.cmap = *cmap;
+        }
+        *normObject = false;
+        if (n && n->isObject() && n->members()[0].first == "$ref") {
+            const auto it = norms_.find(n->members()[0].second.asString());
+            if (it == norms_.end()) return *error = where + ": norm must be a norm the figure file made, or a scale name", false;
+            im.norm = it->second;
+            *normObject = true;
+            return true;
+        }
+        colors::NormSpec spec;
+        if (n && !n->isNull()) {
+            static const char* const scales[] = {"linear", "log", "symlog", "asinh", "logit"};
+            if (!n->isString()) return *error = where + ": norm must be a norm the figure file made, or a scale name", false;
+            const std::string name = n->asString();
+            if (name == "function" || name == "functionlog")
+                return *error = where + ": the norm of the " + name + " scale is not supported yet", false;
+            if (std::find(std::begin(scales), std::end(scales), name) == std::end(scales))
+                return *error = where + ": '" + name + "' is not a valid value for norm; supported values are 'asinh', 'function', 'functionlog', 'linear', 'log', 'logit', 'symlog'", false;
+            spec.kind = "scale:" + name;
+        } else if (noNorm) {
+            spec.kind = "NoNorm";
+        }
+        im.norm = std::make_shared<colors::Norm>();
+        if (!colors::Norm::make(spec, im.norm.get(), error)) return *error = where + ": " + *error, false;
+        return true;
+    }
+
+    // set_alpha of an image: a number in [0, 1], a 2-D array of them, or None
+    bool imageAlpha(ImageBase& im, const Json* alpha, const std::string& where, std::string* error) {
+        if (!alpha || alpha->isNull()) return true;
+        double a = 0;
+        if (readNumber(*alpha, &a)) {
+            if (!(0 <= a && a <= 1)) return *error = where + ": alpha (" + repr(*alpha) + ") is outside 0-1 range", false;
+            im.alpha = a;
+            return true;
+        }
+        ImageArray al;
+        if (alpha->isString() || !readArray(*alpha, &al, error) || al.channels != 0)
+            return *error = where + ": alpha must be a float, two-dimensional array, or None", false;
+        const auto [mn, mx] = std::minmax_element(al.data.begin(), al.data.end());
+        if (!(0 <= *mn && *mx <= 1)) return *error = where + ": alpha must be between 0 and 1, inclusive", false;
+        al.dtype = colors::DType::Float64;
+        im.alphaArray = al;
+        return true;
+    }
+
+    // The properties an image takes as keywords (its constructor's and the Artist's); false and why for one it
+    // does not take, `*taken` false for a name that is not one of them
+    bool imageProperty(ImageBase& im, const std::string& name, const Json& value, const std::string& where, bool* taken,
+                       std::string* error) {
+        static const char* const interpolations[] = {"auto", "none", "nearest", "bilinear", "bicubic", "spline16", "spline36",
+                                                     "hanning", "hamming", "hermite", "kaiser", "quadric", "catrom", "gaussian",
+                                                     "bessel", "mitchell", "sinc", "lanczos", "blackman", "antialiased"};
+        double v = 0;
+        *taken = true;
+        if (name == "interpolation") {
+            std::string s = value.isNull() ? rc_.text("image.interpolation") : value.isString() ? value.asString() : "";
+            for (char& ch : s) ch = char(std::tolower((unsigned char)ch));
+            if (std::find(std::begin(interpolations), std::end(interpolations), s) == std::end(interpolations))
+                return *error = where + ": that is not a valid value for interpolation", false;
+            im.interpolation = s;
+        } else if (name == "interpolation_stage") {
+            const std::string s = value.isNull() ? rc_.text("image.interpolation_stage") : value.isString() ? value.asString() : "";
+            if (s != "data" && s != "rgba" && s != "auto")
+                return *error = where + ": that is not a valid value for s; supported values are 'data', 'rgba', 'auto'", false;
+            im.interpolationStage = s;
+        } else if (name == "origin") {
+            const std::string s = value.isNull() ? rc_.text("image.origin") : value.isString() ? value.asString() : "";
+            if (s != "upper" && s != "lower")
+                return *error = where + ": that is not a valid value for origin; supported values are 'upper', 'lower'", false;
+            im.origin = s;
+        } else if (name == "filternorm") {
+            if (!value.isBool() && !readNumber(value, &v)) return *error = where + ": filternorm must be True or False", false;
+            im.filternorm = value.isBool() ? value.asBool() : v != 0;
+        } else if (name == "filterrad") {
+            if (!readNumber(value, &v)) return *error = where + ": filterrad must be a number", false;
+            if (!(v > 0)) return *error = where + ": The filter radius must be a positive number", false;
+            im.filterrad = v;
+        } else if (name == "resample") {
+            if (value.isNull()) return true;
+            if (!value.isBool()) return *error = where + ": resample must be True or False", false;
+            im.resample = value.asBool();
+        } else if (name == "url" || name == "gid") {
+            if (value.isNull()) return true;
+            if (!value.isString()) return *error = where + ": " + name + " must be a string", false;
+            (name == "url" ? im.url : im.gid) = value.asString();
+        } else if (name == "label") {
+            if (!value.isString()) return *error = where + ": label must be a string", false;
+            im.label = value.asString();
+        } else if (name == "colorizer") {
+            if (!value.isNull()) return *error = where + ": colorizer is not supported yet", false;
+        } else if (name == "zorder") {
+            if (!readFinite(value, &v)) return *error = where + ": zorder must be a number", false;
+            im.zorder = v;
+        } else if (name == "visible" || name == "clip_on") {
+            if (!value.isBool()) return *error = where + ": " + name + " must be True or False", false;
+            (name == "visible" ? im.visible : im.clipOn) = value.asBool();
+        } else {
+            *taken = false;
+        }
+        return true;
+    }
+
     // Axes.imshow(X, cmap=None, norm=None, *, aspect=None, interpolation=None, alpha=None, vmin=None, vmax=None,
     // colorizer=None, origin=None, extent=None, interpolation_stage=None, filternorm=True, filterrad=4.0,
-    // resample=None, url=None, **artist properties)
-    bool imshow(Axes& ax, const model::Call& call, std::string* error) {
-        const std::string where = call.on + ".imshow";
+    // resample=None, url=None, **artist properties). spy's image takes its own colormap and NoNorm as defaults.
+    bool imshow(Axes& ax, const model::Call& call, std::string* error, const colors::Colormap* cmapDefault = nullptr,
+                bool noNorm = false, AxesImage** made = nullptr) {
+        const std::string where = call.on + "." + call.method;
         if (call.as.size() > 1) return *error = where + " returns one object: name it once", false;
         const Json* X = argument(call, 0, "X");
         if (!X) return *error = where + ": missing 1 required positional argument: 'X'", false;
         ImageArray data;
         if (!readArray(*X, &data, error)) return *error = where + ": " + *error, false;
         auto im = std::make_unique<AxesImage>(rc_, ax);
-        // the colorizer: the colormap and the norm
-        std::string cmapName = rc_.text("image.cmap");
-        if (const Json* c = argument(call, 1, "cmap"); c && !c->isNull()) {
-            if (!c->isString()) return *error = where + ": cmap must be a colormap name", false;
-            cmapName = c->asString();
-        }
-        const auto cmap = colors::Colormap::named(cmapName);
-        if (!cmap) return *error = where + ": '" + cmapName + "' is not a valid value for cmap", false;
-        im->cmap = *cmap;
         bool normObject = false;
-        const Json* n = argument(call, 2, "norm");
-        if (n && n->isObject() && n->members()[0].first == "$ref") {
-            const auto it = norms_.find(n->members()[0].second.asString());
-            if (it == norms_.end()) return *error = where + ": norm must be a norm the figure file made, or a scale name", false;
-            im->norm = it->second;
-            normObject = true;
-        } else {
-            colors::NormSpec spec;
-            if (n && !n->isNull()) {
-                static const char* const scales[] = {"linear", "log", "symlog", "asinh", "logit"};
-                if (!n->isString()) return *error = where + ": norm must be a norm the figure file made, or a scale name", false;
-                const std::string name = n->asString();
-                if (name == "function" || name == "functionlog")
-                    return *error = where + ": the norm of the " + name + " scale is not supported yet", false;
-                if (std::find(std::begin(scales), std::end(scales), name) == std::end(scales))
-                    return *error = where + ": '" + name + "' is not a valid value for norm; supported values are 'asinh', 'function', 'functionlog', 'linear', 'log', 'logit', 'symlog'", false;
-                spec.kind = "scale:" + name;
-            }
-            im->norm = std::make_shared<colors::Norm>();
-            if (!colors::Norm::make(spec, im->norm.get(), error)) return *error = where + ": " + *error, false;
-        }
+        if (!imageColorizer(*im, argument(call, 1, "cmap"), argument(call, 2, "norm"), cmapDefault, noNorm, where, &normObject, error))
+            return false;
         std::optional<double> vmin, vmax;
         const Json* aspect = nullptr;
-        const Json* alpha = nullptr;
-        static const char* const interpolations[] = {"auto", "none", "nearest", "bilinear", "bicubic", "spline16", "spline36",
-                                                     "hanning", "hamming", "hermite", "kaiser", "quadric", "catrom", "gaussian",
-                                                     "bessel", "mitchell", "sinc", "lanczos", "blackman", "antialiased"};
         for (const auto& [name, value] : call.kwargs) {
             double v = 0;
-            if (name == "X" || name == "cmap" || name == "norm") continue;
+            bool taken = false;
+            if (name == "X" || name == "cmap" || name == "norm" || name == "alpha") continue;
             if (name == "aspect") {
                 aspect = &value;
-            } else if (name == "alpha") {
-                alpha = &value;
             } else if (name == "vmin" || name == "vmax") {
                 if (value.isNull()) continue;
                 if (!readNumber(value, &v)) return *error = where + ": " + name + " must be a number", false;
                 (name == "vmin" ? vmin : vmax) = v;
-            } else if (name == "interpolation") {
-                std::string s = value.isNull() ? rc_.text("image.interpolation") : value.isString() ? value.asString() : "";
-                for (char& ch : s) ch = char(std::tolower((unsigned char)ch));
-                if (std::find(std::begin(interpolations), std::end(interpolations), s) == std::end(interpolations))
-                    return *error = where + ": that is not a valid value for interpolation", false;
-                im->interpolation = s;
-            } else if (name == "interpolation_stage") {
-                const std::string s = value.isNull() ? rc_.text("image.interpolation_stage") : value.isString() ? value.asString() : "";
-                if (s != "data" && s != "rgba" && s != "auto")
-                    return *error = where + ": that is not a valid value for s; supported values are 'data', 'rgba', 'auto'", false;
-                im->interpolationStage = s;
-            } else if (name == "origin") {
-                const std::string s = value.isNull() ? rc_.text("image.origin") : value.isString() ? value.asString() : "";
-                if (s != "upper" && s != "lower")
-                    return *error = where + ": that is not a valid value for origin; supported values are 'upper', 'lower'", false;
-                im->origin = s;
             } else if (name == "extent") {
                 if (value.isNull()) continue;
                 const Json* list = sequence(value);
@@ -4391,32 +4465,9 @@ private:
                 for (std::size_t k = 0; k < 4; ++k)
                     if (!readNumber((*list)[k], &e[k])) return *error = where + ": extent must be (left, right, bottom, top)", false;
                 im->extent = e;
-            } else if (name == "filternorm") {
-                if (!value.isBool() && !readNumber(value, &v)) return *error = where + ": filternorm must be True or False", false;
-                im->filternorm = value.isBool() ? value.asBool() : v != 0;
-            } else if (name == "filterrad") {
-                if (!readNumber(value, &v)) return *error = where + ": filterrad must be a number", false;
-                if (!(v > 0)) return *error = where + ": The filter radius must be a positive number", false;
-                im->filterrad = v;
-            } else if (name == "resample") {
-                if (value.isNull()) continue;
-                if (!value.isBool()) return *error = where + ": resample must be True or False", false;
-                im->resample = value.asBool();
-            } else if (name == "url" || name == "gid" || name == "label") {
-                if (value.isNull() && name != "label") continue;
-                if (!value.isString()) return *error = where + ": " + name + " must be a string", false;
-                (name == "url" ? im->url : name == "gid" ? im->gid : im->label) = value.asString();
-                if (name == "label") im->label = value.asString();
-            } else if (name == "colorizer") {
-                if (!value.isNull()) return *error = where + ": colorizer is not supported yet", false;
-            } else if (name == "zorder") {
-                if (!readFinite(value, &v)) return *error = where + ": zorder must be a number", false;
-                im->zorder = v;
-            } else if (name == "visible" || name == "clip_on") {
-                if (!value.isBool()) return *error = where + ": " + name + " must be True or False", false;
-                (name == "visible" ? im->visible : im->clipOn) = value.asBool();
             } else {
-                return *error = where + ": " + name + " is not supported yet", false;
+                if (!imageProperty(*im, name, value, where, &taken, error)) return false;
+                if (!taken) return *error = where + ": " + name + " is not supported yet", false;
             }
         }
         // aspect: rcParams["image.aspect"] unless given
@@ -4427,22 +4478,7 @@ private:
         setAspect.args = {*aspect};
         if (!axesCall(ax, setAspect, error)) return *error = where + ": " + *error, false;
         if (!im->setData(data, error)) return *error = where + ": " + *error, false;
-        // set_alpha: a number in [0, 1], a 2-D array of them, or None
-        if (alpha && !alpha->isNull()) {
-            double a = 0;
-            if (readNumber(*alpha, &a)) {
-                if (!(0 <= a && a <= 1)) return *error = where + ": alpha (" + repr(*alpha) + ") is outside 0-1 range", false;
-                im->alpha = a;
-            } else {
-                ImageArray al;
-                if (alpha->isString() || !readArray(*alpha, &al, error) || al.channels != 0)
-                    return *error = where + ": alpha must be a float, two-dimensional array, or None", false;
-                const auto [mn, mx] = std::minmax_element(al.data.begin(), al.data.end());
-                if (!(0 <= *mn && *mx <= 1)) return *error = where + ": alpha must be between 0 and 1, inclusive", false;
-                al.dtype = colors::DType::Float64;
-                im->alphaArray = al;
-            }
-        }
+        if (!imageAlpha(*im, keyword(call, "alpha"), where, error)) return false;
         // clipped to the Axes patch (a rectangle: its box)
         im->clipBox = std::make_shared<transforms::TransformedBbox>(
             std::make_shared<transforms::Bbox>(std::array<double, 4>{0, 0, 1, 1}), ax.patch->fullTransform());
@@ -4472,7 +4508,181 @@ private:
         AxesImage* ref = im.get();
         ax.addImage(std::move(im));
         if (!call.as.empty()) images_[call.as[0]] = ref;
+        if (made) *made = ref;
         return true;
+    }
+
+    // What matshow and spy do after drawing: the title a little higher, the x ticks on top (spy: on the side of
+    // origin 0) and on both sides, and integer MaxNLocator(nbins=9, steps=[1, 2, 5, 10]) for both axes.
+    bool matrixAxes(Axes& ax, bool top, std::string* error) {
+        ax.title->y = 1.05;
+        if (!ax.xaxis->tickSide(top ? "top" : "bottom", error) || !ax.xaxis->setTicksPosition("both", error)) return false;
+        for (Axis* axis : {ax.xaxis.get(), ax.yaxis.get()}) {
+            axes::MaxNLocator locator;
+            locator.nbins = 9;
+            locator.setSteps({1, 2, 5, 10});
+            locator.integer = true;
+            axis->tickerAxis().locator = locator;
+        }
+        return true;
+    }
+
+    // Axes.matshow(Z, **kwargs): imshow with origin 'upper', interpolation 'nearest' and aspect 'equal' unless given
+    bool matshow(Axes& ax, const model::Call& call, std::string* error) {
+        const std::string where = call.on + ".matshow";
+        if (call.args.size() > 1) return *error = where + ": too many positional arguments", false;
+        const Json* Z = argument(call, 0, "Z");
+        if (!Z) return *error = where + ": missing 1 required positional argument: 'Z'", false;
+        model::Call c;
+        c.on = call.on;
+        c.method = "matshow";
+        c.as = call.as;
+        c.args = {*Z};
+        c.kwargs = {{"origin", Json::string("upper")}, {"interpolation", Json::string("nearest")}, {"aspect", Json::string("equal")}};
+        for (const auto& kw : call.kwargs) {  // {**defaults, **kwargs}: a given value takes the default's place
+            const std::string& name = kw.first;
+            const Json& value = kw.second;
+            if (name == "Z") continue;
+            if (name == "X") return *error = where + ": imshow() got multiple values for argument 'X'", false;
+            auto it = std::find_if(c.kwargs.begin(), c.kwargs.end(), [&](const auto& entry) { return entry.first == name; });
+            if (it != c.kwargs.end()) it->second = value;
+            else c.kwargs.emplace_back(name, value);
+        }
+        if (!imshow(ax, c, error)) return false;
+        return matrixAxes(ax, true, error);
+    }
+
+    // Axes.spy(Z, precision=0, marker=None, markersize=None, aspect='equal', origin='upper', **kwargs): the
+    // entries whose magnitude exceeds precision, as an image (no marker) or as markers.
+    bool spy(Axes& ax, const model::Call& call, std::string* error) {
+        const std::string where = call.on + ".spy";
+        static const char* const own[] = {"Z", "precision", "marker", "markersize", "aspect", "origin"};
+        if (call.args.size() > 6) return *error = where + ": too many positional arguments", false;
+        for (std::size_t i = 0; i < call.args.size(); ++i)
+            if (keyword(call, own[i])) return *error = where + ": got multiple values for argument '" + own[i] + "'", false;
+        const Json* Z = argument(call, 0, "Z");
+        if (!Z) return *error = where + ": missing 1 required positional argument: 'Z'", false;
+        double precision = 0;
+        if (const Json* p = argument(call, 1, "precision"); p && !readNumber(*p, &precision))
+            return *error = where + ": precision must be a number ('present' is for sparse arrays)", false;
+        const Json* marker = argument(call, 2, "marker");
+        const Json* markersize = argument(call, 3, "markersize");
+        if (marker && marker->isNull()) marker = nullptr;
+        if (markersize && markersize->isNull()) markersize = nullptr;
+        const Json* aspectArg = argument(call, 4, "aspect");
+        const Json aspect = aspectArg ? *aspectArg : Json::string("equal");
+        const Json* originArg = argument(call, 5, "origin");
+        const std::string origin = originArg && originArg->isString() ? originArg->asString() : originArg ? "" : "upper";
+        if (origin != "upper" && origin != "lower")
+            return *error = where + ": that is not a valid value for origin; supported values are 'upper', 'lower'", false;
+        ImageArray z;
+        if (!readArray(*Z, &z, error) || z.channels != 0) return *error = where + ": Z must be a 2-D array", false;
+        std::vector<std::pair<std::string, Json>> rest;
+        for (const auto& [name, value] : call.kwargs)
+            if (std::find(std::begin(own), std::end(own), name) == std::end(own)) rest.emplace_back(name, value);
+        if (!marker && !markersize) {
+            // an image of the mask: ListedColormap(['w', 'k']) and NoNorm unless given
+            for (const auto& kw : rest)
+                if (kw.first == "interpolation") return *error = where + ": spy() got an unexpected keyword argument 'interpolation'", false;
+            std::vector<Json> rows;
+            for (int r = 0; r < z.rows; ++r) {
+                std::vector<Json> row;
+                for (int c = 0; c < z.cols; ++c) row.push_back(Json::boolean(std::fabs(z.data[std::size_t(r) * z.cols + c]) > precision));
+                rows.push_back(Json::array(row));
+            }
+            model::Call c;
+            c.on = call.on;
+            c.method = "spy";
+            c.as = call.as;
+            c.args = {Json::array(rows)};
+            c.kwargs = {{"interpolation", Json::string("nearest")}, {"aspect", aspect}, {"origin", Json::string(origin)}};
+            for (const auto& kw : rest) c.kwargs.push_back(kw);
+            const colors::Colormap binary = colors::Colormap::listed({{1, 1, 1, 1}, {0, 0, 0, 1}}, "binary");
+            if (!imshow(ax, c, error, &binary, !keyword(call, "norm"))) return false;
+        } else {
+            // Line2D(x, y, linestyle='None', marker=marker, markersize=markersize, **kwargs) of np.nonzero
+            if (!call.as.empty()) return *error = where + ": naming spy's line is not supported yet", false;
+            std::vector<double> xs, ys;
+            for (int r = 0; r < z.rows; ++r)
+                for (int c = 0; c < z.cols; ++c)
+                    if (std::fabs(z.data[std::size_t(r) * z.cols + c]) > precision) ys.push_back(r), xs.push_back(c);
+            auto line = std::make_unique<Line2D>(rc_, xs, ys);
+            for (const auto& kw : rest)
+                if (kw.first == "linestyle" || kw.first == "ls") return *error = where + ": spy() got an unexpected keyword argument 'linestyle'", false;
+            const Json markerValue = marker ? *marker : Json::string("s");
+            const Json sizeValue = markersize ? *markersize : Json::integer(10);
+            if (!lineProperty(*line, "linestyle", Json::string("None"), where, error) ||
+                !lineProperty(*line, "marker", markerValue, where, error) ||
+                !lineProperty(*line, "markersize", sizeValue, where, error))
+                return false;
+            for (const auto& [name, value] : rest)
+                if (!lineProperty(*line, fullName(name, lineAliases()), value, where, error)) return false;
+            ax.addLine(std::move(line));
+            model::Call lim;
+            lim.on = call.on;
+            lim.method = "set_xlim";
+            lim.args = {Json::real(-0.5), Json::real(z.cols - 0.5)};
+            if (!axesCall(ax, lim, error)) return false;
+            lim.method = "set_ylim";
+            lim.args = origin == "upper" ? std::vector<Json>{Json::real(z.rows - 0.5), Json::real(-0.5)}
+                                         : std::vector<Json>{Json::real(-0.5), Json::real(z.rows - 0.5)};
+            if (!axesCall(ax, lim, error)) return false;
+            model::Call setAspect;
+            setAspect.on = call.on;
+            setAspect.method = "set_aspect";
+            setAspect.args = {aspect};
+            if (!axesCall(ax, setAspect, error)) return false;
+        }
+        return matrixAxes(ax, origin == "upper", error);
+    }
+
+    // Figure.figimage(X, xo=0, yo=0, alpha=None, norm=None, cmap=None, vmin=None, vmax=None, origin=None,
+    // resize=False, *, colorizer=None, **kwargs): an image at (xo, yo) pixels on the figure
+    bool figimage(const model::Call& call, std::string* error) {
+        const std::string where = (call.on.empty() ? std::string("plt") : call.on) + ".figimage";
+        static const char* const names[] = {"X", "xo", "yo", "alpha", "norm", "cmap", "vmin", "vmax", "origin", "resize"};
+        if (call.args.size() > 10) return *error = where + ": too many positional arguments", false;
+        for (std::size_t i = 0; i < call.args.size(); ++i)
+            if (keyword(call, names[i])) return *error = where + ": got multiple values for argument '" + names[i] + "'", false;
+        if (call.as.size() > 1) return *error = where + " returns one object: name it once", false;
+        const Json* X = argument(call, 0, "X");
+        if (!X) return *error = where + ": missing 1 required positional argument: 'X'", false;
+        double xo = 0, yo = 0;
+        if (const Json* v = argument(call, 1, "xo"); v && !readNumber(*v, &xo)) return *error = where + ": xo must be a number", false;
+        if (const Json* v = argument(call, 2, "yo"); v && !readNumber(*v, &yo)) return *error = where + ": yo must be a number", false;
+        ImageArray data;
+        if (!readArray(*X, &data, error)) return *error = where + ": " + *error, false;
+        Figure& fig = *figure_;
+        const Json* resize = argument(call, 9, "resize");
+        if (resize && !resize->isNull() && !resize->isBool()) return *error = where + ": resize must be True or False", false;
+        if (resize && resize->isBool() && resize->asBool()) fig.setSizeInches(data.cols / fig.dpi, data.rows / fig.dpi);
+        auto im = std::make_unique<FigureImage>(rc_, fig, xo, yo);
+        const Json* n = argument(call, 4, "norm");
+        bool normObject = false;
+        if (!imageColorizer(*im, argument(call, 5, "cmap"), n, nullptr, false, where, &normObject, error)) return false;
+        if (const Json* o = argument(call, 8, "origin")) {
+            bool taken = false;
+            if (!imageProperty(*im, "origin", *o, where, &taken, error)) return false;
+        }
+        for (const auto& [name, value] : call.kwargs) {
+            if (std::find(std::begin(names), std::end(names), name) != std::end(names)) continue;
+            bool taken = false;
+            if (!imageProperty(*im, name, value, where, &taken, error)) return false;
+            if (!taken) return *error = where + ": " + name + " is not supported yet", false;
+        }
+        if (!im->setData(data, error)) return *error = where + ": " + *error, false;
+        if (!imageAlpha(*im, argument(call, 3, "alpha"), where, error)) return false;
+        if (!n || n->isNull()) {  // set_clim(vmin, vmax); the norm scales itself when the image is drawn
+            double v = 0;
+            for (int k : {6, 7}) {
+                const Json* lim = argument(call, std::size_t(k), names[k]);
+                if (!lim || lim->isNull()) continue;
+                if (!readNumber(*lim, &v)) return *error = where + ": " + names[k] + " must be a number", false;
+                k == 6 ? im->norm->setVmin(v) : im->norm->setVmax(v);
+            }
+        }
+        fig.images.push_back(std::move(im));
+        return nameResult(call, nullptr, error);
     }
 
     // Axes.add_patch(p): a patch the figure file made, into the Axes (its data limits grow by it; no

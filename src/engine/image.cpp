@@ -50,7 +50,7 @@ render::Interpolation filterOf(const std::string& name) {
 
 // _resample(image_obj, data, out_shape, transform, resample=, alpha=): `data` grey (2-D) or RGBA, of uint8,
 // float32 or float64; the output starts as zeros
-bool resampleImage(const AxesImage& im, const ImageArray& in, int outRows, int outCols, TransformPtr t,
+bool resampleImage(const ImageBase& im, const ImageArray& in, int outRows, int outCols, TransformPtr t,
                    std::optional<bool> resampleArg, double alpha, ImageArray* out, std::string* error) {
     if (in.cols > (1 << 23) || in.rows > (1 << 24))
         return *error = "images of more than 2**23 columns or 2**24 rows are not supported yet", false;
@@ -181,7 +181,7 @@ bool passImageData(const ImageArray& x, bool bytes, bool norm, ImageArray* out, 
 }
 
 // Colorizer.to_rgba(x, bytes=, norm=) of a 2-D array (through the norm unless `norm` is false, then the colormap)
-bool mapGrey(const AxesImage& im, colors::Norm& norm, const ImageArray& a, bool bytes, bool useNorm, ImageArray* out,
+bool mapGrey(const ImageBase& im, colors::Norm& norm, const ImageArray& a, bool bytes, bool useNorm, ImageArray* out,
              std::string* error) {
     colors::MaskedArray x;
     x.data = a.data;
@@ -274,7 +274,7 @@ bool readArray(const support::Json& v, ImageArray* out, std::string* error) {
     return true;
 }
 
-AxesImage::AxesImage(const rc::Params& rc, Axes& axes) : Artist(rc), axes_(axes) {
+ImageBase::ImageBase(const rc::Params& rc) : Artist(rc) {
     zorder = 0;
     origin = rc.text("image.origin");
     interpolation = rc.text("image.interpolation");
@@ -282,7 +282,7 @@ AxesImage::AxesImage(const rc::Params& rc, Axes& axes) : Artist(rc), axes_(axes)
     resample = rc.boolean("image.resample");
 }
 
-bool AxesImage::setData(const ImageArray& in, std::string* error) {
+bool ImageBase::setData(const ImageArray& in, std::string* error) {
     ImageArray a = in;
     // cbook.safe_masked_invalid: masked where not finite (no mask when all are)
     a.mask.assign(a.size(), false);
@@ -319,24 +319,44 @@ std::array<double, 4> AxesImage::getExtent() const {
     return {-0.5, cols - 0.5, -0.5, rows - 0.5};
 }
 
-double AxesImage::scalarAlpha() const { return alphaArray || !alpha ? 1.0 : *alpha; }
+double ImageBase::scalarAlpha() const { return alphaArray || !alpha ? 1.0 : *alpha; }
 
-bool AxesImage::canComposite() const {
+bool ImageBase::canComposite() const {
     // can_composite: not 'none', an affine and separable transform (rectilinear Axes)
     return interpolation != "none" && transform->isAffine();
 }
 
-std::optional<AxesImage::Made> AxesImage::makeImage(Renderer& renderer, double magnification, bool unsampled) {
+AxesImage::AxesImage(const rc::Params& rc, Axes& axes) : ImageBase(rc), axes_(axes) {}
+
+std::optional<ImageBase::Made> AxesImage::makeImage(Renderer& renderer, double magnification, bool unsampled) {
+    // the extent through the transform, clipped to the clip box (or the Axes, or the figure)
+    const auto e = getExtent();
+    const std::array<double, 4> in{e[0], e[2], e[1], e[3]};
+    const auto out = transforms::TransformedBbox(std::make_shared<transforms::Bbox>(in), transform).points();
+    const auto clip = (clipOn ? (clipBox ? clipBox : transforms::BboxPtr(axes_.bbox)) : transforms::BboxPtr(axes_.figure.bbox))->points();
+    return makeImageFrom(renderer, in, out, clip, magnification, unsampled, true);
+}
+
+FigureImage::FigureImage(const rc::Params& rc, Figure& figure, double ox, double oy)
+    : ImageBase(rc), figure_(figure), ox_(ox), oy_(oy) {}
+
+std::optional<ImageBase::Made> FigureImage::makeImage(Renderer& renderer, double magnification, bool unsampled) {
+    // in pixels of the figure's dpi; `fac` for renderers drawing at another dpi (SVG: 72)
+    const double fac = renderer.mixedModeDpi() / figure_.dpi;
+    const std::array<double, 4> box{ox_ / fac, oy_ / fac, ox_ / fac + a_.cols, oy_ / fac + a_.rows};
+    const auto inches = figure_.bboxInches->points();
+    const std::array<double, 4> clip{0, 0, inches[2] * renderer.mixedModeDpi(), inches[3] * renderer.mixedModeDpi()};
+    return makeImageFrom(renderer, box, box, clip, magnification / fac, unsampled, false);
+}
+
+std::optional<ImageBase::Made> ImageBase::makeImageFrom(Renderer& renderer, const std::array<double, 4>& in,
+                                                        const std::array<double, 4>& outBbox, const std::array<double, 4>& clip,
+                                                        double magnification, bool unsampled, bool round) {
     std::string error;
     const auto fail = [&]() -> std::optional<Made> {
         renderer.unsupported(error);
         return std::nullopt;
     };
-    // AxesImage.make_image: the extent through the transform, clipped to the clip box (or the Axes, or the figure)
-    const auto e = getExtent();
-    const auto inBbox = std::make_shared<transforms::Bbox>(std::array<double, 4>{e[0], e[2], e[1], e[3]});
-    const auto outBbox = transforms::TransformedBbox(inBbox, transform).points();
-    const auto clip = (clipOn ? (clipBox ? clipBox : transforms::BboxPtr(axes_.bbox)) : transforms::BboxPtr(axes_.figure.bbox))->points();
     // Bbox.intersection
     const double x0 = std::max(std::min(outBbox[0], outBbox[2]), std::min(clip[0], clip[2]));
     const double x1 = std::min(std::max(outBbox[0], outBbox[2]), std::max(clip[0], clip[2]));
@@ -344,7 +364,7 @@ std::optional<AxesImage::Made> AxesImage::makeImage(Renderer& renderer, double m
     const double y1 = std::min(std::max(outBbox[1], outBbox[3]), std::max(clip[1], clip[3]));
     if (!(x0 <= x1 && y0 <= y1)) return std::nullopt;
     std::array<double, 4> m{x0 * magnification, y0 * magnification, x1 * magnification, y1 * magnification};
-    if (!unsampled) {  // to the nearest output pixel, with a fudge away from Agg's anchor (x0, y1)
+    if (!unsampled && round) {  // to the nearest output pixel, with a fudge away from Agg's anchor (x0, y1)
         m = {std::floor(m[0] + 0.5), std::ceil(m[1] - 0.5 - 1e-8), std::floor(m[2] + 0.5 + 1e-8), std::ceil(m[3] - 0.5)};
     }
     const double mwidth = m[2] - m[0], mheight = m[3] - m[1];
@@ -356,7 +376,7 @@ std::optional<AxesImage::Made> AxesImage::makeImage(Renderer& renderer, double m
         t0 = affine(flip);
     }
     Affine2D place;
-    place.scale((e[1] - e[0]) / a_.cols, (e[3] - e[2]) / a_.rows).translate(e[0], e[2]);
+    place.scale((in[2] - in[0]) / a_.cols, (in[3] - in[1]) / a_.rows).translate(in[0], in[1]);
     t0 = transforms::compose(t0, transforms::compose(affine(place), transform));
     Affine2D toOutput;
     toOutput.scale(magnification, magnification).translate(-m[0], -m[1]);
@@ -542,14 +562,14 @@ std::optional<AxesImage::Made> AxesImage::makeImage(Renderer& renderer, double m
     return made;
 }
 
-void AxesImage::draw(Renderer& renderer) {
+void ImageBase::draw(Renderer& renderer) {
     if (!visible || a_.size() == 0) return;
     GC gc = renderer.newGc();
     setGcClip(gc);
     gc.setAlpha(scalarAlpha());
     gc.url = url;
     gc.gid = gid;
-    if (renderer.optionScaleImage() && interpolation == "none" && transform->isAffine()) {
+    if (renderer.optionScaleImage() && checkUnsampledImage() && transform->isAffine()) {
         const auto made = makeImage(renderer, 1.0, true);
         if (made && made->image.width > 0 && made->image.height > 0) {
             Affine2D size;
@@ -563,12 +583,12 @@ void AxesImage::draw(Renderer& renderer) {
 }
 
 void drawListCompositingImages(Renderer& renderer, const transforms::BboxPtr& parentBbox, const std::vector<Artist*>& artists) {
-    const bool hasImages = std::any_of(artists.begin(), artists.end(), [](Artist* a) { return dynamic_cast<AxesImage*>(a); });
+    const bool hasImages = std::any_of(artists.begin(), artists.end(), [](Artist* a) { return dynamic_cast<ImageBase*>(a); });
     if (renderer.optionImageNocomposite() || !hasImages) {
         for (Artist* a : artists) a->draw(renderer);
         return;
     }
-    std::vector<AxesImage*> group;
+    std::vector<ImageBase*> group;
     const double mag = renderer.imageMagnification();
     const auto flush = [&]() {
         if (group.size() == 1) {
@@ -576,12 +596,12 @@ void drawListCompositingImages(Renderer& renderer, const transforms::BboxPtr& pa
         } else if (group.size() > 1) {
             // composite_images: each image made at the magnification, put on one canvas by nearest resampling
             struct Part {
-                AxesImage::Made made;
+                ImageBase::Made made;
                 double alpha;
             };
             std::vector<Part> parts;
             std::vector<transforms::Bbox> boxes;
-            for (AxesImage* im : group) {
+            for (ImageBase* im : group) {
                 auto made = im->makeImage(renderer, mag, false);
                 if (!made) continue;
                 made->x *= mag;
@@ -621,7 +641,7 @@ void drawListCompositingImages(Renderer& renderer, const transforms::BboxPtr& pa
         group.clear();
     };
     for (Artist* a : artists) {
-        auto* im = dynamic_cast<AxesImage*>(a);
+        auto* im = dynamic_cast<ImageBase*>(a);
         if (im && im->canComposite() && im->clipOn && !im->clipPath) {
             group.push_back(im);
         } else {

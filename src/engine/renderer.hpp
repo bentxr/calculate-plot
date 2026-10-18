@@ -81,6 +81,9 @@ public:
     // option_image_nocomposite: images drawn one by one (Agg) rather than put together first (SVG)
     virtual bool optionImageNocomposite() const { return true; }
     virtual double imageMagnification() const { return 1.0; }  // get_image_magnification
+    // renderer.dpi as an artist reads it: the SVG backend's MixedModeRenderer keeps the dpi of the save, while
+    // the figure (and dpi()) are at 72
+    virtual double mixedModeDpi() const { return dpi(); }
     virtual bool optionScaleImage() const { return false; }      // option_scale_image: draw_image takes a transform
     // draw_image(gc, x, y, im, transform): x, y the lower left corner in pixels from the bottom; a transform
     // (the SVG renderer's option_scale_image) maps the unit square of the image

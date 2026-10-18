@@ -19,6 +19,7 @@
 namespace calculate_plot::engine {
 
 class Axes;
+class Figure;
 
 // A NumPy array of two dimensions (rows x cols) or three (rows x cols x channels): its values row by row, each
 // exact in its dtype, and its mask (empty: nomask).
@@ -37,10 +38,10 @@ struct ImageArray {
 // for ragged lists or values the dtype cannot hold.
 bool readArray(const support::Json& v, ImageArray* out, std::string* error);
 
-// An image in an Axes (AxesImage).
-class AxesImage : public Artist {
+// What images share (_ImageBase): the data, the colorizer, how they are resampled and drawn.
+class ImageBase : public Artist {
 public:
-    AxesImage(const rc::Params& rc, Axes& axes);
+    explicit ImageBase(const rc::Params& rc);
 
     // set_data: _normalize_image_array (masked where not finite; RGB(A) clipped to its range and integers made
     // uint8); false with matplotlib's message
@@ -53,8 +54,6 @@ public:
     std::string origin = "upper", interpolation = "auto", interpolationStage = "auto";
     bool filternorm = true, resample = true;
     double filterrad = 4.0;
-    std::optional<std::array<double, 4>> extent;  // left, right, bottom, top
-    std::array<double, 4> getExtent() const;
     double scalarAlpha() const;  // _get_scalar_alpha
     bool canComposite() const;   // can_composite
     void draw(Renderer& renderer) override;
@@ -66,11 +65,41 @@ public:
         double x = 0, y = 0;
         transforms::TransformPtr transform;
     };
-    std::optional<Made> makeImage(Renderer& renderer, double magnification, bool unsampled);
+    virtual std::optional<Made> makeImage(Renderer& renderer, double magnification, bool unsampled) = 0;
+
+protected:
+    virtual bool checkUnsampledImage() const { return false; }  // _check_unsampled_image
+    // _make_image(A, in_bbox, out_bbox, clip_bbox, magnification, unsampled, round_to_pixel_border); the boxes as
+    // their points x0, y0, x1, y1
+    std::optional<Made> makeImageFrom(Renderer& renderer, const std::array<double, 4>& in, const std::array<double, 4>& out,
+                                      const std::array<double, 4>& clip, double magnification, bool unsampled, bool round);
+    ImageArray a_;
+};
+
+// An image in an Axes (AxesImage).
+class AxesImage : public ImageBase {
+public:
+    AxesImage(const rc::Params& rc, Axes& axes);
+    std::optional<std::array<double, 4>> extent;  // left, right, bottom, top
+    std::array<double, 4> getExtent() const;
+    std::optional<Made> makeImage(Renderer& renderer, double magnification, bool unsampled) override;
+
+protected:
+    bool checkUnsampledImage() const override { return interpolation == "none"; }
 
 private:
     Axes& axes_;
-    ImageArray a_;
+};
+
+// An image placed on the figure in pixels from its lower left corner (FigureImage, fig.figimage).
+class FigureImage : public ImageBase {
+public:
+    FigureImage(const rc::Params& rc, Figure& figure, double ox, double oy);
+    std::optional<Made> makeImage(Renderer& renderer, double magnification, bool unsampled) override;
+
+private:
+    Figure& figure_;
+    double ox_, oy_;
 };
 
 // _draw_list_compositing_images: the artists in order, with adjacent images that can be put together drawn as one

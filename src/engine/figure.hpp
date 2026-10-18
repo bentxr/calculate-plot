@@ -57,6 +57,7 @@ public:
     std::vector<std::unique_ptr<Axes>> axes;
     std::vector<std::unique_ptr<GridSpec>> gridspecs;  // kept alive for the axes' subplot specs
     std::vector<std::unique_ptr<Artist>> texts;         // figure texts (suptitle)
+    std::vector<std::unique_ptr<Artist>> images;        // fig.figimage's FigureImages
     Artist* suptitle = nullptr;
     bool suptitleAutopos = true;  // (its y was not given: a layout places it)
     std::optional<LayoutEngine> layoutEngine;

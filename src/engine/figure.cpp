@@ -9,6 +9,7 @@
 #include "support/raised.hpp"
 
 #include "engine/axes.hpp"
+#include "engine/image.hpp"
 #include "engine/text.hpp"
 
 #include <algorithm>
@@ -112,6 +113,7 @@ void Figure::draw(Renderer& renderer) {
     std::vector<Artist*> artists;
     for (auto& a : axes) artists.push_back(a.get());
     for (auto& t : texts) artists.push_back(t.get());
+    for (auto& im : images) artists.push_back(im.get());
     std::stable_sort(artists.begin(), artists.end(), [](const Artist* a, const Artist* b) { return a->zorder < b->zorder; });
     // ... and each Axes, then its child Axes, placed (apply_aspect with its locator) before anything is drawn
     for (auto& ax : axes) {
@@ -131,7 +133,7 @@ void Figure::draw(Renderer& renderer) {
         }
     }
     patch->draw(renderer);
-    for (Artist* a : artists) a->draw(renderer);
+    drawListCompositingImages(renderer, bbox, artists);
     renderer.closeGroup("figure");
 }
 

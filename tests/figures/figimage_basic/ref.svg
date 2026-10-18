@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="216pt" height="144pt" viewBox="0 0 216 144" xmlns="http://www.w3.org/2000/svg" version="1.1">
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>calculate-plot</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 144 
+L 216 144 
+L 216 0 
+L 0 0 
+z
+" style="fill: #ffffff"/>
+  </g>
+  <g clip-path="url(#p352537b05a)">
+   <image xlink:href="data:image/png;base64,
+iVBORw0KGgoAAAANSUhEUgAAAKwAAABACAYAAACHt5whAAACeUlEQVR4nO3cQUhTcQDH8d9/DlqmrEHgIWUMHYJdynAyUBBchOJuQQwRTx3KTl6CDjE6CN2zDp08iATd6hJ18NAhkOqSG0o5D7PyoAYGaaj/DuExeP/Q/+PZ9wODHR6P/+DLjw0eMwJCtP+1wx6+n/8Z0+vtC1rYSGtl/ZwO1hM6/S2mM1+smtZ+KbG6oViYhwUOBYl1b2WVYBG+oLFKIliEyyVWiWARMpdYJYJFyFxilQgWIXOJVSJYhMwlVgDAcTL7bzptcnBcpd2MCu2bupj7qHRfVRquK5+dVNGm1N9dU1fvoloGqtoe2dJYY1lDSSmXqyibr6i5sCzXe6QSNRP2h0f0mFc9U/aoYwxyj865xwQLZ6bp1JT1va5jjWW9OBgnWDgza7dHre91TfdVlZiYJ1g4Mzc0Z32v61BSmthiYeHO7D3rtr7XVcN1JTKfCBbOzNP2aet7XXO5inpePiBYODNbOxnre13z2Ul92LtFsHBmlko3re91zeYrOlt+TrBwZkZiM9b3uhZtSvf3SwQLZ2ZnesD6XtfmwrIa+pYIFs7MdGrG+l7X/u6arizcJVg4Mzu1Dut7XZOD4/qxS7BwZxau3rG+17Wrd1HnH84SLJyZS/FH1ve6lnYzeiJ+dMGd+V4uWt/r2jJQVfzae4KFM3OvYc76XtdC+6auf54gWDjjAW5ECg9wI1J4gBsAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAfOPfV6LqskalVv15temv79+Z2fAOefTiYR8A/6Y14HX1Yz2FfwQbUQSLSGkLeN3bYz2FfwQbUUEX9qQh2IgiWERK0K8EJw3BRhQLi0j5X4P9DQeRhL7G+R3UAAAAAElFTkSuQmCC" id="image44e690749b" transform="scale(1 -1) translate(0 -57.6)" x="9" y="-81.4" width="154.8" height="57.6"/>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="p352537b05a">
+   <rect x="0" y="0" width="216" height="144"/>
+  </clipPath>
+ </defs>
+</svg>

@@ -21,6 +21,8 @@ public:
     // A registered colormap by name (data/colormaps.json, names ending in _r reversed); nullopt for other names.
     static std::optional<Colormap> named(const std::string& name);
     static std::vector<std::string> names();  // every registered name
+    // ListedColormap(colors, name): a colormap of these colours (to_rgba_array of them)
+    static Colormap listed(const std::vector<Rgba>& colors, const std::string& name);
 
     const std::string& name() const { return name_; }
     std::size_t size() const { return std::size_t(n_); }  // N

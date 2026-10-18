@@ -309,10 +309,10 @@ it comes from in its first lines. The changes, as a whole:
   the lookup mesh of a non-affine transform given by the caller) translated to a C++ function without Python. The
   build defines MPL_FIX_AGG_IMAGE_FILTER_LUT_BUGS and MPL_FIX_AGG_INTERPOLATION_ENDPOINT_BUG for Agg, as matplotlib's
   meson build does.
-- **Images** (src/engine/image.cpp): image.py's _ImageBase and AxesImage (_normalize_image_array, set_alpha of
+- **Images** (src/engine/image.cpp): image.py's _ImageBase, AxesImage and FigureImage (_normalize_image_array, set_alpha of
   arrays, _make_image with both interpolation stages, the unsampled path, get_extent / set_extent, draw), _resample,
-  composite_images and _draw_list_compositing_images, colorizer.py's _pass_image_data, cbook.safe_masked_invalid and
-  axes/_axes.py's imshow, translated to C++ with NumPy's dtype rules step by step; the PNG encoder deflates as
+  composite_images and _draw_list_compositing_images (for Axes and the figure), colorizer.py's _pass_image_data,
+  cbook.safe_masked_invalid, axes/_axes.py's imshow, matshow and spy, and figure.py's figimage, translated to C++ with NumPy's dtype rules step by step; the PNG encoder deflates as
   Pillow's does (level 6, memory level 9, Z_FILTERED), so embedded images are byte-identical.
 - **Norms** (src/colors/norms.cpp): colors.py's Normalize (process_value's dtypes, autoscale_None, clip, inverse),
   TwoSlopeNorm, CenteredNorm (its linked vmin / vmax setters), PowerNorm, BoundaryNorm (np.digitize as a sorted
