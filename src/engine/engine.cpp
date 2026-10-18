@@ -183,7 +183,7 @@ public:
             {"hlines", "hlines"}, {"vlines", "vlines"}, {"grid", "grid"}, {"legend", "legend"}, {"text", "text"},
             {"title", "set_title"}, {"xlabel", "set_xlabel"}, {"ylabel", "set_ylabel"}, {"xlim", "set_xlim"},
             {"ylim", "set_ylim"}, {"xscale", "set_xscale"}, {"yscale", "set_yscale"}, {"bar", "bar"}, {"barh", "barh"},
-            {"hist", "hist"}, {"fill", "fill"}, {"step", "step"}, {"stairs", "stairs"}, {"stem", "stem"}, {"boxplot", "boxplot"}, {"violinplot", "violinplot"}, {"pie", "pie"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}, {"imshow", "imshow"}, {"matshow", "matshow"}, {"spy", "spy"}, {"pcolormesh", "pcolormesh"}};
+            {"hist", "hist"}, {"fill", "fill"}, {"step", "step"}, {"stairs", "stairs"}, {"stem", "stem"}, {"boxplot", "boxplot"}, {"violinplot", "violinplot"}, {"pie", "pie"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}, {"imshow", "imshow"}, {"matshow", "matshow"}, {"spy", "spy"}, {"pcolormesh", "pcolormesh"}, {"pcolor", "pcolor"}};
         return ofAxes;
     }
 
@@ -1629,6 +1629,8 @@ private:
         if (call.method == "matshow") return matshow(ax, call, error);
         if (call.method == "spy") return spy(ax, call, error);
         if (call.method == "pcolormesh") return pcolormesh(ax, call, error);
+        if (call.method == "pcolor") return pcolor(ax, call, error);
+        if (call.method == "pcolorfast") return pcolorfast(ax, call, error);
         if (call.method == "vlines" || call.method == "hlines") return lines(ax, call, error);
         if (call.method == "set_xscale" || call.method == "set_yscale") {
             const Json* nameJson = call.args.empty() ? keyword(call, "value") : &call.args[0];
@@ -4706,17 +4708,66 @@ private:
         return true;
     }
 
-    // Axes.pcolormesh([X, Y,] C, *, alpha=None, norm=None, cmap=None, vmin=None, vmax=None, colorizer=None,
-    // shading=None, antialiased=False, **kwargs): a QuadMesh of the cells (_pcolorargs, _update_pcolor_lims)
-    bool pcolormesh(Axes& ax, const model::Call& call, std::string* error) {
-        const std::string where = call.on + ".pcolormesh";
-        if (call.args.size() != 1 && call.args.size() != 3)
-            return *error = where + ": pcolormesh() takes 1 or 3 positional arguments but " + std::to_string(call.args.size()) + " were given", false;
-        if (call.as.size() > 1) return *error = where + " returns one object: name it once", false;
-        ImageArray C;
+    // The keywords of a pcolor collection: vmin / vmax (returned), alpha, edgecolors, line widths, snap, zorder,
+    // label, colorizer (None); `skip` names those the caller takes itself
+    bool meshKeywords(Collection& c, const model::Call& call, const std::vector<std::string>& skip, const std::string& where,
+                      std::optional<double>* vmin, std::optional<double>* vmax, std::string* error) {
+        for (const auto& [name, value] : call.kwargs) {
+            double v = 0;
+            if (std::find(skip.begin(), skip.end(), name) != skip.end()) continue;
+            if (name == "vmin" || name == "vmax") {
+                if (value.isNull()) continue;
+                if (!readNumber(value, &v)) return *error = where + ": " + name + " must be a number", false;
+                (name == "vmin" ? *vmin : *vmax) = v;
+            } else if (name == "alpha") {
+                if (value.isNull()) continue;
+                if (!readAlpha(value, &v)) return *error = where + ": alpha must be a number from 0 to 1 (arrays are not supported yet)", false;
+                c.setAlpha(v);
+            } else if (name == "edgecolors" || name == "edgecolor" || name == "ec") {
+                if (value.isString() && value.asString() == "none") c.setEdgecolor(ColorArg{ColorArg::None, {}});
+                else if (value.isString() && value.asString() == "face") c.setEdgecolor(ColorArg{ColorArg::Face, {}});
+                else if (value.isNull()) c.setEdgecolor(ColorArg{});
+                else {
+                    std::vector<colors::Spec> l;
+                    if (!colorList(value, &l)) return *error = where + ": bad edgecolors", false;
+                    c.setEdgecolor(ColorArg{ColorArg::Colors, l});
+                }
+            } else if (name == "linewidth" || name == "linewidths" || name == "lw") {
+                std::vector<double> lw;
+                if (!numbers(value, &lw) && !(readNumber(value, &v) && (lw = {v}, true))) return *error = where + ": bad linewidth", false;
+                c.setLinewidths(lw);
+            } else if (name == "snap") {
+                if (value.isNull()) c.snap.reset();
+                else if (value.isBool()) c.snap = value.asBool();
+                else return *error = where + ": snap must be True, False or None", false;
+            } else if (name == "zorder") {
+                if (!readFinite(value, &v)) return *error = where + ": zorder must be a number", false;
+                c.zorder = v;
+            } else if (name == "label") {
+                if (!value.isString()) return *error = where + ": label must be a string", false;
+                c.label = value.asString();
+            } else if (name == "colorizer") {
+                if (!value.isNull()) return *error = where + ": colorizer is not supported yet", false;
+            } else {
+                return *error = where + ": " + name + " is not supported yet", false;
+            }
+        }
+        return true;
+    }
+
+    // Axes._pcolorargs(funcname, *args, shading=): X and Y as 2-D grids of the cells' corners (centres expanded),
+    // C, and the shading ('flat' or 'gouraud' after 'auto' and 'nearest'). pcolormesh refuses non-finite X and Y;
+    // pcolor masks them.
+    bool pcolorArgs(const model::Call& call, const std::string& funcname, std::vector<std::vector<double>>* Xout,
+                    std::vector<std::vector<double>>* Yout, ImageArray* Cout, std::string* shadingOut, std::string* error) {
+        const std::string where = call.on + "." + funcname;
+        std::vector<std::vector<double>>& X = *Xout;
+        std::vector<std::vector<double>>& Y = *Yout;
+        ImageArray& C = *Cout;
+        std::string& shading = *shadingOut;
         if (!readArray(call.args.back(), &C, error)) return *error = where + ": " + *error, false;
         if (C.channels != 0 && C.channels != 3 && C.channels != 4) return *error = where + ": C must be (M, N), (M, N, 3) or (M, N, 4)", false;
-        std::string shading = rc_.text("pcolor.shading");
+        shading = rc_.text("pcolor.shading");
         if (const Json* sh = keyword(call, "shading"); sh && !sh->isNull()) {
             if (!sh->isString()) return *error = where + ": shading must be a string", false;
             shading = sh->asString();
@@ -4724,7 +4775,6 @@ private:
         for (char& ch : shading) ch = char(std::tolower((unsigned char)ch));
         if (shading != "gouraud" && shading != "nearest" && shading != "flat" && shading != "auto") shading = "auto";  // (a warning)
         const int nrows = C.rows, ncols = C.cols;
-        std::vector<std::vector<double>> X, Y;
         if (call.args.size() == 1) {
             const bool corners = !(shading == "gouraud" || shading == "nearest");
             const int nx = corners ? ncols + 1 : ncols, ny = corners ? nrows + 1 : nrows;
@@ -4734,13 +4784,14 @@ private:
                 for (int j = 0; j < nx; ++j) X[i][j] = j, Y[i][j] = i;
             if (corners) shading = "flat";
         } else {
+            const bool mesh = funcname == "pcolormesh";
+            const std::string bad = where + ": x and y arguments to pcolormesh cannot have non-finite values or be of type numpy.ma.MaskedArray with masked values";
             if (!gridArray(call.args[0], &X) || !gridArray(call.args[1], &Y))
-                return *error = where + ": x and y arguments to pcolormesh cannot have non-finite values or be of type numpy.ma.MaskedArray with masked values", false;
+                return *error = mesh ? bad : where + ": X and Y must be arrays of numbers", false;
             for (const auto* g : {&X, &Y})
                 for (const auto& row : *g)
                     for (double v : row)
-                        if (!std::isfinite(v))
-                            return *error = where + ": x and y arguments to pcolormesh cannot have non-finite values or be of type numpy.ma.MaskedArray with masked values", false;
+                        if (!std::isfinite(v) && mesh) return *error = bad, false;
             // 1-D (or one-row) X repeated over the rows, 1-D (or one-column) Y over the columns
             const std::size_t Nx = X.front().size();
             const std::size_t Ny = Y.size() == 1 ? Y.front().size() : Y.size();
@@ -4756,18 +4807,18 @@ private:
                 for (std::size_t i = 0; i < col.size(); ++i) std::fill(Y[i].begin(), Y[i].end(), col[i]);
             }
             if (X.size() != Y.size() || X.front().size() != Y.front().size())
-                return *error = where + ": Incompatible X, Y inputs to pcolormesh; see help(pcolormesh)", false;
+                return *error = where + ": Incompatible X, Y inputs to " + funcname + "; see help(" + funcname + ")", false;
         }
         const int Nx = int(X.front().size()), Ny = int(X.size());
         if (shading == "auto") shading = ncols == Nx && nrows == Ny ? "nearest" : "flat";
         if (shading == "flat") {
             if (Nx != ncols + 1 || Ny != nrows + 1)
                 return *error = where + ": Dimensions of C should be one smaller than X(" + std::to_string(Nx) + ") and Y(" +
-                                std::to_string(Ny) + ") while using shading='flat' see help(pcolormesh)", false;
+                                std::to_string(Ny) + ") while using shading='flat' see help(" + funcname + ")", false;
         } else {
             if (Nx != ncols || Ny != nrows)
                 return *error = where + ": Dimensions of C are incompatible with X (" + std::to_string(Nx) + ") and/or Y (" +
-                                std::to_string(Ny) + "); see help(pcolormesh)", false;
+                                std::to_string(Ny) + "); see help(" + funcname + ")", false;
             if (shading == "nearest") {
                 // the corners halfway between the centres (_interp_grid along rows, then along columns)
                 const auto interp = [](const std::vector<std::vector<double>>& g) {
@@ -4800,6 +4851,251 @@ private:
                 shading = "flat";
             }
         }
+        return true;
+    }
+
+    // The colours of a pcolor-like collection: C mapped (its non-finite values masked), or RGB(A) cells
+    bool meshColours(Collection& c, const ImageArray& C, const std::string& where, std::string* error) {
+        if (C.channels == 0) {
+            colors::MaskedArray values;
+            values.data = C.data;
+            values.dtype = C.dtype;
+            values.mask.assign(C.size(), false);
+            bool anyMasked = false;
+            for (std::size_t i = 0; i < C.size(); ++i) {
+                values.mask[i] = !std::isfinite(C.data[i]);
+                anyMasked = anyMasked || values.mask[i];
+            }
+            if (!anyMasked) values.mask.clear();
+            c.array = values;
+            return true;
+        }
+        if (C.dtype != colors::DType::UInt8 && C.dtype != colors::DType::Float32 && C.dtype != colors::DType::Float64)
+            return *error = where + ": Image RGB array must be uint8 or floating point; found " + colors::dtypeName(C.dtype), false;
+        c.rgbChannels = C.channels;
+        c.rgbBytes = C.dtype == colors::DType::UInt8;
+        for (int i = 0; i < C.rows * C.cols; ++i) {
+            colors::Rgba rgba{0, 0, 0, 1};
+            for (int k = 0; k < C.channels; ++k) rgba[std::size_t(k)] = C.data[std::size_t(i) * C.channels + k];
+            c.rgbData.push_back(rgba);
+        }
+        return true;
+    }
+
+    // _scale_norm of a collection: vmin / vmax (not with a norm object), then autoscale_None on its array
+    bool scaleNorm(Collection& c, bool normObject, std::optional<double> vmin, std::optional<double> vmax,
+                   const std::string& where, std::string* error) {
+        if (vmin || vmax) {
+            if (normObject)
+                return *error = where + ": Passing a Normalize instance simultaneously with vmin/vmax is not supported.  "
+                                        "Please pass vmin/vmax directly to the norm when creating it.", false;
+            if (vmin) c.norm->setVmin(*vmin);
+            if (vmax) c.norm->setVmax(*vmax);
+        }
+        if (c.array) c.norm->autoscaleNone(colors::processValue(*c.array));
+        return true;
+    }
+
+    // Axes._update_pcolor_lims: sticky edges and data limits from the (finite) corners, an autoscale asked for
+    void pcolorLimits(Axes& ax, Collection& c, const std::vector<std::array<double, 2>>& coords) {
+        std::vector<std::array<double, 2>> finite;
+        for (const auto& p : coords)
+            if (std::isfinite(p[0]) && std::isfinite(p[1])) finite.push_back(p);
+        if (!finite.empty()) {
+            double minx = finite[0][0], maxx = minx, miny = finite[0][1], maxy = miny;
+            for (const auto& p : finite) {
+                minx = std::min(minx, p[0]), maxx = std::max(maxx, p[0]);
+                miny = std::min(miny, p[1]), maxy = std::max(maxy, p[1]);
+            }
+            c.stickyX = {minx, maxx};
+            c.stickyY = {miny, maxy};
+        }
+        ax.updateDatalim(finite);
+        ax.requestAutoscaleView(true, true);
+    }
+
+    // Axes.pcolor([X, Y,] C, *, shading=None, alpha=None, norm=None, cmap=None, vmin=None, vmax=None, colorizer=None,
+    // **kwargs): a PolyQuadMesh of the cells, without those with a masked corner or value
+    bool pcolor(Axes& ax, const model::Call& call, std::string* error) {
+        const std::string where = call.on + ".pcolor";
+        if (call.args.size() != 1 && call.args.size() != 3)
+            return *error = where + ": pcolor() takes 1 or 3 positional arguments but " + std::to_string(call.args.size()) + " were given", false;
+        if (!call.as.empty()) return *error = where + ": naming pcolor's collection is not supported yet", false;
+        std::vector<std::vector<double>> X, Y;
+        ImageArray C;
+        std::string shading;
+        if (!pcolorArgs(call, "pcolor", &X, &Y, &C, &shading, error)) return false;
+        const int rows = int(X.size()), cols = int(X.front().size());
+        if (C.rows != rows - 1 || C.cols != cols - 1)  // (gouraud: _MeshData.set_array of a flat mesh)
+            return *error = where + ": For X (" + std::to_string(cols) + ") and Y (" + std::to_string(rows) +
+                            ") with flat shading, A should have shape (" + std::to_string(rows - 1) + ", " + std::to_string(cols - 1) + ")", false;
+        std::vector<std::array<double, 2>> coords;
+        for (int i = 0; i < rows; ++i)
+            for (int j = 0; j < cols; ++j) coords.push_back({X[i][j], Y[i][j]});
+        std::vector<bool> cellMasked(std::size_t(C.rows) * C.cols, false);
+        const int ch = C.channels ? C.channels : 1;
+        for (std::size_t i = 0; i < C.size(); ++i)
+            if (!std::isfinite(C.data[i])) cellMasked[i / std::size_t(ch)] = true;
+        auto mesh = std::make_unique<PolyQuadMesh>(rc_, rows, cols, coords, cellMasked);
+        if (!meshColours(*mesh, C, where, error)) return false;
+        bool normObject = false;
+        colors::Colormap cmap;
+        if (!colorizer(&cmap, &mesh->norm, keyword(call, "cmap"), keyword(call, "norm"), nullptr, false, where, &normObject, error)) return false;
+        mesh->cmap = cmap;
+        // linewidths 0.25, edgecolors 'none' and snap False unless given; not antialiased without edges
+        mesh->setLinewidths({0.25});
+        mesh->setEdgecolor(ColorArg{ColorArg::None, {}});
+        mesh->snap = false;
+        const Json* ec = keyword(call, "edgecolors");
+        if (!ec) ec = keyword(call, "edgecolor");
+        const Json* aa = keyword(call, "antialiased");
+        if (!aa) aa = keyword(call, "antialiaseds");
+        if (!aa && (!ec || (ec->isString() && ec->asString() == "none"))) mesh->setAntialiaseds({false});
+        if (aa) {
+            if (!aa->isBool()) return *error = where + ": antialiased must be True or False", false;
+            mesh->setAntialiaseds({aa->asBool()});
+        }
+        std::optional<double> vmin, vmax;
+        if (!meshKeywords(*mesh, call, {"shading", "antialiased", "antialiaseds", "cmap", "norm"}, where, &vmin, &vmax, error)) return false;
+        if (!scaleNorm(*mesh, normObject, vmin, vmax, where, error)) return false;
+        Collection& ref = ax.addCollection(std::move(mesh), false);
+        pcolorLimits(ax, ref, coords);
+        return true;
+    }
+
+    // Axes.pcolorfast([X, Y,] C, *, alpha=None, norm=None, cmap=None, vmin=None, vmax=None, colorizer=None, **kwargs):
+    // an image for a uniform grid, a PcolorImage for 1-D edges, a QuadMesh for 2-D corners
+    bool pcolorfast(Axes& ax, const model::Call& call, std::string* error) {
+        const std::string where = call.on + ".pcolorfast";
+        if (call.args.size() != 1 && call.args.size() != 3)
+            return *error = where + ": pcolorfast() takes 1 or 3 positional arguments but " + std::to_string(call.args.size()) + " were given", false;
+        if (!call.as.empty()) return *error = where + ": naming pcolorfast's result is not supported yet", false;
+        ImageArray C;
+        if (!readArray(call.args.back(), &C, error)) return *error = where + ": " + *error, false;
+        const int nr = C.rows, nc = C.cols;
+        std::string style;
+        std::vector<std::vector<double>> X, Y;
+        std::vector<double> x, y;
+        if (call.args.size() == 1) {
+            style = "image";
+            x = {0, double(nc)};
+            y = {0, double(nr)};
+        } else {
+            if (!gridArray(call.args[0], &X) || !gridArray(call.args[1], &Y)) return *error = where + ": X and Y must be arrays of numbers", false;
+            const bool x1 = sequence(call.args[0]) && !sequence((*sequence(call.args[0]))[0]);
+            const bool y1 = sequence(call.args[1]) && !sequence((*sequence(call.args[1]))[0]);
+            if (x1 && y1) {
+                x = X.front();
+                y = Y.front();
+                if (x.size() == 2 && y.size() == 2) {
+                    style = "image";
+                } else {
+                    if (int(x.size()) != nc + 1)
+                        return *error = where + ": Length of X (" + std::to_string(x.size()) + ") must be one larger than the number of columns in C (" + std::to_string(nc) + ")", false;
+                    if (int(y.size()) != nr + 1)
+                        return *error = where + ": Length of Y (" + std::to_string(y.size()) + ") must be one larger than the number of rows in C (" + std::to_string(nr) + ")", false;
+                    // uniform when the steps vary by less than 1 % of their mean
+                    const auto uniform = [](const std::vector<double>& v) {
+                        std::vector<double> d;
+                        for (std::size_t i = 0; i + 1 < v.size(); ++i) d.push_back(v[i + 1] - v[i]);
+                        const auto [mn, mx] = std::minmax_element(d.begin(), d.end());
+                        return *mx - *mn < 0.01 * std::fabs(support::npMean(d));
+                    };
+                    style = uniform(x) && uniform(y) ? "image" : "pcolorimage";
+                }
+            } else if (!x1 && !y1) {
+                style = "quadmesh";
+            } else {
+                return *error = where + ": When 3 positional parameters are passed to pcolorfast, the first two (X and Y) must be both 1D or both 2D", false;
+            }
+        }
+        std::optional<double> vmin, vmax;
+        for (const char* name : {"vmin", "vmax"})
+            if (const Json* v = keyword(call, name); v && !v->isNull()) {
+                double n = 0;
+                if (!readNumber(*v, &n)) return *error = where + ": " + name + " must be a number", false;
+                (name[1] == 'm' && name[2] == 'i' ? vmin : vmax) = n;
+            }
+        bool normObject = false;
+        double xl, xr, yb, yt;
+        Artist* ret = nullptr;
+        if (style == "quadmesh") {
+            if (X.size() != Y.size() || X.front().size() != Y.front().size()) return *error = where + ": X and Y must have the same shape", false;
+            const int rows = int(X.size()), cols = int(X.front().size());
+            std::vector<std::array<double, 2>> coords;
+            for (int i = 0; i < rows; ++i)
+                for (int j = 0; j < cols; ++j) coords.push_back({X[i][j], Y[i][j]});
+            if (rows != nr + 1 || cols != nc + 1) return *error = where + ": C must have one row and one column less than X and Y", false;
+            auto mesh = std::make_unique<QuadMesh>(rc_, rows, cols, coords, false, false);
+            if (!meshColours(*mesh, C, where, error)) return false;
+            colors::Colormap cmap;
+            if (!colorizer(&cmap, &mesh->norm, keyword(call, "cmap"), keyword(call, "norm"), nullptr, false, where, &normObject, error)) return false;
+            mesh->cmap = cmap;
+            mesh->setEdgecolor(ColorArg{ColorArg::None, {}});
+            double a = 0;
+            if (const Json* al = keyword(call, "alpha"); al && !al->isNull()) {
+                if (!readAlpha(*al, &a)) return *error = where + ": alpha must be a number from 0 to 1", false;
+                mesh->setAlpha(a);
+            }
+            if (C.channels == 0 && !scaleNorm(*mesh, normObject, vmin, vmax, where, error)) return false;
+            xl = coords[0][0], xr = xl, yb = coords[0][1], yt = yb;
+            for (const auto& p : coords) xl = std::min(xl, p[0]), xr = std::max(xr, p[0]), yb = std::min(yb, p[1]), yt = std::max(yt, p[1]);
+            ret = &ax.addCollection(std::move(mesh), false);
+        } else {
+            xl = x.front(), xr = x.back(), yb = y.front(), yt = y.back();
+            std::unique_ptr<AxesImage> im = style == "image" ? std::make_unique<AxesImage>(rc_, ax) : std::make_unique<PcolorImage>(rc_, ax);
+            if (!colorizer(&im->cmap, &im->norm, keyword(call, "cmap"), keyword(call, "norm"), nullptr, false, where, &normObject, error)) return false;
+            im->extent = std::array<double, 4>{xl, xr, yb, yt};
+            if (style == "image") {
+                im->interpolation = "nearest";
+                im->origin = "lower";
+            }
+            if (!im->setData(C, error)) return *error = where + ": " + *error, false;
+            if (style == "pcolorimage" && !static_cast<PcolorImage&>(*im).setGrid(x, y, error)) return *error = where + ": " + *error, false;
+            if (!imageAlpha(*im, keyword(call, "alpha"), where, error)) return false;
+            for (const auto& [name, value] : call.kwargs) {
+                if (name == "cmap" || name == "norm" || name == "alpha" || name == "vmin" || name == "vmax") continue;
+                bool taken = false;
+                if (!imageProperty(*im, name, value, where, &taken, error)) return false;
+                if (!taken) return *error = where + ": " + name + " is not supported yet", false;
+            }
+            if (C.channels == 0) {
+                if (vmin || vmax) {
+                    if (normObject)
+                        return *error = where + ": Passing a Normalize instance simultaneously with vmin/vmax is not supported.  "
+                                                "Please pass vmin/vmax directly to the norm when creating it.", false;
+                    if (vmin) im->norm->setVmin(*vmin);
+                    if (vmax) im->norm->setVmax(*vmax);
+                }
+                colors::MaskedArray raw;
+                raw.data = im->data().data;
+                raw.mask = im->data().mask;
+                raw.dtype = im->data().dtype;
+                im->norm->autoscaleNone(colors::processValue(raw));
+            }
+            im->clipBox = std::make_shared<transforms::TransformedBbox>(
+                std::make_shared<transforms::Bbox>(std::array<double, 4>{0, 0, 1, 1}), ax.patch->fullTransform());
+            ret = &ax.addImage(std::move(im));
+        }
+        ret->stickyX = {xl, xr};
+        ret->stickyY = {yb, yt};
+        ax.updateDatalim({{xl, yb}, {xr, yt}});
+        ax.tight = true;  // _request_autoscale_view(tight=True)
+        ax.requestAutoscaleView(true, true);
+        return true;
+    }
+
+    // Axes.pcolormesh([X, Y,] C, *, alpha=None, norm=None, cmap=None, vmin=None, vmax=None, colorizer=None,
+    // shading=None, antialiased=False, **kwargs): a QuadMesh of the cells (_pcolorargs, _update_pcolor_lims)
+    bool pcolormesh(Axes& ax, const model::Call& call, std::string* error) {
+        const std::string where = call.on + ".pcolormesh";
+        if (call.args.size() != 1 && call.args.size() != 3)
+            return *error = where + ": pcolormesh() takes 1 or 3 positional arguments but " + std::to_string(call.args.size()) + " were given", false;
+        if (call.as.size() > 1) return *error = where + " returns one object: name it once", false;
+        std::vector<std::vector<double>> X, Y;
+        ImageArray C;
+        std::string shading;
+        if (!pcolorArgs(call, "pcolormesh", &X, &Y, &C, &shading, error)) return false;
         const int rows = int(X.size()), cols = int(X.front().size());
         std::vector<std::array<double, 2>> coords;
         for (int i = 0; i < rows; ++i)
@@ -4842,46 +5138,7 @@ private:
         mesh->cmap = cmap;
         std::optional<double> vmin, vmax;
         mesh->setEdgecolor(ColorArg{ColorArg::None, {}});  // kwargs.setdefault('edgecolors', 'none')
-        for (const auto& [name, value] : call.kwargs) {
-            double v = 0;
-            if (name == "shading" || name == "antialiased" || name == "cmap" || name == "norm") continue;
-            if (name == "vmin" || name == "vmax") {
-                if (value.isNull()) continue;
-                if (!readNumber(value, &v)) return *error = where + ": " + name + " must be a number", false;
-                (name == "vmin" ? vmin : vmax) = v;
-            } else if (name == "alpha") {
-                if (value.isNull()) continue;
-                if (!readAlpha(value, &v)) return *error = where + ": alpha must be a number from 0 to 1 (arrays are not supported yet)", false;
-                mesh->setAlpha(v);
-            } else if (name == "edgecolors" || name == "edgecolor" || name == "ec") {
-                if (value.isString() && value.asString() == "none") mesh->setEdgecolor(ColorArg{ColorArg::None, {}});
-                else if (value.isString() && value.asString() == "face") mesh->setEdgecolor(ColorArg{ColorArg::Face, {}});
-                else if (value.isNull()) mesh->setEdgecolor(ColorArg{});
-                else {
-                    std::vector<colors::Spec> l;
-                    if (!colorList(value, &l)) return *error = where + ": bad edgecolors", false;
-                    mesh->setEdgecolor(ColorArg{ColorArg::Colors, l});
-                }
-            } else if (name == "linewidth" || name == "linewidths" || name == "lw") {
-                std::vector<double> lw;
-                if (!numbers(value, &lw) && !(readNumber(value, &v) && (lw = {v}, true))) return *error = where + ": bad linewidth", false;
-                mesh->setLinewidths(lw);
-            } else if (name == "snap") {
-                if (value.isNull()) mesh->snap.reset();
-                else if (value.isBool()) mesh->snap = value.asBool();
-                else return *error = where + ": snap must be True, False or None", false;
-            } else if (name == "zorder") {
-                if (!readFinite(value, &v)) return *error = where + ": zorder must be a number", false;
-                mesh->zorder = v;
-            } else if (name == "label") {
-                if (!value.isString()) return *error = where + ": label must be a string", false;
-                mesh->label = value.asString();
-            } else if (name == "colorizer") {
-                if (!value.isNull()) return *error = where + ": colorizer is not supported yet", false;
-            } else {
-                return *error = where + ": " + name + " is not supported yet", false;
-            }
-        }
+        if (!meshKeywords(*mesh, call, {"shading", "antialiased", "cmap", "norm"}, where, &vmin, &vmax, error)) return false;
         // _scale_norm
         if (vmin || vmax) {
             if (normObject)

@@ -91,6 +91,20 @@ private:
     Axes& axes_;
 };
 
+// An image of cells with given edges along x and y (PcolorImage, pcolorfast's 'pcolorimage'): each screen pixel
+// takes the cell its centre falls in.
+class PcolorImage : public AxesImage {
+public:
+    PcolorImage(const rc::Params& rc, Axes& axes);
+    // set_data(x, y, A): the edges increasing (x or y and A reversed otherwise); false when the shapes do not match
+    bool setGrid(std::vector<double> x, std::vector<double> y, std::string* error);
+    std::optional<Made> makeImage(Renderer& renderer, double magnification, bool unsampled) override;
+
+private:
+    std::vector<double> ax_, ay_;
+    Axes& owner_;
+};
+
 // An image placed on the figure in pixels from its lower left corner (FigureImage, fig.figimage).
 class FigureImage : public ImageBase {
 public:

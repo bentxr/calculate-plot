@@ -12,6 +12,7 @@
 #include "engine/axes.hpp"
 #include "engine/figure.hpp"
 #include "render/resample.hpp"
+#include "support/histogram.hpp"
 #include "rc/rc_params.hpp"
 
 #include <algorithm>
@@ -335,6 +336,89 @@ std::optional<ImageBase::Made> AxesImage::makeImage(Renderer& renderer, double m
     const auto out = transforms::TransformedBbox(std::make_shared<transforms::Bbox>(in), transform).points();
     const auto clip = (clipOn ? (clipBox ? clipBox : transforms::BboxPtr(axes_.bbox)) : transforms::BboxPtr(axes_.figure.bbox))->points();
     return makeImageFrom(renderer, in, out, clip, magnification, unsampled, true);
+}
+
+PcolorImage::PcolorImage(const rc::Params& rc, Axes& axes) : AxesImage(rc, axes), owner_(axes) {}
+
+bool PcolorImage::setGrid(std::vector<double> x, std::vector<double> y, std::string* error) {
+    if (int(x.size()) != a_.cols + 1 || int(y.size()) != a_.rows + 1)
+        return *error = "Axes don't match array shape. Got (" + std::to_string(a_.rows) + ", " + std::to_string(a_.cols) +
+                        "), expected (" + std::to_string(int(y.size()) - 1) + ", " + std::to_string(int(x.size()) - 1) + ").",
+               false;
+    const int ch = a_.channels ? a_.channels : 1;
+    if (x.back() < x.front()) {  // x and the columns reversed
+        std::reverse(x.begin(), x.end());
+        ImageArray r = a_;
+        for (int i = 0; i < a_.rows; ++i)
+            for (int j = 0; j < a_.cols; ++j)
+                for (int k = 0; k < ch; ++k) {
+                    const std::size_t to = (std::size_t(i) * a_.cols + j) * ch + k, from = (std::size_t(i) * a_.cols + (a_.cols - 1 - j)) * ch + k;
+                    r.data[to] = a_.data[from];
+                    if (!a_.mask.empty()) r.mask[to] = a_.mask[from];
+                }
+        a_ = r;
+    }
+    if (y.back() < y.front()) {  // y and the rows reversed
+        std::reverse(y.begin(), y.end());
+        ImageArray r = a_;
+        const std::size_t row = std::size_t(a_.cols) * ch;
+        for (int i = 0; i < a_.rows; ++i)
+            for (std::size_t k = 0; k < row; ++k) {
+                r.data[i * row + k] = a_.data[(a_.rows - 1 - i) * row + k];
+                if (!a_.mask.empty()) r.mask[i * row + k] = a_.mask[(a_.rows - 1 - i) * row + k];
+            }
+        a_ = r;
+    }
+    ax_ = std::move(x);
+    ay_ = std::move(y);
+    return true;
+}
+
+std::optional<ImageBase::Made> PcolorImage::makeImage(Renderer& renderer, double magnification, bool unsampled) {
+    std::string error;
+    if (unsampled) {
+        renderer.unsupported("unsampled not supported on PColorImage");
+        return std::nullopt;
+    }
+    // the cells' colours as bytes, padded by one transparent cell all round (the axes' background with alpha 0
+    // never differs from it in every channel, so the padding stays zeros)
+    ImageArray rgba;
+    if (a_.channels == 0) {
+        if (!mapGrey(*this, *norm, a_, true, true, &rgba, &error)) return renderer.unsupported(error), std::nullopt;
+    } else if (!passImageData(a_, true, true, &rgba, &error)) {
+        return renderer.unsupported(error), std::nullopt;
+    }
+    const auto padded = [&](int row, int col, int k) -> double {
+        if (row == 0 || col == 0 || row == a_.rows + 1 || col == a_.cols + 1) return 0;
+        return rgba.data[(std::size_t(row - 1) * a_.cols + (col - 1)) * 4 + k];
+    };
+    // the Axes' box in output pixels, rounded; the view's edges in data at each pixel
+    const auto e = owner_.bbox->points();
+    const int l = int(e[0] * magnification + 0.5), b = int(e[1] * magnification + 0.5);
+    const int r = int(e[2] * magnification + 0.5), t = int(e[3] * magnification + 0.5);
+    const int width = r - l, height = t - b;
+    const auto vl = owner_.viewLim->points();
+    const auto centres = [](double v0, double v1, int n) {
+        const std::vector<double> edges = support::npLinspace(v0, v1, n + 1);
+        std::vector<double> c;
+        for (int i = 0; i < n; ++i) c.push_back((edges[std::size_t(i)] + edges[std::size_t(i) + 1]) / 2);
+        return c;
+    };
+    const auto xc = centres(vl[0], vl[2], width), yc = centres(vl[1], vl[3], height);
+    Made made;
+    made.image.width = std::max(width, 0);
+    made.image.height = std::max(height, 0);
+    for (int i = 0; i < height; ++i) {
+        const int yi = int(std::lower_bound(ay_.begin(), ay_.end(), yc[std::size_t(i)]) - ay_.begin());  // searchsorted
+        for (int j = 0; j < width; ++j) {
+            const int xi = int(std::lower_bound(ax_.begin(), ax_.end(), xc[std::size_t(j)]) - ax_.begin());
+            for (int k = 0; k < 4; ++k) made.image.rgba.push_back((unsigned char)padded(yi, xi, k));
+        }
+    }
+    made.x = l / magnification;
+    made.y = b / magnification;
+    made.transform = std::make_shared<transforms::IdentityTransform>();
+    return made;
 }
 
 FigureImage::FigureImage(const rc::Params& rc, Figure& figure, double ox, double oy)

@@ -41,6 +41,7 @@ public:
     void setEdgecolor(const ColorArg& c);
     void setHatchcolor(const ColorArg& c);  // (Default: rc hatch.color; update_from does not copy it yet)
     void setLinewidths(std::vector<double> lw);  // empty: the default (patch.linewidth)
+    void setAntialiaseds(std::vector<bool> aa) { antialiaseds_ = std::move(aa); }  // set_antialiased
     // set_linestyle: named styles ('solid', 'dashed', 'dashdot', 'dotted' or their symbols)
     bool setLinestyles(const std::vector<std::string>& styles);
     void setAlpha(std::optional<double> a);       // _set_alpha_for_array with a scalar
@@ -77,8 +78,8 @@ public:
     int rgbChannels = 0;
     bool rgbBytes = false;
 
-    std::vector<colors::Rgba> facecolors() const { return facecolors_; }
-    std::vector<colors::Rgba> edgecolors() const;  // get_edgecolor: the face colours for 'face'
+    virtual std::vector<colors::Rgba> facecolors() const { return facecolors_; }  // get_facecolor
+    virtual std::vector<colors::Rgba> edgecolors() const;  // get_edgecolor: the face colours for 'face'
     std::vector<colors::Rgba> hatchcolors() const;  // get_hatchcolor
     // set_hatch: the pattern, or None; an empty one draws no hatch (but is not None)
     std::optional<std::string> hatch;
@@ -196,6 +197,24 @@ private:
     int rows_, cols_;
     std::vector<std::array<double, 2>> coordinates_;
     bool gouraud_, antialiased_;
+};
+
+// PolyQuadMesh (pcolor): each cell of the grid a polygon of the PolyCollection, but for those with a masked
+// corner or value; the colours shown are those of the cells drawn.
+class PolyQuadMesh : public PolyCollection {
+public:
+    // `coordinates`: rows x cols points, row by row (NaN: masked); `cellMasked`: the cells' values that are masked
+    PolyQuadMesh(const rc::Params& rc, int rows, int cols, const std::vector<std::array<double, 2>>& coordinates,
+                 const std::vector<bool>& cellMasked);
+    std::vector<colors::Rgba> facecolors() const override;
+    std::vector<colors::Rgba> edgecolors() const override;
+
+private:
+    static std::vector<std::vector<std::array<double, 2>>> cells(int rows, int cols, const std::vector<std::array<double, 2>>& c,
+                                                                 const std::vector<bool>& unmasked);
+    static std::vector<bool> unmaskedCells(int rows, int cols, const std::vector<std::array<double, 2>>& c,
+                                           const std::vector<bool>& cellMasked);
+    std::vector<bool> unmasked_;
 };
 
 }  // namespace calculate_plot::engine

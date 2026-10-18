@@ -179,7 +179,7 @@ void Collection::draw(Renderer& renderer) {
     }
     if (sketch) gc.sketch = sketch;
     if (capstyle) gc.capstyle = *capstyle;  // (only when set: the GC's own default otherwise)
-    const std::vector<colors::Rgba> faces = facecolors_, edges = edgecolors();
+    const std::vector<colors::Rgba> faces = facecolors(), edges = edgecolors();
     bool single = false;
     transforms::Matrix combined = master;
     bool solid = true;
@@ -626,6 +626,62 @@ void QuadMesh::draw(Renderer& renderer) {
                               antialiased_, edgecolors());
     }
     renderer.closeGroup(groupName);
+}
+
+std::vector<bool> PolyQuadMesh::unmaskedCells(int rows, int cols, const std::vector<std::array<double, 2>>& c,
+                                              const std::vector<bool>& cellMasked) {
+    // _get_unmasked_polys: a cell with a masked corner (X or Y) or a masked value is not drawn
+    const auto bad = [&](int r, int k) {
+        const auto& p = c[std::size_t(r) * cols + k];
+        return !std::isfinite(p[0]) || !std::isfinite(p[1]);
+    };
+    std::vector<bool> out;
+    for (int r = 0; r + 1 < rows; ++r)
+        for (int k = 0; k + 1 < cols; ++k) {
+            const std::size_t cell = std::size_t(r) * (cols - 1) + k;
+            const bool masked = bad(r, k) || bad(r + 1, k + 1) || bad(r, k + 1) || bad(r + 1, k) ||
+                                (cell < cellMasked.size() && cellMasked[cell]);
+            out.push_back(!masked);
+        }
+    return out;
+}
+
+std::vector<std::vector<std::array<double, 2>>> PolyQuadMesh::cells(int rows, int cols, const std::vector<std::array<double, 2>>& c,
+                                                                    const std::vector<bool>& unmasked) {
+    // _set_unmasked_verts: (X1, Y1) .. (X4, Y4) of each cell drawn, then the first again
+    std::vector<std::vector<std::array<double, 2>>> verts;
+    for (int r = 0; r + 1 < rows; ++r)
+        for (int k = 0; k + 1 < cols; ++k) {
+            if (!unmasked[std::size_t(r) * (cols - 1) + k]) continue;
+            const auto at = [&](int rr, int kk) { return c[std::size_t(rr) * cols + kk]; };
+            verts.push_back({at(r, k), at(r + 1, k), at(r + 1, k + 1), at(r, k + 1), at(r, k)});
+        }
+    return verts;
+}
+
+PolyQuadMesh::PolyQuadMesh(const rc::Params& rc, int rows, int cols, const std::vector<std::array<double, 2>>& coordinates,
+                           const std::vector<bool>& cellMasked)
+    : PolyCollection(rc, cells(rows, cols, coordinates, unmaskedCells(rows, cols, coordinates, cellMasked))),
+      unmasked_(unmaskedCells(rows, cols, coordinates, cellMasked)) {
+    groupName = "PolyQuadMesh";
+}
+
+std::vector<colors::Rgba> PolyQuadMesh::facecolors() const {
+    const auto fc = Collection::facecolors();
+    if (fc.size() != unmasked_.size()) return fc;  // (the mapping is off)
+    std::vector<colors::Rgba> out;
+    for (std::size_t i = 0; i < fc.size(); ++i)
+        if (unmasked_[i]) out.push_back(fc[i]);
+    return out;
+}
+
+std::vector<colors::Rgba> PolyQuadMesh::edgecolors() const {
+    const auto ec = Collection::edgecolors();
+    if (ec.size() != unmasked_.size()) return ec;
+    std::vector<colors::Rgba> out;
+    for (std::size_t i = 0; i < ec.size(); ++i)
+        if (unmasked_[i]) out.push_back(ec[i]);
+    return out;
 }
 
 }  // namespace calculate_plot::engine

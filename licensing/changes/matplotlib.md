@@ -309,10 +309,10 @@ it comes from in its first lines. The changes, as a whole:
   the lookup mesh of a non-affine transform given by the caller) translated to a C++ function without Python. The
   build defines MPL_FIX_AGG_IMAGE_FILTER_LUT_BUGS and MPL_FIX_AGG_INTERPOLATION_ENDPOINT_BUG for Agg, as matplotlib's
   meson build does.
-- **Meshes** (src/engine/collections.cpp QuadMesh, src/engine/engine.cpp pcolormesh): collections.py's _MeshData and
-  QuadMesh (_convert_mesh_to_triangles for Gouraud shading, draw), backend_bases.py's RendererBase.draw_quad_mesh
-  (the SVG renderer's path collection of the cells), axes/_axes.py's pcolormesh, _pcolorargs (with _interp_grid)
-  and _update_pcolor_lims, translated to C++.
+- **Meshes** (src/engine/collections.cpp QuadMesh and PolyQuadMesh, src/engine/engine.cpp pcolormesh, pcolor,
+  pcolorfast; src/engine/image.cpp PcolorImage): collections.py's _MeshData, PolyQuadMesh and QuadMesh (_convert_mesh_to_triangles for Gouraud shading, draw), backend_bases.py's RendererBase.draw_quad_mesh
+  (the SVG renderer's path collection of the cells), axes/_axes.py's pcolormesh, pcolor, pcolorfast,
+  _pcolorargs (with _interp_grid) and _update_pcolor_lims, image.py's PcolorImage, translated to C++.
 - **Images** (src/engine/image.cpp): image.py's _ImageBase, AxesImage and FigureImage (_normalize_image_array, set_alpha of
   arrays, _make_image with both interpolation stages, the unsampled path, get_extent / set_extent, draw), _resample,
   composite_images and _draw_list_compositing_images (for Axes and the figure), colorizer.py's _pass_image_data,
