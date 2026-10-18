@@ -315,13 +315,14 @@ long long searchWithGuess(double key, const double* arr, long long len, long lon
 
 }  // namespace
 
-std::vector<double> npInterp(const std::vector<double>& x, const std::vector<double>& xp, const std::vector<double>& fp) {
+std::vector<double> npInterp(const std::vector<double>& x, const std::vector<double>& xp, const std::vector<double>& fp,
+                             std::optional<double> left, std::optional<double> right) {
     std::vector<double> res(x.size());
     if (x.empty()) return res;
     const double* dx = xp.data();
     const double* dy = fp.data();
     const auto lenxp = static_cast<long long>(xp.size());
-    const double lval = dy[0], rval = dy[lenxp - 1];
+    const double lval = left.value_or(dy[0]), rval = right.value_or(dy[lenxp - 1]);
     if (lenxp == 1) {
         for (std::size_t i = 0; i < x.size(); ++i) res[i] = x[i] < dx[0] ? lval : x[i] > dx[0] ? rval : dy[0];
         return res;

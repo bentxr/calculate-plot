@@ -19,8 +19,10 @@ std::vector<double> npLinspace(double start, double stop, long long num);
 double npMean(const std::vector<double>& a, bool integer = false);
 double npStd(const std::vector<double>& a, bool integer = false);
 double npPercentile(std::vector<double> a, double q);  // (NaN when the data have one)
-// np.interp(x, xp, fp) (arr_interp of compiled_base.c; xp is taken as sorted, as NumPy takes it)
-std::vector<double> npInterp(const std::vector<double>& x, const std::vector<double>& xp, const std::vector<double>& fp);
+// np.interp(x, xp, fp, left, right) (arr_interp of compiled_base.c; xp is taken as sorted, as NumPy takes it;
+// left and right default to fp's ends)
+std::vector<double> npInterp(const std::vector<double>& x, const std::vector<double>& xp, const std::vector<double>& fp,
+                             std::optional<double> left = std::nullopt, std::optional<double> right = std::nullopt);
 // np.min and np.max as NumPy's scalar loop reduces (of equal values the later one, which tells -0.0
 // from 0.0; NaN wins). (Long arrays go through NumPy's SIMD loop, whose order may give the other zero.)
 double npMin(const std::vector<double>& a);

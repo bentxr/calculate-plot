@@ -480,6 +480,8 @@
     "src/axes/ticker.hpp",
     "src/colors/colormap.cpp",
     "src/colors/colormap.hpp",
+    "src/colors/norms.cpp",
+    "src/colors/norms.hpp",
     "src/colors/colors.cpp",
     "src/engine/annotation.cpp",
     "src/engine/annotation.hpp",

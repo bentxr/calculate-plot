@@ -8,4 +8,8 @@ namespace calculate_plot::support {
 // can move a tick or an edge to the next pixel.
 double log10(double x);
 
+// The float32 base-10 logarithm as glibc's log10f gives it (NumPy's np.log10 of float32 arrays): correctly rounded,
+// so the float64 logarithm rounded to float32, except for the one float where that double rounding misses.
+float log10f(float x);
+
 }  // namespace calculate_plot::support

@@ -111,4 +111,9 @@ double log10(double x)
 	return  z+y*log10_2hi;
 }
 
+float log10f(float x) {
+    if (x == 0x1.fddcf4p-98f) return -0x1.d33a46p+4f;  // (log10 there is a hair above the midpoint of two floats)
+    return float(log10(double(x)));
+}
+
 }  // namespace calculate_plot::support

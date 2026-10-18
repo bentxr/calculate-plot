@@ -63,6 +63,7 @@ add_library(calculate-plot STATIC
     src/axes/dateutil.cpp
     src/axes/ticker.cpp
     src/colors/colormap.cpp
+    src/colors/norms.cpp
     src/colors/colors.cpp
     src/engine/artist.cpp
     src/engine/axes.cpp

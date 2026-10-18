@@ -302,6 +302,13 @@ it comes from in its first lines. The changes, as a whole:
   Colour sequences: colors.py's ColorSequenceRegistry (the built-in sequences only) with _cm.py's data
   (data/color_sequences.json; ColorBrewer's schemes in data/color_sequences_colorbrewer.json), written as JSON
   numbers by tools/oracle/make_color_sequences.py; rcsetup.py's _single_string_color_list takes them in cycles.
+- **Norms** (src/colors/norms.cpp): colors.py's Normalize (process_value's dtypes, autoscale_None, clip, inverse),
+  TwoSlopeNorm, CenteredNorm (its linked vmin / vmax setters), PowerNorm, BoundaryNorm (np.digitize as a sorted
+  search), NoNorm and the norms make_norm_from_scale builds (LogNorm, SymLogNorm, AsinhNorm, and the norms
+  colorizer.py's _auto_norm_from_scale makes from a scale name), with scale.py's transforms they use, translated to
+  C++ over one-dimensional masked arrays; NumPy's type rules (float32 kept by in-place and unary operations, float64
+  for masked arithmetic with Python numbers) are followed step by step. A symlog norm of float32 data is refused
+  (it needs NumPy's own float32 logarithm).
 - **Screens** (src/engine/figure.cpp drawScreenTrace): what backend_bases.py's _set_device_pixel_ratio and
   backend_qt.py's FigureCanvasQT.resizeEvent do to the figure (the dpi times the ratio; set_size_inches of the
   widget's size times the ratio over that dpi, forward=False), translated to C++ without Qt; the application

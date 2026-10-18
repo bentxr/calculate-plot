@@ -80,3 +80,22 @@ TEST(Log10, SpecialValues) {
 }
 
 }  // namespace
+
+// support::log10f is glibc's float32 log10 (NumPy's np.log10 of float32 arrays), correctly rounded, on every
+// target: the float64 logarithm rounded to float32, except the one float where that double rounding misses.
+TEST(Log10, Float32EqualsTheReferenceEnvironments) {
+    const float hard = 0x1.fddcf4p-98f;
+    EXPECT_EQ(calculate_plot::support::log10f(hard), -0x1.d33a46p+4f);
+    EXPECT_EQ(float(calculate_plot::support::log10(double(hard))), -0x1.d33a44p+4f);  // (the rounded double)
+    EXPECT_EQ(calculate_plot::support::log10f(0.0f), -std::numeric_limits<float>::infinity());
+    EXPECT_TRUE(std::isnan(calculate_plot::support::log10f(-1.0f)));
+    EXPECT_EQ(calculate_plot::support::log10f(1000.0f), 3.0f);
+    if (!calculate_plot::testing_support::kReferenceLibm) return;
+    // every 997th float from the smallest subnormal to the largest finite one against glibc's log10f
+    for (std::uint32_t u = 1; u < 0x7f800000u; u += 997) {
+        float x;
+        std::memcpy(&x, &u, sizeof x);
+        const float want = std::log10(x), got = calculate_plot::support::log10f(x);
+        ASSERT_EQ(std::memcmp(&want, &got, sizeof got), 0) << x;
+    }
+}
