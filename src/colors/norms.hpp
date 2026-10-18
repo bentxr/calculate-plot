@@ -61,6 +61,7 @@ public:
     const NormSpec& spec() const { return spec_; }
     void setVmin(std::optional<double> v);
     void setVmax(std::optional<double> v);
+    void setClip(bool clip) { spec_.clip = clip; }  // norm.clip = clip
 
 private:
     bool scaleCall(const MaskedArray& value, MaskedArray* out, std::string* error, bool clip);

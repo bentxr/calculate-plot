@@ -388,7 +388,7 @@ TEST(RcParams, KeysThatAreNotHonouredYetTakeOnlyTheirDefault) {
 TEST(RcParams, KeysOfWhatIsNotDrawnTakeWhatMatplotlibTakes) {
     Params p = Params::defaults();
     std::string error;
-    EXPECT_EQ(Params::inertKeys().size(), 75u);
+    EXPECT_EQ(Params::inertKeys().size(), 71u);
     // (boxplot's keys are read now; they still take any value their validators take)
     EXPECT_TRUE(p.set("boxplot.whiskers", json("[5, 95]"), &error)) << error;
     EXPECT_TRUE(p.set("boxplot.whiskers", json("2.5"), &error)) << error;
@@ -403,7 +403,9 @@ TEST(RcParams, KeysOfWhatIsNotDrawnTakeWhatMatplotlibTakes) {
     EXPECT_EQ(p.number("pdf.fonttype"), 42.0);
     EXPECT_TRUE(p.set("keymap.save", json("\"s, ctrl+s\""), &error)) << error;
     EXPECT_EQ(p.strings("keymap.save"), (std::vector<std::string>{"s", "ctrl+s"}));
-    EXPECT_TRUE(p.set("contour.linewidth", json("{\"$float\": \"inf\"}"), &error)) << error;
+    // (contour reads contour.linewidth now: an infinite width is refused, as lines.linewidth's is)
+    EXPECT_FALSE(p.set("contour.linewidth", json("{\"$float\": \"inf\"}"), &error));
+    EXPECT_FALSE(p.set("lines.linewidth", json("{\"$float\": \"inf\"}"), &error));
     EXPECT_FALSE(p.set("pdf.fonttype", json("5"), &error));
     EXPECT_EQ(error, "the value given for pdf.fonttype is not valid: supported Postscript/PDF font types are 3, 42");
     for (const std::string& key : Params::inertKeys()) {

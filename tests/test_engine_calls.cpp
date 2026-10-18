@@ -1975,3 +1975,68 @@ TEST(TwinCalls, AspectsOfTwinsAreRefused) {
     EXPECT_EQ(draw(kSubplots + R"({"on": "axs[0]", "call": "twinx"}, {"on": "axs[0]", "call": "pie", "args": [[1, 2]]})").error,
               "axs[0].pie: a pie on twinned Axes (adjustable 'datalim') is not supported yet");
 }
+
+// contour raises what matplotlib raises, and refuses what is not ported
+class ContourRefusals : public testing::TestWithParam<Refusal> {};
+
+TEST_P(ContourRefusals, NameTheCallAndTheReason) {
+    const auto drawing = draw(kSubplots + GetParam().call);
+    EXPECT_EQ(drawing.error, GetParam().error);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    Engine, ContourRefusals,
+    testing::Values(
+        Refusal{R"({"on": "axs[0]", "call": "contour", "args": [[[0, 1], [2, 3]], [2, 1]]})",
+                "axs[0].contour: Contour levels must be increasing"},
+        Refusal{R"({"on": "axs[0]", "call": "contour", "args": [[[0, 1], [2, 3]]], "kwargs": {"levels": [1, 1]}})",
+                "axs[0].contour: Contour levels must be increasing"},
+        Refusal{R"({"on": "axs[0]", "call": "contour", "args": [[[0, 1], [2, 3]]], "kwargs": {"colors": "k", "cmap": "viridis"}})",
+                "axs[0].contour: Either colors or cmap must be None"},
+        Refusal{R"({"on": "axs[0]", "call": "contour", "args": [[[0, 1], [2, 3]]], "kwargs": {"origin": "left"}})",
+                "axs[0].contour: 'left' is not a valid value for origin. Supported values are None, 'lower', 'upper', 'image'"},
+        Refusal{R"({"on": "axs[0]", "call": "contour", "args": [[[0, 1], [2, 3]]], "kwargs": {"extent": [0, 1]}})",
+                "axs[0].contour: If given, 'extent' must be None or (x0, x1, y0, y1)"},
+        Refusal{R"({"on": "axs[0]", "call": "contour", "args": [[[0, 1], [2, 3]]], "kwargs": {"color": "k"}})",
+                "axs[0].contour: ContourSet.__init__() got an unexpected keyword argument 'color'"},
+        Refusal{R"({"on": "axs[0]", "call": "contour", "args": [[[0, 1], [2, 3]]], "kwargs": {"algorithm": "foo"}})",
+                "axs[0].contour: 'foo' is not a valid value for contour.algorithm; supported values are ['mpl2005', 'mpl2014', 'serial', 'threaded']"},
+        Refusal{R"({"on": "axs[0]", "call": "contour", "args": [[[0, 1], [2, 3]]], "kwargs": {"algorithm": "serial"}})",
+                "axs[0].contour: the serial contour algorithm is not supported yet"},
+        Refusal{R"({"on": "axs[0]", "call": "contour", "args": [[1, 2, 3]]})", "axs[0].contour: Input z must be 2D, not 1D"},
+        Refusal{R"({"on": "axs[0]", "call": "contour", "args": [[[1, 2, 3]]]})",
+                "axs[0].contour: Input z must be at least a (2, 2) shaped array, but has shape (1, 3)"},
+        Refusal{R"({"on": "axs[0]", "call": "contour", "args": [[1, 2], [[1, 2], [1, 2]], [[0, 1], [2, 3]]]})",
+                "axs[0].contour: Number of dimensions of x (1) and y (2) do not match"},
+        Refusal{R"({"on": "axs[0]", "call": "contour", "args": [[1, 2, 3], [1, 2], [[0, 1], [2, 3]]]})",
+                "axs[0].contour: Length of x (3) must match number of columns in z (2)"},
+        Refusal{R"({"on": "axs[0]", "call": "contour", "args": [[1, 2], [1, 2, 3], [[0, 1], [2, 3]]]})",
+                "axs[0].contour: Length of y (3) must match number of rows in z (2)"},
+        Refusal{R"({"on": "axs[0]", "call": "contour", "args": [[[1, 2, 3], [1, 2, 3]], [[1, 2], [1, 2]], [[0, 1], [2, 3]]]})",
+                "axs[0].contour: Shapes of x (2, 3) and z (2, 2) do not match"},
+        Refusal{R"({"on": "axs[0]", "call": "contour", "args": [[[1, 2], [1, 2]], [[1, 2], [1, 2], [1, 2]], [[0, 1], [2, 3]]]})",
+                "axs[0].contour: Shapes of y (3, 2) and z (2, 2) do not match"},
+        Refusal{R"({"on": "axs[0]", "call": "contour", "args": [[[0, 1], [2, 3]], 3, 4, 5, 6]})",
+                "axs[0].contour: contour() takes from 1 to 4 positional arguments but 5 were given"},
+        Refusal{R"({"on": "axs[0]", "call": "contour", "args": [[[0, 1], [2, 3]]], "kwargs": {"nchunk": -1}})",
+                "axs[0].contour: chunk_size cannot be negative"},
+        Refusal{R"({"on": "axs[0]", "call": "contour", "args": [[[0, 1], [2, 3]]], "kwargs": {"linewidths": []}})",
+                "axs[0].contour: division by zero"},
+        Refusal{R"({"on": "axs[0]", "call": "contour", "args": [[[0, 1], [2, 3]]], "kwargs": {"linestyles": []}})",
+                "axs[0].contour: division by zero"},
+        Refusal{R"({"on": "axs[0]", "call": "contour", "args": [[[0, 1], [2, 3]]], "kwargs": {"linestyles": "wavy"}})",
+                "axs[0].contour: linestyles other than 'solid', 'dashed', 'dashdot' and 'dotted' are not supported yet"},
+        Refusal{R"({"on": "axs[0]", "call": "contour", "args": [[[0, 1], [2, 3]]], "kwargs": {"locator": 3}})",
+                "axs[0].contour: locator is not supported yet"},
+        Refusal{R"({"on": "axs[0]", "call": "contour", "args": [[[0, 1], [2, 3]]], "kwargs": {"levels": []}})",
+                "axs[0].contour: contours without levels are not supported yet"},
+        Refusal{R"({"on": "axs[0]", "call": "contour", "args": [[[0, 1], [2, 3]]], "kwargs": {"levels": -1}})",
+                "axs[0].contour: levels as an integer must be from 0 to 1000 (others are not supported yet)"},
+        Refusal{R"({"on": "axs[0]", "call": "contour", "args": [[[{"$float": "nan"}, 1], [2, {"$float": "nan"}]], [[0, 1], [2, 3]], [[0, 1], [2, 3]]]})",
+                "axs[0].contour: contours of x and y that are not finite are not supported yet"},
+        Refusal{R"({"on": "axs[0]", "call": "contour", "args": [[[{"$float": "nan"}, {"$float": "nan"}], [{"$float": "nan"}, {"$float": "nan"}]]]})",
+                "axs[0].contour: contours of a z without a valid value are not supported yet"},
+        Refusal{R"({"on": "axs[0]", "call": "contour", "args": [[[0, 1], [2, 3]]], "as": "cs"})",
+                "axs[0].contour: naming the contour set is not supported yet"},
+        Refusal{R"({"on": "axs[0]", "call": "contour", "args": [[[0, 1], [2, 3]]], "kwargs": {"rasterized": true}})",
+                "axs[0].contour: rasterized is not supported yet"}));

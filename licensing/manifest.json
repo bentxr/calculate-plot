@@ -497,6 +497,8 @@
     "src/engine/collections.cpp",
     "src/engine/collections.hpp",
     "src/engine/colorbar.cpp",
+    "src/engine/contour_set.cpp",
+    "src/engine/contour_set.hpp",
     "src/engine/colorbar.hpp",
     "src/engine/constrained_layout.cpp",
     "src/engine/constrained_layout.hpp",

@@ -6,6 +6,7 @@
 #include "engine/arrows.hpp"
 #include "engine/axes.hpp"
 #include "engine/colorbar.hpp"
+#include "engine/contour_set.hpp"
 #include "engine/figure.hpp"
 #include "engine/image.hpp"
 #include "engine/inset.hpp"
@@ -1644,6 +1645,7 @@ private:
         if (call.method == "pcolormesh") return pcolormesh(ax, call, error) && noteMappable(ax, call);
         if (call.method == "pcolor") return pcolor(ax, call, error) && noteMappable(ax, call);
         if (call.method == "pcolorfast") return pcolorfast(ax, call, error) && noteMappable(ax, call);
+        if (call.method == "contour") return contour(ax, call, error);
         if (call.method == "vlines" || call.method == "hlines") return lines(ax, call, error);
         if (call.method == "set_xscale" || call.method == "set_yscale") {
             const Json* nameJson = call.args.empty() ? keyword(call, "value") : &call.args[0];
@@ -5100,6 +5102,153 @@ private:
         }
         ax.updateDatalim(finite);
         ax.requestAutoscaleView(true, true);
+    }
+
+    // Axes.contour([X, Y,] Z, /, [levels], **kwargs): a QuadContourSet of lines, its limits tight around the grid
+    bool contour(Axes& ax, const model::Call& call, std::string* error) {
+        const std::string where = call.on + "." + call.method;
+        const std::size_t nargs = call.args.size();
+        if (nargs < 1 || nargs > 4)
+            return *error = where + ": " + call.method + "() takes from 1 to 4 positional arguments but " + std::to_string(nargs) + " were given", false;
+        if (!call.as.empty()) return *error = where + ": naming the contour set is not supported yet", false;
+        ContourArgs a;
+        a.filled = call.method == "contourf";
+        const auto dims = [](const Json& v) {  // np.ndim of nested lists (of an $array's data)
+            const Json* e = &v;
+            if (e->isObject() && e->members().size() == 1 && e->members()[0].first == "$array") e = e->members()[0].second.find("data");
+            int d = 0;
+            for (const Json* s = sequence(*e); s; s = s->size() ? sequence((*s)[0]) : nullptr) ++d;
+            return d;
+        };
+        const std::size_t zIndex = nargs <= 2 ? 0 : 2;
+        const Json& zJson = call.args[zIndex];
+        if (const int d = dims(zJson); d == 1 || d == 3) return *error = where + ": Input z must be 2D, not " + std::to_string(d) + "D", false;
+        if (!readArray(zJson, &a.z, error)) return *error = where + ": " + *error, false;
+        if (zIndex == 2) {
+            a.xDims = dims(call.args[0]), a.yDims = dims(call.args[1]);
+            std::vector<std::vector<double>> x, y;
+            if (a.xDims < 1 || a.xDims > 2 || a.yDims < 1 || a.yDims > 2 || !gridArray(call.args[0], &x) || !gridArray(call.args[1], &y))
+                return *error = where + ": X and Y must be arrays of numbers of one or two dimensions", false;
+            a.x = x, a.y = y;
+        }
+        // levels: positional after Z, or the keyword (which wins); an integer asks a locator for them
+        const Json* levels = keyword(call, "levels");
+        if ((!levels || levels->isNull()) && (nargs == 2 || nargs == 4)) levels = &call.args.back();
+        if (levels && !levels->isNull()) {
+            std::vector<double> l;
+            if (levels->isBool()) a.nlevels = levels->asBool() ? 1 : 0;
+            else if (levels->isInteger()) a.nlevels = (long long)levels->asNumber();
+            else if (numbers(*levels, &l)) a.levels = l;
+            else return *error = where + ": levels must be an integer or a sequence of numbers", false;
+        }
+        const Json* cmapJson = keyword(call, "cmap");
+        a.cmapGiven = cmapJson && !cmapJson->isNull();
+        bool normObject = false;
+        if (!colorizer(&a.cmap, &a.norm, cmapJson, keyword(call, "norm"), nullptr, false, where, &normObject, error)) return false;
+        a.logNorm = normObject && a.norm->spec().kind == "LogNorm";
+        const Json* normJson = keyword(call, "norm");
+        if (!normJson || normJson->isNull()) a.norm = nullptr;  // (the set's own Normalize)
+        std::optional<double> zorder;
+        std::optional<std::string> label;
+        for (const auto& [name, value] : call.kwargs) {
+            double v = 0;
+            if (name == "levels" || name == "cmap" || name == "norm") continue;
+            if (name == "color") return *error = where + ": ContourSet.__init__() got an unexpected keyword argument 'color'", false;
+            const bool none = value.isNull();
+            if (name == "linewidths") {
+                if (none) continue;
+                std::vector<double> lw;
+                if (readNumber(value, &v)) lw = {v};
+                else if (!numbers(value, &lw)) return *error = where + ": linewidths must be a number or a sequence of numbers", false;
+                a.linewidths = lw;
+            } else if (name == "linestyles" || name == "negative_linestyles") {
+                if (none) continue;
+                std::vector<std::string> styles;
+                if (value.isString()) styles = {value.asString()};
+                else if (const Json* seq = sequence(value)) {
+                    for (const Json& st : seq->items()) {
+                        if (!st.isString()) return *error = where + ": " + name + " as on-off ink sequences are not supported yet", false;
+                        styles.push_back(st.asString());
+                    }
+                } else {
+                    return *error = where + ": Unrecognized type for linestyles kwarg", false;
+                }
+                if (name == "linestyles") a.linestyles = styles;
+                else if (styles.size() == 1) a.negativeLinestyles = styles[0];
+                else return *error = where + ": negative_linestyles as an on-off ink sequence is not supported yet", false;
+            } else if (name == "alpha") {
+                if (none) continue;
+                if (!readAlpha(value, &v)) return *error = where + ": alpha must be a number from 0 to 1 (arrays are not supported yet)", false;
+                a.alpha = v;
+            } else if (name == "origin") {
+                if (none) continue;
+                if (!value.isString()) return *error = where + ": " + repr(value) + " is not a valid value for origin. Supported values are None, 'lower', 'upper', 'image'", false;
+                a.origin = value.asString();
+            } else if (name == "extent") {
+                if (none) continue;
+                std::vector<double> e;
+                if (!numbers(value, &e) || e.size() != 4) return *error = where + ": If given, 'extent' must be None or (x0, x1, y0, y1)", false;
+                a.extent = std::array<double, 4>{e[0], e[1], e[2], e[3]};
+            } else if (name == "colors") {
+                if (none) continue;
+                std::vector<colors::Spec> specs;
+                if (!colorList(value, &specs)) return *error = where + ": colors must be a colour or a sequence of colours", false;
+                std::vector<colors::Rgba> rgba;
+                for (const auto& spec : specs) {
+                    std::string why;
+                    const auto c = colors::toRgba(spec, std::nullopt, rc_, &why);
+                    if (!c) return *error = where + ": " + why, false;
+                    rgba.push_back(*c);
+                }
+                a.colors = rgba;
+            } else if (name == "vmin" || name == "vmax") {
+                if (none) continue;
+                if (!readNumber(value, &v)) return *error = where + ": " + name + " must be a number", false;
+                (name == "vmin" ? a.vmin : a.vmax) = v;
+            } else if (name == "extend") {
+                if (!value.isString()) return *error = where + ": extend must be one of 'neither', 'both', 'min', 'max'", false;
+                a.extend = value.asString();
+            } else if (name == "antialiased" || name == "corner_mask") {
+                if (none) continue;
+                if (!value.isBool()) return *error = where + ": " + name + " must be True, False or None", false;
+                (name == "antialiased" ? a.antialiased : a.cornerMask) = value.asBool();
+            } else if (name == "nchunk") {
+                if (!value.isInteger()) return *error = where + ": nchunk must be an integer", false;
+                a.nchunk = (long long)value.asNumber();
+            } else if (name == "algorithm") {
+                if (none) continue;
+                if (!value.isString()) return *error = where + ": algorithm must be a string", false;
+                a.algorithm = value.asString();
+            } else if (name == "locator" || name == "transform" || name == "colorizer") {
+                if (!none) return *error = where + ": " + name + " is not supported yet", false;
+            } else if (name == "hatches") {
+                // (lines draw no hatches)
+                const Json* seq = sequence(value);
+                bool allNone = seq != nullptr;
+                if (seq)
+                    for (const Json& h : seq->items()) allNone = allNone && h.isNull();
+                if (!allNone && a.filled) return *error = where + ": hatches are not supported yet", false;
+            } else if (name == "zorder") {
+                if (!readFinite(value, &v)) return *error = where + ": zorder must be a number", false;
+                zorder = v;
+            } else if (name == "label") {
+                if (!value.isString()) return *error = where + ": label must be a string", false;
+                label = value.asString();
+            } else {
+                return *error = where + ": " + name + " is not supported yet", false;
+            }
+        }
+        auto cs = ContourSet::make(rc_, a, error);
+        if (!cs) return *error = where + ": " + *error, false;
+        // self.set(**kwargs) over the defaults
+        if (zorder) cs->zorder = *zorder;
+        if (label) cs->label = *label;
+        const std::array<double, 2> mins = cs->mins, maxs = cs->maxs;
+        ax.addCollection(std::move(cs), false);
+        ax.updateDatalim({mins, maxs});
+        ax.tight = true;  // autoscale_view(tight=True)
+        ax.requestAutoscaleView(true, true);
+        return true;
     }
 
     // Axes.pcolor([X, Y,] C, *, shading=None, alpha=None, norm=None, cmap=None, vmin=None, vmax=None, colorizer=None,

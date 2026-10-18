@@ -115,14 +115,25 @@ std::optional<Colormap> Colormap::named(const std::string& name) {
     return std::nullopt;
 }
 
-Colormap Colormap::listed(const std::vector<Rgba>& colors, const std::string& name) {
+Colormap Colormap::listed(const std::vector<Rgba>& colors, const std::string& name, std::optional<Rgba> under,
+                          std::optional<Rgba> over) {
     Colormap m;
     m.name_ = name;
     m.listed_ = true;
     m.colors_ = colors;
+    m.under_ = under;
+    m.over_ = over;
     m.n_ = (long long)colors.size();
     m.init();
     return m;
+}
+
+bool Colormap::monochrome() const {
+    // self.N <= 1 or np.all(self._lut[0] == self._lut[1:self.N]) (LinearSegmentedColormap: False)
+    if (!listed_) return false;
+    for (long long i = 1; i < n_; ++i)
+        if (lut_[std::size_t(i)] != lut_[0]) return false;
+    return true;
 }
 
 bool Colormap::hasFunctionChannels() const {
@@ -144,9 +155,9 @@ void Colormap::init() {
             for (long long i = 0; i < n_; ++i) lut_[std::size_t(i)][k] = values.size() == 1 ? values[0] : values[std::size_t(i)];
         }
     }
-    // _update_lut_extremes: under and over the ends, bad transparent black
-    lut_[std::size_t(n_)] = lut_[0];
-    lut_[std::size_t(n_ + 1)] = lut_[std::size_t(n_ - 1)];
+    // _update_lut_extremes: the under and over colours, else the ends; bad transparent black
+    lut_[std::size_t(n_)] = under_ ? *under_ : lut_[0];
+    lut_[std::size_t(n_ + 1)] = over_ ? *over_ : lut_[std::size_t(n_ - 1)];
     lut_[std::size_t(n_ + 2)] = Rgba{0, 0, 0, 0};
 }
 
@@ -171,6 +182,7 @@ bool Colormap::resampled(long long lutsize, Colormap* out, std::string* error) c
 Colormap Colormap::reversed() const {
     Colormap r = *this;
     r.name_ = name_ + "_r";
+    std::swap(r.under_, r.over_);  // (under=self._rgba_over, over=self._rgba_under)
     if (listed_) {
         std::reverse(r.colors_.begin(), r.colors_.end());
     } else {

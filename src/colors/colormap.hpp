@@ -21,13 +21,17 @@ public:
     // A registered colormap by name (data/colormaps.json, names ending in _r reversed); nullopt for other names.
     static std::optional<Colormap> named(const std::string& name);
     static std::vector<std::string> names();  // every registered name
-    // ListedColormap(colors, name): a colormap of these colours (to_rgba_array of them)
-    static Colormap listed(const std::vector<Rgba>& colors, const std::string& name);
+    // ListedColormap(colors, name, under=, over=): a colormap of these colours (to_rgba_array of them), with
+    // its own colours under and over the ends when given
+    static Colormap listed(const std::vector<Rgba>& colors, const std::string& name, std::optional<Rgba> under = std::nullopt,
+                           std::optional<Rgba> over = std::nullopt);
 
     const std::string& name() const { return name_; }
     std::size_t size() const { return std::size_t(n_); }  // N
     const std::vector<Rgba>& lut() const { return lut_; }  // N + 3 rows
     bool hasFunctionChannels() const;
+    // monochrome: a listed colormap of identical colours (or of one); a segmented one never is
+    bool monochrome() const;
     // resampled(lutsize); refused for a colormap whose channels matplotlib computes with functions
     bool resampled(long long lutsize, Colormap* out, std::string* error) const;
     Colormap reversed() const;
@@ -49,6 +53,7 @@ private:
     long long n_ = 0;
     bool listed_ = false;
     std::vector<Rgba> colors_;          // ListedColormap
+    std::optional<Rgba> under_, over_;  // _rgba_under, _rgba_over
     std::array<Channel, 4> channels_;   // LinearSegmentedColormap: red, green, blue, alpha
     std::vector<Rgba> lut_;
 };

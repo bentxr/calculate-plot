@@ -177,5 +177,5 @@ TEST(RcParamsCoverage, EveryKeyIsReadOrListed) {
         EXPECT_FALSE(isInert && isUnsupported) << key;
         honoured += isRead && !isUnsupported;
     }
-    EXPECT_EQ(honoured, 251);  // with the 75 that change nothing and the 13 not supported yet: 339
+    EXPECT_EQ(honoured, 255);  // with the 71 that change nothing and the 13 not supported yet: 339
 }
