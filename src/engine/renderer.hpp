@@ -78,6 +78,10 @@ public:
     // x, y: the text's origin in pixels from the top-left (flipy); angle in degrees.
     virtual void drawText(const GC& gc, double x, double y, const std::string& s, const FontSpec& font, double angle,
                           bool ismath, const TextOptions& mtext) = 0;
+    // option_image_nocomposite: images drawn one by one (Agg) rather than put together first (SVG)
+    virtual bool optionImageNocomposite() const { return true; }
+    virtual double imageMagnification() const { return 1.0; }  // get_image_magnification
+    virtual bool optionScaleImage() const { return false; }      // option_scale_image: draw_image takes a transform
     // draw_image(gc, x, y, im, transform): x, y the lower left corner in pixels from the bottom; a transform
     // (the SVG renderer's option_scale_image) maps the unit square of the image
     virtual void drawImage(const GC& gc, double x, double y, const RgbaImage& im,

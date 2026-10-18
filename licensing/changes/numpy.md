@@ -30,3 +30,6 @@ where the bin rules treat them otherwise):
   numpy/_core/src/npymath/npy_math_internal.h.src, in the evaluation of the restricted functions of figure files
   (src/support/pylambda.*: NumPy's elementwise float64 arithmetic and its functions as the C library computes
   them, with Python's own arithmetic for the parts without the array).
+- **float32 logarithm** (src/support/npy_logf.cpp): loops_exponent_log.dispatch.c.src's simd_log_FLOAT for AVX2 and
+  FMA (the reference machine's np.log of float32 arrays) with npy_simd_data.h's coefficients, translated from vector
+  intrinsics to one lane at a time in standard C++ (std::fma for the fused multiply-adds).

@@ -519,6 +519,8 @@ void SvgTraceRenderer::drawMarkers(const GC& gc, const Path& markerPath, const t
     events_.endObject();
 }
 
+bool SvgTraceRenderer::optionImageNocomposite() const { return !rc_.boolean("image.composite_image"); }
+
 void SvgTraceRenderer::drawImage(const GC& gc, double x, double y, const RgbaImage& im,
                                  const std::optional<transforms::Matrix>& transform) {
     events_.beginObject();

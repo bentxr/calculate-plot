@@ -9,6 +9,7 @@
 #include "agg/path_text.h"
 #include "engine/annotation.hpp"
 #include "engine/figure.hpp"
+#include "engine/image.hpp"
 #include "engine/inset.hpp"
 #include "engine/legend.hpp"
 #include "rc/rc_params.hpp"
@@ -1582,6 +1583,14 @@ Collection& Axes::addCollection(std::unique_ptr<Collection> c) {
     return ref;
 }
 
+Artist& Axes::addImage(std::unique_ptr<Artist> im) {
+    if (im->label.empty()) im->label = "_child" + std::to_string(children.size());
+    if (!im->transformSet) im->transform = transData;  // _set_artist_props
+    Artist& ref = *im;
+    children.push_back(std::move(im));
+    return ref;
+}
+
 Collection& Axes::addLinesCollection(std::unique_ptr<Collection> c) {
     if (c->label.empty()) c->label = "_child" + std::to_string(children.size());
     c->figure = &figure;
@@ -2087,7 +2096,7 @@ void Axes::draw(Renderer& renderer) {
     if (legend) artists.push_back(legend.get());
     std::stable_sort(artists.begin(), artists.end(), [](const Artist* a, const Artist* b) { return a->zorder < b->zorder; });
     if (axisOn && frameOn) artists.insert(artists.begin(), patch.get());
-    for (Artist* a : artists) a->draw(renderer);
+    drawListCompositingImages(renderer, bbox, artists);
     renderer.closeGroup("axes");
 }
 

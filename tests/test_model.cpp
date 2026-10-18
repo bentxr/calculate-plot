@@ -222,3 +222,33 @@ TEST(FigureModel, AFunctionIsTheBodyOfALambda) {
         EXPECT_NE(refused(json).find("$lambda"), std::string::npos) << bad;
     }
 }
+
+// matplotlib.colors' classes are called on "colors" (norms, colormaps): `from matplotlib import colors` is imported
+// when a call is on it.
+TEST(FigureModel, ColorsObjectsAreMadeOnTheColorsModule) {
+    const auto f = parsed(R"j({"version":1,"calls":[{"on":"colors","call":"LogNorm","kwargs":{"vmin":0.1,"vmax":10},"as":"norm"},
+        {"call":"subplots","as":["fig","ax"]},{"on":"ax","call":"imshow","args":[[[1,2],[3,4]]],"kwargs":{"norm":{"$ref":"norm"}}}]})j");
+    const std::string script = m::exportPython(f, "x");
+    EXPECT_NE(script.find("from matplotlib import colors\n"), std::string::npos) << script;
+    EXPECT_NE(script.find("norm = colors.LogNorm(vmin=0.1, vmax=10)\n"), std::string::npos) << script;
+    EXPECT_NE(script.find("ax.imshow([[1, 2], [3, 4]], norm=norm)\n"), std::string::npos) << script;
+    EXPECT_EQ(m::exportPython(parsed(R"({"version":1,"calls":[{"call":"figure"}]})"), "x").find("from matplotlib import"),
+              std::string::npos);
+    EXPECT_NE(refused(R"({"version":1,"calls":[{"on":"colors","call":"LogNorm","as":"colors"}]})").find("colors"), std::string::npos);
+}
+
+// {"$array": {"dtype": ..., "data": [...]}} is an array of a NumPy dtype other than the one np.asarray picks;
+// numpy is imported for it.
+TEST(FigureModel, AnArrayMayHaveADtype) {
+    const auto f = parsed(R"j({"version":1,"calls":[{"call":"subplots","as":["fig","ax"]},
+        {"on":"ax","call":"imshow","args":[{"$array":{"dtype":"uint8","data":[[[1,2,3],[4,5,6]]]}}]}]})j");
+    const std::string script = m::exportPython(f, "x");
+    EXPECT_NE(script.find("import numpy as np\n"), std::string::npos) << script;
+    EXPECT_NE(script.find("ax.imshow(np.array([[[1, 2, 3], [4, 5, 6]]], dtype=np.uint8))"), std::string::npos) << script;
+    for (const char* bad : {R"({"$array":{"dtype":"complex128","data":[1]}})", R"({"$array":{"dtype":"uint8"}})",
+                            R"({"$array":{"dtype":"uint8","data":3}})", R"({"$array":{"dtype":"uint8","data":[1],"x":1}})",
+                            R"({"$array":[1]})"}) {
+        const std::string json = std::string(R"({"version":1,"calls":[{"call":"figure","args":[)") + bad + "]}]}";
+        EXPECT_NE(refused(json).find("$array"), std::string::npos) << bad;
+    }
+}

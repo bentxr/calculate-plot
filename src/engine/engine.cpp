@@ -6,6 +6,7 @@
 #include "engine/arrows.hpp"
 #include "engine/axes.hpp"
 #include "engine/figure.hpp"
+#include "engine/image.hpp"
 #include "engine/inset.hpp"
 #include "engine/legend.hpp"
 #include "engine/tight_layout.hpp"
@@ -158,6 +159,7 @@ public:
                 return figureCall(c, error);
             }
         }
+        if (call.on == "colors") return colorsCall(call, error);
         const auto ax = axes_.find(call.on);
         if (ax != axes_.end()) return axesCall(*ax->second, call, error);
         if (figureNames_.count(call.on)) return figureCall(call, error);
@@ -180,7 +182,7 @@ public:
             {"hlines", "hlines"}, {"vlines", "vlines"}, {"grid", "grid"}, {"legend", "legend"}, {"text", "text"},
             {"title", "set_title"}, {"xlabel", "set_xlabel"}, {"ylabel", "set_ylabel"}, {"xlim", "set_xlim"},
             {"ylim", "set_ylim"}, {"xscale", "set_xscale"}, {"yscale", "set_yscale"}, {"bar", "bar"}, {"barh", "barh"},
-            {"hist", "hist"}, {"fill", "fill"}, {"step", "step"}, {"stairs", "stairs"}, {"stem", "stem"}, {"boxplot", "boxplot"}, {"violinplot", "violinplot"}, {"pie", "pie"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}};
+            {"hist", "hist"}, {"fill", "fill"}, {"step", "step"}, {"stairs", "stairs"}, {"stem", "stem"}, {"boxplot", "boxplot"}, {"violinplot", "violinplot"}, {"pie", "pie"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}, {"imshow", "imshow"}};
         return ofAxes;
     }
 
@@ -522,6 +524,7 @@ private:
             {"bar_label", {"container", "labels"}, 2},
             {"stairs", {"values", "edges"}, 2},
             {"add_patch", {"p"}, 1},
+            {"imshow", {"X", "cmap", "norm"}, 3},
         };
         const std::string where = (call.on.empty() ? "plt" : call.on) + "." + call.method;
         for (const Signature& signature : signatures) {
@@ -1620,6 +1623,7 @@ private:
         if (call.method == "stairs") return stairs(ax, call, error);
         if (call.method == "add_patch") return addPatch(ax, call, error);
         if (call.method == "hist") return hist(ax, call, error);
+        if (call.method == "imshow") return imshow(ax, call, error);
         if (call.method == "vlines" || call.method == "hlines") return lines(ax, call, error);
         if (call.method == "set_xscale" || call.method == "set_yscale") {
             const Json* nameJson = call.args.empty() ? keyword(call, "value") : &call.args[0];
@@ -4221,6 +4225,256 @@ private:
         return true;
     }
 
+
+    // The classes of matplotlib.colors a figure file makes on "colors": norms, each kept under its "as" name.
+    bool colorsCall(const model::Call& call, std::string* error) {
+        const std::string where = "colors." + call.method;
+        if (call.as.size() > 1) return *error = where + " returns one object: name it once", false;
+        struct Parameters {
+            const char* cls;
+            std::vector<const char*> positional, keywordOnly, required;
+        };
+        static const Parameters classes[] = {
+            {"Normalize", {"vmin", "vmax", "clip"}, {}, {}},
+            {"LogNorm", {"vmin", "vmax", "clip"}, {}, {}},
+            {"SymLogNorm", {"linthresh", "linscale", "vmin", "vmax", "clip"}, {"base"}, {"linthresh"}},
+            {"AsinhNorm", {"linear_width", "vmin", "vmax", "clip"}, {}, {}},
+            {"PowerNorm", {"gamma", "vmin", "vmax", "clip"}, {}, {"gamma"}},
+            {"TwoSlopeNorm", {"vcenter", "vmin", "vmax"}, {}, {"vcenter"}},
+            {"CenteredNorm", {"vcenter", "halfrange", "clip"}, {}, {}},
+            {"BoundaryNorm", {"boundaries", "ncolors", "clip"}, {"extend"}, {"boundaries", "ncolors"}},
+            {"NoNorm", {"vmin", "vmax", "clip"}, {}, {}}};
+        const Parameters* params = nullptr;
+        for (const auto& c : classes)
+            if (call.method == c.cls) params = &c;
+        if (!params) return *error = where + " is not supported yet", false;
+        std::map<std::string, const Json*> given;
+        if (call.args.size() > params->positional.size()) return *error = where + ": too many positional arguments", false;
+        for (std::size_t i = 0; i < call.args.size(); ++i) given[params->positional[i]] = &call.args[i];
+        for (const auto& kw : call.kwargs) {
+            const std::string& name = kw.first;
+            const Json& value = kw.second;
+            const bool known = std::find_if(params->positional.begin(), params->positional.end(), [&](const char* n) { return name == n; }) !=
+                                   params->positional.end() ||
+                               std::find_if(params->keywordOnly.begin(), params->keywordOnly.end(), [&](const char* n) { return name == n; }) !=
+                                   params->keywordOnly.end();
+            if (!known) return *error = where + ": got an unexpected keyword argument '" + name + "'", false;
+            if (given.count(name)) return *error = where + ": got multiple values for argument '" + name + "'", false;
+            given[name] = &value;
+        }
+        for (const char* r : params->required)
+            if (!given.count(r)) return *error = where + ": missing 1 required positional argument: '" + r + "'", false;
+        colors::NormSpec spec;
+        spec.kind = call.method;
+        for (const auto& entry : given) {
+            const std::string& name = entry.first;
+            const Json* value = entry.second;
+            double v = 0;
+            const auto number = [&](std::optional<double>* out, bool noneAllowed) {
+                if (value->isNull() && noneAllowed) return out->reset(), true;
+                if (!readNumber(*value, &v)) return *error = where + ": " + name + " must be a number", false;
+                return *out = v, true;
+            };
+            std::optional<double> o;
+            if (name == "vmin" || name == "vmax" || name == "halfrange") {
+                if (!number(name == "vmin" ? &spec.vmin : name == "vmax" ? &spec.vmax : &spec.halfrange, true)) return false;
+            } else if (name == "clip") {
+                if (!value->isBool()) return *error = where + ": clip must be True or False", false;
+                spec.clip = value->asBool();
+            } else if (name == "vcenter" || name == "linthresh") {
+                if (!number(name == "vcenter" ? &spec.vcenter : &spec.linthresh, false)) return false;
+            } else if (name == "linscale" || name == "base" || name == "linear_width" || name == "gamma") {
+                if (!number(&o, false)) return false;
+                (name == "linscale" ? spec.linscale : name == "base" ? spec.base : name == "gamma" ? spec.gamma : spec.linearWidth) = *o;
+            } else if (name == "boundaries") {
+                const Json* list = sequence(*value);
+                if (!list) return *error = where + ": boundaries must be a list of numbers", false;
+                for (const Json& b : list->items()) {
+                    if (!readNumber(b, &v)) return *error = where + ": boundaries must be a list of numbers", false;
+                    spec.boundaries.push_back(v);
+                }
+            } else if (name == "ncolors") {
+                if (!value->isNumber() || !value->isInteger()) return *error = where + ": ncolors must be an integer", false;
+                spec.ncolors = (long long)value->asNumber();
+            } else if (name == "extend") {
+                if (!value->isString()) return *error = where + ": extend must be a string", false;
+                spec.extend = value->asString();
+            }
+        }
+        if (spec.kind == "CenteredNorm" && !spec.vcenter) spec.vcenter = 0.0;
+        auto norm = std::make_shared<colors::Norm>();
+        if (!colors::Norm::make(spec, norm.get(), error)) return *error = where + ": " + *error, false;
+        if (!call.as.empty()) norms_[call.as[0]] = norm;
+        return true;
+    }
+
+    // Axes.imshow(X, cmap=None, norm=None, *, aspect=None, interpolation=None, alpha=None, vmin=None, vmax=None,
+    // colorizer=None, origin=None, extent=None, interpolation_stage=None, filternorm=True, filterrad=4.0,
+    // resample=None, url=None, **artist properties)
+    bool imshow(Axes& ax, const model::Call& call, std::string* error) {
+        const std::string where = call.on + ".imshow";
+        if (call.as.size() > 1) return *error = where + " returns one object: name it once", false;
+        const Json* X = argument(call, 0, "X");
+        if (!X) return *error = where + ": missing 1 required positional argument: 'X'", false;
+        ImageArray data;
+        if (!readArray(*X, &data, error)) return *error = where + ": " + *error, false;
+        auto im = std::make_unique<AxesImage>(rc_, ax);
+        // the colorizer: the colormap and the norm
+        std::string cmapName = rc_.text("image.cmap");
+        if (const Json* c = argument(call, 1, "cmap"); c && !c->isNull()) {
+            if (!c->isString()) return *error = where + ": cmap must be a colormap name", false;
+            cmapName = c->asString();
+        }
+        const auto cmap = colors::Colormap::named(cmapName);
+        if (!cmap) return *error = where + ": '" + cmapName + "' is not a valid value for cmap", false;
+        im->cmap = *cmap;
+        bool normObject = false;
+        const Json* n = argument(call, 2, "norm");
+        if (n && n->isObject() && n->members()[0].first == "$ref") {
+            const auto it = norms_.find(n->members()[0].second.asString());
+            if (it == norms_.end()) return *error = where + ": norm must be a norm the figure file made, or a scale name", false;
+            im->norm = it->second;
+            normObject = true;
+        } else {
+            colors::NormSpec spec;
+            if (n && !n->isNull()) {
+                static const char* const scales[] = {"linear", "log", "symlog", "asinh", "logit"};
+                if (!n->isString()) return *error = where + ": norm must be a norm the figure file made, or a scale name", false;
+                const std::string name = n->asString();
+                if (name == "function" || name == "functionlog")
+                    return *error = where + ": the norm of the " + name + " scale is not supported yet", false;
+                if (std::find(std::begin(scales), std::end(scales), name) == std::end(scales))
+                    return *error = where + ": '" + name + "' is not a valid value for norm; supported values are 'asinh', 'function', 'functionlog', 'linear', 'log', 'logit', 'symlog'", false;
+                spec.kind = "scale:" + name;
+            }
+            im->norm = std::make_shared<colors::Norm>();
+            if (!colors::Norm::make(spec, im->norm.get(), error)) return *error = where + ": " + *error, false;
+        }
+        std::optional<double> vmin, vmax;
+        const Json* aspect = nullptr;
+        const Json* alpha = nullptr;
+        static const char* const interpolations[] = {"auto", "none", "nearest", "bilinear", "bicubic", "spline16", "spline36",
+                                                     "hanning", "hamming", "hermite", "kaiser", "quadric", "catrom", "gaussian",
+                                                     "bessel", "mitchell", "sinc", "lanczos", "blackman", "antialiased"};
+        for (const auto& [name, value] : call.kwargs) {
+            double v = 0;
+            if (name == "X" || name == "cmap" || name == "norm") continue;
+            if (name == "aspect") {
+                aspect = &value;
+            } else if (name == "alpha") {
+                alpha = &value;
+            } else if (name == "vmin" || name == "vmax") {
+                if (value.isNull()) continue;
+                if (!readNumber(value, &v)) return *error = where + ": " + name + " must be a number", false;
+                (name == "vmin" ? vmin : vmax) = v;
+            } else if (name == "interpolation") {
+                std::string s = value.isNull() ? rc_.text("image.interpolation") : value.isString() ? value.asString() : "";
+                for (char& ch : s) ch = char(std::tolower((unsigned char)ch));
+                if (std::find(std::begin(interpolations), std::end(interpolations), s) == std::end(interpolations))
+                    return *error = where + ": that is not a valid value for interpolation", false;
+                im->interpolation = s;
+            } else if (name == "interpolation_stage") {
+                const std::string s = value.isNull() ? rc_.text("image.interpolation_stage") : value.isString() ? value.asString() : "";
+                if (s != "data" && s != "rgba" && s != "auto")
+                    return *error = where + ": that is not a valid value for s; supported values are 'data', 'rgba', 'auto'", false;
+                im->interpolationStage = s;
+            } else if (name == "origin") {
+                const std::string s = value.isNull() ? rc_.text("image.origin") : value.isString() ? value.asString() : "";
+                if (s != "upper" && s != "lower")
+                    return *error = where + ": that is not a valid value for origin; supported values are 'upper', 'lower'", false;
+                im->origin = s;
+            } else if (name == "extent") {
+                if (value.isNull()) continue;
+                const Json* list = sequence(value);
+                std::array<double, 4> e{};
+                if (!list || list->size() != 4) return *error = where + ": extent must be (left, right, bottom, top)", false;
+                for (std::size_t k = 0; k < 4; ++k)
+                    if (!readNumber((*list)[k], &e[k])) return *error = where + ": extent must be (left, right, bottom, top)", false;
+                im->extent = e;
+            } else if (name == "filternorm") {
+                if (!value.isBool() && !readNumber(value, &v)) return *error = where + ": filternorm must be True or False", false;
+                im->filternorm = value.isBool() ? value.asBool() : v != 0;
+            } else if (name == "filterrad") {
+                if (!readNumber(value, &v)) return *error = where + ": filterrad must be a number", false;
+                if (!(v > 0)) return *error = where + ": The filter radius must be a positive number", false;
+                im->filterrad = v;
+            } else if (name == "resample") {
+                if (value.isNull()) continue;
+                if (!value.isBool()) return *error = where + ": resample must be True or False", false;
+                im->resample = value.asBool();
+            } else if (name == "url" || name == "gid" || name == "label") {
+                if (value.isNull() && name != "label") continue;
+                if (!value.isString()) return *error = where + ": " + name + " must be a string", false;
+                (name == "url" ? im->url : name == "gid" ? im->gid : im->label) = value.asString();
+                if (name == "label") im->label = value.asString();
+            } else if (name == "colorizer") {
+                if (!value.isNull()) return *error = where + ": colorizer is not supported yet", false;
+            } else if (name == "zorder") {
+                if (!readFinite(value, &v)) return *error = where + ": zorder must be a number", false;
+                im->zorder = v;
+            } else if (name == "visible" || name == "clip_on") {
+                if (!value.isBool()) return *error = where + ": " + name + " must be True or False", false;
+                (name == "visible" ? im->visible : im->clipOn) = value.asBool();
+            } else {
+                return *error = where + ": " + name + " is not supported yet", false;
+            }
+        }
+        // aspect: rcParams["image.aspect"] unless given
+        if (!aspect || aspect->isNull()) aspect = &rc_.value("image.aspect");
+        model::Call setAspect;
+        setAspect.on = call.on;
+        setAspect.method = "set_aspect";
+        setAspect.args = {*aspect};
+        if (!axesCall(ax, setAspect, error)) return *error = where + ": " + *error, false;
+        if (!im->setData(data, error)) return *error = where + ": " + *error, false;
+        // set_alpha: a number in [0, 1], a 2-D array of them, or None
+        if (alpha && !alpha->isNull()) {
+            double a = 0;
+            if (readNumber(*alpha, &a)) {
+                if (!(0 <= a && a <= 1)) return *error = where + ": alpha (" + repr(*alpha) + ") is outside 0-1 range", false;
+                im->alpha = a;
+            } else {
+                ImageArray al;
+                if (alpha->isString() || !readArray(*alpha, &al, error) || al.channels != 0)
+                    return *error = where + ": alpha must be a float, two-dimensional array, or None", false;
+                const auto [mn, mx] = std::minmax_element(al.data.begin(), al.data.end());
+                if (!(0 <= *mn && *mx <= 1)) return *error = where + ": alpha must be between 0 and 1, inclusive", false;
+                al.dtype = colors::DType::Float64;
+                im->alphaArray = al;
+            }
+        }
+        // clipped to the Axes patch (a rectangle: its box)
+        im->clipBox = std::make_shared<transforms::TransformedBbox>(
+            std::make_shared<transforms::Bbox>(std::array<double, 4>{0, 0, 1, 1}), ax.patch->fullTransform());
+        // _scale_norm: vmin / vmax set the norm's limits (not with a norm object), then autoscale_None
+        if (vmin || vmax) {
+            if (normObject)
+                return *error = where + ": Passing a Normalize instance simultaneously with vmin/vmax is not supported.  "
+                                        "Please pass vmin/vmax directly to the norm when creating it.", false;
+            if (vmin) im->norm->setVmin(*vmin);
+            if (vmax) im->norm->setVmax(*vmax);
+        }
+        colors::MaskedArray raw;
+        raw.data = im->data().data;
+        raw.mask = im->data().mask;
+        raw.dtype = im->data().dtype;
+        im->norm->autoscaleNone(colors::processValue(raw));
+        // set_extent(get_extent()): the data limits, the sticky edges, and the view when autoscaling
+        const auto e = im->getExtent();
+        for (double v : e)
+            if (!std::isfinite(v)) return *error = where + ": Axis limits cannot be NaN or Inf", false;
+        im->extent = e;
+        ax.updateDatalim({{e[0], e[2]}, {e[1], e[3]}});
+        im->stickyX = {e[0], e[1]};
+        im->stickyY = {e[2], e[3]};
+        if (ax.xaxis->autoscaleOn) ax.xaxis->setLim(e[0], e[1], std::nullopt);
+        if (ax.yaxis->autoscaleOn) ax.yaxis->setLim(e[2], e[3], std::nullopt);
+        AxesImage* ref = im.get();
+        ax.addImage(std::move(im));
+        if (!call.as.empty()) images_[call.as[0]] = ref;
+        return true;
+    }
+
     // Axes.add_patch(p): a patch the figure file made, into the Axes (its data limits grow by it; no
     // autoscale is asked for)
     bool addPatch(Axes& ax, const model::Call& call, std::string* error) {
@@ -5449,6 +5703,8 @@ private:
     std::map<std::string, Axes*> axes_;
     // The patches plt.Polygon made, by the names the figure file gave them, until add_patch takes them
     std::map<std::string, std::unique_ptr<Polygon>> patches_;
+    std::map<std::string, std::shared_ptr<colors::Norm>> norms_;  // the norms colors.* calls made
+    std::map<std::string, AxesImage*> images_;                    // the images named by "as"
     std::set<std::string> addedPatches_;
     // The containers bar calls returned, by name: their Axes and where in its containers they are
     std::map<std::string, std::pair<Axes*, std::size_t>> barContainers_;

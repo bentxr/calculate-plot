@@ -3,6 +3,7 @@
 // matplotlib does also where the C library is another one (in the browser).
 #include "support/json.hpp"
 #include "support/log10.hpp"
+#include "support/npy_logf.hpp"
 #include "trace_compare.hpp"
 
 #include <gtest/gtest.h>
@@ -98,4 +99,27 @@ TEST(Log10, Float32EqualsTheReferenceEnvironments) {
         const float want = std::log10(x), got = calculate_plot::support::log10f(x);
         ASSERT_EQ(std::memcmp(&want, &got, sizeof got), 0) << x;
     }
+}
+
+// support::npyLogf is NumPy's float32 np.log on x86 with AVX2 and FMA (its SIMD kernel, lane by lane): values
+// recorded from the reference environment (tests/oracle/npy_logf.json).
+TEST(NpyLogf, EqualsNumpysFloat32Log) {
+    std::ifstream in(fs::path(CALCULATE_PLOT_SOURCE_DIR) / "tests/oracle/npy_logf.json", std::ios::binary);
+    std::ostringstream text;
+    text << in.rdbuf();
+    const auto oracle = calculate_plot::support::parseJson(text.str(), nullptr);
+    ASSERT_TRUE(oracle.has_value());
+    int checked = 0;
+    for (const Json& pair : oracle->find("values")->items()) {
+        const float x = float(std::strtod(pair[0].asString().c_str(), nullptr));
+        const float want = float(std::strtod(pair[1].asString().c_str(), nullptr));
+        const float got = calculate_plot::support::npyLogf(x);
+        if (std::isnan(want)) {
+            EXPECT_TRUE(std::isnan(got)) << x;  // (Python writes NaN without its sign)
+        } else {
+            EXPECT_EQ(std::memcmp(&got, &want, sizeof got), 0) << x << ": " << got << " want " << want;
+        }
+        ++checked;
+    }
+    EXPECT_EQ(checked, 40293);
 }

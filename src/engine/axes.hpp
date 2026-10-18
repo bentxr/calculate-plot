@@ -267,6 +267,8 @@ public:
     // Axes.add_artist of a patch: in data coordinates, clipped to the Axes, but no data limits
     Patch& addArtist(std::unique_ptr<Patch> patch);
     Text& addText(std::unique_ptr<Text> text);          // Axes._add_text, as Axes.text does it
+    // Axes.add_image: a child in data coordinates (no data limits: AxesImage.set_extent does those)
+    Artist& addImage(std::unique_ptr<Artist> image);
     // Axes.contains_point(point): the pixel point in the patch's path, grown by a contour of 1 pixel
     bool containsPoint(double x, double y) const;
     // What a new line takes from the property cycle (_get_lines' _PropCycle.getdefaults): the properties

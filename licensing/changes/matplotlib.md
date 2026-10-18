@@ -309,13 +309,18 @@ it comes from in its first lines. The changes, as a whole:
   the lookup mesh of a non-affine transform given by the caller) translated to a C++ function without Python. The
   build defines MPL_FIX_AGG_IMAGE_FILTER_LUT_BUGS and MPL_FIX_AGG_INTERPOLATION_ENDPOINT_BUG for Agg, as matplotlib's
   meson build does.
+- **Images** (src/engine/image.cpp): image.py's _ImageBase and AxesImage (_normalize_image_array, set_alpha of
+  arrays, _make_image with both interpolation stages, the unsampled path, get_extent / set_extent, draw), _resample,
+  composite_images and _draw_list_compositing_images, colorizer.py's _pass_image_data, cbook.safe_masked_invalid and
+  axes/_axes.py's imshow, translated to C++ with NumPy's dtype rules step by step; the PNG encoder deflates as
+  Pillow's does (level 6, memory level 9, Z_FILTERED), so embedded images are byte-identical.
 - **Norms** (src/colors/norms.cpp): colors.py's Normalize (process_value's dtypes, autoscale_None, clip, inverse),
   TwoSlopeNorm, CenteredNorm (its linked vmin / vmax setters), PowerNorm, BoundaryNorm (np.digitize as a sorted
   search), NoNorm and the norms make_norm_from_scale builds (LogNorm, SymLogNorm, AsinhNorm, and the norms
   colorizer.py's _auto_norm_from_scale makes from a scale name), with scale.py's transforms they use, translated to
   C++ over one-dimensional masked arrays; NumPy's type rules (float32 kept by in-place and unary operations, float64
-  for masked arithmetic with Python numbers) are followed step by step. A symlog norm of float32 data is refused
-  (it needs NumPy's own float32 logarithm).
+  for masked arithmetic with Python numbers) are followed step by step; a symlog norm of float32 data takes NumPy's
+  own float32 logarithm (src/support/npy_logf.cpp).
 - **Screens** (src/engine/figure.cpp drawScreenTrace): what backend_bases.py's _set_device_pixel_ratio and
   backend_qt.py's FigureCanvasQT.resizeEvent do to the figure (the dpi times the ratio; set_size_inches of the
   widget's size times the ratio over that dpi, forward=False), translated to C++ without Qt; the application

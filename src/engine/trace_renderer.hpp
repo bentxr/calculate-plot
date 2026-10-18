@@ -105,6 +105,9 @@ public:
                   bool ismath, const TextOptions& mtext) override;
     void drawImage(const GC& gc, double x, double y, const RgbaImage& im,
                    const std::optional<transforms::Matrix>& transform) override;
+    bool optionImageNocomposite() const override;  // not rcParams["image.composite_image"]
+    double imageMagnification() const override { return imageDpi_ / 72.0; }
+    bool optionScaleImage() const override { return true; }
     // TextToPath.get_text_width_height_descent: unhinted, at TextToPath.FONT_SCALE, scaled to the size.
     TextMetrics textWidthHeightDescent(const std::string& s, const FontSpec& font, bool ismath) override;
     std::string trace() override;

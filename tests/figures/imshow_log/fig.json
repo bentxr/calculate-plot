@@ -1,0 +1,7 @@
+{"version": 1, "calls": [
+  {"call": "subplots", "args": [1, 2], "kwargs": {"figsize": {"$tuple": [5.0, 2.5]}}, "as": ["fig", "axs"]},
+  {"on": "axs[0]", "call": "set_xscale", "args": ["log"]},
+  {"on": "axs[0]", "call": "imshow", "args": [[[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]], "kwargs": {"extent": [1, 1000, 0, 3], "aspect": "auto", "interpolation": "bilinear"}},
+  {"on": "axs[1]", "call": "set_yscale", "args": ["log"]},
+  {"on": "axs[1]", "call": "imshow", "args": [[[0.5, 0.25], [0.125, 1.0]]], "kwargs": {"extent": [0, 2, 1, 100], "aspect": "auto"}}
+]}

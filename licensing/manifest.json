@@ -506,6 +506,8 @@
     "src/engine/gridspec.hpp",
     "src/engine/hatch.cpp",
     "src/engine/hatch.hpp",
+    "src/engine/image.cpp",
+    "src/engine/image.hpp",
     "src/engine/inset.cpp",
     "src/engine/inset.hpp",
     "src/engine/navigation.cpp",
@@ -581,6 +583,8 @@
    "vendored": [],
    "derived": [
     "src/support/histogram.cpp",
+    "src/support/npy_logf.cpp",
+    "src/support/npy_logf.hpp",
     "src/support/pylambda.cpp",
     "src/support/pylambda.hpp",
     "src/support/pynum.cpp"

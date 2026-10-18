@@ -64,6 +64,21 @@ bool validValue(const Json& v, const std::set<std::string>& known, std::string* 
             if (error) *error = "{\"$float\": ...} must be \"nan\", \"inf\" or \"-inf\"";
             return false;
         }
+        if (v.members()[0].first == "$array") {
+            // {"$array": {"dtype": name, "data": nested lists}}: np.array(data, dtype=np.<name>)
+            const Json& a = v.members()[0].second;
+            static const std::set<std::string> dtypes = {"bool", "uint8", "int16", "uint16", "int32", "int64", "float32", "float64"};
+            const Json* dtype = a.isObject() ? a.find("dtype") : nullptr;
+            const Json* data = a.isObject() ? a.find("data") : nullptr;
+            if (v.members().size() != 1 || !dtype || !data || a.members().size() != 2 || !dtype->isString() ||
+                !dtypes.count(dtype->asString()) || !data->isArray()) {
+                if (error)
+                    *error = "{\"$array\": ...} must be {\"dtype\": one of bool, uint8, int16, uint16, int32, int64, "
+                             "float32, float64, \"data\": [...]}";
+                return false;
+            }
+            return validValue(*data, known, error);
+        }
         if (v.members()[0].first == "$new") {
             const Json& cls = v.members()[0].second;
             if (v.members().size() == 1 && cls.isString() && isIdentifier(cls.asString())) return true;
@@ -130,6 +145,10 @@ std::string python(const Json& v) {
     case Json::Type::Object: {
         if (v.members()[0].first == "$float") return "float('" + v.members()[0].second.asString() + "')";
         if (v.members()[0].first == "$new") return "plt." + v.members()[0].second.asString() + "()";
+        if (v.members()[0].first == "$array") {
+            const Json& a = v.members()[0].second;
+            return "np.array(" + python(*a.find("data")) + ", dtype=np." + a.find("dtype")->asString() + ")";
+        }
         if (v.members()[0].first == "$ref") return v.members()[0].second.asString();
         if (v.members()[0].first == "$lambda") return "lambda x: " + v.members()[0].second.asString();
         if (v.members()[0].first == "$datetime") {  // repr(datetime.datetime): the seconds only when not 0
@@ -190,7 +209,9 @@ std::optional<Figure> parseFigure(std::string_view json, std::string* error) {
     }
     const Json* calls = doc->find("calls");
     if (!calls || !calls->isArray()) return fail("\"calls\" must be a list");
-    std::set<std::string> known;
+    // the modules the script imports: calls may be on "colors" (matplotlib.colors), and no result takes their names
+    static const std::set<std::string> modules = {"plt", "np", "colors", "locale", "datetime"};
+    std::set<std::string> known = {"colors"};
     for (const Json& c : calls->items()) {
         if (!c.isObject()) return fail("each call is an object");
         Call call;
@@ -230,6 +251,7 @@ std::optional<Figure> parseFigure(std::string_view json, std::string* error) {
                 for (const Json& n : as->items()) names.push_back(n.isString() ? n.asString() : "");
             for (const auto& n : names) {
                 if (!isIdentifier(n)) return fail("\"as\" needs plain names, not " + n);
+                if (modules.count(n)) return fail("\"as\" cannot name " + n + ": the script imports a module by that name");
                 known.insert(n);
             }
             call.as = names;
@@ -249,6 +271,7 @@ bool uses(const Json& v, bool datetime) {
     if (!v.isObject()) return false;
     for (const auto& [key, value] : v.members()) {
         if (datetime && key == "$datetime") return true;
+        if (!datetime && key == "$array") return true;
         if (!datetime && key == "$lambda" && value.isString()) {
             std::string why;
             const auto f = support::PyLambda::parse(value.asString(), &why);
@@ -260,8 +283,9 @@ bool uses(const Json& v, bool datetime) {
 }
 
 std::string exportPython(const Figure& figure, std::string_view version) {
-    bool datetimes = false, numpy = false;
+    bool datetimes = false, numpy = false, colorsModule = false;
     for (const auto& call : figure.calls) {
+        colorsModule = colorsModule || call.on == "colors";
         for (const auto& a : call.args) datetimes = datetimes || uses(a, true), numpy = numpy || uses(a, false);
         for (const auto& kw : call.kwargs) datetimes = datetimes || uses(kw.second, true), numpy = numpy || uses(kw.second, false);
     }
@@ -269,7 +293,8 @@ std::string exportPython(const Figure& figure, std::string_view version) {
                       ": this script draws the same figure with Matplotlib 3.11.2.\n" +
                       std::string(datetimes ? "import datetime\n" : "") +
                       "import locale\n\n"
-                      "import matplotlib.pyplot as plt\n" + std::string(numpy ? "import numpy as np\n" : "") + "\n"
+                      "import matplotlib.pyplot as plt\n" + std::string(colorsModule ? "from matplotlib import colors\n" : "") +
+                      std::string(numpy ? "import numpy as np\n" : "") + "\n"
                       // HarfBuzz takes the language of a text that sets none from LC_CTYPE, the first
                       // time it shapes one; the measuring of a text never uses the text's own language,
                       // so rcParams["text.language"] alone would not do.

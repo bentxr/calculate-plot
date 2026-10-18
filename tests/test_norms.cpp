@@ -105,8 +105,7 @@ std::string pyError(const Json& e) {
 }  // namespace
 
 TEST(Norms, CallsInversesAndErrorsAreMatplotlibs) {
-    int checked = 0, refused = 0;
-    std::set<std::string> refusals;
+    int checked = 0;
     for (const Json& c : oracle().find("cases")->items()) {
         const std::string where = "case " + std::to_string(checked) + " (" + c.find("norm")->asString() + ", " +
                                   c.find("input")->find("dtype")->asString() + ")";
@@ -123,15 +122,6 @@ TEST(Norms, CallsInversesAndErrorsAreMatplotlibs) {
         const Json* clip = c.find("clip");
         const bool ok = norm(array(*c.find("input")), &out, &error,
                              clip ? std::optional<bool>(clip->asBool()) : std::nullopt);
-        if (!ok && error.find("not supported yet") != std::string::npos) {
-            // only float32 data (after process_value) through a symlog norm may be refused
-            const std::string kind = c.find("norm")->asString();
-            EXPECT_TRUE(kind == "SymLogNorm" || kind == "scale:symlog") << where;
-            EXPECT_EQ(colors::processValue(array(*c.find("input"))).dtype, colors::DType::Float32) << where;
-            ++refused;
-            refusals.insert(error);
-            continue;
-        }
         if (const Json* e = c.find("error")) {
             EXPECT_FALSE(ok) << where << ": raises " << e->asString();
             EXPECT_EQ(error, pyError(*e)) << where;
@@ -164,9 +154,6 @@ TEST(Norms, CallsInversesAndErrorsAreMatplotlibs) {
         }
     }
     EXPECT_EQ(checked, 2403);
-    // float32 data through a symlog norm needs NumPy's own float32 logarithm (not ported): refused
-    EXPECT_EQ(refused, 69);
-    for (const auto& r : refusals) std::cout << "refused: " << r << "\n";
 }
 
 TEST(Norms, DtypeNamesRoundTrip) {

@@ -84,11 +84,17 @@ std::string encodePng(const Image& image, const std::vector<std::pair<std::strin
         raw.append(candidate);
     }
 
-    uLongf size = compressBound(uLong(raw.size()));
-    std::string compressed(size, '\0');
-    compress2(reinterpret_cast<Bytef*>(compressed.data()), &size, reinterpret_cast<const Bytef*>(raw.data()),
-              uLong(raw.size()), 6);
-    compressed.resize(size);
+    // deflated as Pillow's PNG encoder does: level 6, memory level 9, the Z_FILTERED strategy
+    std::string compressed(compressBound(uLong(raw.size())) + 64, '\0');
+    z_stream z{};
+    deflateInit2(&z, 6, Z_DEFLATED, 15, 9, Z_FILTERED);
+    z.next_in = reinterpret_cast<Bytef*>(raw.data());
+    z.avail_in = uInt(raw.size());
+    z.next_out = reinterpret_cast<Bytef*>(compressed.data());
+    z.avail_out = uInt(compressed.size());
+    deflate(&z, Z_FINISH);
+    compressed.resize(z.total_out);
+    deflateEnd(&z);
 
     std::string out(kSignature);
     std::string header;

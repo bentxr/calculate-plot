@@ -12,6 +12,7 @@
 
 #include "support/histogram.hpp"
 #include "support/log10.hpp"
+#include "support/npy_logf.hpp"
 #include "support/pyformat.hpp"
 
 #include <algorithm>
@@ -276,11 +277,24 @@ bool Norm::scaleTransform(const MaskedArray& value, MaskedArray* out, std::strin
         return true;
     }
     if (scale == "symlog" && value.dtype == DType::Float32) {
-        // np.abs(values) <= linthresh compares in float32; when all are inside the result is values * linscale_adj
-        // (float64), else np.log of the float32 magnitudes, which is NumPy's own float32 logarithm
-        for (std::size_t i = 0; i < value.data.size(); ++i)
-            if (!value.masked(i) && !(std::fabs(value.data[i]) <= f32(*spec_.linthresh)))
-                return *error = "a symlog norm of 8- or 16-bit integer or float32 data is not supported yet", false;
+        // float32 data: np.abs(values) <= linthresh compares in float32; when all are inside the result is
+        // values * linscale_adj, else np.log of the float32 magnitudes is NumPy's own float32 logarithm
+        const double linscaleAdj = spec_.linscale / (1.0 - 1.0 / spec_.base);
+        const double logBase = std::log(spec_.base);
+        const double lt = *spec_.linthresh;
+        const double c = linscaleAdj - std::log(lt) / logBase;
+        out->dtype = DType::Float64;
+        for (std::size_t i = 0; i < value.data.size(); ++i) {
+            const double v = value.data[i];
+            if (std::fabs(v) <= f32(lt)) {
+                out->data[i] = v * linscaleAdj;
+            } else {
+                const double sign = std::isnan(v) ? v : v > 0 ? 1.0 : -1.0;
+                out->data[i] = sign * lt * (c + double(support::npyLogf(float(std::fabs(v)))) / logBase);
+            }
+        }
+        (void)error;
+        return true;
     }
     out->dtype = DType::Float64;
     for (std::size_t i = 0; i < value.data.size(); ++i) {

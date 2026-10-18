@@ -85,6 +85,7 @@ add_library(calculate-plot STATIC
     src/engine/bezier.cpp
     src/engine/arrows.cpp
     src/engine/inset.cpp
+    src/engine/image.cpp
     src/engine/trace_renderer.cpp
     src/agg/backend_agg.cpp
     src/model/figure_model.cpp
@@ -117,6 +118,7 @@ add_library(calculate-plot STATIC
     src/support/histogram.cpp
     src/support/pynum.cpp
     src/support/log10.cpp
+    src/support/npy_logf.cpp
     src/support/pylambda.cpp
     src/support/pyformat_round.cpp
     src/support/pysum.cpp
