@@ -152,7 +152,7 @@ bool toInteger(double v, long long* out, Formatted* failure) {
 
 }  // namespace
 
-Formatted percentFormat(const std::string& fmt, double v, bool isInt) {
+Formatted percentFormat(const std::string& fmt, double v, bool isInt, bool numpyScalar) {
     std::string out;
     int used = 0;
     for (std::size_t i = 0; i < fmt.size(); ++i) {
@@ -221,7 +221,8 @@ Formatted percentFormat(const std::string& fmt, double v, bool isInt) {
             return raised(std::string("ValueError: unsupported format character"));
         }
     }
-    if (!used) return raised("TypeError: not all arguments converted during string formatting");
+    // (a NumPy scalar can be indexed, so % takes it as a mapping: nothing is left unconverted)
+    if (!used && !numpyScalar) return raised("TypeError: not all arguments converted during string formatting");
     return {Formatted::Text, out};
 }
 
@@ -254,7 +255,8 @@ Formatted formatNumber(const std::string& spec, double v, bool isInt) {
     }
     std::string type = spec.substr(i);
     if (type.size() > 1) return raised("ValueError: Invalid format specifier '" + spec + "' for object of type '" + (isInt ? "int" : "float") + "'");
-    const char t = type.empty() ? 0 : type[0];
+    char t = type.empty() ? 0 : type[0];
+    if (t == 'n' && !isInt) t = 'g';  // ('n' is 'g' with the locale's separators: none in Python's C numeric locale)
     const int p = hasPrecision ? std::stoi(precision) : 6;
     const double a = std::fabs(v);
     std::string body;
@@ -318,7 +320,12 @@ Formatted formatString(const std::string& spec, std::string s) {
 
 }  // namespace
 
-Formatted braceFormat(const std::string& fmt, double v, bool isInt) {
+namespace {
+
+// str.format (one positional argument) or string.Formatter (keyword arguments only): the replacement fields, each
+// through format_field (`fixMinus` replaces '-' with U+2212 in what a field gives)
+Formatted braceCore(const std::string& fmt, const std::vector<FormatArgument>& positional, const std::vector<FormatArgument>& kwargs,
+                    bool stringFormatter, bool fixMinus) {
     std::string out;
     int automatic = -1;  // -1: not decided; 1: automatic numbering, 0: manual
     int next = 0;
@@ -359,27 +366,51 @@ Formatted braceFormat(const std::string& fmt, double v, bool isInt) {
         } else if (nameEnd != std::string::npos) {
             spec = field.substr(nameEnd + 1);
         }
-        int index = 0;
-        if (name.empty()) {
-            if (automatic == 0) return raised("ValueError: cannot switch from manual field specification to automatic field numbering");
-            automatic = 1;
-            index = next++;
-        } else if (std::all_of(name.begin(), name.end(), [](char d) { return std::isdigit(static_cast<unsigned char>(d)); })) {
-            if (automatic == 1) return raised("ValueError: cannot switch from automatic field numbering to manual field specification");
-            automatic = 0;
-            index = std::stoi(name);
+        const FormatArgument* arg = nullptr;
+        if (name.empty() || std::all_of(name.begin(), name.end(), [](char d) { return std::isdigit(static_cast<unsigned char>(d)); })) {
+            int index = 0;
+            if (name.empty()) {
+                if (automatic == 0) return raised("ValueError: cannot switch from manual field specification to automatic field numbering");
+                automatic = 1;
+                index = next++;
+            } else {
+                if (automatic == 1) return raised("ValueError: cannot switch from automatic field numbering to manual field specification");
+                automatic = 0;
+                index = std::stoi(name);
+            }
+            if (index >= int(positional.size()))
+                return raised(stringFormatter ? std::string("IndexError: tuple index out of range")
+                                              : "IndexError: Replacement index " + std::to_string(index) + " out of range for positional args tuple");
+            arg = &positional[std::size_t(index)];
         } else {
-            return raised("KeyError: '" + name + "'");
+            for (const auto& k : kwargs)
+                if (k.name == name) arg = &k;
+            if (!arg) return raised("KeyError: '" + name + "'");
         }
-        if (index != 0) return raised("IndexError: Replacement index " + std::to_string(index) + " out of range for positional args tuple");
         Formatted piece;
-        if (conversion == "r" || conversion == "s") piece = formatString(spec, conversion == "r" ? reprOf(v, isInt) : strOf(v, isInt));
+        if (conversion == "r" || conversion == "s")
+            piece = formatString(spec, conversion == "r" ? reprOf(arg->value, arg->isInt) : strOf(arg->value, arg->isInt));
         else if (!conversion.empty()) return unsupported("conversions other than !r and !s");
-        else piece = formatNumber(spec, v, isInt);
+        else piece = formatNumber(spec, arg->value, arg->isInt);
         if (piece.kind != Formatted::Text) return piece;
+        if (fixMinus) {
+            std::string fixed;
+            for (char ch : piece.text) fixed += ch == '-' ? std::string("\xe2\x88\x92") : std::string(1, ch);
+            piece.text = fixed;
+        }
         out += piece.text;
     }
     return {Formatted::Text, out};
+}
+
+}  // namespace
+
+Formatted braceFormat(const std::string& fmt, double v, bool isInt) {
+    return braceCore(fmt, {FormatArgument{"", v, isInt}}, {}, false, false);
+}
+
+Formatted keywordFormat(const std::string& fmt, const std::vector<FormatArgument>& kwargs, bool fixMinus) {
+    return braceCore(fmt, {}, kwargs, true, fixMinus);
 }
 
 }  // namespace calculate_plot::support

@@ -1,0 +1,5324 @@
+{
+"cases": [
+{
+"kind": "percent",
+"fmt": "%.1f",
+"x": "0x0.0p+0",
+"text": "0.0"
+},
+{
+"kind": "percent",
+"fmt": "%.1f",
+"x": "0x1.0000000000000p+0",
+"text": "1.0"
+},
+{
+"kind": "percent",
+"fmt": "%.1f",
+"x": "-0x1.0000000000000p+0",
+"text": "-1.0"
+},
+{
+"kind": "percent",
+"fmt": "%.1f",
+"x": "0x1.4000000000000p+1",
+"text": "2.5"
+},
+{
+"kind": "percent",
+"fmt": "%.1f",
+"x": "-0x1.4000000000000p+1",
+"text": "-2.5"
+},
+{
+"kind": "percent",
+"fmt": "%.1f",
+"x": "0x1.f9add3739635fp-4",
+"text": "0.1"
+},
+{
+"kind": "percent",
+"fmt": "%.1f",
+"x": "-0x1.34a456d5cfaadp+10",
+"text": "-1234.6"
+},
+{
+"kind": "percent",
+"fmt": "%.1f",
+"x": "0x1.ad7f29abcaf48p-24",
+"text": "0.0"
+},
+{
+"kind": "percent",
+"fmt": "%.1f",
+"x": "-0x1.65a0bc0000000p+31",
+"text": "-3000000000.0"
+},
+{
+"kind": "percent",
+"fmt": "%.1f",
+"x": "0x1.9000000000000p+6",
+"text": "100.0"
+},
+{
+"kind": "percent",
+"fmt": "%.1f",
+"x": "-0x0.0p+0",
+"text": "-0.0"
+},
+{
+"kind": "percent",
+"fmt": "%.1f",
+"x": "0x1.c000000000000p+2",
+"text": "7.0"
+},
+{
+"kind": "percent",
+"fmt": "%.1f",
+"x": "nan",
+"text": "nan"
+},
+{
+"kind": "percent",
+"fmt": "%.1f",
+"x": "inf",
+"text": "inf"
+},
+{
+"kind": "percent",
+"fmt": "%g",
+"x": "0x0.0p+0",
+"text": "0"
+},
+{
+"kind": "percent",
+"fmt": "%g",
+"x": "0x1.0000000000000p+0",
+"text": "1"
+},
+{
+"kind": "percent",
+"fmt": "%g",
+"x": "-0x1.0000000000000p+0",
+"text": "-1"
+},
+{
+"kind": "percent",
+"fmt": "%g",
+"x": "0x1.4000000000000p+1",
+"text": "2.5"
+},
+{
+"kind": "percent",
+"fmt": "%g",
+"x": "-0x1.4000000000000p+1",
+"text": "-2.5"
+},
+{
+"kind": "percent",
+"fmt": "%g",
+"x": "0x1.f9add3739635fp-4",
+"text": "0.123457"
+},
+{
+"kind": "percent",
+"fmt": "%g",
+"x": "-0x1.34a456d5cfaadp+10",
+"text": "-1234.57"
+},
+{
+"kind": "percent",
+"fmt": "%g",
+"x": "0x1.ad7f29abcaf48p-24",
+"text": "1e-07"
+},
+{
+"kind": "percent",
+"fmt": "%g",
+"x": "-0x1.65a0bc0000000p+31",
+"text": "-3e+09"
+},
+{
+"kind": "percent",
+"fmt": "%g",
+"x": "0x1.9000000000000p+6",
+"text": "100"
+},
+{
+"kind": "percent",
+"fmt": "%g",
+"x": "-0x0.0p+0",
+"text": "-0"
+},
+{
+"kind": "percent",
+"fmt": "%g",
+"x": "0x1.c000000000000p+2",
+"text": "7"
+},
+{
+"kind": "percent",
+"fmt": "%g",
+"x": "nan",
+"text": "nan"
+},
+{
+"kind": "percent",
+"fmt": "%g",
+"x": "inf",
+"text": "inf"
+},
+{
+"kind": "percent",
+"fmt": "%d",
+"x": "0x0.0p+0",
+"text": "0"
+},
+{
+"kind": "percent",
+"fmt": "%d",
+"x": "0x1.0000000000000p+0",
+"text": "1"
+},
+{
+"kind": "percent",
+"fmt": "%d",
+"x": "-0x1.0000000000000p+0",
+"text": "-1"
+},
+{
+"kind": "percent",
+"fmt": "%d",
+"x": "0x1.4000000000000p+1",
+"text": "2"
+},
+{
+"kind": "percent",
+"fmt": "%d",
+"x": "-0x1.4000000000000p+1",
+"text": "-2"
+},
+{
+"kind": "percent",
+"fmt": "%d",
+"x": "0x1.f9add3739635fp-4",
+"text": "0"
+},
+{
+"kind": "percent",
+"fmt": "%d",
+"x": "-0x1.34a456d5cfaadp+10",
+"text": "-1234"
+},
+{
+"kind": "percent",
+"fmt": "%d",
+"x": "0x1.ad7f29abcaf48p-24",
+"text": "0"
+},
+{
+"kind": "percent",
+"fmt": "%d",
+"x": "-0x1.65a0bc0000000p+31",
+"text": "-3000000000"
+},
+{
+"kind": "percent",
+"fmt": "%d",
+"x": "0x1.9000000000000p+6",
+"text": "100"
+},
+{
+"kind": "percent",
+"fmt": "%d",
+"x": "-0x0.0p+0",
+"text": "0"
+},
+{
+"kind": "percent",
+"fmt": "%d",
+"x": "0x1.c000000000000p+2",
+"text": "7"
+},
+{
+"kind": "percent",
+"fmt": "%d",
+"x": "nan",
+"error": "ValueError: cannot convert float NaN to integer"
+},
+{
+"kind": "percent",
+"fmt": "%d",
+"x": "inf",
+"error": "OverflowError: cannot convert float infinity to integer"
+},
+{
+"kind": "percent",
+"fmt": "%5.2f",
+"x": "0x0.0p+0",
+"text": " 0.00"
+},
+{
+"kind": "percent",
+"fmt": "%5.2f",
+"x": "0x1.0000000000000p+0",
+"text": " 1.00"
+},
+{
+"kind": "percent",
+"fmt": "%5.2f",
+"x": "-0x1.0000000000000p+0",
+"text": "-1.00"
+},
+{
+"kind": "percent",
+"fmt": "%5.2f",
+"x": "0x1.4000000000000p+1",
+"text": " 2.50"
+},
+{
+"kind": "percent",
+"fmt": "%5.2f",
+"x": "-0x1.4000000000000p+1",
+"text": "-2.50"
+},
+{
+"kind": "percent",
+"fmt": "%5.2f",
+"x": "0x1.f9add3739635fp-4",
+"text": " 0.12"
+},
+{
+"kind": "percent",
+"fmt": "%5.2f",
+"x": "-0x1.34a456d5cfaadp+10",
+"text": "-1234.57"
+},
+{
+"kind": "percent",
+"fmt": "%5.2f",
+"x": "0x1.ad7f29abcaf48p-24",
+"text": " 0.00"
+},
+{
+"kind": "percent",
+"fmt": "%5.2f",
+"x": "-0x1.65a0bc0000000p+31",
+"text": "-3000000000.00"
+},
+{
+"kind": "percent",
+"fmt": "%5.2f",
+"x": "0x1.9000000000000p+6",
+"text": "100.00"
+},
+{
+"kind": "percent",
+"fmt": "%5.2f",
+"x": "-0x0.0p+0",
+"text": "-0.00"
+},
+{
+"kind": "percent",
+"fmt": "%5.2f",
+"x": "0x1.c000000000000p+2",
+"text": " 7.00"
+},
+{
+"kind": "percent",
+"fmt": "%5.2f",
+"x": "nan",
+"text": "  nan"
+},
+{
+"kind": "percent",
+"fmt": "%5.2f",
+"x": "inf",
+"text": "  inf"
+},
+{
+"kind": "percent",
+"fmt": "%+.3e",
+"x": "0x0.0p+0",
+"text": "+0.000e+00"
+},
+{
+"kind": "percent",
+"fmt": "%+.3e",
+"x": "0x1.0000000000000p+0",
+"text": "+1.000e+00"
+},
+{
+"kind": "percent",
+"fmt": "%+.3e",
+"x": "-0x1.0000000000000p+0",
+"text": "-1.000e+00"
+},
+{
+"kind": "percent",
+"fmt": "%+.3e",
+"x": "0x1.4000000000000p+1",
+"text": "+2.500e+00"
+},
+{
+"kind": "percent",
+"fmt": "%+.3e",
+"x": "-0x1.4000000000000p+1",
+"text": "-2.500e+00"
+},
+{
+"kind": "percent",
+"fmt": "%+.3e",
+"x": "0x1.f9add3739635fp-4",
+"text": "+1.235e-01"
+},
+{
+"kind": "percent",
+"fmt": "%+.3e",
+"x": "-0x1.34a456d5cfaadp+10",
+"text": "-1.235e+03"
+},
+{
+"kind": "percent",
+"fmt": "%+.3e",
+"x": "0x1.ad7f29abcaf48p-24",
+"text": "+1.000e-07"
+},
+{
+"kind": "percent",
+"fmt": "%+.3e",
+"x": "-0x1.65a0bc0000000p+31",
+"text": "-3.000e+09"
+},
+{
+"kind": "percent",
+"fmt": "%+.3e",
+"x": "0x1.9000000000000p+6",
+"text": "+1.000e+02"
+},
+{
+"kind": "percent",
+"fmt": "%+.3e",
+"x": "-0x0.0p+0",
+"text": "-0.000e+00"
+},
+{
+"kind": "percent",
+"fmt": "%+.3e",
+"x": "0x1.c000000000000p+2",
+"text": "+7.000e+00"
+},
+{
+"kind": "percent",
+"fmt": "%+.3e",
+"x": "nan",
+"text": "+nan"
+},
+{
+"kind": "percent",
+"fmt": "%+.3e",
+"x": "inf",
+"text": "+inf"
+},
+{
+"kind": "percent",
+"fmt": "%.0f%%",
+"x": "0x0.0p+0",
+"text": "0%"
+},
+{
+"kind": "percent",
+"fmt": "%.0f%%",
+"x": "0x1.0000000000000p+0",
+"text": "1%"
+},
+{
+"kind": "percent",
+"fmt": "%.0f%%",
+"x": "-0x1.0000000000000p+0",
+"text": "-1%"
+},
+{
+"kind": "percent",
+"fmt": "%.0f%%",
+"x": "0x1.4000000000000p+1",
+"text": "2%"
+},
+{
+"kind": "percent",
+"fmt": "%.0f%%",
+"x": "-0x1.4000000000000p+1",
+"text": "-2%"
+},
+{
+"kind": "percent",
+"fmt": "%.0f%%",
+"x": "0x1.f9add3739635fp-4",
+"text": "0%"
+},
+{
+"kind": "percent",
+"fmt": "%.0f%%",
+"x": "-0x1.34a456d5cfaadp+10",
+"text": "-1235%"
+},
+{
+"kind": "percent",
+"fmt": "%.0f%%",
+"x": "0x1.ad7f29abcaf48p-24",
+"text": "0%"
+},
+{
+"kind": "percent",
+"fmt": "%.0f%%",
+"x": "-0x1.65a0bc0000000p+31",
+"text": "-3000000000%"
+},
+{
+"kind": "percent",
+"fmt": "%.0f%%",
+"x": "0x1.9000000000000p+6",
+"text": "100%"
+},
+{
+"kind": "percent",
+"fmt": "%.0f%%",
+"x": "-0x0.0p+0",
+"text": "-0%"
+},
+{
+"kind": "percent",
+"fmt": "%.0f%%",
+"x": "0x1.c000000000000p+2",
+"text": "7%"
+},
+{
+"kind": "percent",
+"fmt": "%.0f%%",
+"x": "nan",
+"text": "nan%"
+},
+{
+"kind": "percent",
+"fmt": "%.0f%%",
+"x": "inf",
+"text": "inf%"
+},
+{
+"kind": "percent",
+"fmt": "x=%s",
+"x": "0x0.0p+0",
+"text": "x=0.0"
+},
+{
+"kind": "percent",
+"fmt": "x=%s",
+"x": "0x1.0000000000000p+0",
+"text": "x=1.0"
+},
+{
+"kind": "percent",
+"fmt": "x=%s",
+"x": "-0x1.0000000000000p+0",
+"text": "x=-1.0"
+},
+{
+"kind": "percent",
+"fmt": "x=%s",
+"x": "0x1.4000000000000p+1",
+"text": "x=2.5"
+},
+{
+"kind": "percent",
+"fmt": "x=%s",
+"x": "-0x1.4000000000000p+1",
+"text": "x=-2.5"
+},
+{
+"kind": "percent",
+"fmt": "x=%s",
+"x": "0x1.f9add3739635fp-4",
+"text": "x=0.123456789"
+},
+{
+"kind": "percent",
+"fmt": "x=%s",
+"x": "-0x1.34a456d5cfaadp+10",
+"text": "x=-1234.5678"
+},
+{
+"kind": "percent",
+"fmt": "x=%s",
+"x": "0x1.ad7f29abcaf48p-24",
+"text": "x=1e-07"
+},
+{
+"kind": "percent",
+"fmt": "x=%s",
+"x": "-0x1.65a0bc0000000p+31",
+"text": "x=-3000000000.0"
+},
+{
+"kind": "percent",
+"fmt": "x=%s",
+"x": "0x1.9000000000000p+6",
+"text": "x=100.0"
+},
+{
+"kind": "percent",
+"fmt": "x=%s",
+"x": "-0x0.0p+0",
+"text": "x=-0.0"
+},
+{
+"kind": "percent",
+"fmt": "x=%s",
+"x": "0x1.c000000000000p+2",
+"text": "x=7.0"
+},
+{
+"kind": "percent",
+"fmt": "x=%s",
+"x": "nan",
+"text": "x=nan"
+},
+{
+"kind": "percent",
+"fmt": "x=%s",
+"x": "inf",
+"text": "x=inf"
+},
+{
+"kind": "percent",
+"fmt": "%r",
+"x": "0x0.0p+0",
+"text": "np.float64(0.0)"
+},
+{
+"kind": "percent",
+"fmt": "%r",
+"x": "0x1.0000000000000p+0",
+"text": "np.float64(1.0)"
+},
+{
+"kind": "percent",
+"fmt": "%r",
+"x": "-0x1.0000000000000p+0",
+"text": "np.float64(-1.0)"
+},
+{
+"kind": "percent",
+"fmt": "%r",
+"x": "0x1.4000000000000p+1",
+"text": "np.float64(2.5)"
+},
+{
+"kind": "percent",
+"fmt": "%r",
+"x": "-0x1.4000000000000p+1",
+"text": "np.float64(-2.5)"
+},
+{
+"kind": "percent",
+"fmt": "%r",
+"x": "0x1.f9add3739635fp-4",
+"text": "np.float64(0.123456789)"
+},
+{
+"kind": "percent",
+"fmt": "%r",
+"x": "-0x1.34a456d5cfaadp+10",
+"text": "np.float64(-1234.5678)"
+},
+{
+"kind": "percent",
+"fmt": "%r",
+"x": "0x1.ad7f29abcaf48p-24",
+"text": "np.float64(1e-07)"
+},
+{
+"kind": "percent",
+"fmt": "%r",
+"x": "-0x1.65a0bc0000000p+31",
+"text": "np.float64(-3000000000.0)"
+},
+{
+"kind": "percent",
+"fmt": "%r",
+"x": "0x1.9000000000000p+6",
+"text": "np.float64(100.0)"
+},
+{
+"kind": "percent",
+"fmt": "%r",
+"x": "-0x0.0p+0",
+"text": "np.float64(-0.0)"
+},
+{
+"kind": "percent",
+"fmt": "%r",
+"x": "0x1.c000000000000p+2",
+"text": "np.float64(7.0)"
+},
+{
+"kind": "percent",
+"fmt": "%r",
+"x": "nan",
+"text": "np.float64(nan)"
+},
+{
+"kind": "percent",
+"fmt": "%r",
+"x": "inf",
+"text": "np.float64(inf)"
+},
+{
+"kind": "percent",
+"fmt": "%.2f %s",
+"x": "0x0.0p+0",
+"error": "TypeError: not enough arguments for format string"
+},
+{
+"kind": "percent",
+"fmt": "%.2f %s",
+"x": "0x1.0000000000000p+0",
+"error": "TypeError: not enough arguments for format string"
+},
+{
+"kind": "percent",
+"fmt": "%.2f %s",
+"x": "-0x1.0000000000000p+0",
+"error": "TypeError: not enough arguments for format string"
+},
+{
+"kind": "percent",
+"fmt": "%.2f %s",
+"x": "0x1.4000000000000p+1",
+"error": "TypeError: not enough arguments for format string"
+},
+{
+"kind": "percent",
+"fmt": "%.2f %s",
+"x": "-0x1.4000000000000p+1",
+"error": "TypeError: not enough arguments for format string"
+},
+{
+"kind": "percent",
+"fmt": "%.2f %s",
+"x": "0x1.f9add3739635fp-4",
+"error": "TypeError: not enough arguments for format string"
+},
+{
+"kind": "percent",
+"fmt": "%.2f %s",
+"x": "-0x1.34a456d5cfaadp+10",
+"error": "TypeError: not enough arguments for format string"
+},
+{
+"kind": "percent",
+"fmt": "%.2f %s",
+"x": "0x1.ad7f29abcaf48p-24",
+"error": "TypeError: not enough arguments for format string"
+},
+{
+"kind": "percent",
+"fmt": "%.2f %s",
+"x": "-0x1.65a0bc0000000p+31",
+"error": "TypeError: not enough arguments for format string"
+},
+{
+"kind": "percent",
+"fmt": "%.2f %s",
+"x": "0x1.9000000000000p+6",
+"error": "TypeError: not enough arguments for format string"
+},
+{
+"kind": "percent",
+"fmt": "%.2f %s",
+"x": "-0x0.0p+0",
+"error": "TypeError: not enough arguments for format string"
+},
+{
+"kind": "percent",
+"fmt": "%.2f %s",
+"x": "0x1.c000000000000p+2",
+"error": "TypeError: not enough arguments for format string"
+},
+{
+"kind": "percent",
+"fmt": "%.2f %s",
+"x": "nan",
+"error": "TypeError: not enough arguments for format string"
+},
+{
+"kind": "percent",
+"fmt": "%.2f %s",
+"x": "inf",
+"error": "TypeError: not enough arguments for format string"
+},
+{
+"kind": "percent",
+"fmt": "{x:.2f}",
+"x": "0x0.0p+0",
+"text": "{x:.2f}"
+},
+{
+"kind": "percent",
+"fmt": "{x:.2f}",
+"x": "0x1.0000000000000p+0",
+"text": "{x:.2f}"
+},
+{
+"kind": "percent",
+"fmt": "{x:.2f}",
+"x": "-0x1.0000000000000p+0",
+"text": "{x:.2f}"
+},
+{
+"kind": "percent",
+"fmt": "{x:.2f}",
+"x": "0x1.4000000000000p+1",
+"text": "{x:.2f}"
+},
+{
+"kind": "percent",
+"fmt": "{x:.2f}",
+"x": "-0x1.4000000000000p+1",
+"text": "{x:.2f}"
+},
+{
+"kind": "percent",
+"fmt": "{x:.2f}",
+"x": "0x1.f9add3739635fp-4",
+"text": "{x:.2f}"
+},
+{
+"kind": "percent",
+"fmt": "{x:.2f}",
+"x": "-0x1.34a456d5cfaadp+10",
+"text": "{x:.2f}"
+},
+{
+"kind": "percent",
+"fmt": "{x:.2f}",
+"x": "0x1.ad7f29abcaf48p-24",
+"text": "{x:.2f}"
+},
+{
+"kind": "percent",
+"fmt": "{x:.2f}",
+"x": "-0x1.65a0bc0000000p+31",
+"text": "{x:.2f}"
+},
+{
+"kind": "percent",
+"fmt": "{x:.2f}",
+"x": "0x1.9000000000000p+6",
+"text": "{x:.2f}"
+},
+{
+"kind": "percent",
+"fmt": "{x:.2f}",
+"x": "-0x0.0p+0",
+"text": "{x:.2f}"
+},
+{
+"kind": "percent",
+"fmt": "{x:.2f}",
+"x": "0x1.c000000000000p+2",
+"text": "{x:.2f}"
+},
+{
+"kind": "percent",
+"fmt": "{x:.2f}",
+"x": "nan",
+"text": "{x:.2f}"
+},
+{
+"kind": "percent",
+"fmt": "{x:.2f}",
+"x": "inf",
+"text": "{x:.2f}"
+},
+{
+"kind": "percent",
+"fmt": "%i",
+"x": "0x0.0p+0",
+"text": "0"
+},
+{
+"kind": "percent",
+"fmt": "%i",
+"x": "0x1.0000000000000p+0",
+"text": "1"
+},
+{
+"kind": "percent",
+"fmt": "%i",
+"x": "-0x1.0000000000000p+0",
+"text": "-1"
+},
+{
+"kind": "percent",
+"fmt": "%i",
+"x": "0x1.4000000000000p+1",
+"text": "2"
+},
+{
+"kind": "percent",
+"fmt": "%i",
+"x": "-0x1.4000000000000p+1",
+"text": "-2"
+},
+{
+"kind": "percent",
+"fmt": "%i",
+"x": "0x1.f9add3739635fp-4",
+"text": "0"
+},
+{
+"kind": "percent",
+"fmt": "%i",
+"x": "-0x1.34a456d5cfaadp+10",
+"text": "-1234"
+},
+{
+"kind": "percent",
+"fmt": "%i",
+"x": "0x1.ad7f29abcaf48p-24",
+"text": "0"
+},
+{
+"kind": "percent",
+"fmt": "%i",
+"x": "-0x1.65a0bc0000000p+31",
+"text": "-3000000000"
+},
+{
+"kind": "percent",
+"fmt": "%i",
+"x": "0x1.9000000000000p+6",
+"text": "100"
+},
+{
+"kind": "percent",
+"fmt": "%i",
+"x": "-0x0.0p+0",
+"text": "0"
+},
+{
+"kind": "percent",
+"fmt": "%i",
+"x": "0x1.c000000000000p+2",
+"text": "7"
+},
+{
+"kind": "percent",
+"fmt": "%i",
+"x": "nan",
+"error": "ValueError: cannot convert float NaN to integer"
+},
+{
+"kind": "percent",
+"fmt": "%i",
+"x": "inf",
+"error": "OverflowError: cannot convert float infinity to integer"
+},
+{
+"kind": "percent",
+"fmt": "%10.4g",
+"x": "0x0.0p+0",
+"text": "         0"
+},
+{
+"kind": "percent",
+"fmt": "%10.4g",
+"x": "0x1.0000000000000p+0",
+"text": "         1"
+},
+{
+"kind": "percent",
+"fmt": "%10.4g",
+"x": "-0x1.0000000000000p+0",
+"text": "        -1"
+},
+{
+"kind": "percent",
+"fmt": "%10.4g",
+"x": "0x1.4000000000000p+1",
+"text": "       2.5"
+},
+{
+"kind": "percent",
+"fmt": "%10.4g",
+"x": "-0x1.4000000000000p+1",
+"text": "      -2.5"
+},
+{
+"kind": "percent",
+"fmt": "%10.4g",
+"x": "0x1.f9add3739635fp-4",
+"text": "    0.1235"
+},
+{
+"kind": "percent",
+"fmt": "%10.4g",
+"x": "-0x1.34a456d5cfaadp+10",
+"text": "     -1235"
+},
+{
+"kind": "percent",
+"fmt": "%10.4g",
+"x": "0x1.ad7f29abcaf48p-24",
+"text": "     1e-07"
+},
+{
+"kind": "percent",
+"fmt": "%10.4g",
+"x": "-0x1.65a0bc0000000p+31",
+"text": "    -3e+09"
+},
+{
+"kind": "percent",
+"fmt": "%10.4g",
+"x": "0x1.9000000000000p+6",
+"text": "       100"
+},
+{
+"kind": "percent",
+"fmt": "%10.4g",
+"x": "-0x0.0p+0",
+"text": "        -0"
+},
+{
+"kind": "percent",
+"fmt": "%10.4g",
+"x": "0x1.c000000000000p+2",
+"text": "         7"
+},
+{
+"kind": "percent",
+"fmt": "%10.4g",
+"x": "nan",
+"text": "       nan"
+},
+{
+"kind": "percent",
+"fmt": "%10.4g",
+"x": "inf",
+"text": "       inf"
+},
+{
+"kind": "percent",
+"fmt": "%-8.2f|",
+"x": "0x0.0p+0",
+"text": "0.00    |"
+},
+{
+"kind": "percent",
+"fmt": "%-8.2f|",
+"x": "0x1.0000000000000p+0",
+"text": "1.00    |"
+},
+{
+"kind": "percent",
+"fmt": "%-8.2f|",
+"x": "-0x1.0000000000000p+0",
+"text": "-1.00   |"
+},
+{
+"kind": "percent",
+"fmt": "%-8.2f|",
+"x": "0x1.4000000000000p+1",
+"text": "2.50    |"
+},
+{
+"kind": "percent",
+"fmt": "%-8.2f|",
+"x": "-0x1.4000000000000p+1",
+"text": "-2.50   |"
+},
+{
+"kind": "percent",
+"fmt": "%-8.2f|",
+"x": "0x1.f9add3739635fp-4",
+"text": "0.12    |"
+},
+{
+"kind": "percent",
+"fmt": "%-8.2f|",
+"x": "-0x1.34a456d5cfaadp+10",
+"text": "-1234.57|"
+},
+{
+"kind": "percent",
+"fmt": "%-8.2f|",
+"x": "0x1.ad7f29abcaf48p-24",
+"text": "0.00    |"
+},
+{
+"kind": "percent",
+"fmt": "%-8.2f|",
+"x": "-0x1.65a0bc0000000p+31",
+"text": "-3000000000.00|"
+},
+{
+"kind": "percent",
+"fmt": "%-8.2f|",
+"x": "0x1.9000000000000p+6",
+"text": "100.00  |"
+},
+{
+"kind": "percent",
+"fmt": "%-8.2f|",
+"x": "-0x0.0p+0",
+"text": "-0.00   |"
+},
+{
+"kind": "percent",
+"fmt": "%-8.2f|",
+"x": "0x1.c000000000000p+2",
+"text": "7.00    |"
+},
+{
+"kind": "percent",
+"fmt": "%-8.2f|",
+"x": "nan",
+"text": "nan     |"
+},
+{
+"kind": "percent",
+"fmt": "%-8.2f|",
+"x": "inf",
+"text": "inf     |"
+},
+{
+"kind": "percent",
+"fmt": "%x",
+"x": "0x0.0p+0",
+"error": "TypeError: %x format: an integer is required, not numpy.float64"
+},
+{
+"kind": "percent",
+"fmt": "%x",
+"x": "0x1.0000000000000p+0",
+"error": "TypeError: %x format: an integer is required, not numpy.float64"
+},
+{
+"kind": "percent",
+"fmt": "%x",
+"x": "-0x1.0000000000000p+0",
+"error": "TypeError: %x format: an integer is required, not numpy.float64"
+},
+{
+"kind": "percent",
+"fmt": "%x",
+"x": "0x1.4000000000000p+1",
+"error": "TypeError: %x format: an integer is required, not numpy.float64"
+},
+{
+"kind": "percent",
+"fmt": "%x",
+"x": "-0x1.4000000000000p+1",
+"error": "TypeError: %x format: an integer is required, not numpy.float64"
+},
+{
+"kind": "percent",
+"fmt": "%x",
+"x": "0x1.f9add3739635fp-4",
+"error": "TypeError: %x format: an integer is required, not numpy.float64"
+},
+{
+"kind": "percent",
+"fmt": "%x",
+"x": "-0x1.34a456d5cfaadp+10",
+"error": "TypeError: %x format: an integer is required, not numpy.float64"
+},
+{
+"kind": "percent",
+"fmt": "%x",
+"x": "0x1.ad7f29abcaf48p-24",
+"error": "TypeError: %x format: an integer is required, not numpy.float64"
+},
+{
+"kind": "percent",
+"fmt": "%x",
+"x": "-0x1.65a0bc0000000p+31",
+"error": "TypeError: %x format: an integer is required, not numpy.float64"
+},
+{
+"kind": "percent",
+"fmt": "%x",
+"x": "0x1.9000000000000p+6",
+"error": "TypeError: %x format: an integer is required, not numpy.float64"
+},
+{
+"kind": "percent",
+"fmt": "%x",
+"x": "-0x0.0p+0",
+"error": "TypeError: %x format: an integer is required, not numpy.float64"
+},
+{
+"kind": "percent",
+"fmt": "%x",
+"x": "0x1.c000000000000p+2",
+"error": "TypeError: %x format: an integer is required, not numpy.float64"
+},
+{
+"kind": "percent",
+"fmt": "%x",
+"x": "nan",
+"error": "TypeError: %x format: an integer is required, not numpy.float64"
+},
+{
+"kind": "percent",
+"fmt": "%x",
+"x": "inf",
+"error": "TypeError: %x format: an integer is required, not numpy.float64"
+},
+{
+"kind": "percent",
+"fmt": "%o",
+"x": "0x0.0p+0",
+"error": "TypeError: %o format: an integer is required, not numpy.float64"
+},
+{
+"kind": "percent",
+"fmt": "%o",
+"x": "0x1.0000000000000p+0",
+"error": "TypeError: %o format: an integer is required, not numpy.float64"
+},
+{
+"kind": "percent",
+"fmt": "%o",
+"x": "-0x1.0000000000000p+0",
+"error": "TypeError: %o format: an integer is required, not numpy.float64"
+},
+{
+"kind": "percent",
+"fmt": "%o",
+"x": "0x1.4000000000000p+1",
+"error": "TypeError: %o format: an integer is required, not numpy.float64"
+},
+{
+"kind": "percent",
+"fmt": "%o",
+"x": "-0x1.4000000000000p+1",
+"error": "TypeError: %o format: an integer is required, not numpy.float64"
+},
+{
+"kind": "percent",
+"fmt": "%o",
+"x": "0x1.f9add3739635fp-4",
+"error": "TypeError: %o format: an integer is required, not numpy.float64"
+},
+{
+"kind": "percent",
+"fmt": "%o",
+"x": "-0x1.34a456d5cfaadp+10",
+"error": "TypeError: %o format: an integer is required, not numpy.float64"
+},
+{
+"kind": "percent",
+"fmt": "%o",
+"x": "0x1.ad7f29abcaf48p-24",
+"error": "TypeError: %o format: an integer is required, not numpy.float64"
+},
+{
+"kind": "percent",
+"fmt": "%o",
+"x": "-0x1.65a0bc0000000p+31",
+"error": "TypeError: %o format: an integer is required, not numpy.float64"
+},
+{
+"kind": "percent",
+"fmt": "%o",
+"x": "0x1.9000000000000p+6",
+"error": "TypeError: %o format: an integer is required, not numpy.float64"
+},
+{
+"kind": "percent",
+"fmt": "%o",
+"x": "-0x0.0p+0",
+"error": "TypeError: %o format: an integer is required, not numpy.float64"
+},
+{
+"kind": "percent",
+"fmt": "%o",
+"x": "0x1.c000000000000p+2",
+"error": "TypeError: %o format: an integer is required, not numpy.float64"
+},
+{
+"kind": "percent",
+"fmt": "%o",
+"x": "nan",
+"error": "TypeError: %o format: an integer is required, not numpy.float64"
+},
+{
+"kind": "percent",
+"fmt": "%o",
+"x": "inf",
+"error": "TypeError: %o format: an integer is required, not numpy.float64"
+},
+{
+"kind": "percent",
+"fmt": "%c",
+"x": "0x0.0p+0",
+"error": "TypeError: %c requires an int or a unicode character, not numpy.float64"
+},
+{
+"kind": "percent",
+"fmt": "%c",
+"x": "0x1.0000000000000p+0",
+"error": "TypeError: %c requires an int or a unicode character, not numpy.float64"
+},
+{
+"kind": "percent",
+"fmt": "%c",
+"x": "-0x1.0000000000000p+0",
+"error": "TypeError: %c requires an int or a unicode character, not numpy.float64"
+},
+{
+"kind": "percent",
+"fmt": "%c",
+"x": "0x1.4000000000000p+1",
+"error": "TypeError: %c requires an int or a unicode character, not numpy.float64"
+},
+{
+"kind": "percent",
+"fmt": "%c",
+"x": "-0x1.4000000000000p+1",
+"error": "TypeError: %c requires an int or a unicode character, not numpy.float64"
+},
+{
+"kind": "percent",
+"fmt": "%c",
+"x": "0x1.f9add3739635fp-4",
+"error": "TypeError: %c requires an int or a unicode character, not numpy.float64"
+},
+{
+"kind": "percent",
+"fmt": "%c",
+"x": "-0x1.34a456d5cfaadp+10",
+"error": "TypeError: %c requires an int or a unicode character, not numpy.float64"
+},
+{
+"kind": "percent",
+"fmt": "%c",
+"x": "0x1.ad7f29abcaf48p-24",
+"error": "TypeError: %c requires an int or a unicode character, not numpy.float64"
+},
+{
+"kind": "percent",
+"fmt": "%c",
+"x": "-0x1.65a0bc0000000p+31",
+"error": "TypeError: %c requires an int or a unicode character, not numpy.float64"
+},
+{
+"kind": "percent",
+"fmt": "%c",
+"x": "0x1.9000000000000p+6",
+"error": "TypeError: %c requires an int or a unicode character, not numpy.float64"
+},
+{
+"kind": "percent",
+"fmt": "%c",
+"x": "-0x0.0p+0",
+"error": "TypeError: %c requires an int or a unicode character, not numpy.float64"
+},
+{
+"kind": "percent",
+"fmt": "%c",
+"x": "0x1.c000000000000p+2",
+"error": "TypeError: %c requires an int or a unicode character, not numpy.float64"
+},
+{
+"kind": "percent",
+"fmt": "%c",
+"x": "nan",
+"error": "TypeError: %c requires an int or a unicode character, not numpy.float64"
+},
+{
+"kind": "percent",
+"fmt": "%c",
+"x": "inf",
+"error": "TypeError: %c requires an int or a unicode character, not numpy.float64"
+},
+{
+"kind": "percent",
+"fmt": "%.3G",
+"x": "0x0.0p+0",
+"text": "0"
+},
+{
+"kind": "percent",
+"fmt": "%.3G",
+"x": "0x1.0000000000000p+0",
+"text": "1"
+},
+{
+"kind": "percent",
+"fmt": "%.3G",
+"x": "-0x1.0000000000000p+0",
+"text": "-1"
+},
+{
+"kind": "percent",
+"fmt": "%.3G",
+"x": "0x1.4000000000000p+1",
+"text": "2.5"
+},
+{
+"kind": "percent",
+"fmt": "%.3G",
+"x": "-0x1.4000000000000p+1",
+"text": "-2.5"
+},
+{
+"kind": "percent",
+"fmt": "%.3G",
+"x": "0x1.f9add3739635fp-4",
+"text": "0.123"
+},
+{
+"kind": "percent",
+"fmt": "%.3G",
+"x": "-0x1.34a456d5cfaadp+10",
+"text": "-1.23E+03"
+},
+{
+"kind": "percent",
+"fmt": "%.3G",
+"x": "0x1.ad7f29abcaf48p-24",
+"text": "1E-07"
+},
+{
+"kind": "percent",
+"fmt": "%.3G",
+"x": "-0x1.65a0bc0000000p+31",
+"text": "-3E+09"
+},
+{
+"kind": "percent",
+"fmt": "%.3G",
+"x": "0x1.9000000000000p+6",
+"text": "100"
+},
+{
+"kind": "percent",
+"fmt": "%.3G",
+"x": "-0x0.0p+0",
+"text": "-0"
+},
+{
+"kind": "percent",
+"fmt": "%.3G",
+"x": "0x1.c000000000000p+2",
+"text": "7"
+},
+{
+"kind": "percent",
+"fmt": "%.3G",
+"x": "nan",
+"text": "NAN"
+},
+{
+"kind": "percent",
+"fmt": "%.3G",
+"x": "inf",
+"text": "INF"
+},
+{
+"kind": "percent",
+"fmt": "%E",
+"x": "0x0.0p+0",
+"text": "0.000000E+00"
+},
+{
+"kind": "percent",
+"fmt": "%E",
+"x": "0x1.0000000000000p+0",
+"text": "1.000000E+00"
+},
+{
+"kind": "percent",
+"fmt": "%E",
+"x": "-0x1.0000000000000p+0",
+"text": "-1.000000E+00"
+},
+{
+"kind": "percent",
+"fmt": "%E",
+"x": "0x1.4000000000000p+1",
+"text": "2.500000E+00"
+},
+{
+"kind": "percent",
+"fmt": "%E",
+"x": "-0x1.4000000000000p+1",
+"text": "-2.500000E+00"
+},
+{
+"kind": "percent",
+"fmt": "%E",
+"x": "0x1.f9add3739635fp-4",
+"text": "1.234568E-01"
+},
+{
+"kind": "percent",
+"fmt": "%E",
+"x": "-0x1.34a456d5cfaadp+10",
+"text": "-1.234568E+03"
+},
+{
+"kind": "percent",
+"fmt": "%E",
+"x": "0x1.ad7f29abcaf48p-24",
+"text": "1.000000E-07"
+},
+{
+"kind": "percent",
+"fmt": "%E",
+"x": "-0x1.65a0bc0000000p+31",
+"text": "-3.000000E+09"
+},
+{
+"kind": "percent",
+"fmt": "%E",
+"x": "0x1.9000000000000p+6",
+"text": "1.000000E+02"
+},
+{
+"kind": "percent",
+"fmt": "%E",
+"x": "-0x0.0p+0",
+"text": "-0.000000E+00"
+},
+{
+"kind": "percent",
+"fmt": "%E",
+"x": "0x1.c000000000000p+2",
+"text": "7.000000E+00"
+},
+{
+"kind": "percent",
+"fmt": "%E",
+"x": "nan",
+"text": "NAN"
+},
+{
+"kind": "percent",
+"fmt": "%E",
+"x": "inf",
+"text": "INF"
+},
+{
+"kind": "brace",
+"fmt": "{x:.2f}",
+"x": "0x0.0p+0",
+"pos": 0,
+"unicode_minus": true,
+"text": "0.00"
+},
+{
+"kind": "brace",
+"fmt": "{x:.2f}",
+"x": "0x1.0000000000000p+0",
+"pos": 1,
+"unicode_minus": true,
+"text": "1.00"
+},
+{
+"kind": "brace",
+"fmt": "{x:.2f}",
+"x": "-0x1.0000000000000p+0",
+"pos": 2,
+"unicode_minus": true,
+"text": "−1.00"
+},
+{
+"kind": "brace",
+"fmt": "{x:.2f}",
+"x": "0x1.4000000000000p+1",
+"pos": 3,
+"unicode_minus": true,
+"text": "2.50"
+},
+{
+"kind": "brace",
+"fmt": "{x:.2f}",
+"x": "-0x1.4000000000000p+1",
+"pos": 4,
+"unicode_minus": true,
+"text": "−2.50"
+},
+{
+"kind": "brace",
+"fmt": "{x:.2f}",
+"x": "0x1.f9add3739635fp-4",
+"pos": 5,
+"unicode_minus": true,
+"text": "0.12"
+},
+{
+"kind": "brace",
+"fmt": "{x:.2f}",
+"x": "-0x1.34a456d5cfaadp+10",
+"pos": 6,
+"unicode_minus": true,
+"text": "−1234.57"
+},
+{
+"kind": "brace",
+"fmt": "{x:.2f}",
+"x": "0x1.ad7f29abcaf48p-24",
+"pos": 7,
+"unicode_minus": true,
+"text": "0.00"
+},
+{
+"kind": "brace",
+"fmt": "{x:.2f}",
+"x": "-0x1.65a0bc0000000p+31",
+"pos": 8,
+"unicode_minus": true,
+"text": "−3000000000.00"
+},
+{
+"kind": "brace",
+"fmt": "{x:.2f}",
+"x": "0x1.9000000000000p+6",
+"pos": 9,
+"unicode_minus": true,
+"text": "100.00"
+},
+{
+"kind": "brace",
+"fmt": "{x:.2f}",
+"x": "-0x0.0p+0",
+"pos": 10,
+"unicode_minus": true,
+"text": "−0.00"
+},
+{
+"kind": "brace",
+"fmt": "{x:.2f}",
+"x": "0x1.c000000000000p+2",
+"pos": 11,
+"unicode_minus": true,
+"text": "7.00"
+},
+{
+"kind": "brace",
+"fmt": "{x:.2f}",
+"x": "nan",
+"pos": 12,
+"unicode_minus": true,
+"text": "nan"
+},
+{
+"kind": "brace",
+"fmt": "{x:.2f}",
+"x": "inf",
+"pos": 13,
+"unicode_minus": true,
+"text": "inf"
+},
+{
+"kind": "brace",
+"fmt": "{x:.2f}",
+"x": "0x0.0p+0",
+"pos": 0,
+"unicode_minus": false,
+"text": "0.00"
+},
+{
+"kind": "brace",
+"fmt": "{x:.2f}",
+"x": "0x1.0000000000000p+0",
+"pos": 1,
+"unicode_minus": false,
+"text": "1.00"
+},
+{
+"kind": "brace",
+"fmt": "{x:.2f}",
+"x": "-0x1.0000000000000p+0",
+"pos": 2,
+"unicode_minus": false,
+"text": "-1.00"
+},
+{
+"kind": "brace",
+"fmt": "{x:.2f}",
+"x": "0x1.4000000000000p+1",
+"pos": 3,
+"unicode_minus": false,
+"text": "2.50"
+},
+{
+"kind": "brace",
+"fmt": "{x:.2f}",
+"x": "-0x1.4000000000000p+1",
+"pos": 4,
+"unicode_minus": false,
+"text": "-2.50"
+},
+{
+"kind": "brace",
+"fmt": "{x:.2f}",
+"x": "0x1.f9add3739635fp-4",
+"pos": 5,
+"unicode_minus": false,
+"text": "0.12"
+},
+{
+"kind": "brace",
+"fmt": "{x:.2f}",
+"x": "-0x1.34a456d5cfaadp+10",
+"pos": 6,
+"unicode_minus": false,
+"text": "-1234.57"
+},
+{
+"kind": "brace",
+"fmt": "{x:.2f}",
+"x": "0x1.ad7f29abcaf48p-24",
+"pos": 7,
+"unicode_minus": false,
+"text": "0.00"
+},
+{
+"kind": "brace",
+"fmt": "{x:.2f}",
+"x": "-0x1.65a0bc0000000p+31",
+"pos": 8,
+"unicode_minus": false,
+"text": "-3000000000.00"
+},
+{
+"kind": "brace",
+"fmt": "{x:.2f}",
+"x": "0x1.9000000000000p+6",
+"pos": 9,
+"unicode_minus": false,
+"text": "100.00"
+},
+{
+"kind": "brace",
+"fmt": "{x:.2f}",
+"x": "-0x0.0p+0",
+"pos": 10,
+"unicode_minus": false,
+"text": "-0.00"
+},
+{
+"kind": "brace",
+"fmt": "{x:.2f}",
+"x": "0x1.c000000000000p+2",
+"pos": 11,
+"unicode_minus": false,
+"text": "7.00"
+},
+{
+"kind": "brace",
+"fmt": "{x:.2f}",
+"x": "nan",
+"pos": 12,
+"unicode_minus": false,
+"text": "nan"
+},
+{
+"kind": "brace",
+"fmt": "{x:.2f}",
+"x": "inf",
+"pos": 13,
+"unicode_minus": false,
+"text": "inf"
+},
+{
+"kind": "brace",
+"fmt": "{x:+.1f} u",
+"x": "0x0.0p+0",
+"pos": 0,
+"unicode_minus": true,
+"text": "+0.0 u"
+},
+{
+"kind": "brace",
+"fmt": "{x:+.1f} u",
+"x": "0x1.0000000000000p+0",
+"pos": 1,
+"unicode_minus": true,
+"text": "+1.0 u"
+},
+{
+"kind": "brace",
+"fmt": "{x:+.1f} u",
+"x": "-0x1.0000000000000p+0",
+"pos": 2,
+"unicode_minus": true,
+"text": "−1.0 u"
+},
+{
+"kind": "brace",
+"fmt": "{x:+.1f} u",
+"x": "0x1.4000000000000p+1",
+"pos": 3,
+"unicode_minus": true,
+"text": "+2.5 u"
+},
+{
+"kind": "brace",
+"fmt": "{x:+.1f} u",
+"x": "-0x1.4000000000000p+1",
+"pos": 4,
+"unicode_minus": true,
+"text": "−2.5 u"
+},
+{
+"kind": "brace",
+"fmt": "{x:+.1f} u",
+"x": "0x1.f9add3739635fp-4",
+"pos": 5,
+"unicode_minus": true,
+"text": "+0.1 u"
+},
+{
+"kind": "brace",
+"fmt": "{x:+.1f} u",
+"x": "-0x1.34a456d5cfaadp+10",
+"pos": 6,
+"unicode_minus": true,
+"text": "−1234.6 u"
+},
+{
+"kind": "brace",
+"fmt": "{x:+.1f} u",
+"x": "0x1.ad7f29abcaf48p-24",
+"pos": 7,
+"unicode_minus": true,
+"text": "+0.0 u"
+},
+{
+"kind": "brace",
+"fmt": "{x:+.1f} u",
+"x": "-0x1.65a0bc0000000p+31",
+"pos": 8,
+"unicode_minus": true,
+"text": "−3000000000.0 u"
+},
+{
+"kind": "brace",
+"fmt": "{x:+.1f} u",
+"x": "0x1.9000000000000p+6",
+"pos": 9,
+"unicode_minus": true,
+"text": "+100.0 u"
+},
+{
+"kind": "brace",
+"fmt": "{x:+.1f} u",
+"x": "-0x0.0p+0",
+"pos": 10,
+"unicode_minus": true,
+"text": "−0.0 u"
+},
+{
+"kind": "brace",
+"fmt": "{x:+.1f} u",
+"x": "0x1.c000000000000p+2",
+"pos": 11,
+"unicode_minus": true,
+"text": "+7.0 u"
+},
+{
+"kind": "brace",
+"fmt": "{x:+.1f} u",
+"x": "nan",
+"pos": 12,
+"unicode_minus": true,
+"text": "+nan u"
+},
+{
+"kind": "brace",
+"fmt": "{x:+.1f} u",
+"x": "inf",
+"pos": 13,
+"unicode_minus": true,
+"text": "+inf u"
+},
+{
+"kind": "brace",
+"fmt": "{x:+.1f} u",
+"x": "0x0.0p+0",
+"pos": 0,
+"unicode_minus": false,
+"text": "+0.0 u"
+},
+{
+"kind": "brace",
+"fmt": "{x:+.1f} u",
+"x": "0x1.0000000000000p+0",
+"pos": 1,
+"unicode_minus": false,
+"text": "+1.0 u"
+},
+{
+"kind": "brace",
+"fmt": "{x:+.1f} u",
+"x": "-0x1.0000000000000p+0",
+"pos": 2,
+"unicode_minus": false,
+"text": "-1.0 u"
+},
+{
+"kind": "brace",
+"fmt": "{x:+.1f} u",
+"x": "0x1.4000000000000p+1",
+"pos": 3,
+"unicode_minus": false,
+"text": "+2.5 u"
+},
+{
+"kind": "brace",
+"fmt": "{x:+.1f} u",
+"x": "-0x1.4000000000000p+1",
+"pos": 4,
+"unicode_minus": false,
+"text": "-2.5 u"
+},
+{
+"kind": "brace",
+"fmt": "{x:+.1f} u",
+"x": "0x1.f9add3739635fp-4",
+"pos": 5,
+"unicode_minus": false,
+"text": "+0.1 u"
+},
+{
+"kind": "brace",
+"fmt": "{x:+.1f} u",
+"x": "-0x1.34a456d5cfaadp+10",
+"pos": 6,
+"unicode_minus": false,
+"text": "-1234.6 u"
+},
+{
+"kind": "brace",
+"fmt": "{x:+.1f} u",
+"x": "0x1.ad7f29abcaf48p-24",
+"pos": 7,
+"unicode_minus": false,
+"text": "+0.0 u"
+},
+{
+"kind": "brace",
+"fmt": "{x:+.1f} u",
+"x": "-0x1.65a0bc0000000p+31",
+"pos": 8,
+"unicode_minus": false,
+"text": "-3000000000.0 u"
+},
+{
+"kind": "brace",
+"fmt": "{x:+.1f} u",
+"x": "0x1.9000000000000p+6",
+"pos": 9,
+"unicode_minus": false,
+"text": "+100.0 u"
+},
+{
+"kind": "brace",
+"fmt": "{x:+.1f} u",
+"x": "-0x0.0p+0",
+"pos": 10,
+"unicode_minus": false,
+"text": "-0.0 u"
+},
+{
+"kind": "brace",
+"fmt": "{x:+.1f} u",
+"x": "0x1.c000000000000p+2",
+"pos": 11,
+"unicode_minus": false,
+"text": "+7.0 u"
+},
+{
+"kind": "brace",
+"fmt": "{x:+.1f} u",
+"x": "nan",
+"pos": 12,
+"unicode_minus": false,
+"text": "+nan u"
+},
+{
+"kind": "brace",
+"fmt": "{x:+.1f} u",
+"x": "inf",
+"pos": 13,
+"unicode_minus": false,
+"text": "+inf u"
+},
+{
+"kind": "brace",
+"fmt": "{x}",
+"x": "0x0.0p+0",
+"pos": 0,
+"unicode_minus": true,
+"text": "0.0"
+},
+{
+"kind": "brace",
+"fmt": "{x}",
+"x": "0x1.0000000000000p+0",
+"pos": 1,
+"unicode_minus": true,
+"text": "1.0"
+},
+{
+"kind": "brace",
+"fmt": "{x}",
+"x": "-0x1.0000000000000p+0",
+"pos": 2,
+"unicode_minus": true,
+"text": "−1.0"
+},
+{
+"kind": "brace",
+"fmt": "{x}",
+"x": "0x1.4000000000000p+1",
+"pos": 3,
+"unicode_minus": true,
+"text": "2.5"
+},
+{
+"kind": "brace",
+"fmt": "{x}",
+"x": "-0x1.4000000000000p+1",
+"pos": 4,
+"unicode_minus": true,
+"text": "−2.5"
+},
+{
+"kind": "brace",
+"fmt": "{x}",
+"x": "0x1.f9add3739635fp-4",
+"pos": 5,
+"unicode_minus": true,
+"text": "0.123456789"
+},
+{
+"kind": "brace",
+"fmt": "{x}",
+"x": "-0x1.34a456d5cfaadp+10",
+"pos": 6,
+"unicode_minus": true,
+"text": "−1234.5678"
+},
+{
+"kind": "brace",
+"fmt": "{x}",
+"x": "0x1.ad7f29abcaf48p-24",
+"pos": 7,
+"unicode_minus": true,
+"text": "1e−07"
+},
+{
+"kind": "brace",
+"fmt": "{x}",
+"x": "-0x1.65a0bc0000000p+31",
+"pos": 8,
+"unicode_minus": true,
+"text": "−3000000000.0"
+},
+{
+"kind": "brace",
+"fmt": "{x}",
+"x": "0x1.9000000000000p+6",
+"pos": 9,
+"unicode_minus": true,
+"text": "100.0"
+},
+{
+"kind": "brace",
+"fmt": "{x}",
+"x": "-0x0.0p+0",
+"pos": 10,
+"unicode_minus": true,
+"text": "−0.0"
+},
+{
+"kind": "brace",
+"fmt": "{x}",
+"x": "0x1.c000000000000p+2",
+"pos": 11,
+"unicode_minus": true,
+"text": "7.0"
+},
+{
+"kind": "brace",
+"fmt": "{x}",
+"x": "nan",
+"pos": 12,
+"unicode_minus": true,
+"text": "nan"
+},
+{
+"kind": "brace",
+"fmt": "{x}",
+"x": "inf",
+"pos": 13,
+"unicode_minus": true,
+"text": "inf"
+},
+{
+"kind": "brace",
+"fmt": "{x}",
+"x": "0x0.0p+0",
+"pos": 0,
+"unicode_minus": false,
+"text": "0.0"
+},
+{
+"kind": "brace",
+"fmt": "{x}",
+"x": "0x1.0000000000000p+0",
+"pos": 1,
+"unicode_minus": false,
+"text": "1.0"
+},
+{
+"kind": "brace",
+"fmt": "{x}",
+"x": "-0x1.0000000000000p+0",
+"pos": 2,
+"unicode_minus": false,
+"text": "-1.0"
+},
+{
+"kind": "brace",
+"fmt": "{x}",
+"x": "0x1.4000000000000p+1",
+"pos": 3,
+"unicode_minus": false,
+"text": "2.5"
+},
+{
+"kind": "brace",
+"fmt": "{x}",
+"x": "-0x1.4000000000000p+1",
+"pos": 4,
+"unicode_minus": false,
+"text": "-2.5"
+},
+{
+"kind": "brace",
+"fmt": "{x}",
+"x": "0x1.f9add3739635fp-4",
+"pos": 5,
+"unicode_minus": false,
+"text": "0.123456789"
+},
+{
+"kind": "brace",
+"fmt": "{x}",
+"x": "-0x1.34a456d5cfaadp+10",
+"pos": 6,
+"unicode_minus": false,
+"text": "-1234.5678"
+},
+{
+"kind": "brace",
+"fmt": "{x}",
+"x": "0x1.ad7f29abcaf48p-24",
+"pos": 7,
+"unicode_minus": false,
+"text": "1e-07"
+},
+{
+"kind": "brace",
+"fmt": "{x}",
+"x": "-0x1.65a0bc0000000p+31",
+"pos": 8,
+"unicode_minus": false,
+"text": "-3000000000.0"
+},
+{
+"kind": "brace",
+"fmt": "{x}",
+"x": "0x1.9000000000000p+6",
+"pos": 9,
+"unicode_minus": false,
+"text": "100.0"
+},
+{
+"kind": "brace",
+"fmt": "{x}",
+"x": "-0x0.0p+0",
+"pos": 10,
+"unicode_minus": false,
+"text": "-0.0"
+},
+{
+"kind": "brace",
+"fmt": "{x}",
+"x": "0x1.c000000000000p+2",
+"pos": 11,
+"unicode_minus": false,
+"text": "7.0"
+},
+{
+"kind": "brace",
+"fmt": "{x}",
+"x": "nan",
+"pos": 12,
+"unicode_minus": false,
+"text": "nan"
+},
+{
+"kind": "brace",
+"fmt": "{x}",
+"x": "inf",
+"pos": 13,
+"unicode_minus": false,
+"text": "inf"
+},
+{
+"kind": "brace",
+"fmt": "{x:g}",
+"x": "0x0.0p+0",
+"pos": 0,
+"unicode_minus": true,
+"text": "0"
+},
+{
+"kind": "brace",
+"fmt": "{x:g}",
+"x": "0x1.0000000000000p+0",
+"pos": 1,
+"unicode_minus": true,
+"text": "1"
+},
+{
+"kind": "brace",
+"fmt": "{x:g}",
+"x": "-0x1.0000000000000p+0",
+"pos": 2,
+"unicode_minus": true,
+"text": "−1"
+},
+{
+"kind": "brace",
+"fmt": "{x:g}",
+"x": "0x1.4000000000000p+1",
+"pos": 3,
+"unicode_minus": true,
+"text": "2.5"
+},
+{
+"kind": "brace",
+"fmt": "{x:g}",
+"x": "-0x1.4000000000000p+1",
+"pos": 4,
+"unicode_minus": true,
+"text": "−2.5"
+},
+{
+"kind": "brace",
+"fmt": "{x:g}",
+"x": "0x1.f9add3739635fp-4",
+"pos": 5,
+"unicode_minus": true,
+"text": "0.123457"
+},
+{
+"kind": "brace",
+"fmt": "{x:g}",
+"x": "-0x1.34a456d5cfaadp+10",
+"pos": 6,
+"unicode_minus": true,
+"text": "−1234.57"
+},
+{
+"kind": "brace",
+"fmt": "{x:g}",
+"x": "0x1.ad7f29abcaf48p-24",
+"pos": 7,
+"unicode_minus": true,
+"text": "1e−07"
+},
+{
+"kind": "brace",
+"fmt": "{x:g}",
+"x": "-0x1.65a0bc0000000p+31",
+"pos": 8,
+"unicode_minus": true,
+"text": "−3e+09"
+},
+{
+"kind": "brace",
+"fmt": "{x:g}",
+"x": "0x1.9000000000000p+6",
+"pos": 9,
+"unicode_minus": true,
+"text": "100"
+},
+{
+"kind": "brace",
+"fmt": "{x:g}",
+"x": "-0x0.0p+0",
+"pos": 10,
+"unicode_minus": true,
+"text": "−0"
+},
+{
+"kind": "brace",
+"fmt": "{x:g}",
+"x": "0x1.c000000000000p+2",
+"pos": 11,
+"unicode_minus": true,
+"text": "7"
+},
+{
+"kind": "brace",
+"fmt": "{x:g}",
+"x": "nan",
+"pos": 12,
+"unicode_minus": true,
+"text": "nan"
+},
+{
+"kind": "brace",
+"fmt": "{x:g}",
+"x": "inf",
+"pos": 13,
+"unicode_minus": true,
+"text": "inf"
+},
+{
+"kind": "brace",
+"fmt": "{x:g}",
+"x": "0x0.0p+0",
+"pos": 0,
+"unicode_minus": false,
+"text": "0"
+},
+{
+"kind": "brace",
+"fmt": "{x:g}",
+"x": "0x1.0000000000000p+0",
+"pos": 1,
+"unicode_minus": false,
+"text": "1"
+},
+{
+"kind": "brace",
+"fmt": "{x:g}",
+"x": "-0x1.0000000000000p+0",
+"pos": 2,
+"unicode_minus": false,
+"text": "-1"
+},
+{
+"kind": "brace",
+"fmt": "{x:g}",
+"x": "0x1.4000000000000p+1",
+"pos": 3,
+"unicode_minus": false,
+"text": "2.5"
+},
+{
+"kind": "brace",
+"fmt": "{x:g}",
+"x": "-0x1.4000000000000p+1",
+"pos": 4,
+"unicode_minus": false,
+"text": "-2.5"
+},
+{
+"kind": "brace",
+"fmt": "{x:g}",
+"x": "0x1.f9add3739635fp-4",
+"pos": 5,
+"unicode_minus": false,
+"text": "0.123457"
+},
+{
+"kind": "brace",
+"fmt": "{x:g}",
+"x": "-0x1.34a456d5cfaadp+10",
+"pos": 6,
+"unicode_minus": false,
+"text": "-1234.57"
+},
+{
+"kind": "brace",
+"fmt": "{x:g}",
+"x": "0x1.ad7f29abcaf48p-24",
+"pos": 7,
+"unicode_minus": false,
+"text": "1e-07"
+},
+{
+"kind": "brace",
+"fmt": "{x:g}",
+"x": "-0x1.65a0bc0000000p+31",
+"pos": 8,
+"unicode_minus": false,
+"text": "-3e+09"
+},
+{
+"kind": "brace",
+"fmt": "{x:g}",
+"x": "0x1.9000000000000p+6",
+"pos": 9,
+"unicode_minus": false,
+"text": "100"
+},
+{
+"kind": "brace",
+"fmt": "{x:g}",
+"x": "-0x0.0p+0",
+"pos": 10,
+"unicode_minus": false,
+"text": "-0"
+},
+{
+"kind": "brace",
+"fmt": "{x:g}",
+"x": "0x1.c000000000000p+2",
+"pos": 11,
+"unicode_minus": false,
+"text": "7"
+},
+{
+"kind": "brace",
+"fmt": "{x:g}",
+"x": "nan",
+"pos": 12,
+"unicode_minus": false,
+"text": "nan"
+},
+{
+"kind": "brace",
+"fmt": "{x:g}",
+"x": "inf",
+"pos": 13,
+"unicode_minus": false,
+"text": "inf"
+},
+{
+"kind": "brace",
+"fmt": "{pos}:{x:.1f}",
+"x": "0x0.0p+0",
+"pos": 0,
+"unicode_minus": true,
+"text": "0:0.0"
+},
+{
+"kind": "brace",
+"fmt": "{pos}:{x:.1f}",
+"x": "0x1.0000000000000p+0",
+"pos": 1,
+"unicode_minus": true,
+"text": "1:1.0"
+},
+{
+"kind": "brace",
+"fmt": "{pos}:{x:.1f}",
+"x": "-0x1.0000000000000p+0",
+"pos": 2,
+"unicode_minus": true,
+"text": "2:−1.0"
+},
+{
+"kind": "brace",
+"fmt": "{pos}:{x:.1f}",
+"x": "0x1.4000000000000p+1",
+"pos": 3,
+"unicode_minus": true,
+"text": "3:2.5"
+},
+{
+"kind": "brace",
+"fmt": "{pos}:{x:.1f}",
+"x": "-0x1.4000000000000p+1",
+"pos": 4,
+"unicode_minus": true,
+"text": "4:−2.5"
+},
+{
+"kind": "brace",
+"fmt": "{pos}:{x:.1f}",
+"x": "0x1.f9add3739635fp-4",
+"pos": 5,
+"unicode_minus": true,
+"text": "5:0.1"
+},
+{
+"kind": "brace",
+"fmt": "{pos}:{x:.1f}",
+"x": "-0x1.34a456d5cfaadp+10",
+"pos": 6,
+"unicode_minus": true,
+"text": "6:−1234.6"
+},
+{
+"kind": "brace",
+"fmt": "{pos}:{x:.1f}",
+"x": "0x1.ad7f29abcaf48p-24",
+"pos": 7,
+"unicode_minus": true,
+"text": "7:0.0"
+},
+{
+"kind": "brace",
+"fmt": "{pos}:{x:.1f}",
+"x": "-0x1.65a0bc0000000p+31",
+"pos": 8,
+"unicode_minus": true,
+"text": "8:−3000000000.0"
+},
+{
+"kind": "brace",
+"fmt": "{pos}:{x:.1f}",
+"x": "0x1.9000000000000p+6",
+"pos": 9,
+"unicode_minus": true,
+"text": "9:100.0"
+},
+{
+"kind": "brace",
+"fmt": "{pos}:{x:.1f}",
+"x": "-0x0.0p+0",
+"pos": 10,
+"unicode_minus": true,
+"text": "10:−0.0"
+},
+{
+"kind": "brace",
+"fmt": "{pos}:{x:.1f}",
+"x": "0x1.c000000000000p+2",
+"pos": 11,
+"unicode_minus": true,
+"text": "11:7.0"
+},
+{
+"kind": "brace",
+"fmt": "{pos}:{x:.1f}",
+"x": "nan",
+"pos": 12,
+"unicode_minus": true,
+"text": "12:nan"
+},
+{
+"kind": "brace",
+"fmt": "{pos}:{x:.1f}",
+"x": "inf",
+"pos": 13,
+"unicode_minus": true,
+"text": "13:inf"
+},
+{
+"kind": "brace",
+"fmt": "{pos}:{x:.1f}",
+"x": "0x0.0p+0",
+"pos": 0,
+"unicode_minus": false,
+"text": "0:0.0"
+},
+{
+"kind": "brace",
+"fmt": "{pos}:{x:.1f}",
+"x": "0x1.0000000000000p+0",
+"pos": 1,
+"unicode_minus": false,
+"text": "1:1.0"
+},
+{
+"kind": "brace",
+"fmt": "{pos}:{x:.1f}",
+"x": "-0x1.0000000000000p+0",
+"pos": 2,
+"unicode_minus": false,
+"text": "2:-1.0"
+},
+{
+"kind": "brace",
+"fmt": "{pos}:{x:.1f}",
+"x": "0x1.4000000000000p+1",
+"pos": 3,
+"unicode_minus": false,
+"text": "3:2.5"
+},
+{
+"kind": "brace",
+"fmt": "{pos}:{x:.1f}",
+"x": "-0x1.4000000000000p+1",
+"pos": 4,
+"unicode_minus": false,
+"text": "4:-2.5"
+},
+{
+"kind": "brace",
+"fmt": "{pos}:{x:.1f}",
+"x": "0x1.f9add3739635fp-4",
+"pos": 5,
+"unicode_minus": false,
+"text": "5:0.1"
+},
+{
+"kind": "brace",
+"fmt": "{pos}:{x:.1f}",
+"x": "-0x1.34a456d5cfaadp+10",
+"pos": 6,
+"unicode_minus": false,
+"text": "6:-1234.6"
+},
+{
+"kind": "brace",
+"fmt": "{pos}:{x:.1f}",
+"x": "0x1.ad7f29abcaf48p-24",
+"pos": 7,
+"unicode_minus": false,
+"text": "7:0.0"
+},
+{
+"kind": "brace",
+"fmt": "{pos}:{x:.1f}",
+"x": "-0x1.65a0bc0000000p+31",
+"pos": 8,
+"unicode_minus": false,
+"text": "8:-3000000000.0"
+},
+{
+"kind": "brace",
+"fmt": "{pos}:{x:.1f}",
+"x": "0x1.9000000000000p+6",
+"pos": 9,
+"unicode_minus": false,
+"text": "9:100.0"
+},
+{
+"kind": "brace",
+"fmt": "{pos}:{x:.1f}",
+"x": "-0x0.0p+0",
+"pos": 10,
+"unicode_minus": false,
+"text": "10:-0.0"
+},
+{
+"kind": "brace",
+"fmt": "{pos}:{x:.1f}",
+"x": "0x1.c000000000000p+2",
+"pos": 11,
+"unicode_minus": false,
+"text": "11:7.0"
+},
+{
+"kind": "brace",
+"fmt": "{pos}:{x:.1f}",
+"x": "nan",
+"pos": 12,
+"unicode_minus": false,
+"text": "12:nan"
+},
+{
+"kind": "brace",
+"fmt": "{pos}:{x:.1f}",
+"x": "inf",
+"pos": 13,
+"unicode_minus": false,
+"text": "13:inf"
+},
+{
+"kind": "brace",
+"fmt": "{x:>8.3f}",
+"x": "0x0.0p+0",
+"pos": 0,
+"unicode_minus": true,
+"text": "   0.000"
+},
+{
+"kind": "brace",
+"fmt": "{x:>8.3f}",
+"x": "0x1.0000000000000p+0",
+"pos": 1,
+"unicode_minus": true,
+"text": "   1.000"
+},
+{
+"kind": "brace",
+"fmt": "{x:>8.3f}",
+"x": "-0x1.0000000000000p+0",
+"pos": 2,
+"unicode_minus": true,
+"text": "  −1.000"
+},
+{
+"kind": "brace",
+"fmt": "{x:>8.3f}",
+"x": "0x1.4000000000000p+1",
+"pos": 3,
+"unicode_minus": true,
+"text": "   2.500"
+},
+{
+"kind": "brace",
+"fmt": "{x:>8.3f}",
+"x": "-0x1.4000000000000p+1",
+"pos": 4,
+"unicode_minus": true,
+"text": "  −2.500"
+},
+{
+"kind": "brace",
+"fmt": "{x:>8.3f}",
+"x": "0x1.f9add3739635fp-4",
+"pos": 5,
+"unicode_minus": true,
+"text": "   0.123"
+},
+{
+"kind": "brace",
+"fmt": "{x:>8.3f}",
+"x": "-0x1.34a456d5cfaadp+10",
+"pos": 6,
+"unicode_minus": true,
+"text": "−1234.568"
+},
+{
+"kind": "brace",
+"fmt": "{x:>8.3f}",
+"x": "0x1.ad7f29abcaf48p-24",
+"pos": 7,
+"unicode_minus": true,
+"text": "   0.000"
+},
+{
+"kind": "brace",
+"fmt": "{x:>8.3f}",
+"x": "-0x1.65a0bc0000000p+31",
+"pos": 8,
+"unicode_minus": true,
+"text": "−3000000000.000"
+},
+{
+"kind": "brace",
+"fmt": "{x:>8.3f}",
+"x": "0x1.9000000000000p+6",
+"pos": 9,
+"unicode_minus": true,
+"text": " 100.000"
+},
+{
+"kind": "brace",
+"fmt": "{x:>8.3f}",
+"x": "-0x0.0p+0",
+"pos": 10,
+"unicode_minus": true,
+"text": "  −0.000"
+},
+{
+"kind": "brace",
+"fmt": "{x:>8.3f}",
+"x": "0x1.c000000000000p+2",
+"pos": 11,
+"unicode_minus": true,
+"text": "   7.000"
+},
+{
+"kind": "brace",
+"fmt": "{x:>8.3f}",
+"x": "nan",
+"pos": 12,
+"unicode_minus": true,
+"text": "     nan"
+},
+{
+"kind": "brace",
+"fmt": "{x:>8.3f}",
+"x": "inf",
+"pos": 13,
+"unicode_minus": true,
+"text": "     inf"
+},
+{
+"kind": "brace",
+"fmt": "{x:>8.3f}",
+"x": "0x0.0p+0",
+"pos": 0,
+"unicode_minus": false,
+"text": "   0.000"
+},
+{
+"kind": "brace",
+"fmt": "{x:>8.3f}",
+"x": "0x1.0000000000000p+0",
+"pos": 1,
+"unicode_minus": false,
+"text": "   1.000"
+},
+{
+"kind": "brace",
+"fmt": "{x:>8.3f}",
+"x": "-0x1.0000000000000p+0",
+"pos": 2,
+"unicode_minus": false,
+"text": "  -1.000"
+},
+{
+"kind": "brace",
+"fmt": "{x:>8.3f}",
+"x": "0x1.4000000000000p+1",
+"pos": 3,
+"unicode_minus": false,
+"text": "   2.500"
+},
+{
+"kind": "brace",
+"fmt": "{x:>8.3f}",
+"x": "-0x1.4000000000000p+1",
+"pos": 4,
+"unicode_minus": false,
+"text": "  -2.500"
+},
+{
+"kind": "brace",
+"fmt": "{x:>8.3f}",
+"x": "0x1.f9add3739635fp-4",
+"pos": 5,
+"unicode_minus": false,
+"text": "   0.123"
+},
+{
+"kind": "brace",
+"fmt": "{x:>8.3f}",
+"x": "-0x1.34a456d5cfaadp+10",
+"pos": 6,
+"unicode_minus": false,
+"text": "-1234.568"
+},
+{
+"kind": "brace",
+"fmt": "{x:>8.3f}",
+"x": "0x1.ad7f29abcaf48p-24",
+"pos": 7,
+"unicode_minus": false,
+"text": "   0.000"
+},
+{
+"kind": "brace",
+"fmt": "{x:>8.3f}",
+"x": "-0x1.65a0bc0000000p+31",
+"pos": 8,
+"unicode_minus": false,
+"text": "-3000000000.000"
+},
+{
+"kind": "brace",
+"fmt": "{x:>8.3f}",
+"x": "0x1.9000000000000p+6",
+"pos": 9,
+"unicode_minus": false,
+"text": " 100.000"
+},
+{
+"kind": "brace",
+"fmt": "{x:>8.3f}",
+"x": "-0x0.0p+0",
+"pos": 10,
+"unicode_minus": false,
+"text": "  -0.000"
+},
+{
+"kind": "brace",
+"fmt": "{x:>8.3f}",
+"x": "0x1.c000000000000p+2",
+"pos": 11,
+"unicode_minus": false,
+"text": "   7.000"
+},
+{
+"kind": "brace",
+"fmt": "{x:>8.3f}",
+"x": "nan",
+"pos": 12,
+"unicode_minus": false,
+"text": "     nan"
+},
+{
+"kind": "brace",
+"fmt": "{x:>8.3f}",
+"x": "inf",
+"pos": 13,
+"unicode_minus": false,
+"text": "     inf"
+},
+{
+"kind": "brace",
+"fmt": "{x:e}",
+"x": "0x0.0p+0",
+"pos": 0,
+"unicode_minus": true,
+"text": "0.000000e+00"
+},
+{
+"kind": "brace",
+"fmt": "{x:e}",
+"x": "0x1.0000000000000p+0",
+"pos": 1,
+"unicode_minus": true,
+"text": "1.000000e+00"
+},
+{
+"kind": "brace",
+"fmt": "{x:e}",
+"x": "-0x1.0000000000000p+0",
+"pos": 2,
+"unicode_minus": true,
+"text": "−1.000000e+00"
+},
+{
+"kind": "brace",
+"fmt": "{x:e}",
+"x": "0x1.4000000000000p+1",
+"pos": 3,
+"unicode_minus": true,
+"text": "2.500000e+00"
+},
+{
+"kind": "brace",
+"fmt": "{x:e}",
+"x": "-0x1.4000000000000p+1",
+"pos": 4,
+"unicode_minus": true,
+"text": "−2.500000e+00"
+},
+{
+"kind": "brace",
+"fmt": "{x:e}",
+"x": "0x1.f9add3739635fp-4",
+"pos": 5,
+"unicode_minus": true,
+"text": "1.234568e−01"
+},
+{
+"kind": "brace",
+"fmt": "{x:e}",
+"x": "-0x1.34a456d5cfaadp+10",
+"pos": 6,
+"unicode_minus": true,
+"text": "−1.234568e+03"
+},
+{
+"kind": "brace",
+"fmt": "{x:e}",
+"x": "0x1.ad7f29abcaf48p-24",
+"pos": 7,
+"unicode_minus": true,
+"text": "1.000000e−07"
+},
+{
+"kind": "brace",
+"fmt": "{x:e}",
+"x": "-0x1.65a0bc0000000p+31",
+"pos": 8,
+"unicode_minus": true,
+"text": "−3.000000e+09"
+},
+{
+"kind": "brace",
+"fmt": "{x:e}",
+"x": "0x1.9000000000000p+6",
+"pos": 9,
+"unicode_minus": true,
+"text": "1.000000e+02"
+},
+{
+"kind": "brace",
+"fmt": "{x:e}",
+"x": "-0x0.0p+0",
+"pos": 10,
+"unicode_minus": true,
+"text": "−0.000000e+00"
+},
+{
+"kind": "brace",
+"fmt": "{x:e}",
+"x": "0x1.c000000000000p+2",
+"pos": 11,
+"unicode_minus": true,
+"text": "7.000000e+00"
+},
+{
+"kind": "brace",
+"fmt": "{x:e}",
+"x": "nan",
+"pos": 12,
+"unicode_minus": true,
+"text": "nan"
+},
+{
+"kind": "brace",
+"fmt": "{x:e}",
+"x": "inf",
+"pos": 13,
+"unicode_minus": true,
+"text": "inf"
+},
+{
+"kind": "brace",
+"fmt": "{x:e}",
+"x": "0x0.0p+0",
+"pos": 0,
+"unicode_minus": false,
+"text": "0.000000e+00"
+},
+{
+"kind": "brace",
+"fmt": "{x:e}",
+"x": "0x1.0000000000000p+0",
+"pos": 1,
+"unicode_minus": false,
+"text": "1.000000e+00"
+},
+{
+"kind": "brace",
+"fmt": "{x:e}",
+"x": "-0x1.0000000000000p+0",
+"pos": 2,
+"unicode_minus": false,
+"text": "-1.000000e+00"
+},
+{
+"kind": "brace",
+"fmt": "{x:e}",
+"x": "0x1.4000000000000p+1",
+"pos": 3,
+"unicode_minus": false,
+"text": "2.500000e+00"
+},
+{
+"kind": "brace",
+"fmt": "{x:e}",
+"x": "-0x1.4000000000000p+1",
+"pos": 4,
+"unicode_minus": false,
+"text": "-2.500000e+00"
+},
+{
+"kind": "brace",
+"fmt": "{x:e}",
+"x": "0x1.f9add3739635fp-4",
+"pos": 5,
+"unicode_minus": false,
+"text": "1.234568e-01"
+},
+{
+"kind": "brace",
+"fmt": "{x:e}",
+"x": "-0x1.34a456d5cfaadp+10",
+"pos": 6,
+"unicode_minus": false,
+"text": "-1.234568e+03"
+},
+{
+"kind": "brace",
+"fmt": "{x:e}",
+"x": "0x1.ad7f29abcaf48p-24",
+"pos": 7,
+"unicode_minus": false,
+"text": "1.000000e-07"
+},
+{
+"kind": "brace",
+"fmt": "{x:e}",
+"x": "-0x1.65a0bc0000000p+31",
+"pos": 8,
+"unicode_minus": false,
+"text": "-3.000000e+09"
+},
+{
+"kind": "brace",
+"fmt": "{x:e}",
+"x": "0x1.9000000000000p+6",
+"pos": 9,
+"unicode_minus": false,
+"text": "1.000000e+02"
+},
+{
+"kind": "brace",
+"fmt": "{x:e}",
+"x": "-0x0.0p+0",
+"pos": 10,
+"unicode_minus": false,
+"text": "-0.000000e+00"
+},
+{
+"kind": "brace",
+"fmt": "{x:e}",
+"x": "0x1.c000000000000p+2",
+"pos": 11,
+"unicode_minus": false,
+"text": "7.000000e+00"
+},
+{
+"kind": "brace",
+"fmt": "{x:e}",
+"x": "nan",
+"pos": 12,
+"unicode_minus": false,
+"text": "nan"
+},
+{
+"kind": "brace",
+"fmt": "{x:e}",
+"x": "inf",
+"pos": 13,
+"unicode_minus": false,
+"text": "inf"
+},
+{
+"kind": "brace",
+"fmt": "{x:%}",
+"x": "0x0.0p+0",
+"pos": 0,
+"unicode_minus": true,
+"text": "0.000000%"
+},
+{
+"kind": "brace",
+"fmt": "{x:%}",
+"x": "0x1.0000000000000p+0",
+"pos": 1,
+"unicode_minus": true,
+"text": "100.000000%"
+},
+{
+"kind": "brace",
+"fmt": "{x:%}",
+"x": "-0x1.0000000000000p+0",
+"pos": 2,
+"unicode_minus": true,
+"text": "−100.000000%"
+},
+{
+"kind": "brace",
+"fmt": "{x:%}",
+"x": "0x1.4000000000000p+1",
+"pos": 3,
+"unicode_minus": true,
+"text": "250.000000%"
+},
+{
+"kind": "brace",
+"fmt": "{x:%}",
+"x": "-0x1.4000000000000p+1",
+"pos": 4,
+"unicode_minus": true,
+"text": "−250.000000%"
+},
+{
+"kind": "brace",
+"fmt": "{x:%}",
+"x": "0x1.f9add3739635fp-4",
+"pos": 5,
+"unicode_minus": true,
+"text": "12.345679%"
+},
+{
+"kind": "brace",
+"fmt": "{x:%}",
+"x": "-0x1.34a456d5cfaadp+10",
+"pos": 6,
+"unicode_minus": true,
+"text": "−123456.780000%"
+},
+{
+"kind": "brace",
+"fmt": "{x:%}",
+"x": "0x1.ad7f29abcaf48p-24",
+"pos": 7,
+"unicode_minus": true,
+"text": "0.000010%"
+},
+{
+"kind": "brace",
+"fmt": "{x:%}",
+"x": "-0x1.65a0bc0000000p+31",
+"pos": 8,
+"unicode_minus": true,
+"text": "−300000000000.000000%"
+},
+{
+"kind": "brace",
+"fmt": "{x:%}",
+"x": "0x1.9000000000000p+6",
+"pos": 9,
+"unicode_minus": true,
+"text": "10000.000000%"
+},
+{
+"kind": "brace",
+"fmt": "{x:%}",
+"x": "-0x0.0p+0",
+"pos": 10,
+"unicode_minus": true,
+"text": "−0.000000%"
+},
+{
+"kind": "brace",
+"fmt": "{x:%}",
+"x": "0x1.c000000000000p+2",
+"pos": 11,
+"unicode_minus": true,
+"text": "700.000000%"
+},
+{
+"kind": "brace",
+"fmt": "{x:%}",
+"x": "nan",
+"pos": 12,
+"unicode_minus": true,
+"text": "nan%"
+},
+{
+"kind": "brace",
+"fmt": "{x:%}",
+"x": "inf",
+"pos": 13,
+"unicode_minus": true,
+"text": "inf%"
+},
+{
+"kind": "brace",
+"fmt": "{x:%}",
+"x": "0x0.0p+0",
+"pos": 0,
+"unicode_minus": false,
+"text": "0.000000%"
+},
+{
+"kind": "brace",
+"fmt": "{x:%}",
+"x": "0x1.0000000000000p+0",
+"pos": 1,
+"unicode_minus": false,
+"text": "100.000000%"
+},
+{
+"kind": "brace",
+"fmt": "{x:%}",
+"x": "-0x1.0000000000000p+0",
+"pos": 2,
+"unicode_minus": false,
+"text": "-100.000000%"
+},
+{
+"kind": "brace",
+"fmt": "{x:%}",
+"x": "0x1.4000000000000p+1",
+"pos": 3,
+"unicode_minus": false,
+"text": "250.000000%"
+},
+{
+"kind": "brace",
+"fmt": "{x:%}",
+"x": "-0x1.4000000000000p+1",
+"pos": 4,
+"unicode_minus": false,
+"text": "-250.000000%"
+},
+{
+"kind": "brace",
+"fmt": "{x:%}",
+"x": "0x1.f9add3739635fp-4",
+"pos": 5,
+"unicode_minus": false,
+"text": "12.345679%"
+},
+{
+"kind": "brace",
+"fmt": "{x:%}",
+"x": "-0x1.34a456d5cfaadp+10",
+"pos": 6,
+"unicode_minus": false,
+"text": "-123456.780000%"
+},
+{
+"kind": "brace",
+"fmt": "{x:%}",
+"x": "0x1.ad7f29abcaf48p-24",
+"pos": 7,
+"unicode_minus": false,
+"text": "0.000010%"
+},
+{
+"kind": "brace",
+"fmt": "{x:%}",
+"x": "-0x1.65a0bc0000000p+31",
+"pos": 8,
+"unicode_minus": false,
+"text": "-300000000000.000000%"
+},
+{
+"kind": "brace",
+"fmt": "{x:%}",
+"x": "0x1.9000000000000p+6",
+"pos": 9,
+"unicode_minus": false,
+"text": "10000.000000%"
+},
+{
+"kind": "brace",
+"fmt": "{x:%}",
+"x": "-0x0.0p+0",
+"pos": 10,
+"unicode_minus": false,
+"text": "-0.000000%"
+},
+{
+"kind": "brace",
+"fmt": "{x:%}",
+"x": "0x1.c000000000000p+2",
+"pos": 11,
+"unicode_minus": false,
+"text": "700.000000%"
+},
+{
+"kind": "brace",
+"fmt": "{x:%}",
+"x": "nan",
+"pos": 12,
+"unicode_minus": false,
+"text": "nan%"
+},
+{
+"kind": "brace",
+"fmt": "{x:%}",
+"x": "inf",
+"pos": 13,
+"unicode_minus": false,
+"text": "inf%"
+},
+{
+"kind": "brace",
+"fmt": "{x:,.2f}",
+"x": "0x0.0p+0",
+"pos": 0,
+"unicode_minus": true,
+"text": "0.00"
+},
+{
+"kind": "brace",
+"fmt": "{x:,.2f}",
+"x": "0x1.0000000000000p+0",
+"pos": 1,
+"unicode_minus": true,
+"text": "1.00"
+},
+{
+"kind": "brace",
+"fmt": "{x:,.2f}",
+"x": "-0x1.0000000000000p+0",
+"pos": 2,
+"unicode_minus": true,
+"text": "−1.00"
+},
+{
+"kind": "brace",
+"fmt": "{x:,.2f}",
+"x": "0x1.4000000000000p+1",
+"pos": 3,
+"unicode_minus": true,
+"text": "2.50"
+},
+{
+"kind": "brace",
+"fmt": "{x:,.2f}",
+"x": "-0x1.4000000000000p+1",
+"pos": 4,
+"unicode_minus": true,
+"text": "−2.50"
+},
+{
+"kind": "brace",
+"fmt": "{x:,.2f}",
+"x": "0x1.f9add3739635fp-4",
+"pos": 5,
+"unicode_minus": true,
+"text": "0.12"
+},
+{
+"kind": "brace",
+"fmt": "{x:,.2f}",
+"x": "-0x1.34a456d5cfaadp+10",
+"pos": 6,
+"unicode_minus": true,
+"text": "−1,234.57"
+},
+{
+"kind": "brace",
+"fmt": "{x:,.2f}",
+"x": "0x1.ad7f29abcaf48p-24",
+"pos": 7,
+"unicode_minus": true,
+"text": "0.00"
+},
+{
+"kind": "brace",
+"fmt": "{x:,.2f}",
+"x": "-0x1.65a0bc0000000p+31",
+"pos": 8,
+"unicode_minus": true,
+"text": "−3,000,000,000.00"
+},
+{
+"kind": "brace",
+"fmt": "{x:,.2f}",
+"x": "0x1.9000000000000p+6",
+"pos": 9,
+"unicode_minus": true,
+"text": "100.00"
+},
+{
+"kind": "brace",
+"fmt": "{x:,.2f}",
+"x": "-0x0.0p+0",
+"pos": 10,
+"unicode_minus": true,
+"text": "−0.00"
+},
+{
+"kind": "brace",
+"fmt": "{x:,.2f}",
+"x": "0x1.c000000000000p+2",
+"pos": 11,
+"unicode_minus": true,
+"text": "7.00"
+},
+{
+"kind": "brace",
+"fmt": "{x:,.2f}",
+"x": "nan",
+"pos": 12,
+"unicode_minus": true,
+"text": "nan"
+},
+{
+"kind": "brace",
+"fmt": "{x:,.2f}",
+"x": "inf",
+"pos": 13,
+"unicode_minus": true,
+"text": "inf"
+},
+{
+"kind": "brace",
+"fmt": "{x:,.2f}",
+"x": "0x0.0p+0",
+"pos": 0,
+"unicode_minus": false,
+"text": "0.00"
+},
+{
+"kind": "brace",
+"fmt": "{x:,.2f}",
+"x": "0x1.0000000000000p+0",
+"pos": 1,
+"unicode_minus": false,
+"text": "1.00"
+},
+{
+"kind": "brace",
+"fmt": "{x:,.2f}",
+"x": "-0x1.0000000000000p+0",
+"pos": 2,
+"unicode_minus": false,
+"text": "-1.00"
+},
+{
+"kind": "brace",
+"fmt": "{x:,.2f}",
+"x": "0x1.4000000000000p+1",
+"pos": 3,
+"unicode_minus": false,
+"text": "2.50"
+},
+{
+"kind": "brace",
+"fmt": "{x:,.2f}",
+"x": "-0x1.4000000000000p+1",
+"pos": 4,
+"unicode_minus": false,
+"text": "-2.50"
+},
+{
+"kind": "brace",
+"fmt": "{x:,.2f}",
+"x": "0x1.f9add3739635fp-4",
+"pos": 5,
+"unicode_minus": false,
+"text": "0.12"
+},
+{
+"kind": "brace",
+"fmt": "{x:,.2f}",
+"x": "-0x1.34a456d5cfaadp+10",
+"pos": 6,
+"unicode_minus": false,
+"text": "-1,234.57"
+},
+{
+"kind": "brace",
+"fmt": "{x:,.2f}",
+"x": "0x1.ad7f29abcaf48p-24",
+"pos": 7,
+"unicode_minus": false,
+"text": "0.00"
+},
+{
+"kind": "brace",
+"fmt": "{x:,.2f}",
+"x": "-0x1.65a0bc0000000p+31",
+"pos": 8,
+"unicode_minus": false,
+"text": "-3,000,000,000.00"
+},
+{
+"kind": "brace",
+"fmt": "{x:,.2f}",
+"x": "0x1.9000000000000p+6",
+"pos": 9,
+"unicode_minus": false,
+"text": "100.00"
+},
+{
+"kind": "brace",
+"fmt": "{x:,.2f}",
+"x": "-0x0.0p+0",
+"pos": 10,
+"unicode_minus": false,
+"text": "-0.00"
+},
+{
+"kind": "brace",
+"fmt": "{x:,.2f}",
+"x": "0x1.c000000000000p+2",
+"pos": 11,
+"unicode_minus": false,
+"text": "7.00"
+},
+{
+"kind": "brace",
+"fmt": "{x:,.2f}",
+"x": "nan",
+"pos": 12,
+"unicode_minus": false,
+"text": "nan"
+},
+{
+"kind": "brace",
+"fmt": "{x:,.2f}",
+"x": "inf",
+"pos": 13,
+"unicode_minus": false,
+"text": "inf"
+},
+{
+"kind": "brace",
+"fmt": "{}",
+"x": "0x0.0p+0",
+"pos": 0,
+"unicode_minus": true,
+"error": "IndexError: tuple index out of range"
+},
+{
+"kind": "brace",
+"fmt": "{}",
+"x": "0x1.0000000000000p+0",
+"pos": 1,
+"unicode_minus": true,
+"error": "IndexError: tuple index out of range"
+},
+{
+"kind": "brace",
+"fmt": "{}",
+"x": "-0x1.0000000000000p+0",
+"pos": 2,
+"unicode_minus": true,
+"error": "IndexError: tuple index out of range"
+},
+{
+"kind": "brace",
+"fmt": "{}",
+"x": "0x1.4000000000000p+1",
+"pos": 3,
+"unicode_minus": true,
+"error": "IndexError: tuple index out of range"
+},
+{
+"kind": "brace",
+"fmt": "{}",
+"x": "-0x1.4000000000000p+1",
+"pos": 4,
+"unicode_minus": true,
+"error": "IndexError: tuple index out of range"
+},
+{
+"kind": "brace",
+"fmt": "{}",
+"x": "0x1.f9add3739635fp-4",
+"pos": 5,
+"unicode_minus": true,
+"error": "IndexError: tuple index out of range"
+},
+{
+"kind": "brace",
+"fmt": "{}",
+"x": "-0x1.34a456d5cfaadp+10",
+"pos": 6,
+"unicode_minus": true,
+"error": "IndexError: tuple index out of range"
+},
+{
+"kind": "brace",
+"fmt": "{}",
+"x": "0x1.ad7f29abcaf48p-24",
+"pos": 7,
+"unicode_minus": true,
+"error": "IndexError: tuple index out of range"
+},
+{
+"kind": "brace",
+"fmt": "{}",
+"x": "-0x1.65a0bc0000000p+31",
+"pos": 8,
+"unicode_minus": true,
+"error": "IndexError: tuple index out of range"
+},
+{
+"kind": "brace",
+"fmt": "{}",
+"x": "0x1.9000000000000p+6",
+"pos": 9,
+"unicode_minus": true,
+"error": "IndexError: tuple index out of range"
+},
+{
+"kind": "brace",
+"fmt": "{}",
+"x": "-0x0.0p+0",
+"pos": 10,
+"unicode_minus": true,
+"error": "IndexError: tuple index out of range"
+},
+{
+"kind": "brace",
+"fmt": "{}",
+"x": "0x1.c000000000000p+2",
+"pos": 11,
+"unicode_minus": true,
+"error": "IndexError: tuple index out of range"
+},
+{
+"kind": "brace",
+"fmt": "{}",
+"x": "nan",
+"pos": 12,
+"unicode_minus": true,
+"error": "IndexError: tuple index out of range"
+},
+{
+"kind": "brace",
+"fmt": "{}",
+"x": "inf",
+"pos": 13,
+"unicode_minus": true,
+"error": "IndexError: tuple index out of range"
+},
+{
+"kind": "brace",
+"fmt": "{}",
+"x": "0x0.0p+0",
+"pos": 0,
+"unicode_minus": false,
+"error": "IndexError: tuple index out of range"
+},
+{
+"kind": "brace",
+"fmt": "{}",
+"x": "0x1.0000000000000p+0",
+"pos": 1,
+"unicode_minus": false,
+"error": "IndexError: tuple index out of range"
+},
+{
+"kind": "brace",
+"fmt": "{}",
+"x": "-0x1.0000000000000p+0",
+"pos": 2,
+"unicode_minus": false,
+"error": "IndexError: tuple index out of range"
+},
+{
+"kind": "brace",
+"fmt": "{}",
+"x": "0x1.4000000000000p+1",
+"pos": 3,
+"unicode_minus": false,
+"error": "IndexError: tuple index out of range"
+},
+{
+"kind": "brace",
+"fmt": "{}",
+"x": "-0x1.4000000000000p+1",
+"pos": 4,
+"unicode_minus": false,
+"error": "IndexError: tuple index out of range"
+},
+{
+"kind": "brace",
+"fmt": "{}",
+"x": "0x1.f9add3739635fp-4",
+"pos": 5,
+"unicode_minus": false,
+"error": "IndexError: tuple index out of range"
+},
+{
+"kind": "brace",
+"fmt": "{}",
+"x": "-0x1.34a456d5cfaadp+10",
+"pos": 6,
+"unicode_minus": false,
+"error": "IndexError: tuple index out of range"
+},
+{
+"kind": "brace",
+"fmt": "{}",
+"x": "0x1.ad7f29abcaf48p-24",
+"pos": 7,
+"unicode_minus": false,
+"error": "IndexError: tuple index out of range"
+},
+{
+"kind": "brace",
+"fmt": "{}",
+"x": "-0x1.65a0bc0000000p+31",
+"pos": 8,
+"unicode_minus": false,
+"error": "IndexError: tuple index out of range"
+},
+{
+"kind": "brace",
+"fmt": "{}",
+"x": "0x1.9000000000000p+6",
+"pos": 9,
+"unicode_minus": false,
+"error": "IndexError: tuple index out of range"
+},
+{
+"kind": "brace",
+"fmt": "{}",
+"x": "-0x0.0p+0",
+"pos": 10,
+"unicode_minus": false,
+"error": "IndexError: tuple index out of range"
+},
+{
+"kind": "brace",
+"fmt": "{}",
+"x": "0x1.c000000000000p+2",
+"pos": 11,
+"unicode_minus": false,
+"error": "IndexError: tuple index out of range"
+},
+{
+"kind": "brace",
+"fmt": "{}",
+"x": "nan",
+"pos": 12,
+"unicode_minus": false,
+"error": "IndexError: tuple index out of range"
+},
+{
+"kind": "brace",
+"fmt": "{}",
+"x": "inf",
+"pos": 13,
+"unicode_minus": false,
+"error": "IndexError: tuple index out of range"
+},
+{
+"kind": "brace",
+"fmt": "{0}",
+"x": "0x0.0p+0",
+"pos": 0,
+"unicode_minus": true,
+"error": "IndexError: tuple index out of range"
+},
+{
+"kind": "brace",
+"fmt": "{0}",
+"x": "0x1.0000000000000p+0",
+"pos": 1,
+"unicode_minus": true,
+"error": "IndexError: tuple index out of range"
+},
+{
+"kind": "brace",
+"fmt": "{0}",
+"x": "-0x1.0000000000000p+0",
+"pos": 2,
+"unicode_minus": true,
+"error": "IndexError: tuple index out of range"
+},
+{
+"kind": "brace",
+"fmt": "{0}",
+"x": "0x1.4000000000000p+1",
+"pos": 3,
+"unicode_minus": true,
+"error": "IndexError: tuple index out of range"
+},
+{
+"kind": "brace",
+"fmt": "{0}",
+"x": "-0x1.4000000000000p+1",
+"pos": 4,
+"unicode_minus": true,
+"error": "IndexError: tuple index out of range"
+},
+{
+"kind": "brace",
+"fmt": "{0}",
+"x": "0x1.f9add3739635fp-4",
+"pos": 5,
+"unicode_minus": true,
+"error": "IndexError: tuple index out of range"
+},
+{
+"kind": "brace",
+"fmt": "{0}",
+"x": "-0x1.34a456d5cfaadp+10",
+"pos": 6,
+"unicode_minus": true,
+"error": "IndexError: tuple index out of range"
+},
+{
+"kind": "brace",
+"fmt": "{0}",
+"x": "0x1.ad7f29abcaf48p-24",
+"pos": 7,
+"unicode_minus": true,
+"error": "IndexError: tuple index out of range"
+},
+{
+"kind": "brace",
+"fmt": "{0}",
+"x": "-0x1.65a0bc0000000p+31",
+"pos": 8,
+"unicode_minus": true,
+"error": "IndexError: tuple index out of range"
+},
+{
+"kind": "brace",
+"fmt": "{0}",
+"x": "0x1.9000000000000p+6",
+"pos": 9,
+"unicode_minus": true,
+"error": "IndexError: tuple index out of range"
+},
+{
+"kind": "brace",
+"fmt": "{0}",
+"x": "-0x0.0p+0",
+"pos": 10,
+"unicode_minus": true,
+"error": "IndexError: tuple index out of range"
+},
+{
+"kind": "brace",
+"fmt": "{0}",
+"x": "0x1.c000000000000p+2",
+"pos": 11,
+"unicode_minus": true,
+"error": "IndexError: tuple index out of range"
+},
+{
+"kind": "brace",
+"fmt": "{0}",
+"x": "nan",
+"pos": 12,
+"unicode_minus": true,
+"error": "IndexError: tuple index out of range"
+},
+{
+"kind": "brace",
+"fmt": "{0}",
+"x": "inf",
+"pos": 13,
+"unicode_minus": true,
+"error": "IndexError: tuple index out of range"
+},
+{
+"kind": "brace",
+"fmt": "{0}",
+"x": "0x0.0p+0",
+"pos": 0,
+"unicode_minus": false,
+"error": "IndexError: tuple index out of range"
+},
+{
+"kind": "brace",
+"fmt": "{0}",
+"x": "0x1.0000000000000p+0",
+"pos": 1,
+"unicode_minus": false,
+"error": "IndexError: tuple index out of range"
+},
+{
+"kind": "brace",
+"fmt": "{0}",
+"x": "-0x1.0000000000000p+0",
+"pos": 2,
+"unicode_minus": false,
+"error": "IndexError: tuple index out of range"
+},
+{
+"kind": "brace",
+"fmt": "{0}",
+"x": "0x1.4000000000000p+1",
+"pos": 3,
+"unicode_minus": false,
+"error": "IndexError: tuple index out of range"
+},
+{
+"kind": "brace",
+"fmt": "{0}",
+"x": "-0x1.4000000000000p+1",
+"pos": 4,
+"unicode_minus": false,
+"error": "IndexError: tuple index out of range"
+},
+{
+"kind": "brace",
+"fmt": "{0}",
+"x": "0x1.f9add3739635fp-4",
+"pos": 5,
+"unicode_minus": false,
+"error": "IndexError: tuple index out of range"
+},
+{
+"kind": "brace",
+"fmt": "{0}",
+"x": "-0x1.34a456d5cfaadp+10",
+"pos": 6,
+"unicode_minus": false,
+"error": "IndexError: tuple index out of range"
+},
+{
+"kind": "brace",
+"fmt": "{0}",
+"x": "0x1.ad7f29abcaf48p-24",
+"pos": 7,
+"unicode_minus": false,
+"error": "IndexError: tuple index out of range"
+},
+{
+"kind": "brace",
+"fmt": "{0}",
+"x": "-0x1.65a0bc0000000p+31",
+"pos": 8,
+"unicode_minus": false,
+"error": "IndexError: tuple index out of range"
+},
+{
+"kind": "brace",
+"fmt": "{0}",
+"x": "0x1.9000000000000p+6",
+"pos": 9,
+"unicode_minus": false,
+"error": "IndexError: tuple index out of range"
+},
+{
+"kind": "brace",
+"fmt": "{0}",
+"x": "-0x0.0p+0",
+"pos": 10,
+"unicode_minus": false,
+"error": "IndexError: tuple index out of range"
+},
+{
+"kind": "brace",
+"fmt": "{0}",
+"x": "0x1.c000000000000p+2",
+"pos": 11,
+"unicode_minus": false,
+"error": "IndexError: tuple index out of range"
+},
+{
+"kind": "brace",
+"fmt": "{0}",
+"x": "nan",
+"pos": 12,
+"unicode_minus": false,
+"error": "IndexError: tuple index out of range"
+},
+{
+"kind": "brace",
+"fmt": "{0}",
+"x": "inf",
+"pos": 13,
+"unicode_minus": false,
+"error": "IndexError: tuple index out of range"
+},
+{
+"kind": "brace",
+"fmt": "{x!r}",
+"x": "0x0.0p+0",
+"pos": 0,
+"unicode_minus": true,
+"text": "np.float64(0.0)"
+},
+{
+"kind": "brace",
+"fmt": "{x!r}",
+"x": "0x1.0000000000000p+0",
+"pos": 1,
+"unicode_minus": true,
+"text": "np.float64(1.0)"
+},
+{
+"kind": "brace",
+"fmt": "{x!r}",
+"x": "-0x1.0000000000000p+0",
+"pos": 2,
+"unicode_minus": true,
+"text": "np.float64(−1.0)"
+},
+{
+"kind": "brace",
+"fmt": "{x!r}",
+"x": "0x1.4000000000000p+1",
+"pos": 3,
+"unicode_minus": true,
+"text": "np.float64(2.5)"
+},
+{
+"kind": "brace",
+"fmt": "{x!r}",
+"x": "-0x1.4000000000000p+1",
+"pos": 4,
+"unicode_minus": true,
+"text": "np.float64(−2.5)"
+},
+{
+"kind": "brace",
+"fmt": "{x!r}",
+"x": "0x1.f9add3739635fp-4",
+"pos": 5,
+"unicode_minus": true,
+"text": "np.float64(0.123456789)"
+},
+{
+"kind": "brace",
+"fmt": "{x!r}",
+"x": "-0x1.34a456d5cfaadp+10",
+"pos": 6,
+"unicode_minus": true,
+"text": "np.float64(−1234.5678)"
+},
+{
+"kind": "brace",
+"fmt": "{x!r}",
+"x": "0x1.ad7f29abcaf48p-24",
+"pos": 7,
+"unicode_minus": true,
+"text": "np.float64(1e−07)"
+},
+{
+"kind": "brace",
+"fmt": "{x!r}",
+"x": "-0x1.65a0bc0000000p+31",
+"pos": 8,
+"unicode_minus": true,
+"text": "np.float64(−3000000000.0)"
+},
+{
+"kind": "brace",
+"fmt": "{x!r}",
+"x": "0x1.9000000000000p+6",
+"pos": 9,
+"unicode_minus": true,
+"text": "np.float64(100.0)"
+},
+{
+"kind": "brace",
+"fmt": "{x!r}",
+"x": "-0x0.0p+0",
+"pos": 10,
+"unicode_minus": true,
+"text": "np.float64(−0.0)"
+},
+{
+"kind": "brace",
+"fmt": "{x!r}",
+"x": "0x1.c000000000000p+2",
+"pos": 11,
+"unicode_minus": true,
+"text": "np.float64(7.0)"
+},
+{
+"kind": "brace",
+"fmt": "{x!r}",
+"x": "nan",
+"pos": 12,
+"unicode_minus": true,
+"text": "np.float64(nan)"
+},
+{
+"kind": "brace",
+"fmt": "{x!r}",
+"x": "inf",
+"pos": 13,
+"unicode_minus": true,
+"text": "np.float64(inf)"
+},
+{
+"kind": "brace",
+"fmt": "{x!r}",
+"x": "0x0.0p+0",
+"pos": 0,
+"unicode_minus": false,
+"text": "np.float64(0.0)"
+},
+{
+"kind": "brace",
+"fmt": "{x!r}",
+"x": "0x1.0000000000000p+0",
+"pos": 1,
+"unicode_minus": false,
+"text": "np.float64(1.0)"
+},
+{
+"kind": "brace",
+"fmt": "{x!r}",
+"x": "-0x1.0000000000000p+0",
+"pos": 2,
+"unicode_minus": false,
+"text": "np.float64(-1.0)"
+},
+{
+"kind": "brace",
+"fmt": "{x!r}",
+"x": "0x1.4000000000000p+1",
+"pos": 3,
+"unicode_minus": false,
+"text": "np.float64(2.5)"
+},
+{
+"kind": "brace",
+"fmt": "{x!r}",
+"x": "-0x1.4000000000000p+1",
+"pos": 4,
+"unicode_minus": false,
+"text": "np.float64(-2.5)"
+},
+{
+"kind": "brace",
+"fmt": "{x!r}",
+"x": "0x1.f9add3739635fp-4",
+"pos": 5,
+"unicode_minus": false,
+"text": "np.float64(0.123456789)"
+},
+{
+"kind": "brace",
+"fmt": "{x!r}",
+"x": "-0x1.34a456d5cfaadp+10",
+"pos": 6,
+"unicode_minus": false,
+"text": "np.float64(-1234.5678)"
+},
+{
+"kind": "brace",
+"fmt": "{x!r}",
+"x": "0x1.ad7f29abcaf48p-24",
+"pos": 7,
+"unicode_minus": false,
+"text": "np.float64(1e-07)"
+},
+{
+"kind": "brace",
+"fmt": "{x!r}",
+"x": "-0x1.65a0bc0000000p+31",
+"pos": 8,
+"unicode_minus": false,
+"text": "np.float64(-3000000000.0)"
+},
+{
+"kind": "brace",
+"fmt": "{x!r}",
+"x": "0x1.9000000000000p+6",
+"pos": 9,
+"unicode_minus": false,
+"text": "np.float64(100.0)"
+},
+{
+"kind": "brace",
+"fmt": "{x!r}",
+"x": "-0x0.0p+0",
+"pos": 10,
+"unicode_minus": false,
+"text": "np.float64(-0.0)"
+},
+{
+"kind": "brace",
+"fmt": "{x!r}",
+"x": "0x1.c000000000000p+2",
+"pos": 11,
+"unicode_minus": false,
+"text": "np.float64(7.0)"
+},
+{
+"kind": "brace",
+"fmt": "{x!r}",
+"x": "nan",
+"pos": 12,
+"unicode_minus": false,
+"text": "np.float64(nan)"
+},
+{
+"kind": "brace",
+"fmt": "{x!r}",
+"x": "inf",
+"pos": 13,
+"unicode_minus": false,
+"text": "np.float64(inf)"
+},
+{
+"kind": "brace",
+"fmt": "{x:.0f}",
+"x": "0x0.0p+0",
+"pos": 0,
+"unicode_minus": true,
+"text": "0"
+},
+{
+"kind": "brace",
+"fmt": "{x:.0f}",
+"x": "0x1.0000000000000p+0",
+"pos": 1,
+"unicode_minus": true,
+"text": "1"
+},
+{
+"kind": "brace",
+"fmt": "{x:.0f}",
+"x": "-0x1.0000000000000p+0",
+"pos": 2,
+"unicode_minus": true,
+"text": "−1"
+},
+{
+"kind": "brace",
+"fmt": "{x:.0f}",
+"x": "0x1.4000000000000p+1",
+"pos": 3,
+"unicode_minus": true,
+"text": "2"
+},
+{
+"kind": "brace",
+"fmt": "{x:.0f}",
+"x": "-0x1.4000000000000p+1",
+"pos": 4,
+"unicode_minus": true,
+"text": "−2"
+},
+{
+"kind": "brace",
+"fmt": "{x:.0f}",
+"x": "0x1.f9add3739635fp-4",
+"pos": 5,
+"unicode_minus": true,
+"text": "0"
+},
+{
+"kind": "brace",
+"fmt": "{x:.0f}",
+"x": "-0x1.34a456d5cfaadp+10",
+"pos": 6,
+"unicode_minus": true,
+"text": "−1235"
+},
+{
+"kind": "brace",
+"fmt": "{x:.0f}",
+"x": "0x1.ad7f29abcaf48p-24",
+"pos": 7,
+"unicode_minus": true,
+"text": "0"
+},
+{
+"kind": "brace",
+"fmt": "{x:.0f}",
+"x": "-0x1.65a0bc0000000p+31",
+"pos": 8,
+"unicode_minus": true,
+"text": "−3000000000"
+},
+{
+"kind": "brace",
+"fmt": "{x:.0f}",
+"x": "0x1.9000000000000p+6",
+"pos": 9,
+"unicode_minus": true,
+"text": "100"
+},
+{
+"kind": "brace",
+"fmt": "{x:.0f}",
+"x": "-0x0.0p+0",
+"pos": 10,
+"unicode_minus": true,
+"text": "−0"
+},
+{
+"kind": "brace",
+"fmt": "{x:.0f}",
+"x": "0x1.c000000000000p+2",
+"pos": 11,
+"unicode_minus": true,
+"text": "7"
+},
+{
+"kind": "brace",
+"fmt": "{x:.0f}",
+"x": "nan",
+"pos": 12,
+"unicode_minus": true,
+"text": "nan"
+},
+{
+"kind": "brace",
+"fmt": "{x:.0f}",
+"x": "inf",
+"pos": 13,
+"unicode_minus": true,
+"text": "inf"
+},
+{
+"kind": "brace",
+"fmt": "{x:.0f}",
+"x": "0x0.0p+0",
+"pos": 0,
+"unicode_minus": false,
+"text": "0"
+},
+{
+"kind": "brace",
+"fmt": "{x:.0f}",
+"x": "0x1.0000000000000p+0",
+"pos": 1,
+"unicode_minus": false,
+"text": "1"
+},
+{
+"kind": "brace",
+"fmt": "{x:.0f}",
+"x": "-0x1.0000000000000p+0",
+"pos": 2,
+"unicode_minus": false,
+"text": "-1"
+},
+{
+"kind": "brace",
+"fmt": "{x:.0f}",
+"x": "0x1.4000000000000p+1",
+"pos": 3,
+"unicode_minus": false,
+"text": "2"
+},
+{
+"kind": "brace",
+"fmt": "{x:.0f}",
+"x": "-0x1.4000000000000p+1",
+"pos": 4,
+"unicode_minus": false,
+"text": "-2"
+},
+{
+"kind": "brace",
+"fmt": "{x:.0f}",
+"x": "0x1.f9add3739635fp-4",
+"pos": 5,
+"unicode_minus": false,
+"text": "0"
+},
+{
+"kind": "brace",
+"fmt": "{x:.0f}",
+"x": "-0x1.34a456d5cfaadp+10",
+"pos": 6,
+"unicode_minus": false,
+"text": "-1235"
+},
+{
+"kind": "brace",
+"fmt": "{x:.0f}",
+"x": "0x1.ad7f29abcaf48p-24",
+"pos": 7,
+"unicode_minus": false,
+"text": "0"
+},
+{
+"kind": "brace",
+"fmt": "{x:.0f}",
+"x": "-0x1.65a0bc0000000p+31",
+"pos": 8,
+"unicode_minus": false,
+"text": "-3000000000"
+},
+{
+"kind": "brace",
+"fmt": "{x:.0f}",
+"x": "0x1.9000000000000p+6",
+"pos": 9,
+"unicode_minus": false,
+"text": "100"
+},
+{
+"kind": "brace",
+"fmt": "{x:.0f}",
+"x": "-0x0.0p+0",
+"pos": 10,
+"unicode_minus": false,
+"text": "-0"
+},
+{
+"kind": "brace",
+"fmt": "{x:.0f}",
+"x": "0x1.c000000000000p+2",
+"pos": 11,
+"unicode_minus": false,
+"text": "7"
+},
+{
+"kind": "brace",
+"fmt": "{x:.0f}",
+"x": "nan",
+"pos": 12,
+"unicode_minus": false,
+"text": "nan"
+},
+{
+"kind": "brace",
+"fmt": "{x:.0f}",
+"x": "inf",
+"pos": 13,
+"unicode_minus": false,
+"text": "inf"
+},
+{
+"kind": "brace",
+"fmt": "{y}",
+"x": "0x0.0p+0",
+"pos": 0,
+"unicode_minus": true,
+"error": "KeyError: 'y'"
+},
+{
+"kind": "brace",
+"fmt": "{y}",
+"x": "0x1.0000000000000p+0",
+"pos": 1,
+"unicode_minus": true,
+"error": "KeyError: 'y'"
+},
+{
+"kind": "brace",
+"fmt": "{y}",
+"x": "-0x1.0000000000000p+0",
+"pos": 2,
+"unicode_minus": true,
+"error": "KeyError: 'y'"
+},
+{
+"kind": "brace",
+"fmt": "{y}",
+"x": "0x1.4000000000000p+1",
+"pos": 3,
+"unicode_minus": true,
+"error": "KeyError: 'y'"
+},
+{
+"kind": "brace",
+"fmt": "{y}",
+"x": "-0x1.4000000000000p+1",
+"pos": 4,
+"unicode_minus": true,
+"error": "KeyError: 'y'"
+},
+{
+"kind": "brace",
+"fmt": "{y}",
+"x": "0x1.f9add3739635fp-4",
+"pos": 5,
+"unicode_minus": true,
+"error": "KeyError: 'y'"
+},
+{
+"kind": "brace",
+"fmt": "{y}",
+"x": "-0x1.34a456d5cfaadp+10",
+"pos": 6,
+"unicode_minus": true,
+"error": "KeyError: 'y'"
+},
+{
+"kind": "brace",
+"fmt": "{y}",
+"x": "0x1.ad7f29abcaf48p-24",
+"pos": 7,
+"unicode_minus": true,
+"error": "KeyError: 'y'"
+},
+{
+"kind": "brace",
+"fmt": "{y}",
+"x": "-0x1.65a0bc0000000p+31",
+"pos": 8,
+"unicode_minus": true,
+"error": "KeyError: 'y'"
+},
+{
+"kind": "brace",
+"fmt": "{y}",
+"x": "0x1.9000000000000p+6",
+"pos": 9,
+"unicode_minus": true,
+"error": "KeyError: 'y'"
+},
+{
+"kind": "brace",
+"fmt": "{y}",
+"x": "-0x0.0p+0",
+"pos": 10,
+"unicode_minus": true,
+"error": "KeyError: 'y'"
+},
+{
+"kind": "brace",
+"fmt": "{y}",
+"x": "0x1.c000000000000p+2",
+"pos": 11,
+"unicode_minus": true,
+"error": "KeyError: 'y'"
+},
+{
+"kind": "brace",
+"fmt": "{y}",
+"x": "nan",
+"pos": 12,
+"unicode_minus": true,
+"error": "KeyError: 'y'"
+},
+{
+"kind": "brace",
+"fmt": "{y}",
+"x": "inf",
+"pos": 13,
+"unicode_minus": true,
+"error": "KeyError: 'y'"
+},
+{
+"kind": "brace",
+"fmt": "{y}",
+"x": "0x0.0p+0",
+"pos": 0,
+"unicode_minus": false,
+"error": "KeyError: 'y'"
+},
+{
+"kind": "brace",
+"fmt": "{y}",
+"x": "0x1.0000000000000p+0",
+"pos": 1,
+"unicode_minus": false,
+"error": "KeyError: 'y'"
+},
+{
+"kind": "brace",
+"fmt": "{y}",
+"x": "-0x1.0000000000000p+0",
+"pos": 2,
+"unicode_minus": false,
+"error": "KeyError: 'y'"
+},
+{
+"kind": "brace",
+"fmt": "{y}",
+"x": "0x1.4000000000000p+1",
+"pos": 3,
+"unicode_minus": false,
+"error": "KeyError: 'y'"
+},
+{
+"kind": "brace",
+"fmt": "{y}",
+"x": "-0x1.4000000000000p+1",
+"pos": 4,
+"unicode_minus": false,
+"error": "KeyError: 'y'"
+},
+{
+"kind": "brace",
+"fmt": "{y}",
+"x": "0x1.f9add3739635fp-4",
+"pos": 5,
+"unicode_minus": false,
+"error": "KeyError: 'y'"
+},
+{
+"kind": "brace",
+"fmt": "{y}",
+"x": "-0x1.34a456d5cfaadp+10",
+"pos": 6,
+"unicode_minus": false,
+"error": "KeyError: 'y'"
+},
+{
+"kind": "brace",
+"fmt": "{y}",
+"x": "0x1.ad7f29abcaf48p-24",
+"pos": 7,
+"unicode_minus": false,
+"error": "KeyError: 'y'"
+},
+{
+"kind": "brace",
+"fmt": "{y}",
+"x": "-0x1.65a0bc0000000p+31",
+"pos": 8,
+"unicode_minus": false,
+"error": "KeyError: 'y'"
+},
+{
+"kind": "brace",
+"fmt": "{y}",
+"x": "0x1.9000000000000p+6",
+"pos": 9,
+"unicode_minus": false,
+"error": "KeyError: 'y'"
+},
+{
+"kind": "brace",
+"fmt": "{y}",
+"x": "-0x0.0p+0",
+"pos": 10,
+"unicode_minus": false,
+"error": "KeyError: 'y'"
+},
+{
+"kind": "brace",
+"fmt": "{y}",
+"x": "0x1.c000000000000p+2",
+"pos": 11,
+"unicode_minus": false,
+"error": "KeyError: 'y'"
+},
+{
+"kind": "brace",
+"fmt": "{y}",
+"x": "nan",
+"pos": 12,
+"unicode_minus": false,
+"error": "KeyError: 'y'"
+},
+{
+"kind": "brace",
+"fmt": "{y}",
+"x": "inf",
+"pos": 13,
+"unicode_minus": false,
+"error": "KeyError: 'y'"
+},
+{
+"kind": "brace",
+"fmt": "{x:+08.2f}",
+"x": "0x0.0p+0",
+"pos": 0,
+"unicode_minus": true,
+"text": "+0000.00"
+},
+{
+"kind": "brace",
+"fmt": "{x:+08.2f}",
+"x": "0x1.0000000000000p+0",
+"pos": 1,
+"unicode_minus": true,
+"text": "+0001.00"
+},
+{
+"kind": "brace",
+"fmt": "{x:+08.2f}",
+"x": "-0x1.0000000000000p+0",
+"pos": 2,
+"unicode_minus": true,
+"text": "−0001.00"
+},
+{
+"kind": "brace",
+"fmt": "{x:+08.2f}",
+"x": "0x1.4000000000000p+1",
+"pos": 3,
+"unicode_minus": true,
+"text": "+0002.50"
+},
+{
+"kind": "brace",
+"fmt": "{x:+08.2f}",
+"x": "-0x1.4000000000000p+1",
+"pos": 4,
+"unicode_minus": true,
+"text": "−0002.50"
+},
+{
+"kind": "brace",
+"fmt": "{x:+08.2f}",
+"x": "0x1.f9add3739635fp-4",
+"pos": 5,
+"unicode_minus": true,
+"text": "+0000.12"
+},
+{
+"kind": "brace",
+"fmt": "{x:+08.2f}",
+"x": "-0x1.34a456d5cfaadp+10",
+"pos": 6,
+"unicode_minus": true,
+"text": "−1234.57"
+},
+{
+"kind": "brace",
+"fmt": "{x:+08.2f}",
+"x": "0x1.ad7f29abcaf48p-24",
+"pos": 7,
+"unicode_minus": true,
+"text": "+0000.00"
+},
+{
+"kind": "brace",
+"fmt": "{x:+08.2f}",
+"x": "-0x1.65a0bc0000000p+31",
+"pos": 8,
+"unicode_minus": true,
+"text": "−3000000000.00"
+},
+{
+"kind": "brace",
+"fmt": "{x:+08.2f}",
+"x": "0x1.9000000000000p+6",
+"pos": 9,
+"unicode_minus": true,
+"text": "+0100.00"
+},
+{
+"kind": "brace",
+"fmt": "{x:+08.2f}",
+"x": "-0x0.0p+0",
+"pos": 10,
+"unicode_minus": true,
+"text": "−0000.00"
+},
+{
+"kind": "brace",
+"fmt": "{x:+08.2f}",
+"x": "0x1.c000000000000p+2",
+"pos": 11,
+"unicode_minus": true,
+"text": "+0007.00"
+},
+{
+"kind": "brace",
+"fmt": "{x:+08.2f}",
+"x": "nan",
+"pos": 12,
+"unicode_minus": true,
+"text": "+0000nan"
+},
+{
+"kind": "brace",
+"fmt": "{x:+08.2f}",
+"x": "inf",
+"pos": 13,
+"unicode_minus": true,
+"text": "+0000inf"
+},
+{
+"kind": "brace",
+"fmt": "{x:+08.2f}",
+"x": "0x0.0p+0",
+"pos": 0,
+"unicode_minus": false,
+"text": "+0000.00"
+},
+{
+"kind": "brace",
+"fmt": "{x:+08.2f}",
+"x": "0x1.0000000000000p+0",
+"pos": 1,
+"unicode_minus": false,
+"text": "+0001.00"
+},
+{
+"kind": "brace",
+"fmt": "{x:+08.2f}",
+"x": "-0x1.0000000000000p+0",
+"pos": 2,
+"unicode_minus": false,
+"text": "-0001.00"
+},
+{
+"kind": "brace",
+"fmt": "{x:+08.2f}",
+"x": "0x1.4000000000000p+1",
+"pos": 3,
+"unicode_minus": false,
+"text": "+0002.50"
+},
+{
+"kind": "brace",
+"fmt": "{x:+08.2f}",
+"x": "-0x1.4000000000000p+1",
+"pos": 4,
+"unicode_minus": false,
+"text": "-0002.50"
+},
+{
+"kind": "brace",
+"fmt": "{x:+08.2f}",
+"x": "0x1.f9add3739635fp-4",
+"pos": 5,
+"unicode_minus": false,
+"text": "+0000.12"
+},
+{
+"kind": "brace",
+"fmt": "{x:+08.2f}",
+"x": "-0x1.34a456d5cfaadp+10",
+"pos": 6,
+"unicode_minus": false,
+"text": "-1234.57"
+},
+{
+"kind": "brace",
+"fmt": "{x:+08.2f}",
+"x": "0x1.ad7f29abcaf48p-24",
+"pos": 7,
+"unicode_minus": false,
+"text": "+0000.00"
+},
+{
+"kind": "brace",
+"fmt": "{x:+08.2f}",
+"x": "-0x1.65a0bc0000000p+31",
+"pos": 8,
+"unicode_minus": false,
+"text": "-3000000000.00"
+},
+{
+"kind": "brace",
+"fmt": "{x:+08.2f}",
+"x": "0x1.9000000000000p+6",
+"pos": 9,
+"unicode_minus": false,
+"text": "+0100.00"
+},
+{
+"kind": "brace",
+"fmt": "{x:+08.2f}",
+"x": "-0x0.0p+0",
+"pos": 10,
+"unicode_minus": false,
+"text": "-0000.00"
+},
+{
+"kind": "brace",
+"fmt": "{x:+08.2f}",
+"x": "0x1.c000000000000p+2",
+"pos": 11,
+"unicode_minus": false,
+"text": "+0007.00"
+},
+{
+"kind": "brace",
+"fmt": "{x:+08.2f}",
+"x": "nan",
+"pos": 12,
+"unicode_minus": false,
+"text": "+0000nan"
+},
+{
+"kind": "brace",
+"fmt": "{x:+08.2f}",
+"x": "inf",
+"pos": 13,
+"unicode_minus": false,
+"text": "+0000inf"
+},
+{
+"kind": "brace",
+"fmt": "{{x}}",
+"x": "0x0.0p+0",
+"pos": 0,
+"unicode_minus": true,
+"text": "{x}"
+},
+{
+"kind": "brace",
+"fmt": "{{x}}",
+"x": "0x1.0000000000000p+0",
+"pos": 1,
+"unicode_minus": true,
+"text": "{x}"
+},
+{
+"kind": "brace",
+"fmt": "{{x}}",
+"x": "-0x1.0000000000000p+0",
+"pos": 2,
+"unicode_minus": true,
+"text": "{x}"
+},
+{
+"kind": "brace",
+"fmt": "{{x}}",
+"x": "0x1.4000000000000p+1",
+"pos": 3,
+"unicode_minus": true,
+"text": "{x}"
+},
+{
+"kind": "brace",
+"fmt": "{{x}}",
+"x": "-0x1.4000000000000p+1",
+"pos": 4,
+"unicode_minus": true,
+"text": "{x}"
+},
+{
+"kind": "brace",
+"fmt": "{{x}}",
+"x": "0x1.f9add3739635fp-4",
+"pos": 5,
+"unicode_minus": true,
+"text": "{x}"
+},
+{
+"kind": "brace",
+"fmt": "{{x}}",
+"x": "-0x1.34a456d5cfaadp+10",
+"pos": 6,
+"unicode_minus": true,
+"text": "{x}"
+},
+{
+"kind": "brace",
+"fmt": "{{x}}",
+"x": "0x1.ad7f29abcaf48p-24",
+"pos": 7,
+"unicode_minus": true,
+"text": "{x}"
+},
+{
+"kind": "brace",
+"fmt": "{{x}}",
+"x": "-0x1.65a0bc0000000p+31",
+"pos": 8,
+"unicode_minus": true,
+"text": "{x}"
+},
+{
+"kind": "brace",
+"fmt": "{{x}}",
+"x": "0x1.9000000000000p+6",
+"pos": 9,
+"unicode_minus": true,
+"text": "{x}"
+},
+{
+"kind": "brace",
+"fmt": "{{x}}",
+"x": "-0x0.0p+0",
+"pos": 10,
+"unicode_minus": true,
+"text": "{x}"
+},
+{
+"kind": "brace",
+"fmt": "{{x}}",
+"x": "0x1.c000000000000p+2",
+"pos": 11,
+"unicode_minus": true,
+"text": "{x}"
+},
+{
+"kind": "brace",
+"fmt": "{{x}}",
+"x": "nan",
+"pos": 12,
+"unicode_minus": true,
+"text": "{x}"
+},
+{
+"kind": "brace",
+"fmt": "{{x}}",
+"x": "inf",
+"pos": 13,
+"unicode_minus": true,
+"text": "{x}"
+},
+{
+"kind": "brace",
+"fmt": "{{x}}",
+"x": "0x0.0p+0",
+"pos": 0,
+"unicode_minus": false,
+"text": "{x}"
+},
+{
+"kind": "brace",
+"fmt": "{{x}}",
+"x": "0x1.0000000000000p+0",
+"pos": 1,
+"unicode_minus": false,
+"text": "{x}"
+},
+{
+"kind": "brace",
+"fmt": "{{x}}",
+"x": "-0x1.0000000000000p+0",
+"pos": 2,
+"unicode_minus": false,
+"text": "{x}"
+},
+{
+"kind": "brace",
+"fmt": "{{x}}",
+"x": "0x1.4000000000000p+1",
+"pos": 3,
+"unicode_minus": false,
+"text": "{x}"
+},
+{
+"kind": "brace",
+"fmt": "{{x}}",
+"x": "-0x1.4000000000000p+1",
+"pos": 4,
+"unicode_minus": false,
+"text": "{x}"
+},
+{
+"kind": "brace",
+"fmt": "{{x}}",
+"x": "0x1.f9add3739635fp-4",
+"pos": 5,
+"unicode_minus": false,
+"text": "{x}"
+},
+{
+"kind": "brace",
+"fmt": "{{x}}",
+"x": "-0x1.34a456d5cfaadp+10",
+"pos": 6,
+"unicode_minus": false,
+"text": "{x}"
+},
+{
+"kind": "brace",
+"fmt": "{{x}}",
+"x": "0x1.ad7f29abcaf48p-24",
+"pos": 7,
+"unicode_minus": false,
+"text": "{x}"
+},
+{
+"kind": "brace",
+"fmt": "{{x}}",
+"x": "-0x1.65a0bc0000000p+31",
+"pos": 8,
+"unicode_minus": false,
+"text": "{x}"
+},
+{
+"kind": "brace",
+"fmt": "{{x}}",
+"x": "0x1.9000000000000p+6",
+"pos": 9,
+"unicode_minus": false,
+"text": "{x}"
+},
+{
+"kind": "brace",
+"fmt": "{{x}}",
+"x": "-0x0.0p+0",
+"pos": 10,
+"unicode_minus": false,
+"text": "{x}"
+},
+{
+"kind": "brace",
+"fmt": "{{x}}",
+"x": "0x1.c000000000000p+2",
+"pos": 11,
+"unicode_minus": false,
+"text": "{x}"
+},
+{
+"kind": "brace",
+"fmt": "{{x}}",
+"x": "nan",
+"pos": 12,
+"unicode_minus": false,
+"text": "{x}"
+},
+{
+"kind": "brace",
+"fmt": "{{x}}",
+"x": "inf",
+"pos": 13,
+"unicode_minus": false,
+"text": "{x}"
+},
+{
+"kind": "brace",
+"fmt": "{x:n}",
+"x": "0x0.0p+0",
+"pos": 0,
+"unicode_minus": true,
+"text": "0"
+},
+{
+"kind": "brace",
+"fmt": "{x:n}",
+"x": "0x1.0000000000000p+0",
+"pos": 1,
+"unicode_minus": true,
+"text": "1"
+},
+{
+"kind": "brace",
+"fmt": "{x:n}",
+"x": "-0x1.0000000000000p+0",
+"pos": 2,
+"unicode_minus": true,
+"text": "−1"
+},
+{
+"kind": "brace",
+"fmt": "{x:n}",
+"x": "0x1.4000000000000p+1",
+"pos": 3,
+"unicode_minus": true,
+"text": "2.5"
+},
+{
+"kind": "brace",
+"fmt": "{x:n}",
+"x": "-0x1.4000000000000p+1",
+"pos": 4,
+"unicode_minus": true,
+"text": "−2.5"
+},
+{
+"kind": "brace",
+"fmt": "{x:n}",
+"x": "0x1.f9add3739635fp-4",
+"pos": 5,
+"unicode_minus": true,
+"text": "0.123457"
+},
+{
+"kind": "brace",
+"fmt": "{x:n}",
+"x": "-0x1.34a456d5cfaadp+10",
+"pos": 6,
+"unicode_minus": true,
+"text": "−1234.57"
+},
+{
+"kind": "brace",
+"fmt": "{x:n}",
+"x": "0x1.ad7f29abcaf48p-24",
+"pos": 7,
+"unicode_minus": true,
+"text": "1e−07"
+},
+{
+"kind": "brace",
+"fmt": "{x:n}",
+"x": "-0x1.65a0bc0000000p+31",
+"pos": 8,
+"unicode_minus": true,
+"text": "−3e+09"
+},
+{
+"kind": "brace",
+"fmt": "{x:n}",
+"x": "0x1.9000000000000p+6",
+"pos": 9,
+"unicode_minus": true,
+"text": "100"
+},
+{
+"kind": "brace",
+"fmt": "{x:n}",
+"x": "-0x0.0p+0",
+"pos": 10,
+"unicode_minus": true,
+"text": "−0"
+},
+{
+"kind": "brace",
+"fmt": "{x:n}",
+"x": "0x1.c000000000000p+2",
+"pos": 11,
+"unicode_minus": true,
+"text": "7"
+},
+{
+"kind": "brace",
+"fmt": "{x:n}",
+"x": "nan",
+"pos": 12,
+"unicode_minus": true,
+"text": "nan"
+},
+{
+"kind": "brace",
+"fmt": "{x:n}",
+"x": "inf",
+"pos": 13,
+"unicode_minus": true,
+"text": "inf"
+},
+{
+"kind": "brace",
+"fmt": "{x:n}",
+"x": "0x0.0p+0",
+"pos": 0,
+"unicode_minus": false,
+"text": "0"
+},
+{
+"kind": "brace",
+"fmt": "{x:n}",
+"x": "0x1.0000000000000p+0",
+"pos": 1,
+"unicode_minus": false,
+"text": "1"
+},
+{
+"kind": "brace",
+"fmt": "{x:n}",
+"x": "-0x1.0000000000000p+0",
+"pos": 2,
+"unicode_minus": false,
+"text": "-1"
+},
+{
+"kind": "brace",
+"fmt": "{x:n}",
+"x": "0x1.4000000000000p+1",
+"pos": 3,
+"unicode_minus": false,
+"text": "2.5"
+},
+{
+"kind": "brace",
+"fmt": "{x:n}",
+"x": "-0x1.4000000000000p+1",
+"pos": 4,
+"unicode_minus": false,
+"text": "-2.5"
+},
+{
+"kind": "brace",
+"fmt": "{x:n}",
+"x": "0x1.f9add3739635fp-4",
+"pos": 5,
+"unicode_minus": false,
+"text": "0.123457"
+},
+{
+"kind": "brace",
+"fmt": "{x:n}",
+"x": "-0x1.34a456d5cfaadp+10",
+"pos": 6,
+"unicode_minus": false,
+"text": "-1234.57"
+},
+{
+"kind": "brace",
+"fmt": "{x:n}",
+"x": "0x1.ad7f29abcaf48p-24",
+"pos": 7,
+"unicode_minus": false,
+"text": "1e-07"
+},
+{
+"kind": "brace",
+"fmt": "{x:n}",
+"x": "-0x1.65a0bc0000000p+31",
+"pos": 8,
+"unicode_minus": false,
+"text": "-3e+09"
+},
+{
+"kind": "brace",
+"fmt": "{x:n}",
+"x": "0x1.9000000000000p+6",
+"pos": 9,
+"unicode_minus": false,
+"text": "100"
+},
+{
+"kind": "brace",
+"fmt": "{x:n}",
+"x": "-0x0.0p+0",
+"pos": 10,
+"unicode_minus": false,
+"text": "-0"
+},
+{
+"kind": "brace",
+"fmt": "{x:n}",
+"x": "0x1.c000000000000p+2",
+"pos": 11,
+"unicode_minus": false,
+"text": "7"
+},
+{
+"kind": "brace",
+"fmt": "{x:n}",
+"x": "nan",
+"pos": 12,
+"unicode_minus": false,
+"text": "nan"
+},
+{
+"kind": "brace",
+"fmt": "{x:n}",
+"x": "inf",
+"pos": 13,
+"unicode_minus": false,
+"text": "inf"
+}
+]
+}

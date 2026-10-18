@@ -401,4 +401,10 @@ std::string ScalarFormatter::offsetText() const {
     return fixMinus("$" + sciNotStr + "\\mathdefault{" + offsetStr + "}$");
 }
 
+support::Formatted formatStrFormatter(const std::string& fmt, double x) { return support::percentFormat(fmt, x, false, true); }
+
+support::Formatted strMethodFormatter(const std::string& fmt, double x, int pos, bool unicodeMinus) {
+    return support::keywordFormat(fmt, {{"x", x, false}, {"pos", double(pos), true}}, unicodeMinus);
+}
+
 }  // namespace calculate_plot::axes

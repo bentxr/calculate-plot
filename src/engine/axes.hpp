@@ -197,6 +197,10 @@ public:
     // NullFormatter() set as the major or the minor formatter: no labels, no offset text. The scale's
     // defaults replace it when the scale is set.
     bool nullMajorFormatter = false, nullMinorFormatter = false;
+    // FormatStrFormatter(fmt) (fmt % x) or, with strFormatMethod, StrMethodFormatter(fmt) (fmt.format(x=, pos=)) as
+    // the major formatter; no offset text
+    std::optional<std::string> strFormat;
+    bool strFormatMethod = false;
     // FixedLocator(locs) and FixedFormatter(seq) as the major locator and formatter (boxplot's
     // manage_ticks): every location, the i-th labelled seq[i] ('' past its end). The scale's defaults
     // replace them when the scale is set.

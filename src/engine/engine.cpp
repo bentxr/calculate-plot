@@ -4483,7 +4483,16 @@ private:
                 } else if (!pair(name == "anchor" ? &o.anchor : &o.panchor)) {
                     return *error = where + ": " + name + " must be a pair of numbers", false;
                 }
-            } else if (name == "format" || name == "values" || name == "boundaries" || name == "cmap" || name == "norm") {
+            } else if (name == "format") {
+                if (value.isNull()) continue;
+                if (!value.isString()) return *error = where + ": format must be a format string (formatters are not supported yet)", false;
+                o.format = value.asString();
+            } else if (name == "values" || name == "boundaries") {
+                if (value.isNull()) continue;
+                std::vector<double> list;
+                if (!numbers(value, &list)) return *error = where + ": " + name + " must be a list of numbers", false;
+                (name == "values" ? o.values : o.boundaries) = list;
+            } else if (name == "cmap" || name == "norm") {
                 if (!value.isNull()) return *error = where + ": " + name + " is not supported yet", false;
             } else if (name == "alpha") {
                 continue;  // (the mappable's alpha replaces it)

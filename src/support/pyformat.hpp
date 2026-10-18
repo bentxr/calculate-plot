@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 namespace calculate_plot::support {
 
@@ -32,9 +33,19 @@ struct Formatted {
     enum Kind { Text, Raised, Unsupported } kind = Text;
     std::string text;
 };
-// fmt % (value,)
-Formatted percentFormat(const std::string& fmt, double value, bool isInt);
+// fmt % (value,); `numpyScalar`: fmt % value of a NumPy scalar, which % takes as a mapping (a format without any
+// conversion gives itself back)
+Formatted percentFormat(const std::string& fmt, double value, bool isInt, bool numpyScalar = false);
 // fmt.format(value)
 Formatted braceFormat(const std::string& fmt, double value, bool isInt);
+// A number given by name to a format: its value, and whether it is an int.
+struct FormatArgument {
+    std::string name;
+    double value = 0;
+    bool isInt = false;
+};
+// string.Formatter().format(fmt, **kwargs) (no positional arguments); `fixMinus`: each formatted field's '-' made a
+// U+2212 minus (matplotlib's _UnicodeMinusFormat)
+Formatted keywordFormat(const std::string& fmt, const std::vector<FormatArgument>& kwargs, bool fixMinus);
 
 }  // namespace calculate_plot::support

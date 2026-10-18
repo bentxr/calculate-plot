@@ -791,7 +791,7 @@ std::string Axis::offsetString() const {
     // NullFormatter.get_offset() is '' (a log scale's formatters have none either)
     const Axis& owner = tickerAxis();
     if (logScale() || scale_ == "symlog" || scale_ == "logit" || owner.nullMajorFormatter || owner.fixedLabels || owner.dictLabels ||
-        owner.dateTickers)
+        owner.dateTickers || owner.strFormat)
         return std::string();
     return formatter.offsetText();
 }
@@ -1064,6 +1064,14 @@ std::vector<Tick*> Axis::updateTicks() {
         std::vector<std::string> labels;
         if (owner.nullMajorFormatter) {
             labels.assign(locs.size(), "");
+        } else if (owner.strFormat) {
+            for (std::size_t i = 0; i < locs.size(); ++i) {
+                const auto f = owner.strFormatMethod ? axes::strMethodFormatter(*owner.strFormat, locs[i], int(i), rc_.boolean("axes.unicode_minus"))
+                                                     : axes::formatStrFormatter(*owner.strFormat, locs[i]);
+                if (f.kind != support::Formatted::Text)
+                    support::noteRaised(f.kind == support::Formatted::Raised ? f.text : "this tick format is not supported yet");
+                labels.push_back(f.kind == support::Formatted::Text ? f.text : "");
+            }
         } else if (owner.fixedLabels) {  // FixedFormatter: the i-th label, '' past its end
             for (std::size_t i = 0; i < locs.size(); ++i) labels.push_back(i < owner.fixedLabels->size() ? (*owner.fixedLabels)[i] : "");
         } else if (owner.dictLabels) {  // tickd.get(x, ''): the last label given for an equal location

@@ -1,4 +1,5 @@
 // Doubles spelled exactly as Python and NumPy spell them (the oracle was written by Python).
+#include "axes/ticker.hpp"
 #include "engine/text.hpp"
 #include "support/json.hpp"
 #include "support/pyformat.hpp"
@@ -118,4 +119,38 @@ TEST(PythonFormat, AutoFormatIsMatplotlibs) {
         EXPECT_EQ(same, before);
     }
     std::setlocale(LC_NUMERIC, saved.c_str());
+}
+
+// ticker.FormatStrFormatter(fmt)(x) and StrMethodFormatter(fmt)(x, pos) (fields x and pos, the unicode minus of
+// axes.unicode_minus in each field) against matplotlib 3.11.2 (tests/oracle/str_formatters.json).
+TEST(PythonFormat, StrFormattersAreMatplotlibs) {
+    std::ifstream in(std::string(CALCULATE_PLOT_SOURCE_DIR) + "/tests/oracle/str_formatters.json", std::ios::binary);
+    std::ostringstream text;
+    text << in.rdbuf();
+    const auto doc = calculate_plot::support::parseJson(text.str(), nullptr);
+    ASSERT_TRUE(doc.has_value());
+    int same = 0, unsupported = 0;
+    for (const auto& c : doc->find("cases")->items()) {
+        const std::string fmt = c.find("fmt")->asString(), xs = c.find("x")->asString();
+        const double x = xs == "nan" ? std::nan("") : xs == "inf" ? HUGE_VAL : std::strtod(xs.c_str(), nullptr);
+        const bool percent = c.find("kind")->asString() == "percent";
+        const auto got = percent ? calculate_plot::axes::formatStrFormatter(fmt, x)
+                                 : calculate_plot::axes::strMethodFormatter(fmt, x, int(c.find("pos")->asNumber()),
+                                                                            c.find("unicode_minus")->asBool());
+        const std::string where = fmt + " of " + xs;
+        if (got.kind == calculate_plot::support::Formatted::Unsupported) {
+            ++unsupported;
+            continue;
+        }
+        if (const auto* e = c.find("error")) {
+            EXPECT_EQ(got.kind, calculate_plot::support::Formatted::Raised) << where << ": " << got.text;
+            EXPECT_EQ(got.text, e->asString()) << where;
+        } else {
+            EXPECT_EQ(got.kind, calculate_plot::support::Formatted::Text) << where << ": " << got.text;
+            EXPECT_EQ(got.text, c.find("text")->asString()) << where;
+        }
+        ++same;
+    }
+    EXPECT_EQ(same + unsupported, 728);
+    EXPECT_LE(unsupported, 40) << "forms not ported";
 }

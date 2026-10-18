@@ -37,7 +37,8 @@ struct ColorbarOptions {
     bool extendrect = false, drawedges = false;
     bool extendfracAuto = false;                       // extendfrac='auto'
     std::optional<std::array<double, 2>> extendfrac;  // a number (twice) or a pair
-    std::optional<std::vector<double>> ticks;
+    std::optional<std::vector<double>> ticks, boundaries, values;
+    std::optional<std::string> format;  // a FormatStrFormatter or StrMethodFormatter string
     double fraction = 0.15, shrink = 1.0, aspect = 20;
     std::optional<double> pad;
     std::optional<std::array<double, 2>> anchor, panchor;

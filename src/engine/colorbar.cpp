@@ -112,6 +112,7 @@ public:
         vertical_ = orientation_ == "vertical";
         const std::string kind = m_.norm->spec().kind;
         boundaryNorm_ = kind == "BoundaryNorm";
+        boundariesGiven_ = o_.boundaries.has_value();
         noNorm_ = kind == "NoNorm";
         extend_ = o_.extend ? *o_.extend : boundaryNorm_ ? m_.norm->spec().extend : "neither";  // (norm.extend)
         if (extend_ != "neither" && extend_ != "both" && extend_ != "min" && extend_ != "max")
@@ -138,7 +139,7 @@ public:
         ticklocation_ = o_.ticklocation != "auto" ? o_.ticklocation : o_.location ? *o_.location : vertical_ ? "right" : "bottom";
         longAxis().setLabelText(o_.label, ax_.rc().text(vertical_ ? "yaxis.labellocation" : "xaxis.labellocation"));
         if (!processValues(error)) return false;
-        if (boundaryNorm_) {
+        if (boundaryNorm_ || boundariesGiven_) {
             // uniform spacing: the boundaries spread evenly along the axis (a function scale of them)
             if (o_.spacing == "uniform") {
                 AxisScaleOptions f;
@@ -213,8 +214,21 @@ public:
             owner.fixedNbins = 10;
         } else if (noNorm_) {
             owner.indexLocator = std::array<double, 2>{double(1 + int(double(values_.size()) / 10)), 0.5};
+        } else if (boundariesGiven_) {
+            owner.fixedLocs = std::vector<double>(boundaries_.begin() + long(inside.first), boundaries_.begin() + long(inside.second));
+            owner.fixedNbins = 10;
         }
         if (boundaryNorm_) owner.fixedMinorLocs = m_.norm->spec().boundaries;
+        if (o_.format) {
+            // FormatStrFormatter unless it cannot format 0, then StrMethodFormatter
+            const auto probe = support::percentFormat(*o_.format, 0, true);
+            if (probe.kind == support::Formatted::Unsupported) return *error = "this colorbar format is not supported yet", false;
+            const bool method = probe.kind == support::Formatted::Raised &&
+                                (probe.text.rfind("TypeError", 0) == 0 || probe.text.rfind("ValueError", 0) == 0);
+            if (probe.kind == support::Formatted::Raised && !method) return *error = probe.text, false;
+            owner.strFormat = *o_.format;
+            owner.strFormatMethod = method;
+        }
         // the solids: pcolormesh of the values between the extensions
         std::size_t first = 0, last = values_.size();
         if (extendLower()) ++first;
@@ -276,9 +290,26 @@ private:
 
     // _process_values: the boundaries of the colours (uniform in the norm's space) and their values
     bool processValues(std::string* error) {
+        if (o_.values) {
+            // values given: the boundaries halfway between them (and extrapolated at the ends), or as given
+            values_ = *o_.values;
+            if (o_.boundaries) {
+                boundaries_ = *o_.boundaries;
+            } else {
+                const std::size_t n = values_.size();
+                boundaries_.assign(n + 1, 0.0);
+                for (std::size_t i = 1; i < n; ++i) boundaries_[i] = 0.5 * (values_[i - 1] + values_[i]);
+                boundaries_[0] = 2.0 * boundaries_[1] - boundaries_[2];
+                boundaries_[n] = 2.0 * boundaries_[n - 1] - boundaries_[n - 2];
+            }
+            *boundariesShared_ = boundaries_;
+            return true;
+        }
         const long long N = (long long)m_.cmap->size() + 1;
         std::vector<double> b;
-        if (boundaryNorm_) {
+        if (boundariesGiven_ && !boundaryNorm_ && !noNorm_) {
+            b = *o_.boundaries;
+        } else if (boundaryNorm_) {
             b = m_.norm->spec().boundaries;
         } else if (noNorm_) {
             for (long long i = 0; i < N; ++i) b.push_back(double(i) - .5);  // N blocks centred on integers
@@ -293,7 +324,7 @@ private:
         const auto ns = axes::nonsingular(*norm.vmin(), *norm.vmax(), 0.1);
         norm.setVmin(ns.first);
         norm.setVmax(ns.second);
-        boundaries_ = boundaryNorm_ ? b : inverseOf(norm, b, error);
+        boundaries_ = boundaryNorm_ || boundariesGiven_ ? b : inverseOf(norm, b, error);
         if (boundaries_.empty()) return false;
         *boundariesShared_ = boundaries_;
         values_.clear();
@@ -307,7 +338,7 @@ private:
     bool proportionalY(std::vector<double>* y, std::array<double, 2>* extendlen, std::string* error) {
         const auto inside = insideRange();
         std::vector<double> all, scaled;
-        if (boundaryNorm_) {
+        if (boundaryNorm_ || boundariesGiven_) {
             const double b0 = boundaries_[inside.first], b1 = boundaries_[inside.second - 1];
             for (double b : boundaries_) all.push_back((b - b0) / (b1 - b0));
             if (o_.spacing == "uniform")
@@ -343,7 +374,7 @@ private:
         std::vector<double> y;
         std::array<double, 2> extendlen;
         if (!proportionalY(&y, &extendlen, error)) return false;
-        if (boundaryNorm_ || noNorm_) {  // (not using a norm)
+        if (boundaryNorm_ || noNorm_ || boundariesGiven_) {  // (not using a norm)
             y_.clear();
             for (double v : y) y_.push_back(v * (vmax_ - vmin_) + vmin_);
             return true;
@@ -465,7 +496,7 @@ private:
     bool vertical_ = true;
     std::vector<double> boundaries_, values_, y_;
     std::shared_ptr<std::vector<double>> boundariesShared_ = std::make_shared<std::vector<double>>();  // (for the scale)
-    bool boundaryNorm_ = false, noNorm_ = false;
+    bool boundaryNorm_ = false, noNorm_ = false, boundariesGiven_ = false;
     double vmin_ = 0, vmax_ = 1;
     std::optional<double> infoAspect_;
     Polygon* outline_ = nullptr;

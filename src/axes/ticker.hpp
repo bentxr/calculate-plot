@@ -3,12 +3,20 @@
 // Licence: LICENSES/Matplotlib.txt. Changes: licensing/changes/matplotlib.md
 #pragma once
 
+#include "support/pyformat.hpp"
+
 #include <optional>
 #include <string>
 #include <utility>
 #include <vector>
 
 namespace calculate_plot::axes {
+
+// ticker.FormatStrFormatter(fmt)(x): fmt % x of a NumPy float
+support::Formatted formatStrFormatter(const std::string& fmt, double x);
+// ticker.StrMethodFormatter(fmt)(x, pos): fmt.format(x=x, pos=pos), each field's '-' a unicode minus when
+// rcParams["axes.unicode_minus"]
+support::Formatted strMethodFormatter(const std::string& fmt, double x, int pos, bool unicodeMinus);
 
 // transforms._nonsingular: widens a range too small to divide, orders it.
 std::pair<double, double> nonsingular(double vmin, double vmax, double expander = 0.001, double tiny = 1e-15,
