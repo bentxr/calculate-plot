@@ -84,6 +84,15 @@ std::vector<double> inverseOf(const colors::Norm& norm, const std::vector<double
     return out.data;
 }
 
+// _forward_boundaries: the boundaries spread evenly over [0, 1]; values well outside them far out (-1 and 2)
+double forwardBoundaries(const std::vector<double>& b, double x) {
+    double y = support::npInterp({x}, b, support::npLinspace(0, 1, (long long)b.size()))[0];
+    const double eps = (b.back() - b.front()) * 1e-6;
+    if (x < b.front() - eps) y = -1;
+    if (x > b.back() + eps) y = 2;
+    return y;
+}
+
 class Colorbar {
 public:
     Colorbar(Axes& cax, const Mappable& m, const ColorbarOptions& o, std::optional<double> infoAspect)
@@ -101,14 +110,13 @@ public:
             return *error = "location and orientation are mutually exclusive", false;
         orientation_ = o_.orientation ? *o_.orientation : locOrientation ? *locOrientation : "vertical";
         vertical_ = orientation_ == "vertical";
-        extend_ = o_.extend ? *o_.extend : "neither";  // (no colormap or norm here asks for another)
+        const std::string kind = m_.norm->spec().kind;
+        boundaryNorm_ = kind == "BoundaryNorm";
+        noNorm_ = kind == "NoNorm";
+        extend_ = o_.extend ? *o_.extend : boundaryNorm_ ? m_.norm->spec().extend : "neither";  // (norm.extend)
         if (extend_ != "neither" && extend_ != "both" && extend_ != "min" && extend_ != "max")
             return *error = "'" + extend_ + "' is not a valid value for extend; supported values are 'neither', 'both', 'min', 'max'", false;
-        const std::string kind = m_.norm->spec().kind;
-        if (kind != "Normalize" && kind != "LogNorm" && kind != "scale:linear" && kind != "scale:log" && kind != "scale:symlog" &&
-            kind != "SymLogNorm" && kind != "scale:logit")
-            return *error = "colorbars of a " + kind + " are not supported yet", false;
-        if (o_.spacing == "proportional") return *error = "spacing='proportional' is not supported yet", false;
+        if (kind == "AsinhNorm" || kind == "scale:asinh") return *error = "colorbars of an asinh norm (the asinh scale) are not supported yet", false;
         // the four spines hidden; the outline spine; the dividers (no segments yet)
         for (auto& s : ax_.spines) s->visible = false;
         auto outline = std::make_unique<Polygon>(ax_.rc(), std::vector<double>{0, 0, 0, 0}, true);
@@ -130,7 +138,20 @@ public:
         ticklocation_ = o_.ticklocation != "auto" ? o_.ticklocation : o_.location ? *o_.location : vertical_ ? "right" : "bottom";
         longAxis().setLabelText(o_.label, ax_.rc().text(vertical_ ? "yaxis.labellocation" : "xaxis.labellocation"));
         if (!processValues(error)) return false;
-        if (kind == "LogNorm" || kind == "scale:log") {
+        if (boundaryNorm_) {
+            // uniform spacing: the boundaries spread evenly along the axis (a function scale of them)
+            if (o_.spacing == "uniform") {
+                AxisScaleOptions f;
+                const std::shared_ptr<std::vector<double>> b = boundariesShared_;
+                f.forwardFn = [b](double x) { return forwardBoundaries(*b, x); };
+                f.inverseFn = [b](double x) {
+                    return support::npInterp({x}, support::npLinspace(0, 1, (long long)b->size()), *b)[0];
+                };
+                ax_.setScale(!vertical_, "function", f);
+            } else {
+                ax_.setScale(!vertical_, "linear");
+            }
+        } else if (kind == "LogNorm" || kind == "scale:log") {
             AxisScaleOptions log;
             log.logClip = false;  // LogScale(nonpositive='mask')
             ax_.setScale(vertical_ ? false : true, "log", log);
@@ -144,8 +165,23 @@ public:
             AxisScaleOptions s;
             s.clip = false;
             ax_.setScale(!vertical_, "logit", s);
-        } else {
+        } else if (kind == "Normalize" || kind == "scale:linear") {
             ax_.setScale(!vertical_, "linear");
+        } else {
+            // a norm without a scale of its own: the norm and its inverse as the axis' functions
+            AxisScaleOptions f;
+            const std::shared_ptr<colors::Norm> norm = m_.norm;
+            f.forwardFn = [norm](double x) {
+                std::string ignored;
+                const auto y = normed(*norm, {x}, &ignored);
+                return y.empty() ? std::numeric_limits<double>::quiet_NaN() : y[0];
+            };
+            f.inverseFn = [norm](double x) {
+                std::string ignored;
+                const auto y = inverseOf(*norm, {x}, &ignored);
+                return y.empty() ? std::numeric_limits<double>::quiet_NaN() : y[0];
+            };
+            ax_.setScale(!vertical_, "function", f);
         }
         // _draw_all
         if (ax_.rc().boolean(vertical_ ? "ytick.minor.visible" : "xtick.minor.visible"))
@@ -167,8 +203,18 @@ public:
             ax_.yaxis->setLim(0, 1, false);
             ax_.xaxis->setLim(lower, upper, false);
         }
-        // update_ticks: the scale's locator (or the ticks given) and formatter
-        if (o_.ticks) longAxis().tickerAxis().fixedLocs = *o_.ticks;
+        // update_ticks: the ticks given, the boundaries (BoundaryNorm, minor ticks there too), the integers between
+        // NoNorm's boundaries, or the scale's own locator; the scale's formatter
+        Axis& owner = longAxis().tickerAxis();
+        if (o_.ticks) {
+            owner.fixedLocs = *o_.ticks;
+        } else if (boundaryNorm_) {
+            owner.fixedLocs = m_.norm->spec().boundaries;
+            owner.fixedNbins = 10;
+        } else if (noNorm_) {
+            owner.indexLocator = std::array<double, 2>{double(1 + int(double(values_.size()) / 10)), 0.5};
+        }
+        if (boundaryNorm_) owner.fixedMinorLocs = m_.norm->spec().boundaries;
         // the solids: pcolormesh of the values between the extensions
         std::size_t first = 0, last = values_.size();
         if (extendLower()) ++first;
@@ -231,7 +277,14 @@ private:
     // _process_values: the boundaries of the colours (uniform in the norm's space) and their values
     bool processValues(std::string* error) {
         const long long N = (long long)m_.cmap->size() + 1;
-        std::vector<double> b = support::npLinspace(0, 1, N);  // _uniform_y(N)
+        std::vector<double> b;
+        if (boundaryNorm_) {
+            b = m_.norm->spec().boundaries;
+        } else if (noNorm_) {
+            for (long long i = 0; i < N; ++i) b.push_back(double(i) - .5);  // N blocks centred on integers
+        } else {
+            b = support::npLinspace(0, 1, N);  // _uniform_y(N)
+        }
         if (extendLower()) b.insert(b.begin(), b.front() - 1);
         if (extendUpper()) b.push_back(b.back() + 1);
         colors::Norm& norm = *m_.norm;
@@ -240,26 +293,46 @@ private:
         const auto ns = axes::nonsingular(*norm.vmin(), *norm.vmax(), 0.1);
         norm.setVmin(ns.first);
         norm.setVmax(ns.second);
-        boundaries_ = inverseOf(norm, b, error);
+        boundaries_ = boundaryNorm_ ? b : inverseOf(norm, b, error);
         if (boundaries_.empty()) return false;
+        *boundariesShared_ = boundaries_;
         values_.clear();
         for (std::size_t i = 0; i + 1 < boundaries_.size(); ++i) values_.push_back(0.5 * (boundaries_[i] + boundaries_[i + 1]));
+        if (noNorm_)
+            for (double& v : values_) v = std::trunc(v + 0.00001);  // .astype(np.int16)
         return true;
     }
 
     // _proportional_y: the inner boundaries normalised to [0, 1], and the extensions' lengths
     bool proportionalY(std::vector<double>* y, std::array<double, 2>* extendlen, std::string* error) {
-        std::vector<double> all = normed(*m_.norm, boundaries_, error);
-        if (all.empty() && !boundaries_.empty()) return false;
         const auto inside = insideRange();
-        std::vector<double> in(all.begin() + long(inside.first), all.begin() + long(inside.second));
-        colors::NormSpec s;
-        s.vmin = in.front();
-        s.vmax = in.back();
-        colors::Norm n;
-        if (!colors::Norm::make(s, &n, error)) return false;
-        *y = normed(n, in, error);
-        const double automin = (*y)[1] - (*y)[0], automax = y->back() - (*y)[y->size() - 2];
+        std::vector<double> all, scaled;
+        if (boundaryNorm_) {
+            const double b0 = boundaries_[inside.first], b1 = boundaries_[inside.second - 1];
+            for (double b : boundaries_) all.push_back((b - b0) / (b1 - b0));
+            if (o_.spacing == "uniform")
+                for (double b : boundaries_) scaled.push_back(forwardBoundaries(boundaries_, b));
+            else
+                scaled = all;
+        } else {
+            all = normed(*m_.norm, boundaries_, error);
+            if (all.empty() && !boundaries_.empty()) return false;
+            scaled = all;
+        }
+        // each normalised from 0 to 1 over the inner boundaries
+        const auto unit = [&](const std::vector<double>& v, std::vector<double>* out) {
+            std::vector<double> in(v.begin() + long(inside.first), v.begin() + long(inside.second));
+            colors::NormSpec s;
+            s.vmin = in.front();
+            s.vmax = in.back();
+            colors::Norm n;
+            if (!colors::Norm::make(s, &n, error)) return false;
+            *out = normed(n, in, error);
+            return true;
+        };
+        std::vector<double> yscaled;
+        if (!unit(all, y) || !unit(scaled, &yscaled)) return false;
+        const double automin = yscaled[1] - yscaled[0], automax = yscaled.back() - yscaled[yscaled.size() - 2];
         *extendlen = {0, 0};
         if (extendLower() || extendUpper()) *extendlen = extensionLengths(automin, automax);
         return true;
@@ -270,6 +343,11 @@ private:
         std::vector<double> y;
         std::array<double, 2> extendlen;
         if (!proportionalY(&y, &extendlen, error)) return false;
+        if (boundaryNorm_ || noNorm_) {  // (not using a norm)
+            y_.clear();
+            for (double v : y) y_.push_back(v * (vmax_ - vmin_) + vmin_);
+            return true;
+        }
         colors::Norm n = *m_.norm;  // (vmin and vmax set for a while to the colorbar's)
         n.setVmin(vmin_);
         n.setVmax(vmax_);
@@ -302,6 +380,7 @@ private:
             auto p = std::make_unique<Polygon>(ax_.rc(), flat(std::move(xy)), false);
             colors::MaskedArray v, out;
             v.data = {value};
+            if (noNorm_) v.dtype = colors::DType::Int16;
             if (!(*m_.norm)(v, &out, error)) return false;
             std::vector<colors::Rgba> rgba;
             if (!(*m_.cmap)(out, nullptr, false, &rgba, error)) return false;
@@ -359,6 +438,7 @@ private:
         auto mesh = std::make_unique<QuadMesh>(ax_.rc(), rows, cols, coords, false, false);
         colors::MaskedArray c;
         for (std::size_t i = first; i < last; ++i) c.data.push_back(values_[i]);
+        if (noNorm_) c.dtype = colors::DType::Int16;  // (NoNorm's values are int16: the colormap's indices)
         mesh->array = c;
         mesh->cmap = *m_.cmap;
         mesh->norm = m_.norm;
@@ -384,6 +464,8 @@ private:
     std::string orientation_, extend_, ticklocation_;
     bool vertical_ = true;
     std::vector<double> boundaries_, values_, y_;
+    std::shared_ptr<std::vector<double>> boundariesShared_ = std::make_shared<std::vector<double>>();  // (for the scale)
+    bool boundaryNorm_ = false, noNorm_ = false;
     double vmin_ = 0, vmax_ = 1;
     std::optional<double> infoAspect_;
     Polygon* outline_ = nullptr;

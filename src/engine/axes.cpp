@@ -604,10 +604,9 @@ void Axis::setScale(const std::string& name, const ScaleOptions& options) {
 }
 
 transforms::TransformPtr Axis::scaleTransform() const {
-    if (scale_ == "function") return std::make_shared<transforms::FuncTransform>(scaleOptions_.forward, scaleOptions_.inverse);
+    if (scale_ == "function") return scaleOptions_.funcTransform();
     if (scale_ == "functionlog")  // FuncTransform(forward, inverse) + LogTransform(base)
-        return transforms::compose(std::make_shared<transforms::FuncTransform>(scaleOptions_.forward, scaleOptions_.inverse),
-                                   std::make_shared<transforms::LogTransform>(scaleOptions_.base));
+        return transforms::compose(scaleOptions_.funcTransform(), std::make_shared<transforms::LogTransform>(scaleOptions_.base));
     if (logScale()) return std::make_shared<transforms::LogTransform>(scaleOptions_.base, scaleOptions_.logClip);
     if (scale_ == "symlog")
         return std::make_shared<transforms::SymmetricalLogTransform>(scaleOptions_.base, scaleOptions_.linthresh, scaleOptions_.linscale);
@@ -617,7 +616,7 @@ transforms::TransformPtr Axis::scaleTransform() const {
 
 double Axis::scaleForward(double v) const {
     if (scale_ == "function" || scale_ == "functionlog") {
-        const double f = transforms::FuncTransform(scaleOptions_.forward, scaleOptions_.inverse).transform1d(v);
+        const double f = scaleOptions_.funcTransform()->transform1d(v);
         return scale_ == "function" ? f : transforms::LogTransform(scaleOptions_.base).transform1d(f);
     }
     if (logScale()) return transforms::LogTransform(scaleOptions_.base, scaleOptions_.logClip).transform1d(v);
@@ -628,7 +627,7 @@ double Axis::scaleForward(double v) const {
 double Axis::scaleInverse(double v) const {
     if (scale_ == "function" || scale_ == "functionlog") {
         const double f = scale_ == "function" ? v : transforms::LogTransform(scaleOptions_.base).inverse1d(v);
-        return transforms::FuncTransform(scaleOptions_.inverse, scaleOptions_.forward).transform1d(f);
+        return scaleOptions_.funcTransform(true)->transform1d(f);
     }
     if (logScale()) return transforms::LogTransform(scaleOptions_.base).inverse1d(v);
     if (scale_ == "symlog") return transforms::SymmetricalLogTransform(scaleOptions_.base, scaleOptions_.linthresh, scaleOptions_.linscale).inverse1d(v);
@@ -993,6 +992,41 @@ std::optional<std::string> Axis::formatDataShort(double value) const {
     return s;
 }
 
+std::vector<double> Axis::fixedLocatorValues(const std::vector<double>& locs, std::optional<int> nbins) {
+    // FixedLocator.tick_values: with nbins, every step-th location, from the offset whose smallest magnitude is least
+    if (!nbins || locs.empty()) return locs;
+    const int step = std::max(int(std::ceil(double(locs.size()) / *nbins)), 1);
+    const auto every = [&](int from) {
+        std::vector<double> out;
+        for (std::size_t i = std::size_t(from); i < locs.size(); i += std::size_t(step)) out.push_back(locs[i]);
+        return out;
+    };
+    const auto least = [](const std::vector<double>& v) {
+        double m = std::numeric_limits<double>::infinity();
+        for (double x : v) m = std::min(m, std::fabs(x));
+        return m;
+    };
+    std::vector<double> ticks = every(0);
+    for (int i = 1; i < step; ++i) {
+        const auto other = every(i);
+        if (least(other) < least(ticks)) ticks = other;
+    }
+    return ticks;
+}
+
+std::vector<double> Axis::indexLocatorValues(const std::array<double, 2>& baseOffset) const {
+    // IndexLocator: np.arange(dmin + offset, dmax + 1, base) over the data interval
+    const auto d = axes_.dataLim->points();
+    const double dmin = isX_ ? d[0] : d[1], dmax = isX_ ? d[2] : d[3];
+    const double start = dmin + baseOffset[1], stop = dmax + 1, step = baseOffset[0];
+    const double count = std::ceil((stop - start) / step);
+    std::vector<double> out;
+    if (!(count > 0)) return out;
+    const double delta = (start + step) - start;  // (NumPy fills from the first two values)
+    for (long long i = 0; i < (long long)count; ++i) out.push_back(i == 0 ? start : i == 1 ? start + step : start + double(i) * delta);
+    return out;
+}
+
 std::vector<Tick*> Axis::updateTicks() {
     // The locators and formatters read the limits, the tick space and the minpos of their own axis
     // (the one this axis shares its tickers with); the ticks are then kept by this axis' limits.
@@ -1007,7 +1041,9 @@ std::vector<Tick*> Axis::updateTicks() {
         // the major locator's locations, then its formatter's labels
         std::vector<double> locs;
         if (owner.fixedLocs) {
-            locs = *owner.fixedLocs;
+            locs = fixedLocatorValues(*owner.fixedLocs, owner.fixedNbins);
+        } else if (owner.indexLocator) {
+            locs = indexLocatorValues(*owner.indexLocator);
         } else if (owner.dateTickers) {
             std::string error;
             if (!owner.dateLocator.ticks(ownerView[0], ownerView[1], &locs, &error)) support::noteRaised(error);
@@ -1138,6 +1174,17 @@ std::vector<Tick*> Axis::updateTicks() {
             majorLocs = locator.tickValues(ownerView[0], ownerView[1]);
         }
         const auto locs = axes::withoutMajorTicks((*minorLocator)(majorLocs, ownerView[0], ownerView[1]), majorLocs, view[0], view[1]);
+        const std::vector<Tick*> minor = minorTicks(locs.size());
+        for (std::size_t i = 0; i < locs.size(); ++i) {
+            minor[i]->updatePosition(locs[i]);
+            minor[i]->label1.text = minor[i]->label2.text = "";
+            ticks.push_back(minor[i]);
+        }
+    }
+    // a FixedLocator as the minor locator: its locations but those of the major ticks
+    if (groupVisible(minorTickKw_) && owner.fixedMinorLocs) {
+        const std::vector<double> majorLocs = owner.fixedLocs ? fixedLocatorValues(*owner.fixedLocs, owner.fixedNbins) : std::vector<double>{};
+        const auto locs = axes::withoutMajorTicks(*owner.fixedMinorLocs, majorLocs, view[0], view[1]);
         const std::vector<Tick*> minor = minorTicks(locs.size());
         for (std::size_t i = 0; i < locs.size(); ++i) {
             minor[i]->updatePosition(locs[i]);

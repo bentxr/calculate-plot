@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <array>
+#include <functional>
 #include <cmath>
 #include <memory>
 #include <optional>
@@ -146,17 +147,23 @@ private:
 // transformed alone.
 class FuncTransform : public Transform {
 public:
+    using Function = std::function<double(double)>;
     FuncTransform(std::shared_ptr<const support::PyLambda> forward, std::shared_ptr<const support::PyLambda> inverse)
         : forward_(std::move(forward)), inverse_(std::move(inverse)) {}
+    // functions of the library itself (a colorbar's norm and its inverse, say)
+    FuncTransform(Function forward, Function inverse) : forwardFn_(std::move(forward)), inverseFn_(std::move(inverse)) {}
     Matrix matrix() const override { return {}; }
     bool isAffine() const override { return false; }
     bool isAffine2DBase() const override { return false; }
     double transform1d(double v) const;
     double transform1dMasked(double v) const;  // of a value of a masked array
-    TransformPtr inverted() const override { return std::make_shared<FuncTransform>(inverse_, forward_); }
+    TransformPtr inverted() const override {
+        return forwardFn_ ? std::make_shared<FuncTransform>(inverseFn_, forwardFn_) : std::make_shared<FuncTransform>(inverse_, forward_);
+    }
 
 private:
     std::shared_ptr<const support::PyLambda> forward_, inverse_;
+    Function forwardFn_, inverseFn_;
 };
 
 // scale.SymmetricalLogTransform(base, linthresh, linscale): linear within linthresh of zero, logarithmic

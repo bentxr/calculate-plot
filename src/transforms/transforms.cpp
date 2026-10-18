@@ -263,6 +263,7 @@ std::array<double, 2> BlendedAffine2D::transformNonAffine(double x, double y) co
 }
 
 double FuncTransform::transform1d(double v) const {
+    if (forwardFn_) return forwardFn_(v);
     std::vector<double> out;
     std::string error;
     // (the functions are tried when a scale takes them: only their parts without x can raise, and they did not)
@@ -271,6 +272,7 @@ double FuncTransform::transform1d(double v) const {
 }
 
 double FuncTransform::transform1dMasked(double v) const {
+    if (forwardFn_) return forwardFn_(v);
     std::vector<double> out;
     std::string error;
     if (!forward_->apply({v}, &out, &error, true)) return std::numeric_limits<double>::quiet_NaN();

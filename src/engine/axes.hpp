@@ -109,8 +109,14 @@ struct AxisScaleOptions {
     // logit's nonpositive ('mask' unless clip), one_half and use_overline; log's nonpositive ('clip' unless not)
     bool clip = false, useOverline = false, logClip = true;
     std::string oneHalf = "\\frac{1}{2}";
-    // FuncScale's and FuncScaleLog's functions (the base is FuncScaleLog's)
+    // FuncScale's and FuncScaleLog's functions (the base is FuncScaleLog's): a figure file's, or the library's own
     std::shared_ptr<const support::PyLambda> forward, inverse;
+    transforms::FuncTransform::Function forwardFn, inverseFn;
+    // the FuncTransform of these functions
+    std::shared_ptr<transforms::FuncTransform> funcTransform(bool inverted = false) const {
+        if (forwardFn) return std::make_shared<transforms::FuncTransform>(inverted ? inverseFn : forwardFn, inverted ? forwardFn : inverseFn);
+        return std::make_shared<transforms::FuncTransform>(inverted ? inverse : forward, inverted ? forward : inverse);
+    }
 };
 
 class Axis : public Artist {
@@ -130,6 +136,8 @@ public:
     Axis& tickerAxis() const;
     void setLabelText(const std::string& text, const std::string& loc);  // set_xlabel / set_ylabel
     std::vector<Tick*> updateTicks();  // Axis._update_ticks: the ticks to draw, labelled
+    static std::vector<double> fixedLocatorValues(const std::vector<double>& locs, std::optional<int> nbins);
+    std::vector<double> indexLocatorValues(const std::array<double, 2>& baseOffset) const;
     // The major formatter's format_data_short(value): the pointer's coordinate as the toolbar shows it; nothing
     // where matplotlib raises (ValueError, OverflowError) or for a formatter not ported.
     std::optional<std::string> formatDataShort(double value) const;
@@ -193,6 +201,9 @@ public:
     // manage_ticks): every location, the i-th labelled seq[i] ('' past its end). The scale's defaults
     // replace them when the scale is set.
     std::optional<std::vector<double>> fixedLocs;
+    std::optional<int> fixedNbins;  // FixedLocator(locs, nbins): every step-th location (the step whose smallest is least)
+    std::optional<std::vector<double>> fixedMinorLocs;  // FixedLocator as the minor locator (a colorbar's)
+    std::optional<std::array<double, 2>> indexLocator;  // IndexLocator(base, offset): from the data interval
     std::optional<std::vector<std::string>> fixedLabels;
     // set_ticklabels(labels) with a FixedLocator: a FuncFormatter of {location: label} ('' elsewhere)
     std::optional<std::vector<std::pair<double, std::string>>> dictLabels;
