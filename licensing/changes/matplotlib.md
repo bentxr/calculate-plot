@@ -304,6 +304,11 @@ it comes from in its first lines. The changes, as a whole:
   Colour sequences: colors.py's ColorSequenceRegistry (the built-in sequences only) with _cm.py's data
   (data/color_sequences.json; ColorBrewer's schemes in data/color_sequences_colorbrewer.json), written as JSON
   numbers by tools/oracle/make_color_sequences.py; rcsetup.py's _single_string_color_list takes them in cycles.
+- **Image resampling** (src/agg/image_resample.h, src/render/resample.cpp): src/_image_resample.h unchanged but for
+  its location; src/_image_wrapper.cpp's image_resample (pixel types by dtype, the parameters taken as C floats,
+  the lookup mesh of a non-affine transform given by the caller) translated to a C++ function without Python. The
+  build defines MPL_FIX_AGG_IMAGE_FILTER_LUT_BUGS and MPL_FIX_AGG_INTERPOLATION_ENDPOINT_BUG for Agg, as matplotlib's
+  meson build does.
 - **Norms** (src/colors/norms.cpp): colors.py's Normalize (process_value's dtypes, autoscale_None, clip, inverse),
   TwoSlopeNorm, CenteredNorm (its linked vmin / vmax setters), PowerNorm, BoundaryNorm (np.digitize as a sorted
   search), NoNorm and the norms make_norm_from_scale builds (LogNorm, SymLogNorm, AsinhNorm, and the norms

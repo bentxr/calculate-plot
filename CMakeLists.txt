@@ -95,6 +95,7 @@ add_library(calculate-plot STATIC
     src/rc/rc_validate.cpp
     src/rc/styles.cpp
     src/render/replay.cpp
+    src/render/resample.cpp
     src/render/svg_replay.cpp
     src/support/base64.cpp
     src/transforms/transforms.cpp
@@ -125,7 +126,7 @@ target_include_directories(calculate-plot
     PRIVATE ${PROJECT_SOURCE_DIR}/src)
 # Matplotlib's renderer, ported: its headers keep upstream's style, so they are system headers here,
 target_include_directories(calculate-plot SYSTEM PRIVATE ${PROJECT_SOURCE_DIR}/src/agg ${PROJECT_SOURCE_DIR}/extern/kiwi)
-set_source_files_properties(src/agg/backend_agg.cpp src/render/replay.cpp src/text/ft2font.cpp src/text/text_render.cpp
+set_source_files_properties(src/agg/backend_agg.cpp src/render/replay.cpp src/render/resample.cpp src/text/ft2font.cpp src/text/text_render.cpp
     src/svg/svg_renderer.cpp src/render/svg_replay.cpp
     PROPERTIES COMPILE_OPTIONS
     "-Wno-unused-parameter;-Wno-shadow;-Wno-sign-compare;-Wno-missing-field-initializers")
