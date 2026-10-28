@@ -36,7 +36,7 @@ bool exactHere(const std::string& body) {
     using namespace calculate_plot::testing_support;
     const bool hyperbolic = body.find("sinh") != std::string::npos || body.find("cosh") != std::string::npos ||
                             body.find("arctanh") != std::string::npos;
-    return kReferenceLibm && (!hyperbolic || kReferenceHyperbolic);
+    return kReferenceLibm && (!hyperbolic || kReferenceGlibc);
 }
 
 }  // namespace

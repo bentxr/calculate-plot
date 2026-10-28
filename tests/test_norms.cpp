@@ -45,8 +45,12 @@ std::string hex(double v) {
     return buf;
 }
 
+// Whether values must equal matplotlib's to the last bit here: with the reference libm, and for the asinh norm (asinh
+// and sinh) with its version (see trace_compare.hpp).
+bool exact = calculate_plot::testing_support::kReferenceLibm;
+
 bool same(double got, double want) {
-    return (std::isnan(got) && std::isnan(want)) || calculate_plot::testing_support::sameNumber(got, want);
+    return (std::isnan(got) && std::isnan(want)) || calculate_plot::testing_support::sameNumber(got, want, exact);
 }
 
 colors::MaskedArray array(const Json& v) {
@@ -110,6 +114,9 @@ TEST(Norms, CallsInversesAndErrorsAreMatplotlibs) {
         const std::string where = "case " + std::to_string(checked) + " (" + c.find("norm")->asString() + ", " +
                                   c.find("input")->find("dtype")->asString() + ")";
         ++checked;
+        const std::string kind = c.find("norm")->asString();
+        exact = calculate_plot::testing_support::kReferenceLibm &&
+                ((kind != "AsinhNorm" && kind != "scale:asinh") || calculate_plot::testing_support::kReferenceGlibc);
         colors::Norm norm;
         std::string error;
         if (!colors::Norm::make(spec(c), &norm, &error)) {

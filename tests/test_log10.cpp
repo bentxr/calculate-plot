@@ -88,11 +88,13 @@ TEST(Log10, Float32EqualsTheReferenceEnvironments) {
     const float hard = 0x1.fddcf4p-98f;
     EXPECT_EQ(calculate_plot::support::log10f(hard), -0x1.d33a46p+4f);
     EXPECT_EQ(float(calculate_plot::support::log10(double(hard))), -0x1.d33a44p+4f);  // (the rounded double)
+    // a near tie that glibc before 2.44 rounds the other way (its log10f was not correctly rounded)
+    EXPECT_EQ(calculate_plot::support::log10f(0x1.a68fp-132f), -0x1.3c2582p+5f);
     EXPECT_EQ(calculate_plot::support::log10f(0.0f), -std::numeric_limits<float>::infinity());
     EXPECT_TRUE(std::isnan(calculate_plot::support::log10f(-1.0f)));
     EXPECT_EQ(calculate_plot::support::log10f(1000.0f), 3.0f);
-    if (!calculate_plot::testing_support::kReferenceLibm) return;
-    // every 997th float from the smallest subnormal to the largest finite one against glibc's log10f
+    if (!calculate_plot::testing_support::kReferenceGlibc) return;
+    // every 997th float from the smallest subnormal to the largest finite one against glibc 2.44's log10f
     for (std::uint32_t u = 1; u < 0x7f800000u; u += 997) {
         float x;
         std::memcpy(&x, &u, sizeof x);

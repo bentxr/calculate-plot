@@ -23,11 +23,12 @@ inline constexpr bool kReferenceLibm = false;
 #endif
 
 // The oracles' C library is glibc 2.44. Earlier glibc versions (2.39 on the CI machines) give other last bits for
-// sinh, cosh, asinh and atanh on some inputs; only figure files' functions ({"$lambda"}) use them.
+// sinh, cosh, asinh and atanh on some inputs (figure files' functions, {"$lambda"}, and the asinh norm use them), and
+// their float32 log10 is not correctly rounded on some inputs (2.44's is, as support::log10f).
 #if defined(__GLIBC__) && (__GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 44))
-inline constexpr bool kReferenceHyperbolic = true;
+inline constexpr bool kReferenceGlibc = true;
 #else
-inline constexpr bool kReferenceHyperbolic = false;
+inline constexpr bool kReferenceGlibc = false;
 #endif
 
 // Equal with the sign of zero; within 1e-12 (relative) when the libm is not the reference (`exact` false).
