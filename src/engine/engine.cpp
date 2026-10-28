@@ -6,6 +6,7 @@
 #include "engine/arrows.hpp"
 #include "engine/axes.hpp"
 #include "engine/colorbar.hpp"
+#include "engine/contour_labels.hpp"
 #include "engine/contour_set.hpp"
 #include "engine/figure.hpp"
 #include "engine/image.hpp"
@@ -170,6 +171,12 @@ public:
             }
         }
         if (call.on == "colors") return colorsCall(call, error);
+        if (contourSets_.count(call.on)) {
+            const std::string where = call.on + "." + call.method;
+            if (call.method != "clabel") return *error = "unsupported call: " + where, false;
+            if (call.args.size() > 1) return *error = where + ": clabel() takes from 1 to 2 positional arguments but " + std::to_string(call.args.size() + 1) + " were given", false;
+            return clabel(call.on, argument(call, 0, "levels"), call, where, error);
+        }
         const auto ax = axes_.find(call.on);
         if (ax != axes_.end()) return axesCall(*ax->second, call, error);
         if (figureNames_.count(call.on)) return figureCall(call, error);
@@ -192,7 +199,7 @@ public:
             {"hlines", "hlines"}, {"vlines", "vlines"}, {"grid", "grid"}, {"legend", "legend"}, {"text", "text"},
             {"title", "set_title"}, {"xlabel", "set_xlabel"}, {"ylabel", "set_ylabel"}, {"xlim", "set_xlim"},
             {"ylim", "set_ylim"}, {"xscale", "set_xscale"}, {"yscale", "set_yscale"}, {"bar", "bar"}, {"barh", "barh"},
-            {"hist", "hist"}, {"fill", "fill"}, {"step", "step"}, {"stairs", "stairs"}, {"stem", "stem"}, {"boxplot", "boxplot"}, {"violinplot", "violinplot"}, {"pie", "pie"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}, {"imshow", "imshow"}, {"matshow", "matshow"}, {"spy", "spy"}, {"pcolormesh", "pcolormesh"}, {"pcolor", "pcolor"}, {"contour", "contour"}, {"contourf", "contourf"}};
+            {"hist", "hist"}, {"fill", "fill"}, {"step", "step"}, {"stairs", "stairs"}, {"stem", "stem"}, {"boxplot", "boxplot"}, {"violinplot", "violinplot"}, {"pie", "pie"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}, {"imshow", "imshow"}, {"matshow", "matshow"}, {"spy", "spy"}, {"pcolormesh", "pcolormesh"}, {"pcolor", "pcolor"}, {"contour", "contour"}, {"contourf", "contourf"}, {"clabel", "clabel"}};
         return ofAxes;
     }
 
@@ -1646,6 +1653,14 @@ private:
         if (call.method == "pcolor") return pcolor(ax, call, error) && noteMappable(ax, call);
         if (call.method == "pcolorfast") return pcolorfast(ax, call, error) && noteMappable(ax, call);
         if (call.method == "contour" || call.method == "contourf") return contour(ax, call, error) && noteMappable(ax, call);
+        if (call.method == "clabel") {
+            const Json* cs = argument(call, 0, "CS");
+            if (call.args.size() > 2) return *error = where + ": clabel() takes from 2 to 3 positional arguments but " + std::to_string(call.args.size() + 1) + " were given", false;
+            if (!cs) return *error = where + ": clabel() missing 1 required positional argument: 'CS'", false;
+            if (!(cs->isObject() && cs->members().size() == 1 && cs->members()[0].first == "$ref" && cs->members()[0].second.isString()))
+                return *error = where + ": the contour set must be one the figure file named ({\"$ref\": name})", false;
+            return clabel(cs->members()[0].second.asString(), argument(call, 1, "levels"), call, where, error);
+        }
         if (call.method == "vlines" || call.method == "hlines") return lines(ax, call, error);
         if (call.method == "set_xscale" || call.method == "set_yscale") {
             const Json* nameJson = call.args.empty() ? keyword(call, "value") : &call.args[0];
@@ -5259,10 +5274,82 @@ private:
         if (zorder) cs->zorder = *zorder;
         if (label) cs->label = *label;
         const std::array<double, 2> mins = cs->mins, maxs = cs->maxs;
+        if (call.as.size() == 1) contourSets_[call.as[0]] = {cs.get(), &ax};
         ax.addCollection(std::move(cs), false);
         ax.updateDatalim({mins, maxs});
         ax.tight = true;  // autoscale_view(tight=True)
         ax.requestAutoscaleView(true, true);
+        return true;
+    }
+
+    // ContourSet.clabel(levels=None, *, fontsize=None, inline=True, inline_spacing=5, fmt=None, colors=None,
+    // use_clabeltext=False, manual=False, rightside_up=True, zorder=None), and Axes.clabel(CS, levels=None,
+    // **kwargs) which calls it: labels placed automatically on the named contour set
+    bool clabel(const std::string& setName, const Json* levels, const model::Call& call, const std::string& where, std::string* error) {
+        if (!call.as.empty()) return *error = where + ": naming the labels is not supported yet", false;
+        const auto it = contourSets_.find(setName);
+        if (it == contourSets_.end()) return *error = where + ": the contour set must be one the figure file named ({\"$ref\": name})", false;
+        ContourSet& cs = *it->second.first;
+        Axes& ax = *it->second.second;
+        ClabelOptions o;
+        if (levels && !levels->isNull()) {
+            std::vector<double> l;
+            if (!numbers(*levels, &l)) return *error = where + ": levels must be a list of numbers", false;
+            o.levels = l;
+            o.levelsText = repr(*levels);
+        }
+        for (const auto& [name, value] : call.kwargs) {
+            double v = 0;
+            if (name == "levels" || name == "CS") continue;
+            const bool none = value.isNull();
+            if (name == "fontsize") {
+                if (none) continue;
+                if (readNumber(value, &v)) {
+                    o.fontsize = text::atLeastOnePoint(v);
+                } else if (value.isString() && text::fontSize(value.asString(), rc_)) {
+                    o.fontsize = text::atLeastOnePoint(*text::fontSize(value.asString(), rc_));
+                } else {
+                    return *error = where + ": Size is invalid. Valid font size are xx-small, x-small, small, medium, large, x-large, xx-large, larger, smaller, None", false;
+                }
+            } else if (name == "inline" || name == "rightside_up") {
+                if (!value.isBool()) return *error = where + ": " + name + " must be True or False", false;
+                (name == "inline" ? o.inlineLabels : o.rightsideUp) = value.asBool();
+            } else if (name == "inline_spacing") {
+                if (!readNumber(value, &v)) return *error = where + ": inline_spacing must be a number", false;
+                o.inlineSpacing = v;
+            } else if (name == "fmt") {
+                if (none) continue;
+                if (!value.isString()) return *error = where + ": fmt as a formatter, a function or a dict is not supported yet", false;
+                o.fmt = value.asString();
+            } else if (name == "colors") {
+                if (none) continue;
+                std::vector<colors::Spec> specs;
+                if (!colorList(value, &specs)) return *error = where + ": colors must be a colour or a sequence of colours", false;
+                std::vector<colors::Rgba> rgba;
+                for (const auto& spec : specs) {
+                    std::string why;
+                    const auto c = colors::toRgba(spec, std::nullopt, rc_, &why);
+                    if (!c) return *error = where + ": " + why, false;
+                    rgba.push_back(*c);
+                }
+                if (rgba.empty()) return *error = where + ": an empty list of colors is not supported yet", false;
+                o.colors = rgba;
+            } else if (name == "use_clabeltext" || name == "manual") {
+                if (!value.isBool()) return *error = where + ": " + name + " must be True or False", false;
+                if (value.asBool()) return *error = where + ": " + name + "=True is not supported yet", false;
+            } else if (name == "zorder") {
+                if (none) continue;
+                if (!readFinite(value, &v)) return *error = where + ": zorder must be a number", false;
+                o.zorder = v;
+            } else {
+                return *error = where + ": ContourLabeler.clabel() got an unexpected keyword argument '" + name + "'", false;
+            }
+        }
+        // fig._get_renderer(): the Agg canvas' renderer at the figure's dpi, which measures the labels
+        const auto size = figure_->canvasSize();
+        AggTraceRenderer renderer(size[0], size[1], figure_->dpi, figure_->rc(), options_.locale, options_.fontDirectory);
+        if (!engine::clabel(cs, ax, renderer, o, error)) return *error = where + ": " + *error, false;
+        if (!renderer.error().empty()) return *error = where + ": " + renderer.error(), false;
         return true;
     }
 
@@ -6744,6 +6831,7 @@ private:
     std::map<std::string, std::unique_ptr<Polygon>> patches_;
     std::map<std::string, std::shared_ptr<colors::Norm>> norms_;  // the norms colors.* calls made
     std::map<std::string, Mappable> mappables_;             // the images and collections named by "as"
+    std::map<std::string, std::pair<ContourSet*, Axes*>> contourSets_;  // the contour sets named by "as", and their Axes
     std::map<const Axes*, Mappable> currentImages_;         // pyplot's current image of each Axes (sci)
     std::map<std::string, std::vector<Axes*>> axesArrays_;  // the arrays of Axes plt.subplots returned
     std::set<std::string> addedPatches_;

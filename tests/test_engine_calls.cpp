@@ -2049,6 +2049,50 @@ INSTANTIATE_TEST_SUITE_P(
         Refusal{R"({"on": "axs[0]", "call": "contourf", "args": [[[0, 1], [2, 3]], 1, 2, 3, 4]})",
                 "axs[0].contourf: contourf() takes from 1 to 4 positional arguments but 5 were given"}));
 
+// clabel raises what matplotlib raises, and refuses what is not ported
+class ClabelRefusals : public testing::TestWithParam<Refusal> {};
+
+TEST_P(ClabelRefusals, NameTheCallAndTheReason) {
+    const auto drawing = draw(kSubplots + R"({"on": "axs[0]", "call": "contour", "args": [[[0, 1], [2, 3]]], "as": "cs"},)" + GetParam().call);
+    EXPECT_EQ(drawing.error, GetParam().error);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    Engine, ClabelRefusals,
+    testing::Values(
+        Refusal{R"({"on": "cs", "call": "clabel", "args": [[5]]})",
+                "cs.clabel: Specified levels [5] don't match available levels [0.  0.4 0.8 1.2 1.6 2.  2.4 2.8 3.2]"},
+        Refusal{R"({"on": "axs[0]", "call": "clabel", "args": [{"$ref": "cs"}], "kwargs": {"levels": [0.5, 7]}})",
+                "axs[0].clabel: Specified levels [0.5, 7] don't match available levels [0.  0.4 0.8 1.2 1.6 2.  2.4 2.8 3.2]"},
+        Refusal{R"({"on": "cs", "call": "clabel", "kwargs": {"foo": 1}})",
+                "cs.clabel: ContourLabeler.clabel() got an unexpected keyword argument 'foo'"},
+        Refusal{R"({"on": "cs", "call": "clabel", "kwargs": {"fontsize": "huge"}})",
+                "cs.clabel: Size is invalid. Valid font size are xx-small, x-small, small, medium, large, x-large, xx-large, larger, smaller, None"},
+        Refusal{R"({"on": "cs", "call": "clabel", "kwargs": {"use_clabeltext": true}})",
+                "cs.clabel: use_clabeltext=True is not supported yet"},
+        Refusal{R"({"on": "cs", "call": "clabel", "kwargs": {"manual": true}})", "cs.clabel: manual=True is not supported yet"},
+        Refusal{R"({"on": "cs", "call": "clabel", "kwargs": {"fmt": {"$dict": {"a": "b"}}}})",
+                "cs.clabel: fmt as a formatter, a function or a dict is not supported yet"},
+        Refusal{R"({"on": "cs", "call": "clabel", "as": "labels"})", "cs.clabel: naming the labels is not supported yet"},
+        Refusal{R"({"on": "axs[0]", "call": "clabel", "args": [[1, 2]]})",
+                "axs[0].clabel: the contour set must be one the figure file named ({\"$ref\": name})"},
+        Refusal{R"({"on": "cs", "call": "set_alpha", "args": [0.5]})", "unsupported call: cs.set_alpha"}));
+
+// NumPy's argsort (x86-simd-sort on the reference machine) does not keep the order of equal values, so where equally
+// straight blocks of a contour compete for a label the choice is refused
+TEST(ClabelCalls, EquallyStraightBlocksAreRefused) {
+    std::string z = "[";
+    for (int i = 0; i < 3; ++i) {
+        z += i ? ", [" : "[";
+        for (int j = 0; j < 200; ++j) z += (j ? ", " : "") + std::to_string(i) + ".0";
+        z += "]";
+    }
+    z += "]";
+    EXPECT_EQ(draw(kSubplots + R"({"on": "axs[0]", "call": "contour", "args": [)" + z + R"(, [1]], "as": "cs"},
+                     {"on": "cs", "call": "clabel"})").error,
+              "cs.clabel: contour labels where blocks of the contour are equally straight are not supported yet");
+}
+
 // contour lines never look at hatches, whatever they are
 TEST(ContourCalls, LinesIgnoreHatches) {
     EXPECT_EQ(draw(kSubplots + R"({"on": "axs[0]", "call": "contour", "args": [[[0, 1], [2, 3]]], "kwargs": {"hatches": null}})").error, "");

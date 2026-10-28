@@ -497,6 +497,8 @@
     "src/engine/collections.cpp",
     "src/engine/collections.hpp",
     "src/engine/colorbar.cpp",
+    "src/engine/contour_labels.cpp",
+    "src/engine/contour_labels.hpp",
     "src/engine/contour_set.cpp",
     "src/engine/contour_set.hpp",
     "src/engine/colorbar.hpp",

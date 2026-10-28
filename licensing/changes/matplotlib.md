@@ -322,7 +322,11 @@ it comes from in its first lines. The changes, as a whole:
   QuadContourSet (_process_args, _contour_args, _check_xyz, _initialize_x_y, _process_contour_level_args, _autolev,
   _process_levels, _process_colors, _process_linewidths, _process_linestyles, _get_lowers_and_uppers, the paths
   from the contour generator, draw with hatches), cbook.py's _resize_sequence and axes/_axes.py's Axes.contour and
-  Axes.contourf, translated to C++; colors.py's ListedColormap under
+  Axes.contourf, translated to C++; ContourLabeler (src/engine/contour_labels.cpp: clabel with automatic
+  placement, get_text, _get_nth_label_width, print_label, too_close, locate_label, _split_path_and_get_label_rotation,
+  add_label, labels) and path.py's _iter_connected_components and make_compound_path, translated to C++ with NumPy's
+  operations in their order; np.argsort's order of equal distances (x86-simd-sort's) is not reproduced: a choice
+  between equally straight blocks is refused; colors.py's ListedColormap under
   and over colours and its monochrome property (src/colors/colormap.cpp).
 - **Meshes** (src/engine/collections.cpp QuadMesh and PolyQuadMesh, src/engine/engine.cpp pcolormesh, pcolor,
   pcolorfast; src/engine/image.cpp PcolorImage): collections.py's _MeshData, PolyQuadMesh and QuadMesh (_convert_mesh_to_triangles for Gouraud shading, draw), backend_bases.py's RendererBase.draw_quad_mesh
