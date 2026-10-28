@@ -44,7 +44,6 @@ void meshgrid(const std::vector<double>& x, const std::vector<double>& y, Grid* 
 ContourSet::ContourSet(const rc::Params& rc) : Collection(rc) { groupName = "QuadContourSet"; }
 
 std::unique_ptr<ContourSet> ContourSet::make(const rc::Params& rc, const ContourArgs& a, std::string* error) {
-    if (a.filled) return *error = "filled contours are not supported yet", nullptr;
     std::unique_ptr<ContourSet> cs(new ContourSet(rc));
     ContourSet& c = *cs;
     // Collection(antialiaseds=antialiased, alpha=alpha): not antialiased when filled, unless asked
@@ -52,6 +51,7 @@ std::unique_ptr<ContourSet> ContourSet::make(const rc::Params& rc, const Contour
     else if (a.filled) c.setAntialiaseds({false});
     if (a.alpha) c.setAlpha(a.alpha);
     c.filled = a.filled;
+    c.hatches = a.hatches;
     c.extend = a.extend;
     c.logscale = a.logNorm;  // (a LogLocator is not taken yet)
     std::optional<std::string> origin = a.origin;
@@ -196,7 +196,16 @@ std::unique_ptr<ContourSet> ContourSet::make(const rc::Params& rc, const Contour
     const double lower = c.logscale ? 1e-250 : -1e250, upper = 1e250;
     if (a.extend == "both" || a.extend == "min") c.extendedLevels.insert(c.extendedLevels.begin(), lower);
     if (a.extend == "both" || a.extend == "max") c.extendedLevels.push_back(upper);
-    c.layers = c.levels;  // (the lines' layers are the levels)
+    if (!a.filled) {
+        c.layers = c.levels;  // a line is a thin layer
+    } else {
+        // layers mid-way between levels in screen space (on a log scale, square roots first against overflow)
+        c.layers.clear();
+        for (std::size_t i = 0; i + 1 < c.extendedLevels.size(); ++i) {
+            const double lo = c.extendedLevels[i], hi = c.extendedLevels[i + 1];
+            c.layers.push_back(c.logscale ? std::sqrt(lo) * std::sqrt(hi) : 0.5 * (lo + hi));
+        }
+    }
     const bool extendMin = a.extend == "min" || a.extend == "both", extendMax = a.extend == "max" || a.extend == "both";
 
     // colors=: a ListedColormap of them, resized to the levels (the first and last under and over the ends
@@ -243,9 +252,19 @@ std::unique_ptr<ContourSet> ContourSet::make(const rc::Params& rc, const Contour
     c.array = cvalues;
     if (extendMin || extendMax) c.norm->setClip(false);
 
-    // the paths: one compound path per level
-    for (double level : c.levels) {
-        const contour::Paths p = generator->lines(level);
+    // the paths: one compound path per level, or per pair of levels when filled (_get_lowers_and_uppers: the
+    // lowest interval takes in the minimum when that is its lower level)
+    std::vector<double> lowers, uppers;
+    if (a.filled) {
+        lowers.assign(c.extendedLevels.begin(), c.extendedLevels.end() - 1);
+        uppers.assign(c.extendedLevels.begin() + 1, c.extendedLevels.end());
+        if (c.zmin == lowers[0]) lowers[0] = c.logscale ? 0.99 * c.zmin : lowers[0] - 1;
+    }
+    const std::size_t npaths = a.filled ? lowers.size() : c.levels.size();
+    for (std::size_t l = 0; l < npaths; ++l) {
+        contour::Paths p;
+        if (!a.filled) p = generator->lines(c.levels[l]);
+        else if (!generator->filled(lowers[l], uppers[l], &p, error)) return nullptr;
         std::vector<double> vertices;
         std::vector<unsigned char> codes;
         for (std::size_t k = 0; k < p.vertices.size(); ++k) {
@@ -256,6 +275,12 @@ std::unique_ptr<ContourSet> ContourSet::make(const rc::Params& rc, const Contour
     }
     c.offsets = {{0.0, 0.0}};  // get_offsets() without offsets: one at the origin
 
+    if (a.filled) {  // filled regions: no edge (linewidths are ignored, with a warning)
+        c.setEdgecolor(ColorArg{ColorArg::None, {}});
+        c.stickyX = {c.mins[0], c.maxs[0]};
+        c.stickyY = {c.mins[1], c.maxs[1]};
+        return cs;
+    }
     // lines: no face, the widths and styles of the levels (negative ones in their own style when monochrome)
     const std::size_t nlev = c.levels.size();
     c.setFacecolor(ColorArg{ColorArg::None, {}});
@@ -286,6 +311,30 @@ std::unique_ptr<ContourSet> ContourSet::make(const rc::Params& rc, const Contour
     c.stickyX = {c.mins[0], c.maxs[0]};
     c.stickyY = {c.mins[1], c.maxs[1]};
     return cs;
+}
+
+void ContourSet::draw(Renderer& renderer) {
+    bool hatched = false;
+    for (const auto& h : hatches) hatched = hatched || h.has_value();
+    if (!filled || !hatched) return Collection::draw(renderer);
+    // with _cm_set(paths=[paths[idx]], hatch=hatches[idx % len], array=[array[idx]], ...): the widths, styles and
+    // edge colours (none) of a filled set are the same for every region
+    const std::vector<Path> all = paths;
+    const std::optional<colors::MaskedArray> values = array;
+    const std::optional<std::string> ownHatch = hatch;
+    for (std::size_t idx = 0; idx < all.size(); ++idx) {
+        paths = {all[idx]};
+        hatch = hatches[idx % hatches.size()];
+        colors::MaskedArray one;
+        one.dtype = values->dtype;
+        one.data = {values->data[idx]};
+        one.mask = {values->masked(idx)};
+        array = one;
+        Collection::draw(renderer);
+    }
+    paths = all;
+    array = values;
+    hatch = ownHatch;
 }
 
 }  // namespace calculate_plot::engine

@@ -1645,7 +1645,7 @@ private:
         if (call.method == "pcolormesh") return pcolormesh(ax, call, error) && noteMappable(ax, call);
         if (call.method == "pcolor") return pcolor(ax, call, error) && noteMappable(ax, call);
         if (call.method == "pcolorfast") return pcolorfast(ax, call, error) && noteMappable(ax, call);
-        if (call.method == "contour") return contour(ax, call, error);
+        if (call.method == "contour" || call.method == "contourf") return contour(ax, call, error);
         if (call.method == "vlines" || call.method == "hlines") return lines(ax, call, error);
         if (call.method == "set_xscale" || call.method == "set_yscale") {
             const Json* nameJson = call.args.empty() ? keyword(call, "value") : &call.args[0];
@@ -5104,7 +5104,8 @@ private:
         ax.requestAutoscaleView(true, true);
     }
 
-    // Axes.contour([X, Y,] Z, /, [levels], **kwargs): a QuadContourSet of lines, its limits tight around the grid
+    // Axes.contour and Axes.contourf([X, Y,] Z, /, [levels], **kwargs): a QuadContourSet of lines or filled regions,
+    // its limits tight around the grid
     bool contour(Axes& ax, const model::Call& call, std::string* error) {
         const std::string where = call.on + "." + call.method;
         const std::size_t nargs = call.args.size();
@@ -5222,12 +5223,25 @@ private:
             } else if (name == "locator" || name == "transform" || name == "colorizer") {
                 if (!none) return *error = where + ": " + name + " is not supported yet", false;
             } else if (name == "hatches") {
-                // (lines draw no hatches)
-                const Json* seq = sequence(value);
-                bool allNone = seq != nullptr;
-                if (seq)
-                    for (const Json& h : seq->items()) allNone = allNone && h.isNull();
-                if (!allNone && a.filled) return *error = where + ": hatches are not supported yet", false;
+                // patterns or None, cycled over the regions (a string's characters, as Python indexes it); lines
+                // never look at them. What is not iterable fails when matplotlib draws (here when made).
+                if (!a.filled) continue;
+                const auto notIterable = [&](const Json& item) {
+                    const char* type = item.isNull() ? "NoneType" : item.isBool() ? "bool" : item.isInteger() ? "int" : item.isNumber() ? "float" : nullptr;
+                    *error = where + (type ? ": '" + std::string(type) + "' object is not iterable" : ": hatches must be a sequence of patterns or None");
+                    return false;
+                };
+                a.hatches.clear();
+                if (value.isString()) {
+                    for (char ch : value.asString()) a.hatches.push_back(std::string(1, ch));
+                } else if (const Json* seq = sequence(value)) {
+                    for (const Json& h : seq->items()) {
+                        if (!h.isNull() && !h.isString()) return notIterable(h);
+                        a.hatches.push_back(h.isNull() ? std::nullopt : std::optional<std::string>(h.asString()));
+                    }
+                } else {
+                    return notIterable(value);
+                }
             } else if (name == "zorder") {
                 if (!readFinite(value, &v)) return *error = where + ": zorder must be a number", false;
                 zorder = v;

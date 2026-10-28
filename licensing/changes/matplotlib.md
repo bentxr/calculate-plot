@@ -317,8 +317,9 @@ it comes from in its first lines. The changes, as a whole:
   artists in SVG.
 - **Contour sets** (src/engine/contour_set.cpp, src/engine/engine.cpp contour): contour.py's ContourSet and
   QuadContourSet (_process_args, _contour_args, _check_xyz, _initialize_x_y, _process_contour_level_args, _autolev,
-  _process_levels, _process_colors, _process_linewidths, _process_linestyles, the paths from the contour generator),
-  cbook.py's _resize_sequence and axes/_axes.py's Axes.contour, translated to C++; colors.py's ListedColormap under
+  _process_levels, _process_colors, _process_linewidths, _process_linestyles, _get_lowers_and_uppers, the paths
+  from the contour generator, draw with hatches), cbook.py's _resize_sequence and axes/_axes.py's Axes.contour and
+  Axes.contourf, translated to C++; colors.py's ListedColormap under
   and over colours and its monochrome property (src/colors/colormap.cpp).
 - **Meshes** (src/engine/collections.cpp QuadMesh and PolyQuadMesh, src/engine/engine.cpp pcolormesh, pcolor,
   pcolorfast; src/engine/image.cpp PcolorImage): collections.py's _MeshData, PolyQuadMesh and QuadMesh (_convert_mesh_to_triangles for Gouraud shading, draw), backend_bases.py's RendererBase.draw_quad_mesh

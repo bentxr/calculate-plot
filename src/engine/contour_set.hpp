@@ -37,6 +37,7 @@ struct ContourArgs {
     bool logNorm = false;                              // the norm is a LogNorm
     std::optional<double> vmin, vmax;
     std::string extend = "neither";
+    std::vector<std::optional<std::string>> hatches{std::nullopt};  // cycled over the filled regions
     std::optional<bool> antialiased, cornerMask;
     long long nchunk = 0;
     std::optional<std::string> algorithm;  // None: rcParams["contour.algorithm"]
@@ -48,10 +49,13 @@ public:
     // QuadContourSet(ax, *args, **kwargs) up to adding it to the Axes: the levels, the colours and the paths.
     // False and matplotlib's message when it raises, or a "not supported yet" message.
     static std::unique_ptr<ContourSet> make(const rc::Params& rc, const ContourArgs& args, std::string* error);
+    // ContourSet.draw: filled regions with hatches are drawn one at a time, each with its own hatch
+    void draw(Renderer& renderer) override;
 
     bool filled = false;
     bool logscale = false;
     std::string extend = "neither";
+    std::vector<std::optional<std::string>> hatches{std::nullopt};
     std::vector<double> levels;          // levels
     std::vector<double> extendedLevels;  // _levels: with the extensions' -1e250 and 1e250 (1e-250 on a log scale)
     std::vector<double> layers;          // the levels, or the middle of each pair of them for filled contours

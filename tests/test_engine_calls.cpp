@@ -2039,4 +2039,18 @@ INSTANTIATE_TEST_SUITE_P(
         Refusal{R"({"on": "axs[0]", "call": "contour", "args": [[[0, 1], [2, 3]]], "as": "cs"})",
                 "axs[0].contour: naming the contour set is not supported yet"},
         Refusal{R"({"on": "axs[0]", "call": "contour", "args": [[[0, 1], [2, 3]]], "kwargs": {"rasterized": true}})",
-                "axs[0].contour: rasterized is not supported yet"}));
+                "axs[0].contour: rasterized is not supported yet"},
+        Refusal{R"({"on": "axs[0]", "call": "contourf", "args": [[[0, 1], [2, 3]], [1]]})",
+                "axs[0].contourf: Filled contours require at least 2 levels."},
+        Refusal{R"({"on": "axs[0]", "call": "contourf", "args": [[[0, 1], [2, 3]]], "kwargs": {"hatches": null}})",
+                "axs[0].contourf: 'NoneType' object is not iterable"},
+        Refusal{R"({"on": "axs[0]", "call": "contourf", "args": [[[0, 1], [2, 3]]], "kwargs": {"hatches": ["/", 3]}})",
+                "axs[0].contourf: 'int' object is not iterable"},
+        Refusal{R"({"on": "axs[0]", "call": "contourf", "args": [[[0, 1], [2, 3]], 1, 2, 3, 4]})",
+                "axs[0].contourf: contourf() takes from 1 to 4 positional arguments but 5 were given"}));
+
+// contour lines never look at hatches, whatever they are
+TEST(ContourCalls, LinesIgnoreHatches) {
+    EXPECT_EQ(draw(kSubplots + R"({"on": "axs[0]", "call": "contour", "args": [[[0, 1], [2, 3]]], "kwargs": {"hatches": null}})").error, "");
+    EXPECT_EQ(draw(kSubplots + R"({"on": "axs[0]", "call": "contour", "args": [[[0, 1], [2, 3]]], "kwargs": {"hatches": 5}})").error, "");
+}
