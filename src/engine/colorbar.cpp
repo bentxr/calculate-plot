@@ -8,6 +8,7 @@
 #include "axes/ticker.hpp"
 #include "engine/axes.hpp"
 #include "engine/collections.hpp"
+#include "engine/contour_set.hpp"
 #include "engine/figure.hpp"
 #include "rc/rc_params.hpp"
 #include "support/histogram.hpp"
@@ -111,6 +112,14 @@ public:
         orientation_ = o_.orientation ? *o_.orientation : locOrientation ? *locOrientation : "vertical";
         vertical_ = orientation_ == "vertical";
         const std::string kind = m_.norm->spec().kind;
+        if (const ContourSet* cs = m_.contour) {
+            // a contour set's own boundaries (with the extensions'), values, extension, and its levels as ticks
+            o_.boundaries = cs->extendedLevels;
+            o_.values = cs->array->data;
+            o_.extend = cs->extend;
+            filled_ = cs->filled;
+            if (!o_.ticks) o_.ticks = cs->levels, ticksNbins_ = 10;
+        }
         boundaryNorm_ = kind == "BoundaryNorm";
         boundariesGiven_ = o_.boundaries.has_value();
         noNorm_ = kind == "NoNorm";
@@ -139,7 +148,12 @@ public:
         ticklocation_ = o_.ticklocation != "auto" ? o_.ticklocation : o_.location ? *o_.location : vertical_ ? "right" : "bottom";
         longAxis().setLabelText(o_.label, ax_.rc().text(vertical_ ? "yaxis.labellocation" : "xaxis.labellocation"));
         if (!processValues(error)) return false;
-        if (boundaryNorm_ || boundariesGiven_) {
+        if (m_.contour && kind == "LogNorm") {
+            // contours of a LogNorm: a log scale
+            AxisScaleOptions log;
+            log.logClip = false;
+            ax_.setScale(!vertical_, "log", log);
+        } else if (boundaryNorm_ || boundariesGiven_) {
             // uniform spacing: the boundaries spread evenly along the axis (a function scale of them)
             if (o_.spacing == "uniform") {
                 AxisScaleOptions f;
@@ -209,6 +223,7 @@ public:
         Axis& owner = longAxis().tickerAxis();
         if (o_.ticks) {
             owner.fixedLocs = *o_.ticks;
+            if (ticksNbins_) owner.fixedNbins = *ticksNbins_;
         } else if (boundaryNorm_) {
             owner.fixedLocs = m_.norm->spec().boundaries;
             owner.fixedNbins = 10;
@@ -219,6 +234,7 @@ public:
             owner.fixedNbins = 10;
         }
         if (boundaryNorm_) owner.fixedMinorLocs = m_.norm->spec().boundaries;
+        else if (noNorm_ || boundariesGiven_) owner.nullMinorLocator = true;  // (no minor locator of the scale's)
         if (o_.format) {
             // FormatStrFormatter unless it cannot format 0, then StrMethodFormatter
             const auto probe = support::percentFormat(*o_.format, 0, true);
@@ -229,11 +245,12 @@ public:
             owner.strFormat = *o_.format;
             owner.strFormatMethod = method;
         }
-        // the solids: pcolormesh of the values between the extensions
+        // the solids: pcolormesh of the values between the extensions (none for contour lines)
         std::size_t first = 0, last = values_.size();
         if (extendLower()) ++first;
         if (extendUpper()) --last;
-        if (!addSolids(first, last, error)) return false;
+        if (filled_ && !addSolids(first, last, error)) return false;
+        if (!filled_) return *error = "colorbars of contour lines are not supported yet", false;
         installLocator(error);
         return error->empty();
     }
@@ -405,9 +422,13 @@ private:
             return v;
         };
         outline_->setXY(flat(xyout));
-        // the extension patches (filled colorbars), just behind the Axes patch's zorder
+        if (!filled_) return true;
+        // the extension patches (filled colorbars), just behind the Axes patch's zorder; a hatched contour set's
+        // hatches cycled over them and the solids
+        std::vector<std::optional<std::string>> hatches(y_.size() + 1);
+        if (hatched()) hatches = repeated(m_.contour->hatches, y_.size() + 1);
         const double z = std::nextafter(ax_.patch->zorder, -std::numeric_limits<double>::infinity());
-        const auto patch = [&](std::vector<std::array<double, 2>> xy, double value) -> bool {
+        const auto patch = [&](std::vector<std::array<double, 2>> xy, double value, const std::optional<std::string>& hatch) -> bool {
             auto p = std::make_unique<Polygon>(ax_.rc(), flat(std::move(xy)), false);
             colors::MaskedArray v, out;
             v.data = {value};
@@ -420,6 +441,7 @@ private:
             p->setAlpha(m_.alpha);
             p->setLinewidth(0.0);
             p->antialiased = false;
+            p->setHatch(hatch);
             p->transform = ax_.transAxes;
             p->transformSet = true;
             p->clipOn = false;
@@ -430,12 +452,13 @@ private:
         if (extendLower()) {
             auto xy = o_.extendrect ? std::vector<std::array<double, 2>>{{0, 0}, {0, bot}, {1., bot}, {1, 0}}
                                     : std::vector<std::array<double, 2>>{{0, 0}, {0.5, bot}, {1, 0}};
-            if (!patch(xy, inverted() ? values_.back() : values_.front())) return false;
+            if (!patch(xy, inverted() ? values_.back() : values_.front(), hatches[0])) return false;
+            hatches.erase(hatches.begin());  // (the first hatch went to the lower extension)
         }
         if (extendUpper()) {
             auto xy = o_.extendrect ? std::vector<std::array<double, 2>>{{0, 1}, {0, top}, {1, top}, {1, 1}}
                                     : std::vector<std::array<double, 2>>{{0, 1}, {0.5, top}, {1, 1}};
-            if (!patch(xy, inverted() ? values_.front() : values_.back())) return false;
+            if (!patch(xy, inverted() ? values_.front() : values_.back(), hatches[y_.size() - 1])) return false;
         }
         return true;
     }
@@ -457,9 +480,52 @@ private:
         dividers_->setSegments(segments);
     }
 
+    // Whether the mappable is a contour set with a hatch
+    bool hatched() const {
+        if (!m_.contour) return false;
+        for (const auto& h : m_.contour->hatches)
+            if (h) return true;
+        return false;
+    }
+
+    // seq * (n // len + ...): a list repeated n times (hatches * n), as Python repeats it
+    static std::vector<std::optional<std::string>> repeated(const std::vector<std::optional<std::string>>& seq, std::size_t n) {
+        std::vector<std::optional<std::string>> out;
+        for (std::size_t i = 0; i < n; ++i) out.insert(out.end(), seq.begin(), seq.end());
+        return out;
+    }
+
+    // _add_solids_patches: one PathPatch per colour with its hatch, the colours mapped here
+    bool addSolidsPatches(std::size_t first, std::size_t last, std::string* error) {
+        std::vector<std::optional<std::string>> hatches = repeated(m_.contour->hatches, last - first + 1);
+        if (extendLower()) hatches.erase(hatches.begin());  // (the first went into the extension)
+        for (std::size_t i = 0; i + 1 < y_.size(); ++i) {
+            const double a = y_[i], b = y_[i + 1];
+            const std::vector<double> xy = vertical_ ? std::vector<double>{0, a, 1, a, 1, b, 0, b}
+                                                     : std::vector<double>{a, 1, a, 0, b, 0, b, 1};
+            auto p = std::make_unique<Polygon>(ax_.rc(), xy, false);
+            colors::MaskedArray v, out;
+            v.data = {values_[first + i]};
+            if (noNorm_) v.dtype = colors::DType::Int16;
+            if (!(*m_.norm)(v, &out, error)) return false;
+            std::vector<colors::Rgba> rgba;
+            if (!(*m_.cmap)(out, nullptr, false, &rgba, error)) return false;
+            p->setFacecolor(colors::Spec(std::vector<double>(rgba[0].begin(), rgba[0].end())));
+            p->setEdgecolor(colors::Spec(ax_.rc().text("patch.edgecolor")));  // (PathPatch's _edge_default)
+            p->setHatch(hatches[i]);
+            p->setLinewidth(0.0);
+            p->antialiased = false;
+            p->setAlpha(m_.alpha);
+            ax_.addPatch(std::move(p));
+        }
+        updateDividers();
+        return true;
+    }
+
     // _add_solids: pcolormesh(X, Y, C, cmap, norm, alpha, edgecolors='none', shading='flat'), rasterized when the
-    // edges are not drawn and there are many colours
+    // edges are not drawn and there are many colours; patches for a hatched contour set
     bool addSolids(std::size_t first, std::size_t last, std::string* error) {
+        if (hatched()) return addSolidsPatches(first, last, error);
         const int rows = int(y_.size()), cols = 2;
         std::vector<std::array<double, 2>> coords;
         for (int i = 0; i < rows; ++i)
@@ -497,6 +563,8 @@ private:
     std::vector<double> boundaries_, values_, y_;
     std::shared_ptr<std::vector<double>> boundariesShared_ = std::make_shared<std::vector<double>>();  // (for the scale)
     bool boundaryNorm_ = false, noNorm_ = false, boundariesGiven_ = false;
+    bool filled_ = true;
+    std::optional<int> ticksNbins_;  // FixedLocator(levels, nbins=10) of a contour set
     double vmin_ = 0, vmax_ = 1;
     std::optional<double> infoAspect_;
     Polygon* outline_ = nullptr;

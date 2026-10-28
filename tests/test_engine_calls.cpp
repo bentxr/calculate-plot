@@ -2036,8 +2036,8 @@ INSTANTIATE_TEST_SUITE_P(
                 "axs[0].contour: contours of x and y that are not finite are not supported yet"},
         Refusal{R"({"on": "axs[0]", "call": "contour", "args": [[[{"$float": "nan"}, {"$float": "nan"}], [{"$float": "nan"}, {"$float": "nan"}]]]})",
                 "axs[0].contour: contours of a z without a valid value are not supported yet"},
-        Refusal{R"({"on": "axs[0]", "call": "contour", "args": [[[0, 1], [2, 3]]], "as": "cs"})",
-                "axs[0].contour: naming the contour set is not supported yet"},
+        Refusal{R"({"on": "axs[0]", "call": "contour", "args": [[[0, 1], [2, 3]]], "as": ["a", "b"]})",
+                "axs[0].contour: a contour set is one object (\"as\" names one)"},
         Refusal{R"({"on": "axs[0]", "call": "contour", "args": [[[0, 1], [2, 3]]], "kwargs": {"rasterized": true}})",
                 "axs[0].contour: rasterized is not supported yet"},
         Refusal{R"({"on": "axs[0]", "call": "contourf", "args": [[[0, 1], [2, 3]], [1]]})",
@@ -2047,7 +2047,9 @@ INSTANTIATE_TEST_SUITE_P(
         Refusal{R"({"on": "axs[0]", "call": "contourf", "args": [[[0, 1], [2, 3]]], "kwargs": {"hatches": ["/", 3]}})",
                 "axs[0].contourf: 'int' object is not iterable"},
         Refusal{R"({"on": "axs[0]", "call": "contourf", "args": [[[0, 1], [2, 3]], 1, 2, 3, 4]})",
-                "axs[0].contourf: contourf() takes from 1 to 4 positional arguments but 5 were given"}));
+                "axs[0].contourf: contourf() takes from 1 to 4 positional arguments but 5 were given"},
+        Refusal{R"({"on": "axs[0]", "call": "contour", "args": [[[0, 1], [2, 3]]], "as": "cs"}, {"on": "fig", "call": "colorbar", "args": [{"$ref": "cs"}]})",
+                "fig.colorbar: colorbars of contour lines are not supported yet"}));
 
 // contour lines never look at hatches, whatever they are
 TEST(ContourCalls, LinesIgnoreHatches) {

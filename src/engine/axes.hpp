@@ -207,6 +207,7 @@ public:
     std::optional<std::vector<double>> fixedLocs;
     std::optional<int> fixedNbins;  // FixedLocator(locs, nbins): every step-th location (the step whose smallest is least)
     std::optional<std::vector<double>> fixedMinorLocs;  // FixedLocator as the minor locator (a colorbar's)
+    bool nullMinorLocator = false;  // NullLocator as the minor locator, whatever the scale (a colorbar's)
     std::optional<std::array<double, 2>> indexLocator;  // IndexLocator(base, offset): from the data interval
     std::optional<std::vector<std::string>> fixedLabels;
     // set_ticklabels(labels) with a FixedLocator: a FuncFormatter of {location: label} ('' elsewhere)

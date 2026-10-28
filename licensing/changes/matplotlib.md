@@ -310,7 +310,8 @@ it comes from in its first lines. The changes, as a whole:
   build defines MPL_FIX_AGG_IMAGE_FILTER_LUT_BUGS and MPL_FIX_AGG_INTERPOLATION_ENDPOINT_BUG for Agg, as matplotlib's
   meson build does.
 - **Colorbars** (src/engine/colorbar.cpp): colorbar.py's Colorbar (_process_values, _mesh, _proportional_y,
-  _uniform_y, _do_extends, _update_dividers, _add_solids, the scale and ticks of the long axis),
+  _uniform_y, _do_extends, _update_dividers, _add_solids, _add_solids_patches, the scale and ticks of the long
+  axis, a contour set as the mappable),
   _ColorbarAxesLocator, _ColorbarSpine, make_axes and make_axes_gridspec, and figure.py's Figure.colorbar,
   translated to C++; gridspec.py's GridSpecFromSubplotSpec, Axes.set_box_aspect and set_subplotspec, and
   backend_mixed.py's MixedModeRenderer.start_rasterizing / stop_rasterizing (src/engine/figure.cpp) for rasterized

@@ -1107,8 +1107,9 @@ std::vector<Tick*> Axis::updateTicks() {
             ticks.push_back(major[i]);
         }
     }
-    // The minor locator: LogLocator(subs='auto') on log scales, NullLocator otherwise
-    if (groupVisible(minorTickKw_) && logScale()) {
+    // The minor locator: LogLocator(subs='auto') on log scales, NullLocator otherwise (or when set: a colorbar's)
+    const bool minorShown = groupVisible(minorTickKw_) && !owner.nullMinorLocator;
+    if (minorShown && logScale()) {
         logMinorLocator.tickSpace = owner.tickSpace();
         logMinorLocator.minpos = owner.minpos();
         logLocator.tickSpace = owner.tickSpace();
@@ -1127,7 +1128,7 @@ std::vector<Tick*> Axis::updateTicks() {
     }
     // SymmetricalLogLocator(subs) on a symlog scale, its labels empty (NullFormatter); the minor ticks within
     // 1e-5 of the view (through the scale's transform) of a major one go
-    if (groupVisible(minorTickKw_) && scale_ == "symlog") {
+    if (minorShown && scale_ == "symlog") {
         const auto majorLocs = owner.fixedLocs ? *owner.fixedLocs : owner.symlogLocator.tickValues(ownerView[0], ownerView[1]);
         double lo = scaleForward(view[0]), hi = scaleForward(view[1]);
         if (lo > hi) std::swap(lo, hi);
@@ -1146,7 +1147,7 @@ std::vector<Tick*> Axis::updateTicks() {
         }
     }
     // LogitLocator(minor=True) on a logit scale, labelled by LogitFormatter(minor=True)
-    if (groupVisible(minorTickKw_) && scale_ == "logit") {
+    if (minorShown && scale_ == "logit") {
         owner.logitLocator.tickSpace = owner.logitMinorLocator.tickSpace = owner.tickSpace();
         owner.logitLocator.minpos = owner.logitMinorLocator.minpos = owner.minpos();
         const auto majorLocs = owner.fixedLocs ? *owner.fixedLocs : owner.logitLocator.tickValues(ownerView[0], ownerView[1]);
@@ -1169,7 +1170,7 @@ std::vector<Tick*> Axis::updateTicks() {
     }
     // AutoMinorLocator on a linear scale that has one; its labels are empty (NullFormatter)
     // (every axis makes the same locator from the rcParams: this one's is as good as the owner's)
-    if (groupVisible(minorTickKw_) && (scale_ == "linear" || scale_ == "function") && minorLocator) {
+    if (minorShown && (scale_ == "linear" || scale_ == "function") && minorLocator) {
         locator.tickSpace = owner.tickSpace();
         // get_majorticklocs(): the major locator's (the date locator's on a date axis)
         std::vector<double> majorLocs;
@@ -1190,7 +1191,7 @@ std::vector<Tick*> Axis::updateTicks() {
         }
     }
     // a FixedLocator as the minor locator: its locations but those of the major ticks
-    if (groupVisible(minorTickKw_) && owner.fixedMinorLocs) {
+    if (minorShown && owner.fixedMinorLocs) {
         const std::vector<double> majorLocs = owner.fixedLocs ? fixedLocatorValues(*owner.fixedLocs, owner.fixedNbins) : std::vector<double>{};
         const auto locs = axes::withoutMajorTicks(*owner.fixedMinorLocs, majorLocs, view[0], view[1]);
         const std::vector<Tick*> minor = minorTicks(locs.size());

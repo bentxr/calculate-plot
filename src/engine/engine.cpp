@@ -192,7 +192,7 @@ public:
             {"hlines", "hlines"}, {"vlines", "vlines"}, {"grid", "grid"}, {"legend", "legend"}, {"text", "text"},
             {"title", "set_title"}, {"xlabel", "set_xlabel"}, {"ylabel", "set_ylabel"}, {"xlim", "set_xlim"},
             {"ylim", "set_ylim"}, {"xscale", "set_xscale"}, {"yscale", "set_yscale"}, {"bar", "bar"}, {"barh", "barh"},
-            {"hist", "hist"}, {"fill", "fill"}, {"step", "step"}, {"stairs", "stairs"}, {"stem", "stem"}, {"boxplot", "boxplot"}, {"violinplot", "violinplot"}, {"pie", "pie"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}, {"imshow", "imshow"}, {"matshow", "matshow"}, {"spy", "spy"}, {"pcolormesh", "pcolormesh"}, {"pcolor", "pcolor"}};
+            {"hist", "hist"}, {"fill", "fill"}, {"step", "step"}, {"stairs", "stairs"}, {"stem", "stem"}, {"boxplot", "boxplot"}, {"violinplot", "violinplot"}, {"pie", "pie"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}, {"imshow", "imshow"}, {"matshow", "matshow"}, {"spy", "spy"}, {"pcolormesh", "pcolormesh"}, {"pcolor", "pcolor"}, {"contour", "contour"}, {"contourf", "contourf"}};
         return ofAxes;
     }
 
@@ -1645,7 +1645,7 @@ private:
         if (call.method == "pcolormesh") return pcolormesh(ax, call, error) && noteMappable(ax, call);
         if (call.method == "pcolor") return pcolor(ax, call, error) && noteMappable(ax, call);
         if (call.method == "pcolorfast") return pcolorfast(ax, call, error) && noteMappable(ax, call);
-        if (call.method == "contour" || call.method == "contourf") return contour(ax, call, error);
+        if (call.method == "contour" || call.method == "contourf") return contour(ax, call, error) && noteMappable(ax, call);
         if (call.method == "vlines" || call.method == "hlines") return lines(ax, call, error);
         if (call.method == "set_xscale" || call.method == "set_yscale") {
             const Json* nameJson = call.args.empty() ? keyword(call, "value") : &call.args[0];
@@ -4356,6 +4356,7 @@ private:
         }
         if (auto* c = dynamic_cast<Collection*>(a)) {
             if (!c->cmap) return std::nullopt;
+            m.contour = dynamic_cast<const ContourSet*>(c);
             m.cmap = &*c->cmap;
             m.norm = c->norm;
             m.array = c->array;
@@ -5111,7 +5112,7 @@ private:
         const std::size_t nargs = call.args.size();
         if (nargs < 1 || nargs > 4)
             return *error = where + ": " + call.method + "() takes from 1 to 4 positional arguments but " + std::to_string(nargs) + " were given", false;
-        if (!call.as.empty()) return *error = where + ": naming the contour set is not supported yet", false;
+        if (call.as.size() > 1) return *error = where + ": a contour set is one object (\"as\" names one)", false;
         ContourArgs a;
         a.filled = call.method == "contourf";
         const auto dims = [](const Json& v) {  // np.ndim of nested lists (of an $array's data)

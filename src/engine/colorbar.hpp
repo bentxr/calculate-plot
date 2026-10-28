@@ -17,12 +17,15 @@ namespace calculate_plot::engine {
 
 class Artist;
 class Axes;
+class ContourSet;
 class Figure;
 
-// What a colorbar reads of its mappable (an image, a mesh, a scatter): its colormap and norm (the same objects:
-// the colorbar sets the norm's limits), the data the norm scales to (get_array), and its alpha as a number.
+// What a colorbar reads of its mappable (an image, a mesh, a scatter, a contour set): its colormap and norm (the
+// same objects: the colorbar sets the norm's limits), the data the norm scales to (get_array), and its alpha as a
+// number. A contour set gives the colorbar its boundaries, values, extension and ticks too.
 struct Mappable {
     Artist* artist = nullptr;
+    const ContourSet* contour = nullptr;
     Axes* axes = nullptr;
     const colors::Colormap* cmap = nullptr;
     std::shared_ptr<colors::Norm> norm;
