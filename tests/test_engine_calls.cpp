@@ -2047,9 +2047,7 @@ INSTANTIATE_TEST_SUITE_P(
         Refusal{R"({"on": "axs[0]", "call": "contourf", "args": [[[0, 1], [2, 3]]], "kwargs": {"hatches": ["/", 3]}})",
                 "axs[0].contourf: 'int' object is not iterable"},
         Refusal{R"({"on": "axs[0]", "call": "contourf", "args": [[[0, 1], [2, 3]], 1, 2, 3, 4]})",
-                "axs[0].contourf: contourf() takes from 1 to 4 positional arguments but 5 were given"},
-        Refusal{R"({"on": "axs[0]", "call": "contour", "args": [[[0, 1], [2, 3]]], "as": "cs"}, {"on": "fig", "call": "colorbar", "args": [{"$ref": "cs"}]})",
-                "fig.colorbar: colorbars of contour lines are not supported yet"}));
+                "axs[0].contourf: contourf() takes from 1 to 4 positional arguments but 5 were given"}));
 
 // contour lines never look at hatches, whatever they are
 TEST(ContourCalls, LinesIgnoreHatches) {

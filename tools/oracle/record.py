@@ -438,6 +438,7 @@ def record_svg(fig, metadata):
         del events[:]
         del ids[:]
         _svg_clip_paths.clear()
+        _identities.clear()  # (numbered per drawing, as record() numbers them: not after the Agg drawing's)
         events.insert(0, {"op": "begin", "width": number(width), "height": number(height),
                           "image_dpi": number(image_dpi)})
         return original_init(self, width, height, svgwriter, basename, image_dpi, metadata=metadata)

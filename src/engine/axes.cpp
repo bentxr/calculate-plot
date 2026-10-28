@@ -1625,8 +1625,9 @@ Collection& Axes::addCollection(std::unique_ptr<Collection> c, bool autolim) {
     if (c->label.empty()) c->label = "_child" + std::to_string(children.size());
     c->figure = &figure;
     if (!c->transformSet) c->transform = transData;  // _set_artist_props
-    c->clipBox = std::make_shared<transforms::TransformedBbox>(
-        std::make_shared<transforms::Bbox>(std::array<double, 4>{0, 0, 1, 1}), patch->fullTransform());
+    if (!c->clipPath)  // set_clip_path(self.patch) unless clipped already
+        c->clipBox = std::make_shared<transforms::TransformedBbox>(
+            std::make_shared<transforms::Bbox>(std::array<double, 4>{0, 0, 1, 1}), patch->fullTransform());
     if (!autolim) {
         Collection& ref = *c;
         children.push_back(std::move(c));

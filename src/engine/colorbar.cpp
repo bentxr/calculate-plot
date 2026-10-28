@@ -250,9 +250,11 @@ public:
         if (extendLower()) ++first;
         if (extendUpper()) --last;
         if (filled_ && !addSolids(first, last, error)) return false;
-        if (!filled_) return *error = "colorbars of contour lines are not supported yet", false;
         installLocator(error);
-        return error->empty();
+        if (!error->empty()) return false;
+        // contour lines: add_lines(levels, the lines' colours, their widths)
+        if (m_.contour && !filled_) return addLines(error);
+        return true;
     }
 
     // _ColorbarAxesLocator: the colorbar's box shrunk to leave room for its extensions, with the box aspect of
@@ -478,6 +480,70 @@ private:
                                              : std::vector<std::array<double, 2>>{{v, 0}, {v, 1}});
         }
         dividers_->setSegments(segments);
+    }
+
+    // _locate: where values fall along the long axis, interpolated between the inner boundaries in the norm's space
+    // (as they are for NoNorm and BoundaryNorm)
+    bool locate(const std::vector<double>& x, std::vector<double>* y, std::string* error) {
+        std::vector<double> b = boundaries_, xn = x;
+        if (!noNorm_ && !boundaryNorm_) {
+            // norm(..., clip=False).filled(): masked values as the fill value 1e20
+            const auto normalised = [&](const std::vector<double>& v, std::vector<double>* out) {
+                colors::MaskedArray in, res;
+                in.data = v;
+                if (!(*m_.norm)(in, &res, error, false)) return false;
+                for (std::size_t i = 0; i < res.data.size(); ++i)
+                    if (res.masked(i)) res.data[i] = 1e20;
+                *out = res.data;
+                return true;
+            };
+            if (!normalised(boundaries_, &b) || !normalised(x, &xn)) return false;
+        }
+        const auto inside = insideRange();
+        *y = support::npInterp(xn, std::vector<double>(b.begin() + long(inside.first), b.begin() + long(inside.second)), y_);
+        return true;
+    }
+
+    // add_lines(cs.levels, cs.to_rgba(cs.cvalues, cs.alpha), cs.get_linewidths()): a LineCollection across the
+    // colorbar at each level inside it, clipped to the Axes widened by the widest line
+    bool addLines(std::string* error) {
+        const ContourSet& cs = *m_.contour;
+        std::vector<colors::Rgba> rgba;
+        if (!colors::mapColors(*cs.array, *m_.norm, *m_.cmap, cs.alpha, &rgba, error)) return false;
+        std::vector<double> y;
+        if (!locate(cs.levels, &y, error)) return false;
+        const double rtol = (y_.back() - y_.front()) * 1e-10;
+        std::vector<std::vector<std::array<double, 2>>> segments;
+        std::vector<colors::Spec> colours;
+        std::vector<double> widths;
+        const std::vector<double>& lw = cs.linewidths();
+        for (std::size_t i = 0; i < y.size(); ++i) {
+            if (!(y[i] < y_.back() + rtol && y[i] > y_.front() - rtol)) continue;
+            segments.push_back(vertical_ ? std::vector<std::array<double, 2>>{{0, y[i]}, {1, y[i]}}
+                                         : std::vector<std::array<double, 2>>{{y[i], 0}, {y[i], 1}});
+            colours.push_back(colors::Spec(std::vector<double>(rgba[i].begin(), rgba[i].end())));
+            widths.push_back(lw[i % lw.size()]);
+        }
+        if (widths.empty()) return *error = "zero-size array to reduction operation maximum which has no identity", false;
+        auto col = std::make_unique<LineCollection>(ax_.rc(), segments);
+        col->setLinewidths(widths);
+        col->setEdgecolor(ColorArg{ColorArg::Colors, colours});
+        // the clip path: the Axes' unit square, its bottom lowered and its top raised by the widest line, in inches
+        const double fac = *std::max_element(widths.begin(), widths.end()) / 72;
+        const transforms::Matrix toDisplay = ax_.transAxes->matrix(), fromDisplay = transforms::inverse(toDisplay);
+        const transforms::Matrix inches = ax_.figure.dpiScaleTrans->matrix(), fromInches = transforms::inverse(inches);
+        std::vector<double> xy{0, 0, 1, 0, 1, 1, 0, 1, 0, 0};
+        for (std::size_t k = 0; k < 5; ++k) {
+            const auto display = transforms::apply(toDisplay, xy[2 * k], xy[2 * k + 1]);
+            auto p = transforms::apply(fromInches, display[0], display[1]);
+            p[1] += (k == 2 || k == 3) ? fac : -fac;
+            const auto d = transforms::apply(inches, p[0], p[1]);
+            const auto a = transforms::apply(fromDisplay, d[0], d[1]);
+            xy[2 * k] = a[0], xy[2 * k + 1] = a[1];
+        }
+        col->clipPath = ClipPath{Path::make(xy, {}, ax_.rc(), true), ax_.transAxes};
+        ax_.addCollection(std::move(col), false);
+        return true;
     }
 
     // Whether the mappable is a contour set with a hatch
