@@ -33,3 +33,7 @@ where the bin rules treat them otherwise):
 - **float32 logarithm** (src/support/npy_logf.cpp): loops_exponent_log.dispatch.c.src's simd_log_FLOAT for AVX2 and
   FMA (the reference machine's np.log of float32 arrays) with npy_simd_data.h's coefficients, translated from vector
   intrinsics to one lane at a time in standard C++ (std::fma for the fused multiply-adds).
+- **str() of float arrays** (src/support/numpy_str.cpp): arrayprint.py's array2string and FloatingFormat with the
+  default print options (precision 8, floatmode 'maxprec'), for 2-D float64 arrays of finite values whose rows fit
+  the line width (no wrapping, no non-finite values), with dragon4.c's rounding: the shortest digits, or the value
+  correctly rounded at the precision when those need more (here through pythonRepr, fixed and printf's %.8e).

@@ -589,6 +589,8 @@
     "src/support/histogram.cpp",
     "src/support/npy_logf.cpp",
     "src/support/npy_logf.hpp",
+    "src/support/numpy_str.cpp",
+    "src/support/numpy_str.hpp",
     "src/support/pylambda.cpp",
     "src/support/pylambda.hpp",
     "src/support/pynum.cpp"

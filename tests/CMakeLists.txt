@@ -21,6 +21,7 @@ add_executable(calculate-plot-tests
     test_shared_axes.cpp
     test_transform_algebra.cpp
     test_log10.cpp
+    test_transform_str.cpp
     test_savefig.cpp
     test_font_manager.cpp
     test_cycler.cpp

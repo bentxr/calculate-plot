@@ -11,6 +11,7 @@
 #include <cmath>
 #include <memory>
 #include <optional>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -40,6 +41,8 @@ class BboxBase {
 public:
     virtual ~BboxBase() = default;
     virtual std::array<double, 4> points() const = 0;  // x0, y0, x1, y1
+    // str(): Bbox.__format__ or the tree _make_str_method prints; nothing for a box not ported
+    virtual std::optional<std::string> str() const { return std::nullopt; }
     std::array<double, 4> bounds() const;              // x0, y0, width, height
     double width() const;
     double height() const;
@@ -53,6 +56,7 @@ public:
     static std::shared_ptr<Bbox> fromExtents(double x0, double y0, double x1, double y1);
     std::array<double, 4> points() const override { return points_; }
     void setPoints(std::array<double, 4> points) { points_ = points; }
+    std::optional<std::string> str() const override;
 
 private:
     std::array<double, 4> points_;
@@ -66,6 +70,7 @@ class TransformedBbox : public BboxBase {
 public:
     TransformedBbox(BboxPtr bbox, TransformPtr transform) : bbox_(std::move(bbox)), transform_(std::move(transform)) {}
     std::array<double, 4> points() const override;
+    std::optional<std::string> str() const override;
 
 private:
     BboxPtr bbox_;
@@ -102,6 +107,9 @@ public:
     virtual std::vector<std::pair<TransformPtr, TransformPtr>> breaks() const;
     // contains_branch: `other` is a sub-tree of this transform (by transform equality)
     virtual bool containsBranch(const Transform& other) const;
+    // str(): the tree _make_str_method prints (RendererSVG hashes it for clip path ids); nothing for a transform
+    // whose text is not ported
+    virtual std::optional<std::string> str() const { return std::nullopt; }
 };
 
 // a == b in Python: a's __eq__, then b's, then identity.
@@ -240,6 +248,7 @@ public:
     Affine2D& translate(double tx, double ty);
     Affine2D& rotate(double theta);
     Affine2D& rotateDeg(double degrees);
+    std::optional<std::string> str() const override;
 
 private:
     Matrix m_;
@@ -249,6 +258,7 @@ class IdentityTransform : public Transform {
 public:
     Matrix matrix() const override { return {}; }
     bool isIdentity() const override { return true; }
+    std::optional<std::string> str() const override { return std::string("IdentityTransform()"); }
 };
 
 class BboxTransformTo : public Transform {
@@ -258,6 +268,7 @@ public:
     // _boxout, which saving a part of the figure replaces for a while (_tight_bbox.adjust_bbox)
     const BboxPtr& boxout() const { return boxout_; }
     void setBoxout(BboxPtr boxout) { boxout_ = std::move(boxout); }
+    std::optional<std::string> str() const override;
 
 private:
     BboxPtr boxout_;
@@ -267,6 +278,7 @@ class BboxTransformFrom : public Transform {
 public:
     explicit BboxTransformFrom(BboxPtr boxin) : boxin_(std::move(boxin)) {}
     Matrix matrix() const override;
+    std::optional<std::string> str() const override;
 
 private:
     BboxPtr boxin_;
@@ -276,6 +288,7 @@ class BboxTransform : public Transform {
 public:
     BboxTransform(BboxPtr boxin, BboxPtr boxout) : boxin_(std::move(boxin)), boxout_(std::move(boxout)) {}
     Matrix matrix() const override;
+    std::optional<std::string> str() const override;
 
 private:
     BboxPtr boxin_, boxout_;
@@ -297,6 +310,7 @@ public:
     std::optional<bool> eq(const Transform& other) const override;  // _BlendedMixin.__eq__
     // BlendedGenericTransform.inverted: the blend of the two inverses (BlendedAffine2D inverts its matrix)
     TransformPtr inverted() const override;
+    std::optional<std::string> str() const override;
     int depth() const override { return generic_ ? std::max(x_->depth(), y_->depth()) : 1; }
     // BlendedGenericTransform never contains a branch
     bool containsBranch(const Transform& other) const override { return generic_ ? false : Transform::containsBranch(other); }
@@ -325,6 +339,7 @@ public:
     std::optional<bool> eq(const Transform& other) const override;  // CompositeGenericTransform.__eq__ when generic
     int depth() const override { return a_->depth() + b_->depth(); }
     std::vector<std::pair<TransformPtr, TransformPtr>> breaks() const override;
+    std::optional<std::string> str() const override;
 
 private:
     TransformPtr a_, b_;
@@ -356,6 +371,7 @@ public:
     std::array<double, 2> transformNonAffineMasked(double x, double y) const override { return child_->transformNonAffineMasked(x, y); }
     TransformPtr inverted() const override { return child_->inverted(); }
     std::optional<bool> eq(const Transform& other) const override { return child_->eq(other); }
+    std::optional<std::string> str() const override;
 
 private:
     TransformPtr child_;

@@ -5,6 +5,9 @@
 
 #include "transforms/transforms.hpp"
 
+#include "support/numpy_str.hpp"
+#include "support/pyformat.hpp"
+
 #include <functional>
 #include <limits>
 
@@ -426,5 +429,62 @@ TransformPtr CompositeTransform::inverted() const {
 TransformPtr blend(const TransformPtr& x, const TransformPtr& y) {
     return std::make_shared<BlendedAffine2D>(x, y, !(x->isAffine2DBase() && y->isAffine2DBase()));
 }
+
+// _make_str_method(*args): the class name, then each part on its own lines indented by four spaces
+// (textwrap.indent leaves blank lines alone); nothing when a part has no text
+namespace {
+
+std::optional<std::string> strMethod(const std::string& name, const std::vector<std::optional<std::string>>& parts) {
+    std::string out = name + "(";
+    for (std::size_t i = 0; i < parts.size(); ++i) {
+        if (!parts[i]) return std::nullopt;
+        if (i) out += ",";
+        const std::string text = "\n" + *parts[i];
+        std::size_t start = 0;
+        while (start < text.size()) {
+            const std::size_t end = std::min(text.find('\n', start), text.size() - 1) + 1;
+            const std::string line = text.substr(start, end - start);
+            if (line.find_first_not_of(" \t\r\n\f\v") != std::string::npos) out += "    ";
+            out += line;
+            start = end;
+        }
+    }
+    return out + ")";
+}
+
+}  // namespace
+
+std::optional<std::string> Bbox::str() const {
+    // Bbox.__format__ with no format: each corner coordinate as str() of a float64 (its repr)
+    return "Bbox(x0=" + support::pythonRepr(points_[0]) + ", y0=" + support::pythonRepr(points_[1]) +
+           ", x1=" + support::pythonRepr(points_[2]) + ", y1=" + support::pythonRepr(points_[3]) + ")";
+}
+
+std::optional<std::string> TransformedBbox::str() const { return strMethod("TransformedBbox", {bbox_->str(), transform_->str()}); }
+
+std::optional<std::string> Affine2D::str() const {
+    // the matrix printed by NumPy, or the scale it is when it has nothing off its diagonal
+    const bool diagonal = m_.shx == 0 && m_.tx == 0 && m_.shy == 0 && m_.ty == 0 && m_.sx == m_.sx && m_.sy == m_.sy;
+    if (!diagonal)
+        return strMethod("Affine2D", {support::numpyStr({{m_.sx, m_.shx, m_.tx}, {m_.shy, m_.sy, m_.ty}, {0.0, 0.0, 1.0}})});
+    if (m_.sx != m_.sy) return "Affine2D().scale(" + support::pythonRepr(m_.sx) + ", " + support::pythonRepr(m_.sy) + ")";
+    return "Affine2D().scale(" + support::pythonRepr(m_.sx) + ")";
+}
+
+std::optional<std::string> BboxTransformTo::str() const { return strMethod("BboxTransformTo", {boxout_->str()}); }
+
+std::optional<std::string> BboxTransformFrom::str() const { return strMethod("BboxTransformFrom", {boxin_->str()}); }
+
+std::optional<std::string> BboxTransform::str() const { return strMethod("BboxTransform", {boxin_->str(), boxout_->str()}); }
+
+std::optional<std::string> BlendedAffine2D::str() const {
+    return strMethod(generic_ ? "BlendedGenericTransform" : "BlendedAffine2D", {x_->str(), y_->str()});
+}
+
+std::optional<std::string> CompositeTransform::str() const {
+    return strMethod(generic_ ? "CompositeGenericTransform" : "CompositeAffine2D", {a_->str(), b_->str()});
+}
+
+std::optional<std::string> TransformWrapper::str() const { return strMethod("TransformWrapper", {child_->str()}); }
 
 }  // namespace calculate_plot::transforms

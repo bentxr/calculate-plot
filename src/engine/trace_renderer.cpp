@@ -529,10 +529,21 @@ void SvgTraceRenderer::writeSvgGc(const GC& gc) {
 }
 
 void SvgTraceRenderer::writeClipTransform(const GC& gc) {
-    // str() of the clip path's transform tree, which the clip path's id hashes; it comes with the
-    // first clipped artists.
-    if (gc.clippath) error_ = "SVG traces of clipped artists are not supported yet";
-    events_.null();
+    // str() of the clip path's transform tree with RendererSVG's flip (_make_flip_transform), which the clip
+    // path's id hashes
+    if (!gc.clippath) {
+        events_.null();
+        return;
+    }
+    auto flip = std::make_shared<transforms::Affine2D>();
+    flip->scale(1, -1).translate(0, height());
+    const auto text = transforms::compose(gc.clippath->affine, flip)->str();
+    if (!text) {
+        error_ = "SVG traces of artists clipped through this transform are not supported yet";
+        events_.null();
+        return;
+    }
+    events_.value(*text);
 }
 
 void SvgTraceRenderer::drawPath(const GC& gc, const Path& path, const transforms::Matrix& affine,

@@ -48,6 +48,8 @@ it comes from in its first lines. The changes, as a whole:
   to C++ (matrices computed on demand rather than cached and invalidated; the same values). np.dot is reproduced
   (accumulating from +0.0) and numpy.linalg.inv by an LU solve that multiplies by pivot reciprocals as NumPy's
   OpenBLAS does; composites keep matplotlib's distinction between CompositeAffine2D and CompositeGenericTransform.
+  str() of the boxes and of these transforms (_make_str_method, Bbox.__format__, Affine2D.__str__'s scale shorthand)
+  as RendererSVG hashes it for clip path ids; a transform without it (the scales') returns nothing.
   Non-affine transforms are supported for log scales: LogTransform/InvertedLogTransform (one-dimensional, used
   inside blended transforms), BlendedGenericTransform, CompositeGenericTransform's non-affine part and get_affine.
 - **Font manager** (src/text/font_manager, data/fonts.json): font_manager.py's FontProperties defaults, font
