@@ -297,7 +297,10 @@ it comes from in its first lines. The changes, as a whole:
   Violins: mlab.GaussianKDE (one-dimensional), cbook.violin_stats and delete_masked_points (src/engine/violin.*),
   Axes.violinplot and Axes.violin (the classic style is refused); Collection.set_capstyle for LineCollections.
   Aspect: Axes.set_aspect with adjustable 'box' and apply_aspect (get_data_ratio, Bbox.shrunk_to_aspect and
-  anchored) at the start of draw and get_tightbbox; the original and the active position kept apart.
+  anchored) at the start of draw and get_tightbbox; the original and the active position kept apart. Later
+  apply_aspect's adjustable 'datalim' branch (set_xbound / set_ybound of the limits grown to the aspect),
+  set_adjustable, Axes.axis (option strings, limits), margins, set_xmargin / set_ymargin, locator_params with
+  MaxNLocator.set_params and FixedLocator.set_params.
   Ticks: Axis.set_ticks (FixedLocator, set_view_interval without ignore on the shared axes) and set_ticklabels
   (NullFormatter, or a FuncFormatter of a dict of labels); set_frame_on.
   Pies: Path.arc, patches.Wedge, Shadow's zorder, Axes.pie and Axes.pie_label; the data limits of curved
