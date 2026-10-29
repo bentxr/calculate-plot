@@ -86,6 +86,12 @@ public:
     std::string capstyle = "butt";
     std::string joinstyle = "miter";
 
+    // _edge_default (a class's own, as FancyArrow's): an edge of rcParams["patch.edgecolor"] by default; the edge
+    // colour made again
+    void setEdgeDefault(bool on) {
+        edgeDefault_ = on;
+        setEdgecolor(std::nullopt);
+    }
     // Patch.set_alpha: the colours are made again (`isInt`: the alpha was a Python int)
     void setAlpha(std::optional<double> a, bool isInt = false);
     // What HandlerPolyCollection._update_prop sets directly: the resolved colours (no alpha applied)

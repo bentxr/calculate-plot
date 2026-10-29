@@ -219,7 +219,7 @@ public:
             {"hlines", "hlines"}, {"vlines", "vlines"}, {"grid", "grid"}, {"legend", "legend"}, {"text", "text"},
             {"title", "set_title"}, {"xlabel", "set_xlabel"}, {"ylabel", "set_ylabel"}, {"xlim", "set_xlim"},
             {"ylim", "set_ylim"}, {"xscale", "set_xscale"}, {"yscale", "set_yscale"}, {"bar", "bar"}, {"barh", "barh"},
-            {"hist", "hist"}, {"fill", "fill"}, {"step", "step"}, {"stairs", "stairs"}, {"stem", "stem"}, {"boxplot", "boxplot"}, {"violinplot", "violinplot"}, {"pie", "pie"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}, {"imshow", "imshow"}, {"matshow", "matshow"}, {"spy", "spy"}, {"pcolormesh", "pcolormesh"}, {"pcolor", "pcolor"}, {"contour", "contour"}, {"contourf", "contourf"}, {"clabel", "clabel"}, {"hexbin", "hexbin"}, {"quiver", "quiver"}, {"quiverkey", "quiverkey"}, {"barbs", "barbs"}, {"streamplot", "streamplot"}, {"triplot", "triplot"}, {"tripcolor", "tripcolor"}, {"tricontour", "tricontour"}, {"tricontourf", "tricontourf"}, {"stackplot", "stackplot"}, {"broken_barh", "broken_barh"}, {"axline", "axline"}, {"eventplot", "eventplot"}};
+            {"hist", "hist"}, {"fill", "fill"}, {"step", "step"}, {"stairs", "stairs"}, {"stem", "stem"}, {"boxplot", "boxplot"}, {"violinplot", "violinplot"}, {"pie", "pie"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}, {"imshow", "imshow"}, {"matshow", "matshow"}, {"spy", "spy"}, {"pcolormesh", "pcolormesh"}, {"pcolor", "pcolor"}, {"contour", "contour"}, {"contourf", "contourf"}, {"clabel", "clabel"}, {"hexbin", "hexbin"}, {"quiver", "quiver"}, {"quiverkey", "quiverkey"}, {"barbs", "barbs"}, {"streamplot", "streamplot"}, {"triplot", "triplot"}, {"tripcolor", "tripcolor"}, {"tricontour", "tricontour"}, {"tricontourf", "tricontourf"}, {"stackplot", "stackplot"}, {"broken_barh", "broken_barh"}, {"axline", "axline"}, {"eventplot", "eventplot"}, {"arrow", "arrow"}};
         return ofAxes;
     }
 
@@ -1919,6 +1919,7 @@ private:
         if (call.method == "stackplot") return stackplot(ax, call, error);
         if (call.method == "broken_barh") return brokenBarh(ax, call, error);
         if (call.method == "eventplot") return eventplot(ax, call, error);
+        if (call.method == "arrow") return arrow(ax, call, error);
         if (call.method == "tripcolor") return tripcolor(ax, call, error) && noteMappable(ax, call);
         if (call.method == "clabel") {
             const Json* cs = argument(call, 0, "CS");
@@ -5308,6 +5309,88 @@ private:
             else ax.updateDatalim({{minline, minpos}, {maxline, maxpos}});
             ax.requestAutoscaleView(true, true);
         }
+        return true;
+    }
+
+    // Axes.arrow(x, y, dx, dy, **kwargs): a FancyArrow (width=0.001, length_includes_head=False, head_width=None,
+    // head_length=None, shape='full', overhang=0, head_starts_at_zero=False): a closed Polygon of the arrow's outline
+    bool arrow(Axes& ax, const model::Call& call, std::string* error) {
+        const std::string where = call.on + "." + call.method;
+        static const char* const names[4] = {"x", "y", "dx", "dy"};
+        if (call.args.size() > 4) return *error = where + ": arrow() takes 4 positional arguments", false;
+        double v[4] = {0, 0, 0, 0};
+        for (std::size_t i = 0; i < 4; ++i) {
+            const Json* j = argument(call, i, names[i]);
+            if (!j) return *error = where + ": arrow() missing required argument '" + names[i] + "'", false;
+            if (!readNumber(*j, &v[i])) return *error = where + ": " + names[i] + " must be a number", false;
+        }
+        const double x = v[0], y = v[1], dx = v[2], dy = v[3];
+        double width = 0.001, overhang = 0;
+        std::optional<double> headWidth, headLength;
+        bool includesHead = false, startsAtZero = false;
+        std::string shape = "full";
+        std::vector<std::pair<std::string, const Json*>> rest;
+        for (const auto& [name, value] : ownFirst(call, {"edgecolor", "facecolor", "color", "linewidth", "linestyle"})) {
+            if (name == "x" || name == "y" || name == "dx" || name == "dy") continue;
+            double n = 0;
+            if (name == "width" || name == "overhang") {
+                if (!readNumber(*value, &n)) return *error = where + ": " + name + " must be a number", false;
+                (name == "width" ? width : overhang) = n;
+            } else if (name == "head_width" || name == "head_length") {
+                if (value->isNull()) continue;
+                if (!readNumber(*value, &n)) return *error = where + ": " + name + " must be a number", false;
+                (name == "head_width" ? headWidth : headLength) = n;
+            } else if (name == "length_includes_head" || name == "head_starts_at_zero") {
+                if (!value->isBool()) return *error = where + ": " + name + " must be True or False", false;
+                (name == "length_includes_head" ? includesHead : startsAtZero) = value->asBool();
+            } else if (name == "shape") {
+                if (!value->isString()) return *error = where + ": Got unknown shape: " + repr(*value), false;
+                shape = value->asString();
+            } else {
+                rest.emplace_back(name, value);
+            }
+        }
+        // _make_verts
+        const double hw = headWidth ? *headWidth : 3 * width;
+        const double hl = headLength ? *headLength : 1.5 * hw;
+        const double distance = std::hypot(dx, dy);
+        const double length = includesHead ? distance : distance + hl;
+        std::vector<std::array<double, 2>> left{{0.0, 0.0}, {-hl, -hw / 2}, {-hl * (1 - overhang), -width / 2}, {-length, -width / 2}, {-length, 0}};
+        if (!includesHead)
+            for (auto& p : left) p[0] += hl;
+        if (startsAtZero)
+            for (auto& p : left) p[0] += hl / 2;
+        std::vector<std::array<double, 2>> coords;
+        if (shape == "left") {
+            coords = left;
+        } else {
+            std::vector<std::array<double, 2>> right;
+            for (const auto& p : left) right.push_back({p[0], p[1] * -1});
+            if (shape == "right") {
+                coords = right;
+            } else if (shape == "full") {
+                coords.assign(left.begin(), left.end() - 1);
+                for (std::size_t k = right.size() - 1; k-- > 0;) coords.push_back(right[k]);
+            } else {
+                return *error = where + ": Got unknown shape: '" + shape + "'", false;
+            }
+        }
+        double cx = 0, sx = 1;
+        if (distance != 0) cx = dx / distance, sx = dy / distance;
+        // np.dot(coords, [[cx, sx], [-sx, cx]]) as BLAS's dgemm sums (fused, from +0.0), then the tip's position
+        std::vector<double> xy;
+        for (const auto& p : coords) {
+            const double u = std::fma(p[1], -sx, std::fma(p[0], cx, 0.0));
+            const double w = std::fma(p[1], cx, std::fma(p[0], sx, 0.0));
+            xy.push_back(u + (x + dx));
+            xy.push_back(w + (y + dy));
+        }
+        auto poly = std::make_unique<Polygon>(rc_, xy, true);
+        poly->setEdgeDefault(true);  // FancyArrow._edge_default
+        for (const auto& [name, value] : rest)
+            if (!patchProperty(*poly, name, *value, where, error)) return false;
+        ax.addPatch(std::move(poly));
+        ax.requestAutoscaleView(true, true);
         return true;
     }
 

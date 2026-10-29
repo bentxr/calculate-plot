@@ -373,7 +373,8 @@ it comes from in its first lines. The changes, as a whole:
   style_generator, the bands through Axes.fill_between. axes/_axes.py's broken_barh, with collections.py's
   Collection.get_datalim for PolyCollection (the paths' extents when the transform contains transData).
   axes/_axes.py's axline with lines.py's AxLine (get_transform made at each drawing; src/engine/lines.cpp), and
-  eventplot with collections.py's EventCollection (set_positions) as a LineCollection.
+  eventplot with collections.py's EventCollection (set_positions) as a LineCollection, and arrow with
+  patches.py's FancyArrow (_make_verts; np.dot as BLAS's dgemm sums) as a Polygon.
 - **Meshes** (src/engine/collections.cpp QuadMesh and PolyQuadMesh, src/engine/engine.cpp pcolormesh, pcolor,
   pcolorfast; src/engine/image.cpp PcolorImage): collections.py's _MeshData, PolyQuadMesh and QuadMesh (_convert_mesh_to_triangles for Gouraud shading, draw), backend_bases.py's RendererBase.draw_quad_mesh
   (the SVG renderer's path collection of the cells), axes/_axes.py's pcolormesh, pcolor, pcolorfast,
