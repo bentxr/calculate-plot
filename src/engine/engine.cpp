@@ -219,7 +219,7 @@ public:
             {"hlines", "hlines"}, {"vlines", "vlines"}, {"grid", "grid"}, {"legend", "legend"}, {"text", "text"},
             {"title", "set_title"}, {"xlabel", "set_xlabel"}, {"ylabel", "set_ylabel"}, {"xlim", "set_xlim"},
             {"ylim", "set_ylim"}, {"xscale", "set_xscale"}, {"yscale", "set_yscale"}, {"bar", "bar"}, {"barh", "barh"},
-            {"hist", "hist"}, {"fill", "fill"}, {"step", "step"}, {"stairs", "stairs"}, {"stem", "stem"}, {"boxplot", "boxplot"}, {"violinplot", "violinplot"}, {"pie", "pie"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}, {"imshow", "imshow"}, {"matshow", "matshow"}, {"spy", "spy"}, {"pcolormesh", "pcolormesh"}, {"pcolor", "pcolor"}, {"contour", "contour"}, {"contourf", "contourf"}, {"clabel", "clabel"}, {"hexbin", "hexbin"}, {"quiver", "quiver"}, {"quiverkey", "quiverkey"}, {"barbs", "barbs"}, {"streamplot", "streamplot"}, {"triplot", "triplot"}, {"tripcolor", "tripcolor"}, {"tricontour", "tricontour"}, {"tricontourf", "tricontourf"}};
+            {"hist", "hist"}, {"fill", "fill"}, {"step", "step"}, {"stairs", "stairs"}, {"stem", "stem"}, {"boxplot", "boxplot"}, {"violinplot", "violinplot"}, {"pie", "pie"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}, {"imshow", "imshow"}, {"matshow", "matshow"}, {"spy", "spy"}, {"pcolormesh", "pcolormesh"}, {"pcolor", "pcolor"}, {"contour", "contour"}, {"contourf", "contourf"}, {"clabel", "clabel"}, {"hexbin", "hexbin"}, {"quiver", "quiver"}, {"quiverkey", "quiverkey"}, {"barbs", "barbs"}, {"streamplot", "streamplot"}, {"triplot", "triplot"}, {"tripcolor", "tripcolor"}, {"tricontour", "tricontour"}, {"tricontourf", "tricontourf"}, {"stackplot", "stackplot"}};
         return ofAxes;
     }
 
@@ -1915,6 +1915,7 @@ private:
         if (call.method == "barbs") return barbs(ax, call, error) && noteMappable(ax, call);
         if (call.method == "streamplot") return streamplot(ax, call, error);
         if (call.method == "triplot") return triplot(ax, call, error);
+        if (call.method == "stackplot") return stackplot(ax, call, error);
         if (call.method == "tripcolor") return tripcolor(ax, call, error) && noteMappable(ax, call);
         if (call.method == "clabel") {
             const Json* cs = argument(call, 0, "CS");
@@ -4854,6 +4855,158 @@ private:
         ax.requestAutoscaleView(true, true);
         ax.unstaleViewLim();
         ax.addCollection(std::move(col), false);
+        return true;
+    }
+
+    // stackplot(x, *args, labels=(), colors=None, baseline='zero', **kwargs): the data sets stacked (np.cumsum in
+    // float64) over a baseline, each band a fill_between; facecolor (the colours given, else the lines' cycle),
+    // edgecolor, hatch and linewidth cycle over the bands (_style_helpers.style_generator)
+    bool stackplot(Axes& ax, const model::Call& call, std::string* error) {
+        const std::string where = call.on + "." + call.method;
+        if (call.args.size() < 2) return *error = where + ": stackplot() needs x and at least one data set", false;
+        if (!call.as.empty()) return *error = where + ": naming stackplot's collections is not supported yet", false;
+        std::vector<double> x;
+        if (!numbers(call.args[0], &x)) return *error = where + ": x must be a list of numbers", false;
+        std::vector<std::vector<double>> y;
+        for (std::size_t i = 1; i < call.args.size(); ++i) {
+            const Json* seq = sequence(call.args[i]);
+            std::vector<double> row;
+            if (seq && seq->size() && sequence((*seq)[0])) {  // a 2-D array: its rows
+                for (const Json& r : seq->items()) {
+                    if (!numbers(r, &row) || row.size() != x.size()) return *error = where + ": the data sets must be as long as x", false;
+                    y.push_back(row);
+                }
+                continue;
+            }
+            if (!numbers(call.args[i], &row) || row.size() != x.size()) return *error = where + ": the data sets must be as long as x", false;
+            y.push_back(row);
+        }
+        const std::size_t m = y.size(), n = x.size();
+        std::vector<std::string> labels;
+        std::string baseline = "zero";
+        const Json* colorsJson = nullptr;
+        std::vector<std::pair<std::string, Json>> rest;
+        std::vector<std::pair<std::string, std::vector<Json>>> cycles;  // the style keywords, in their order
+        for (const auto& [rawName, value] : call.kwargs) {
+            if (rawName == "labels") {
+                const Json* seq = sequence(value);
+                if (!seq) return *error = where + ": labels must be a list of strings", false;
+                for (const Json& l : seq->items()) {
+                    if (!l.isString()) return *error = where + ": labels must be strings", false;
+                    labels.push_back(l.asString());
+                }
+                continue;
+            }
+            if (rawName == "colors") {
+                if (!value.isNull()) colorsJson = &value;
+                continue;
+            }
+            if (rawName == "baseline") {
+                if (!value.isString() || (value.asString() != "zero" && value.asString() != "sym" && value.asString() != "wiggle" &&
+                                          value.asString() != "weighted_wiggle"))
+                    return *error = where + ": " + repr(value) + " is not a valid value for baseline; supported values are 'zero', 'sym', 'wiggle', 'weighted_wiggle'", false;
+                baseline = value.asString();
+                continue;
+            }
+            const std::string name = fullName(rawName, collectionAliases());  // normalize_kwargs(kwargs, PolyCollection)
+            if (name == "linestyle") return *error = where + ": linestyle in stackplot is not supported yet", false;
+            if (name != "facecolor" && name != "edgecolor" && name != "hatch" && name != "linewidth") {
+                rest.emplace_back(name, value);
+                continue;
+            }
+            std::vector<Json> items;
+            std::string lower = value.isString() ? value.asString() : "";
+            for (char& ch : lower) ch = char(std::tolower(static_cast<unsigned char>(ch)));
+            const Json* seq = value.isString() ? nullptr : sequence(value);
+            if (seq && seq->items().empty()) return *error = where + ": " + name + " must not be an empty sequence", false;
+            if ((name == "facecolor" || name == "edgecolor") && !(value.isNull() || lower == "none")) {
+                std::vector<colors::Spec> list;  // itertools.cycle(to_rgba_array(value))
+                if (!colorList(value, &list)) return *error = where + ": " + name + " is not a colour", false;
+                for (const auto& c : list) {
+                    const auto rgba = colors::toRgba(c, std::nullopt, rc_, nullptr);
+                    if (!rgba) return *error = where + ": " + name + " is not a colour", false;
+                    items.push_back(colorJson(std::vector<double>(rgba->begin(), rgba->end())));
+                }
+            } else if ((name == "hatch" || name == "linewidth") && seq) {
+                items = seq->items();  // itertools.cycle(np.atleast_1d(value))
+            } else {
+                items = {value};
+            }
+            cycles.emplace_back(name, items);
+        }
+        // colors=None: one colour of the lines' cycle per data set; facecolor defaults to the colours
+        bool faceGiven = false;
+        for (const auto& c : cycles) faceGiven = faceGiven || c.first == "facecolor";
+        std::vector<colors::Spec> palette;
+        if (colorsJson) {
+            if (!colorList(*colorsJson, &palette)) return *error = where + ": colors must be colours", false;
+        } else {
+            for (std::size_t i = 0; i < m; ++i) palette.push_back(ax.nextLineColor());
+        }
+        if (!faceGiven) {
+            std::vector<Json> items;
+            for (const auto& c : palette) {
+                const auto rgba = colors::toRgba(c, std::nullopt, rc_, nullptr);
+                if (!rgba) return *error = where + ": colors must be colours", false;
+                items.push_back(colorJson(std::vector<double>(rgba->begin(), rgba->end())));
+            }
+            if (items.empty()) return *error = where + ": facecolor must not be an empty sequence", false;
+            cycles.emplace_back("facecolor", items);  // (kwargs.setdefault: after the others)
+        }
+        // the stack and its first line
+        std::vector<std::vector<double>> stack = y;
+        for (std::size_t i = 1; i < m; ++i)
+            for (std::size_t j = 0; j < n; ++j) stack[i][j] = stack[i - 1][j] + y[i][j];
+        std::vector<double> firstLine(n, 0.0);
+        bool scalarFirst = baseline == "zero";
+        if (baseline == "sym") {
+            for (std::size_t j = 0; j < n; ++j) {
+                double sum = 0;
+                for (std::size_t i = 0; i < m; ++i) sum += y[i][j];
+                firstLine[j] = -sum * 0.5;
+            }
+        } else if (baseline == "wiggle") {
+            for (std::size_t j = 0; j < n; ++j) {
+                double sum = 0;
+                for (std::size_t i = 0; i < m; ++i) sum += y[i][j] * ((double(m) - 0.5) - double(i));
+                firstLine[j] = sum / -double(m);
+            }
+        } else if (baseline == "weighted_wiggle") {
+            std::vector<double> total(n, 0.0), inv(n, 0.0), centerSum(n, 0.0);
+            for (std::size_t j = 0; j < n; ++j) {
+                for (std::size_t i = 0; i < m; ++i) total[j] += y[i][j];
+                if (total[j] > 0) inv[j] = 1.0 / total[j];
+            }
+            for (std::size_t i = 0; i < m; ++i)
+                for (std::size_t j = 0; j < n; ++j) {
+                    const double increase = j == 0 ? y[i][0] : y[i][j] - y[i][j - 1];
+                    double below = total[j] - stack[i][j];
+                    below += 0.5 * y[i][j];
+                    const double moveUp = j == 0 ? 0.5 : below * inv[j];
+                    centerSum[j] += (moveUp - 0.5) * increase;  // center.sum(0)
+                }
+            double acc = 0;
+            for (std::size_t j = 0; j < n; ++j) {
+                acc += centerSum[j];  // np.cumsum
+                firstLine[j] = acc - 0.5 * total[j];
+            }
+        }
+        if (!scalarFirst)
+            for (auto& row : stack)
+                for (std::size_t j = 0; j < n; ++j) row[j] += firstLine[j];
+        // the bands
+        for (std::size_t i = 0; i < m; ++i) {
+            model::Call f;
+            f.on = call.on;
+            f.method = "fill_between";
+            f.args = {numbersJson(x), i == 0 ? (scalarFirst ? Json::real(0.0) : numbersJson(firstLine)) : numbersJson(stack[i - 1]),
+                      numbersJson(stack[i])};
+            if (i < labels.size()) f.kwargs.emplace_back("label", Json::string(labels[i]));
+            for (const auto& [name, items] : cycles) f.kwargs.emplace_back(name, items[i % items.size()]);
+            for (const auto& kw : rest) f.kwargs.push_back(kw);
+            if (!fillBetween(ax, f, error)) return false;
+            if (i == 0) ax.children.back()->stickyY = {0.0};  // coll.sticky_edges.y[:] = [0]
+        }
         return true;
     }
 

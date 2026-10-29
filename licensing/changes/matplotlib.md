@@ -369,6 +369,8 @@ it comes from in its first lines. The changes, as a whole:
   are in src/engine/engine.cpp, collections.py's TriMesh in src/engine/collections.cpp. src/tri/_tri.cpp's
   TriContourGenerator is src/tri/tri_contour.cpp (vectors for the NumPy arrays); tri/_tricontour.py's TriContourSet
   (_contour_args) joins src/engine/contour_set.cpp's ContourSet as its triangulation input.
+- **Stacked areas** (src/engine/engine.cpp stackplot): stackplot.py's stackplot with _style_helpers.py's
+  style_generator, the bands through Axes.fill_between.
 - **Meshes** (src/engine/collections.cpp QuadMesh and PolyQuadMesh, src/engine/engine.cpp pcolormesh, pcolor,
   pcolorfast; src/engine/image.cpp PcolorImage): collections.py's _MeshData, PolyQuadMesh and QuadMesh (_convert_mesh_to_triangles for Gouraud shading, draw), backend_bases.py's RendererBase.draw_quad_mesh
   (the SVG renderer's path collection of the cells), axes/_axes.py's pcolormesh, pcolor, pcolorfast,
