@@ -18,5 +18,7 @@ NpyComplex npyMultiply(NpyComplex a, NpyComplex b);
 // np.abs of a complex128 value on x86 with AVX2 and FMA (simd_cabsolute_f64): the larger part times
 // sqrt(1 + ratio ** 2), the square fused; infinities and NaN as it treats them
 double npyAbsolute(NpyComplex z);
+// complex128 division (loops.c.src's CDOUBLE_divide, Smith's method: by a real b, a times 1 / b)
+NpyComplex npyDivide(NpyComplex a, NpyComplex b);
 
 }  // namespace calculate_plot::support

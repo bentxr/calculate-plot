@@ -1,5 +1,6 @@
 // Derived from NumPy 2.5.3: numpy/_core/src/umath/loops_arithm_fp.dispatch.c.src (simd_cmul_f64) and
-// numpy/_core/src/umath/loops_unary_complex.dispatch.c.src (simd_cabsolute_f64).
+// numpy/_core/src/umath/loops_unary_complex.dispatch.c.src (simd_cabsolute_f64) and
+// numpy/_core/src/umath/loops.c.src (CDOUBLE_divide).
 // Copyright (c) 2005-2025, NumPy Developers. All rights reserved.
 // Licence: LICENSES/NumPy.txt. Changes: licensing/changes/numpy.md
 
@@ -29,6 +30,19 @@ double npyAbsolute(NpyComplex z) {
     const double smaller = im < re ? im : re;  // npyv_min_f64(im, re)
     const double ratio = larger == 0 || smaller == inf ? 0.0 : smaller / larger;  // npyv_ifdivz_f64
     return std::sqrt(std::fma(ratio, ratio, 1.0)) * larger;
+}
+
+NpyComplex npyDivide(NpyComplex a, NpyComplex b) {
+    const double absr = std::fabs(b.re), absi = std::fabs(b.im);
+    if (absr >= absi) {
+        if (absr == 0 && absi == 0) return {a.re / absr, a.im / absi};  // a complex infinity or NaN
+        const double rat = b.im / b.re;
+        const double scl = 1.0 / (b.re + b.im * rat);
+        return {(a.re + a.im * rat) * scl, (a.im - a.re * rat) * scl};
+    }
+    const double rat = b.re / b.im;
+    const double scl = 1.0 / (b.im + b.re * rat);
+    return {(a.re * rat + a.im) * scl, (a.im * rat - a.re) * scl};
 }
 
 }  // namespace calculate_plot::support

@@ -377,6 +377,11 @@ it comes from in its first lines. The changes, as a whole:
   patches.py's FancyArrow (_make_verts; np.dot as BLAS's dgemm sums) as a Polygon.
 - **ecdf** (src/engine/engine.cpp ecdf): axes/_axes.py's ecdf, a stepped line through Axes.plot. xcorr and acorr
   through vlines / axhline or plot (np.correlate in src/support/npy_correlate.cpp).
+- **Spectra** (src/engine/spectral.cpp): mlab.py's window_hanning, window_none, _spectral_helper,
+  _single_spectrum_helper, psd, csd, specgram and cohere, translated to C++ with NumPy's operations in their order
+  (np.hanning, sliding windows, np.fft.fft through src/support/npy_fft.cpp, complex products and quotients,
+  pairwise sums of real and complex windows, the mean over Fortran-ordered segments, np.fft.fftfreq, np.roll,
+  np.unwrap, np.arange of floats); detrending other than none is not ported yet.
 - **Tables** (src/engine/table.cpp, src/engine/engine.cpp table): table.py's Cell, Table (alignment, auto font size,
   auto column width, placement by loc or bbox) and table(), with axes/_base.py's add_table, translated to C++.
 - **Meshes** (src/engine/collections.cpp QuadMesh and PolyQuadMesh, src/engine/engine.cpp pcolormesh, pcolor,

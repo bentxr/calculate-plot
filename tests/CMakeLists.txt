@@ -45,6 +45,7 @@ add_executable(calculate-plot-tests
     test_mathtext.cpp
     test_pyparse.cpp
     test_pyliteral.cpp
+    test_mlab.cpp
     test_model.cpp
     test_notices.cpp
     test_png.cpp

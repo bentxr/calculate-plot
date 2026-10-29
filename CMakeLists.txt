@@ -93,6 +93,7 @@ add_library(calculate-plot STATIC
     src/engine/quiver.cpp
     src/engine/streamplot.cpp
     src/engine/table.cpp
+    src/engine/spectral.cpp
     src/engine/polar.cpp
     src/tri/delaunay.cpp
     src/tri/triangulation.cpp

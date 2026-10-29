@@ -593,6 +593,8 @@
     "src/engine/streamplot.hpp",
     "src/engine/table.cpp",
     "src/engine/table.hpp",
+    "src/engine/spectral.cpp",
+    "src/engine/spectral.hpp",
     "src/engine/polar.cpp",
     "src/engine/polar.hpp",
     "src/tri/delaunay.cpp",

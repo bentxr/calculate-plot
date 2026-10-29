@@ -40,7 +40,7 @@ where the bin rules treat them otherwise):
 - **complex arithmetic** (src/support/npy_complex.cpp): loops_arithm_fp.dispatch.c.src's simd_cmul_f64 and
   loops_unary_complex.dispatch.c.src's simd_cabsolute_f64 for AVX2 and FMA (the reference machine's complex128
   multiplication and np.abs), translated from vector intrinsics to one value at a time (std::fma for the fused
-  multiply-adds), for quiver's arrows.
+  multiply-adds), for quiver's arrows; and loops.c.src's CDOUBLE_divide (Smith's method), for the spectra.
 - **np.correlate** (src/support/npy_correlate.cpp): multiarraymodule.c's _pyarray_correlate for mode 'full' with
   arraytypes.c.src's small_correlate, DOUBLE_dot (OpenBLAS's ddot through src/support/blas_dot.cpp) and LONG_dot,
   translated to C++ for arrays of one length, for xcorr and acorr.
