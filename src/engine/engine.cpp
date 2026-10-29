@@ -140,19 +140,34 @@ public:
             }
             if (call.method == "Polygon") return polygon(call, error);
             if (call.method == "axes") {
-                // plt.axes(arg=None, **kwargs): add_subplot() without a rect, else add_axes(rect)
+                // plt.axes(arg=None, **kwargs): add_subplot() without a rect, else add_axes(rect); of the keywords
+                // the projection so far
                 if (call.args.size() > 1) return *error = "plt.axes: too many positional arguments", false;
                 const Json* rect = call.args.empty() ? keyword(call, "arg") : &call.args[0];
                 if (!rect || rect->isNull()) rect = keyword(call, "position");
                 for (const auto& kw : call.kwargs)
-                    if (kw.first != "arg" && kw.first != "position") return *error = "plt.axes: keyword arguments are not supported yet", false;
+                    if (kw.first != "arg" && kw.first != "position" && kw.first != "projection" && kw.first != "polar")
+                        return *error = "plt.axes: keyword arguments are not supported yet", false;
                 if (!rect || rect->isNull()) {
+                    bool isPolar = false;
+                    if (!projectionOf(keyword(call, "projection"), keyword(call, "polar"), "plt.axes", &isPolar, error)) return false;
                     gcf();
-                    current_ = figure_->addSubplot(1, 1, 0, 0);
+                    current_ = figure_->addSubplot(1, 1, 0, 0, isPolar);
                     return nameResult(call, current_, error);
                 }
                 gcf();
                 return addAxes(call, rect, error);
+            }
+            if (call.method == "polar") {
+                // pyplot.polar(*args, **kwargs): plot on the current Axes when the figure has one (polar or not, as
+                // matplotlib still allows), else on axes(projection='polar')
+                Figure& f = gcf();
+                if (f.axes.empty()) current_ = f.addSubplot(1, 1, 0, 0, true);
+                model::Call c = call;
+                c.on = "plt";
+                c.method = "plot";
+                if (!positionalArguments(c, error)) return false;
+                return axesCall(gca(), c, error);
             }
             // the pyplot functions of the current Axes and of the current figure
             const auto& ofAxes = pyplotOfAxes();
@@ -1071,9 +1086,9 @@ private:
             if (call.args.size() != 1) return *error = where + "a rect (left, bottom, width, height) is supported so far", false;
             for (const auto& [name, value] : call.kwargs)
                 if (name != "projection" && name != "polar") return *error = where + "the keyword " + name + " is not supported yet", false;
-            if (!projectionOf(keyword(call, "projection"), keyword(call, "polar"), where.substr(0, where.size() - 2), &isPolar, error))
-                return false;
         }
+        if (!projectionOf(keyword(call, "projection"), keyword(call, "polar"), where.substr(0, where.size() - 2), &isPolar, error))
+            return false;
         const Json* seq = rect ? sequence(*rect) : nullptr;
         double r[4];
         if (!seq || seq->size() != 4) return *error = where + "rect must be (left, bottom, width, height)", false;
@@ -2658,6 +2673,11 @@ private:
             return line;
         };
         std::vector<std::unique_ptr<Line2D>> capLines;
+        struct CapData {
+            std::vector<double> x, y;
+            bool radial;
+        };
+        std::vector<CapData> capData;
         // x errors (hlines, '|' caps), then y errors (vlines, '_' caps)
         for (int axisIndex = 0; axisIndex < 2; ++axisIndex) {
             const Json* err = axisIndex == 0 ? xerr : yerr;
@@ -2680,13 +2700,40 @@ private:
             }
             auto bars = std::make_unique<LineCollection>(rc_, segments);
             styleBars(*bars);
+            if (ax.polar && axisIndex == 0)  // (the theta errors of a polar Axes follow the circles)
+                for (Path& path : bars->paths) path.interpolationSteps = 2;
             container.barlinecols.push_back(&ax.addLinesCollection(std::move(bars)));
             if (caps > 0) {
                 for (const std::vector<double>* lh : {&low, &high}) {
                     if (axisIndex == 0) capLines.push_back(capLine(*lh, indep, "|"));
                     else capLines.push_back(capLine(indep, *lh, "_"));
+                    capData.push_back({axisIndex == 0 ? *lh : indep, axisIndex == 0 ? indep : *lh, axisIndex == 1});
                 }
             }
+        }
+        if (ax.polar) {
+            // the caps turned to stand across the bars: of each point of each cap line a line of its own, its '_'
+            // marker (errorbar's last `marker`) rotated by _ScaledRotation(theta, transShift), a quarter turn more
+            // for the radial bars; the cap lines themselves are the container's only
+            for (std::size_t i = 0; i < capLines.size(); ++i) {
+                const CapData& d = capData[i];
+                for (std::size_t k = 0; k < d.x.size(); ++k) {
+                    transforms::Affine2D rotation;
+                    rotation.rotate(ax.polar->transShift->transform(d.x[k], 0)[0]);
+                    transforms::Matrix user = rotation.matrix();
+                    if (d.radial) {
+                        transforms::Affine2D quarter;
+                        quarter.rotate(M_PI / 2);
+                        user = transforms::dot(quarter.matrix(), user);
+                    }
+                    auto cap = capLine({d.x[k]}, {d.y[k]}, "_");
+                    cap->markerStyle.setUserTransform(user);
+                    ax.addLine(std::move(cap));
+                }
+                container.caplines.push_back(capLines[i].get());
+                ax.detached.push_back(std::move(capLines[i]));
+            }
+            capLines.clear();
         }
         for (auto& l : capLines) container.caplines.push_back(&ax.addLine(std::move(l)));
         ax.containers.push_back(container);
@@ -3384,7 +3431,7 @@ private:
             if (name == "c" && value->isNull()) return *error = where + ": bad color", false;
             if (!lineProperty(*line, fullName(name, lineAliases()), *value, where, error)) return false;
         }
-        ax.addLine(std::move(line), true);
+        ax.addLine(std::move(line), true).setInterpolationSteps(180);  // GRIDLINE_INTERPOLATION_STEPS
         if (rescale) ax.requestAutoscaleView(!horizontal, horizontal);
         return true;
     }
@@ -3626,6 +3673,7 @@ private:
         Line2D* base = vertical ? plotLine({lo, hi}, {bottom, bottom}, optColor(basecolor), optText(basestyle), optText(basemarker))
                                 : plotLine({bottom, bottom}, {lo, hi}, optColor(basecolor), optText(basestyle), optText(basemarker));
         if (!base) return false;
+        base->setInterpolationSteps(180);  // baseline.get_path()._interpolation_steps = GRIDLINE_INTERPOLATION_STEPS
         ErrorbarContainer container;
         container.isStem = true;
         container.stemMarker = marker;
@@ -6921,6 +6969,7 @@ private:
         rect->transform = horizontal ? ax.yaxisTransform : ax.xaxisTransform;
         rect->transformSet = true;
         ax.addPatch(std::move(rect));  // (the other direction's limits are kept as they were)
+        *ax.figure.unitRectangleSteps = 180;  // p.get_path()._interpolation_steps = GRIDLINE_INTERPOLATION_STEPS
         ax.requestAutoscaleView(!horizontal, horizontal);
         return true;
     }
@@ -7134,6 +7183,7 @@ private:
             else r->stickyX.push_back(left[i]);
             container.bars.push_back(r.get());
             ax.addPatch(std::move(r));
+            *ax.figure.unitRectangleSteps = 100;  // r.get_path()._interpolation_steps = 100
         }
         if ((xerr && !xerr->isNull()) || (yerr && !yerr->isNull())) {
             container.errorbar = ax.containers.size();  // (where errorbar puts its container)
@@ -8099,8 +8149,10 @@ NavigationResult navigate(const model::Figure& model, double ratio, std::array<d
             model::Call call;
             call.on = executor.nameOf(change.axes);
             if (call.on.empty()) return std::string("the Axes under the pointer has no name in the figure file");
-            call.method = change.x ? "set_xlim" : "set_ylim";
-            for (const auto& v : {change.lo, change.hi}) call.args.push_back(v ? support::Json::real(*v) : support::Json());
+            call.method = !change.method.empty() ? change.method : change.x ? "set_xlim" : "set_ylim";
+            if (!change.method.empty()) call.args.push_back(support::Json::real(*change.lo));
+            else
+                for (const auto& v : {change.lo, change.hi}) call.args.push_back(v ? support::Json::real(*v) : support::Json());
             out.calls.push_back(std::move(call));
         }
         return std::string();

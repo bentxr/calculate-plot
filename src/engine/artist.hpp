@@ -170,10 +170,17 @@ private:
 class Rectangle : public Patch {
 public:
     Rectangle(const rc::Params& rc, double x0, double y0, double width, double height, double angle = 0.0);
-    Path path() const override { return Path::unitRectangle(rc_); }
+    // Path.unit_rectangle(), the one path all rectangles share: its _interpolation_steps are what bar (100) and
+    // axhspan / axvspan (180) set last on it in the figure (`unitSteps`; 1 when not set)
+    Path path() const override {
+        Path p = Path::unitRectangle(rc_);
+        if (unitSteps) p.interpolationSteps = *unitSteps;
+        return p;
+    }
     transforms::TransformPtr patchTransform() const override;
 
     double x0, y0, width, height, angle;
+    std::shared_ptr<const int> unitSteps;
 };
 
 // patches.Polygon(xy, closed=): the vertices as given. A closed polygon gets its first vertex again at

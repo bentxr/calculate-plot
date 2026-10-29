@@ -23,7 +23,7 @@ import numpy as np  # noqa: E402
 from matplotlib.backend_bases import MouseButton, MouseEvent, NavigationToolbar2  # noqa: E402
 
 CASES = ["corpus_legend_box", "corpus_subplots_grid", "twin_axes", "log_both", "scale_symlog", "scale_logit",
-         "aspect_box", "inset_axes", "secondary_axes", "dates_shared", "share_y_log"]
+         "aspect_box", "inset_axes", "secondary_axes", "dates_shared", "share_y_log", "polar_basic", "polar_wedges"]
 CANVASES = [(640, 480, 1.0), (500, 420, 2.0)]
 
 
@@ -47,14 +47,43 @@ def state(fig):
     canvas = fig.canvas
     canvas.draw()
     rgba = np.ascontiguousarray(np.asarray(canvas.buffer_rgba()))
-    return {"limits": [[float(v).hex() for v in (*ax.get_xlim(), *ax.get_ylim())] for ax in fig.get_axes()],
-            "sha256": hashlib.sha256(rgba.tobytes()).hexdigest()}
+    out = {"limits": [[float(v).hex() for v in (*ax.get_xlim(), *ax.get_ylim())] for ax in fig.get_axes()],
+           "sha256": hashlib.sha256(rgba.tobytes()).hexdigest()}
+    # (a polar Axes' radial labels can move without a pixel changing: on a wedge they stay at its start)
+    rlabels = [float(ax.get_rlabel_position()).hex() for ax in fig.get_axes() if ax.name == "polar"]
+    if rlabels:
+        out["rlabels"] = rlabels
+    return out
+
+
+def polar_gestures(k, ax, height, ratio):
+    """On a polar Axes: the radial labels dragged (button 1 on their angle), the radius scaled (button 3), a press
+    away from the labels and the zoom box, which do nothing."""
+    def at(theta, r):
+        x, y = ax.transData.transform((theta, r))
+        return (round(x / ratio, 2), round(height - y / ratio, 2))
+    label = np.deg2rad(ax.get_rlabel_position())
+    rmax = ax.get_rmax()
+    lo, hi = ax.get_rmin(), rmax
+    mid = lo + 0.6 * (hi - lo)
+    off = ax.get_xlim()[0] + 0.5 * (ax.get_xlim()[1] - ax.get_xlim()[0])
+    return [
+        {"axes": k, "tool": "pan", "button": 1, "key": None, "from": at(label, mid), "to": at(label + 0.5, mid)},
+        {"axes": k, "tool": "pan", "button": 1, "key": "x", "from": at(label, mid), "to": at(label - 0.3, lo + 0.3 * (hi - lo))},
+        {"axes": k, "tool": "pan", "button": 1, "key": None, "from": at(off, mid), "to": at(off + 0.4, mid)},
+        {"axes": k, "tool": "pan", "button": 3, "key": None, "from": at(off, mid), "to": at(off, lo + 0.9 * (hi - lo))},
+        {"axes": k, "tool": "pan", "button": 3, "key": "control", "from": at(off, mid), "to": at(off + 0.2, lo + 0.35 * (hi - lo))},
+        {"axes": k, "tool": "zoom", "button": 1, "key": None, "from": at(off, mid), "to": at(off + 0.3, lo + 0.9 * (hi - lo))},
+    ]
 
 
 def gestures(fig, height, ratio):
     """Gestures around each Axes' centre, in logical pixels from the top-left."""
     out = []
     for k, ax in enumerate(fig.get_axes()):
+        if ax.name == "polar":
+            out += polar_gestures(k, ax, height, ratio)
+            continue
         x0, y0, x1, y1 = ax.bbox.extents
         cx, cy = (x0 + x1) / 2 / ratio, height - (y0 + y1) / 2 / ratio
         c = (round(cx, 2), round(cy, 2))

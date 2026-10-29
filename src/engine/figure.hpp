@@ -49,6 +49,8 @@ public:
     double dpi;
     std::shared_ptr<transforms::Bbox> bboxInches;
     std::shared_ptr<transforms::Affine2D> dpiScaleTrans;
+    // the _interpolation_steps of Path.unit_rectangle() (shared by every Rectangle): what bar and the spans set
+    std::shared_ptr<int> unitRectangleSteps = std::make_shared<int>(1);
     std::shared_ptr<transforms::TransformedBbox> bbox;
     std::shared_ptr<transforms::BboxTransformTo> transFigure;
     transforms::TransformPtr transSubfigure;

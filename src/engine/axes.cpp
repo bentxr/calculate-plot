@@ -999,6 +999,8 @@ double Axis::tickSpace() const {
 
 namespace {
 
+}  // namespace
+
 // cbook._g_sig_digits(value, delta): the significant digits to %g-format value known to within delta; nothing
 // where math.floor(math.log10(...)) raises (a delta that is NaN or not positive)
 std::optional<int> gSigDigits(double value, double delta) {
@@ -1011,6 +1013,8 @@ std::optional<int> gSigDigits(double value, double delta) {
     const int before = value != 0 ? int(std::floor(std::log10(std::fabs(value)))) + 1 : 1;
     return std::max(0, before - int(std::floor(std::log10(delta))));
 }
+
+namespace {
 
 std::optional<std::string> percent(const std::string& fmt, double v) {
     const auto f = support::percentFormat(fmt, v, false);
@@ -1600,7 +1604,7 @@ Line2D& Axes::addLine(std::unique_ptr<Line2D> line, bool keepTransform) {
     const Path& path = line->path();
     if (path.size()) {
         std::vector<double> v = *path.vertices;
-        const auto update = transforms::containsBranchSeparately(line->transform, transData);
+        auto update = transforms::containsBranchSeparately(line->transform, transData);
         // A line whose transform equals transData (as transforms compare: an axhline's blend does
         // while the view limits are still (0, 1)) gives its path as it is; otherwise its path goes
         // through trf_to_data = line_trf - transData: as one affine when transData is affine, and
@@ -1619,6 +1623,10 @@ Line2D& Axes::addLine(std::unique_ptr<Line2D> line, bool keepTransform) {
                     v[k] = q[0], v[k + 1] = q[1];
                 }
             }
+        }
+        if (polar) {  // (not rectilinear: an axvline's r and an axhline's theta do not count)
+            if (update[0] && transforms::equal(*line->transform, *yaxisTransform)) update[0] = false;
+            if (update[1] && transforms::equal(*line->transform, *xaxisTransform)) update[1] = false;
         }
         updateFromPath(v, update[0], update[1]);
         ignoreExistingDataLimits_ = false;
@@ -1649,13 +1657,18 @@ bool Axes::containsPoint(double x, double y) const {
 
 Patch& Axes::addPatch(std::unique_ptr<Patch> p) {
     if (!p->transformSet) p->transform = transData;  // _set_artist_props
+    if (auto* r = dynamic_cast<Rectangle*>(p.get())) r->unitSteps = figure.unitRectangleSteps;
     clipToPatch(*p);
     // _update_patch_limits: the ends of the path's segments (iter_bezier) through patch_trf - transData;
     // a Rectangle of no width and no height counts for nothing
     const auto* rect = dynamic_cast<const Rectangle*>(p.get());
     if (!rect || rect->width != 0 || rect->height != 0) {
         const auto t = p->fullTransform();
-        const auto update = transforms::containsBranchSeparately(t, transData);
+        auto update = transforms::containsBranchSeparately(t, transData);
+        if (polar && (update[0] || update[1])) {  // (as for lines: an axvspan's patch transform alone)
+            if (update[0] && transforms::equal(*t, *yaxisTransform)) update[0] = false;
+            if (update[1] && transforms::equal(*t, *xaxisTransform)) update[1] = false;
+        }
         if (update[0] || update[1]) {
             const auto toData = transforms::subtract(t, transData);
             std::vector<std::array<double, 2>> xys;
@@ -1777,7 +1790,20 @@ Collection& Axes::addLinesCollection(std::unique_ptr<Collection> c) {
     Collection& ref = *c;
     children.push_back(std::move(c));
     if (!ref.paths.empty()) {
-        const auto d = ref.dataLim(transData);
+        auto d = ref.dataLim(transData);
+        if (polar) {
+            // (not rectilinear: np.nanmin / np.nanmax of the vertices themselves)
+            const double inf = std::numeric_limits<double>::infinity();
+            d.points = {inf, inf, -inf, -inf};
+            for (const Path& path : ref.paths)
+                for (std::size_t i = 0; i + 1 < path.vertices->size(); i += 2)
+                    for (std::size_t k = 0; k < 2; ++k) {
+                        const double v = (*path.vertices)[i + k];
+                        if (std::isnan(v)) continue;
+                        d.points[k] = std::min(d.points[k], v);
+                        d.points[k + 2] = std::max(d.points[k + 2], v);
+                    }
+        }
         updateDatalim({{d.points[0], d.points[1]}, {d.points[2], d.points[3]}});
         requestAutoscaleView(true, true);
     }

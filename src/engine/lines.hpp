@@ -45,6 +45,11 @@ public:
     const std::string& capstyle() const { return capstyle_; }
     const std::string& fillstyle() const { return fillstyle_; }
     bool filled() const { return filled_; }
+    // MarkerStyle(marker, transform=user): get_transform() is then (the marker's transform + user).frozen()
+    void setUserTransform(const transforms::Matrix& user) {
+        transform_ = transforms::dot(user, transform_);
+        altTransform_ = transforms::dot(user, altTransform_);
+    }
 
 private:
     std::string marker_ = "none";

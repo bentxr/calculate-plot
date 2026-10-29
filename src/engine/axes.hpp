@@ -352,6 +352,8 @@ public:
     std::unique_ptr<Artist> legend;                  // legend_
     // The errorbar calls' containers, which a legend lists under their labels
     std::vector<ErrorbarContainer> containers;
+    // artists a container refers to that the Axes does not draw (a polar errorbar's cap lines)
+    std::vector<std::unique_ptr<Artist>> detached;
 
     // get_tightbbox(renderer, for_layout_only=): the box of the Axes with its decorations; nullopt
     // when the Axes is invisible.
@@ -432,5 +434,9 @@ private:
     colors::Spec nextColor(std::size_t* index);
     void updateFromPath(const std::vector<double>& xy, bool updatex, bool updatey);
 };
+
+// cbook._g_sig_digits(value, delta): the significant digits to %g-format value known to within delta; nothing where
+// matplotlib raises
+std::optional<int> gSigDigits(double value, double delta);
 
 }  // namespace calculate_plot::engine

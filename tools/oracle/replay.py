@@ -64,7 +64,11 @@ class GC:
         self._dashes = (value(offset), None if pattern is None else [value(v) for v in pattern])
         self._cliprect = None if g["cliprect"] is None else floats(g["cliprect"]).reshape(2, 2)
         clip = g["clippath"]
-        self._clip = (None, None) if clip is None else (path(clip["path"]), affine(clip["transform"]))
+        # one Path per recorded identity: Agg keeps a clip path's mask while the same path object comes again
+        # (render_clippath), and an alpha mask made again under another rasterizer state can differ
+        if clip is not None and clip["id"] not in _CLIP_PATHS:
+            _CLIP_PATHS[clip["id"]] = path(clip["path"])
+        self._clip = (None, None) if clip is None else (_CLIP_PATHS[clip["id"]], affine(clip["transform"]))
         self._snap = g["snap"]
         self._hatch = path(g["hatch"])
         self._hatch_color = color(g["hatch_color"])
@@ -80,7 +84,11 @@ class GC:
     def get_sketch_params(self): return self._sketch
 
 
+_CLIP_PATHS = {}
+
+
 def replay(trace):
+    _CLIP_PATHS.clear()
     r = CppRendererAgg(trace["width"], trace["height"], value(trace["dpi"]))
     for e in trace["events"]:
         op = e["op"]

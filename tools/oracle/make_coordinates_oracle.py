@@ -20,7 +20,7 @@ from matplotlib.backend_bases import MouseEvent  # noqa: E402
 
 CASES = ["corpus_legend_box", "corpus_subplots_grid", "twin_axes", "log_both", "scale_symlog", "scale_logit",
          "aspect_box", "dates_shared", "share_y_log", "axis_null_formatter", "boxplot_basic", "rc_unicode_minus_false",
-         "scale_function", "inset_axes", "secondary_axes"]
+         "scale_function", "inset_axes", "secondary_axes", "polar_basic", "polar_settings", "polar_wedges"]
 CANVASES = [(640, 480, 1.0), (500, 420, 2.0)]
 
 

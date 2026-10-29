@@ -73,9 +73,9 @@ TEST(Navigation, PansAndZoomsAsMatplotlibsToolbar) {
             << where << "\nours: ..." << after.substr(after.size() > 400 ? after.size() - 400 : 0) << "\nmatplotlib's limits:" << limits;
         ++checked;
     }
-    EXPECT_EQ(checked + ignored, (868u + stride - 1) / stride);
+    EXPECT_EQ(checked + ignored, (928u + stride - 1) / stride);
     if (stride == 1) {
-        EXPECT_EQ(ignored, 34u);
+        EXPECT_EQ(ignored, 62u);
     }
     EXPECT_GT(ignored, 0u);
 }
@@ -123,5 +123,5 @@ TEST(Navigation, ThePointersCoordinatesReadAsMatplotlibsToolbar) {
             ++checked;
         }
     }
-    EXPECT_EQ(checked, 5760u);
+    EXPECT_EQ(checked, 6912u);
 }

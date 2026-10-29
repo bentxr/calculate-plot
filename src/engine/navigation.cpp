@@ -3,6 +3,10 @@
 // Copyright (c) 2012- Matplotlib Development Team; All Rights Reserved
 // Licence: LICENSES/Matplotlib.txt. Changes: licensing/changes/matplotlib.md
 #include "engine/navigation.hpp"
+#include "support/histogram.hpp"
+#include "support/log10.hpp"
+#include "support/pyformat.hpp"
+#include "support/pynum.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -43,10 +47,10 @@ void formatDeltas(const std::string& key, double& dx, double& dy) {
 // _start_event_axes_interaction: the Axes under the event that navigate (in_axes: the patch contains the point),
 // by zorder from the top, each with its twins, down to the first that captures events (its patch is visible:
 // forward_navigation_events 'auto')
-std::vector<Axes*> axesToTrigger(Figure& figure, double x, double y) {
+std::vector<Axes*> axesToTrigger(Figure& figure, double x, double y, bool zoom) {
     std::vector<Axes*> axes;
-    for (auto& ax : figure.axes)
-        if (ax->patch->containsPoint(x, y)) axes.push_back(ax.get());
+    for (auto& ax : figure.axes)  // (can_zoom: a polar Axes has no zoom box)
+        if (ax->patch->containsPoint(x, y) && !(zoom && ax->polar)) axes.push_back(ax.get());
     std::map<double, std::vector<Axes*>, std::greater<double>> groups;
     for (auto it = axes.rbegin(); it != axes.rend(); ++it) groups[(*it)->zorder].push_back(*it);
     std::vector<Axes*> out;
@@ -102,6 +106,31 @@ std::vector<LimitChange> pan(const std::vector<Axes*>& axes, double ex, double e
                              const NavigationGesture& g) {
     std::vector<LimitChange> out;
     for (Axes* ax : axes) {
+        if (ax->polar) {
+            // PolarAxes.start_pan / drag_pan: the radial labels dragged round by the left button pressed within
+            // pi / 45 of their angle; the outer radius scaled by the right button; nothing else
+            const PolarAxesState& p = *ax->polar;
+            const double angle = p.rlabelPosition() * (M_PI / 180.0);  // np.deg2rad(get_rlabel_position())
+            const auto inverse = ax->transData->inverted();
+            const auto start = inverse->transform(ex, ey);
+            std::string mode;
+            if (g.button == 1) {
+                const double epsilon = M_PI / 45.0;
+                if (angle - epsilon <= start[0] && start[0] <= angle + epsilon) mode = "drag_r_labels";
+            } else if (g.button == 3) {
+                mode = "zoom";
+            }
+            const auto now = inverse->transform(tx, ty);
+            if (mode == "drag_r_labels") {
+                const double dt = (start[0] - now[0]) * (180.0 / M_PI);  // np.rad2deg(startt - t)
+                out.push_back({ax, true, p.rlabelPosition() - dt, std::nullopt, "set_rlabel_position"});
+            } else if (mode == "zoom") {
+                const auto v = ax->viewLim->points();
+                const double scale = now[1] / start[1];
+                out.push_back({ax, false, std::max(v[1], v[3]) / scale, std::nullopt, "set_rmax"});  // p.rmax / scale
+            }
+            continue;
+        }
         // start_pan: the view, the transforms and the box as they are at the press
         const Points lim = ax->viewLim->points();
         const auto trans = ax->transData;
@@ -127,8 +156,8 @@ std::vector<LimitChange> pan(const std::vector<Axes*>& axes, double ex, double e
         const Points back = transformedBox(*trans, result);
         const auto valid = [&](int i) { return std::isfinite(back[std::size_t(i)]); };
         const auto value = [&](int i) { return valid(i) ? std::optional<double>(result[std::size_t(i)]) : std::nullopt; };
-        out.push_back({ax, true, value(0), value(2)});
-        out.push_back({ax, false, value(1), value(3)});
+        out.push_back({ax, true, value(0), value(2), {}});
+        out.push_back({ax, false, value(1), value(3), {}});
     }
     return out;
 }
@@ -174,7 +203,7 @@ std::vector<LimitChange> zoom(const std::vector<Axes*>& axes, double sx, double 
             const auto view = (x ? ax->xaxis : ax->yaxis)->viewInterval();
             auto s = sorted2(b[0], b[1]);
             if (view[1] < view[0]) std::swap(s[0], s[1]);
-            out.push_back({ax, x, s[0], s[1]});
+            out.push_back({ax, x, s[0], s[1], {}});
         };
         if (!twinx && mode != "y") setBound(true, nx);
         if (!twiny && mode != "x") setBound(false, ny);
@@ -194,6 +223,37 @@ std::array<double, 2> eventPosition(const Figure& figure, double ratio, double x
     return {x * ratio, (height - y) * ratio};
 }
 
+// PolarAxes.format_coord(theta, r): theta in half turns and degrees and r, each to the precision a pixel gives (the
+// largest change over the 3 x 3 pixels around); nothing where matplotlib raises
+std::optional<std::string> polarCoord(Axes& ax, double theta, double r) {
+    const auto screen = ax.transData->transform(theta, r);
+    const auto inverse = ax.transData->inverted();
+    std::vector<double> dts, drs;
+    for (int dy = -1; dy <= 1; ++dy)  // np.stack(np.meshgrid([-1, 0, 1], [-1, 0, 1])).reshape((2, -1)).T
+        for (int dx = -1; dx <= 1; ++dx) {
+            const auto q = inverse->transform(screen[0] + dx, screen[1] + dy);
+            dts.push_back(std::fabs(support::divmod(q[0] - theta + M_PI, 2 * M_PI).second - M_PI));
+            drs.push_back(std::fabs(q[1] - r));
+        }
+    const double deltaT = support::npMax(dts), deltaR = support::npMax(drs);
+    const double deltaHalfturns = deltaT / M_PI, deltaDegrees = deltaHalfturns * 180;
+    if (theta < 0) theta += 2 * M_PI;
+    const double halfturns = theta / M_PI, degrees = halfturns * 180;
+    // format_sig: 'f' with the digits after the point that delta needs, max(0, -floor(log10(delta)))
+    const auto fixed = [](double value, double delta) -> std::optional<std::string> {
+        const double l = support::log10(delta);  // (math.log10 raises for delta <= 0; floor for NaN and inf)
+        if (!(delta > 0) || !std::isfinite(l)) return std::nullopt;
+        const double digits = -std::floor(l);
+        return support::percentF(value, digits > 0 ? int(digits) : 0);
+    };
+    const auto t1 = fixed(halfturns, deltaHalfturns), t2 = fixed(degrees, deltaDegrees);
+    const auto sig = gSigDigits(r, deltaR);
+    if (!t1 || !t2 || !sig) return std::nullopt;
+    const auto rText = support::percentFormat("%#." + std::to_string(*sig) + "g", r, false);
+    if (rText.kind != support::Formatted::Text) return std::nullopt;
+    return "\u03b8=" + *t1 + "\u03c0 (" + *t2 + "\u00b0), r=" + rText.text;
+}
+
 }  // namespace
 
 std::string pointerText(Figure& figure, double ratio, double x, double y) {
@@ -205,6 +265,12 @@ std::string pointerText(Figure& figure, double ratio, double x, double y) {
         if (ax->visible && ax->patch->containsPoint(e[0], e[1]) && (!inaxes || ax->zorder >= inaxes->zorder)) inaxes = ax.get();
     if (!inaxes) return std::string();
     const auto data = inaxes->transData->inverted()->transform(e[0], e[1]);
+    if (inaxes->polar) {
+        auto text = polarCoord(*inaxes, data[0], data[1]);
+        if (!text) return std::string();
+        text->erase(text->find_last_not_of(" \t\n\r\f\v") + 1);  // rstrip
+        return *text;
+    }
     // format_coord(xdata, ydata): of twins, each one's coordinates of the same pixel, by zorder
     std::vector<Axes*> twins = inaxes->twinned ? *inaxes->twinned : std::vector<Axes*>{inaxes};
     std::string s = "(x, y) = ";
@@ -242,7 +308,7 @@ std::vector<LimitChange> navigate(Figure& figure, double ratio, const Navigation
     const auto whole = [](double v) { return std::trunc(v); };
     const double ex = whole(g.fromX * ratio), ey = whole((height - g.fromY) * ratio);
     const double tx = whole(g.toX * ratio), ty = whole((height - g.toY) * ratio);
-    const std::vector<Axes*> axes = axesToTrigger(figure, ex, ey);
+    const std::vector<Axes*> axes = axesToTrigger(figure, ex, ey, g.zoom);
     if (axes.empty()) return {};
     if (!g.zoom) return pan(axes, ex, ey, tx, ty, g);
     // release_zoom: a drag of less than 5 pixels (in a direction that counts) cancels

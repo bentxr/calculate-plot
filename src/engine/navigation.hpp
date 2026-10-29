@@ -24,11 +24,13 @@ struct NavigationGesture {
     double fromX = 0, fromY = 0, toX = 0, toY = 0;
 };
 
-// What the toolbar sets on one Axes: set_xlim / set_ylim with these bounds (nullopt: None, the old bound stays).
+// What the toolbar sets on one Axes: set_xlim / set_ylim with these bounds (nullopt: None, the old bound stays);
+// on a polar Axes `method` set_rlabel_position or set_rmax with `lo`.
 struct LimitChange {
     Axes* axes = nullptr;
     bool x = true;
     std::optional<double> lo, hi;
+    std::string method;
 };
 
 // The limits the gesture sets, in the order the toolbar sets them, on a figure drawn on a canvas at `ratio`
