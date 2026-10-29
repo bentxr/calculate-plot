@@ -220,7 +220,7 @@ public:
             {"hlines", "hlines"}, {"vlines", "vlines"}, {"grid", "grid"}, {"legend", "legend"}, {"text", "text"},
             {"title", "set_title"}, {"xlabel", "set_xlabel"}, {"ylabel", "set_ylabel"}, {"xlim", "set_xlim"},
             {"ylim", "set_ylim"}, {"xscale", "set_xscale"}, {"yscale", "set_yscale"}, {"bar", "bar"}, {"barh", "barh"},
-            {"hist", "hist"}, {"fill", "fill"}, {"step", "step"}, {"stairs", "stairs"}, {"stem", "stem"}, {"boxplot", "boxplot"}, {"violinplot", "violinplot"}, {"pie", "pie"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}, {"imshow", "imshow"}, {"matshow", "matshow"}, {"spy", "spy"}, {"pcolormesh", "pcolormesh"}, {"pcolor", "pcolor"}, {"contour", "contour"}, {"contourf", "contourf"}, {"clabel", "clabel"}, {"hexbin", "hexbin"}, {"quiver", "quiver"}, {"quiverkey", "quiverkey"}, {"barbs", "barbs"}, {"streamplot", "streamplot"}, {"triplot", "triplot"}, {"tripcolor", "tripcolor"}, {"tricontour", "tricontour"}, {"tricontourf", "tricontourf"}, {"stackplot", "stackplot"}, {"broken_barh", "broken_barh"}, {"axline", "axline"}, {"eventplot", "eventplot"}, {"arrow", "arrow"}, {"table", "table"}};
+            {"hist", "hist"}, {"fill", "fill"}, {"step", "step"}, {"stairs", "stairs"}, {"stem", "stem"}, {"boxplot", "boxplot"}, {"violinplot", "violinplot"}, {"pie", "pie"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}, {"imshow", "imshow"}, {"matshow", "matshow"}, {"spy", "spy"}, {"pcolormesh", "pcolormesh"}, {"pcolor", "pcolor"}, {"contour", "contour"}, {"contourf", "contourf"}, {"clabel", "clabel"}, {"hexbin", "hexbin"}, {"quiver", "quiver"}, {"quiverkey", "quiverkey"}, {"barbs", "barbs"}, {"streamplot", "streamplot"}, {"triplot", "triplot"}, {"tripcolor", "tripcolor"}, {"tricontour", "tricontour"}, {"tricontourf", "tricontourf"}, {"stackplot", "stackplot"}, {"broken_barh", "broken_barh"}, {"axline", "axline"}, {"eventplot", "eventplot"}, {"arrow", "arrow"}, {"table", "table"}, {"ecdf", "ecdf"}};
         return ofAxes;
     }
 
@@ -1922,6 +1922,7 @@ private:
         if (call.method == "eventplot") return eventplot(ax, call, error);
         if (call.method == "arrow") return arrow(ax, call, error);
         if (call.method == "table") return table(ax, call, error);
+        if (call.method == "ecdf") return ecdf(ax, call, error);
         if (call.method == "tripcolor") return tripcolor(ax, call, error) && noteMappable(ax, call);
         if (call.method == "clabel") {
             const Json* cs = argument(call, 0, "CS");
@@ -5580,6 +5581,90 @@ private:
         // add_table: the Axes' figure; its own transform (transAxes); not clipped (clip_on False)
         if (t->label.empty()) t->label = "_child" + std::to_string(ax.children.size());
         ax.children.push_back(std::move(t));
+        return true;
+    }
+
+    // ecdf(x, weights=None, *, complementary=False, orientation='vertical', compress=False, **kwargs): the empirical
+    // cumulative distribution as a stepped line (plot), its sticky edges at 0 and 1
+    bool ecdf(Axes& ax, const model::Call& call, std::string* error) {
+        const std::string where = call.on + "." + call.method;
+        if (call.args.size() > 2) return *error = where + ": too many positional arguments", false;
+        if (!call.as.empty()) return *error = where + ": naming ecdf's line is not supported yet", false;
+        const Json* xj = argument(call, 0, "x");
+        std::vector<double> x, weights;
+        if (!xj || !numbers(*xj, &x)) return *error = where + ": x must be a list of numbers", false;
+        const Json* wj = argument(call, 1, "weights");
+        const bool weighted = wj && !wj->isNull();
+        if (weighted && (!numbers(*wj, &weights) || weights.size() != x.size()))
+            return *error = where + ": weights must be a number per value of x", false;
+        bool complementary = false, compress = false;
+        std::string orientation = "vertical";
+        if (const Json* v = keyword(call, "orientation")) {
+            if (!v->isString() || (v->asString() != "horizontal" && v->asString() != "vertical"))
+                return *error = where + ": " + repr(*v) + " is not a valid value for orientation; supported values are 'horizontal', 'vertical'", false;
+            orientation = v->asString();
+        }
+        for (const char* name : {"complementary", "compress"})
+            if (const Json* v = keyword(call, name)) {
+                if (!v->isBool()) return *error = where + ": " + name + " must be True or False", false;
+                (name[1] == 'o' && name[2] == 'm' && name[3] == 'p' && name[4] == 'l' ? complementary : compress) = v->asBool();
+            }
+        if (keyword(call, "drawstyle") || keyword(call, "ds")) return *error = where + ": Cannot pass 'drawstyle' or 'ds' to ecdf()", false;
+        for (double v : x)
+            if (std::isnan(v)) return *error = where + ": ecdf() does not support NaNs", false;
+        if (x.empty()) return *error = where + ": ecdf() of no values is not supported yet", false;
+        // np.argsort (not stable): ties that carry different weights would take NumPy's order
+        std::vector<std::size_t> order(x.size());
+        for (std::size_t i = 0; i < order.size(); ++i) order[i] = i;
+        std::stable_sort(order.begin(), order.end(), [&](std::size_t a, std::size_t b) { return x[a] < x[b]; });
+        if (weighted)
+            for (std::size_t i = 1; i < order.size(); ++i)
+                if (x[order[i]] == x[order[i - 1]] && weights[order[i]] != weights[order[i - 1]])
+                    return *error = where + ": equal values with different weights are not supported yet", false;
+        std::vector<double> xs, cum;
+        for (std::size_t i : order) xs.push_back(x[i]);
+        const std::size_t n = xs.size();
+        if (!weighted) {
+            for (std::size_t i = 0; i < n; ++i) cum.push_back(double(1 + i) / double(n));
+        } else {
+            std::vector<double> w;
+            for (std::size_t i : order) w.push_back(weights[i]);
+            const double total = support::npSum(w);
+            double acc = 0;
+            for (double v : w) cum.push_back(acc += v / total);  // np.cumsum(weights / np.sum(weights))
+        }
+        if (compress) {
+            std::vector<double> cx{xs[0]}, cc{cum[0]};
+            for (std::size_t i = 1; i < n; ++i)
+                if (xs[i - 1] != xs[i]) cx.push_back(xs[i]), cc.push_back(cum[i]);
+            xs = cx, cum = cc;
+        }
+        std::vector<double> a, b;  // the line's points
+        std::string drawstyle;
+        if (!complementary) {
+            a = {xs[0]};
+            a.insert(a.end(), xs.begin(), xs.end());
+            b = {0.0};
+            b.insert(b.end(), cum.begin(), cum.end());
+        } else {
+            a = xs;
+            a.push_back(xs.back());
+            b = {1.0};
+            for (double c : cum) b.push_back(1 - c);
+        }
+        const bool vertical = orientation == "vertical";
+        drawstyle = vertical == !complementary ? "steps-post" : "steps-pre";
+        model::Call p;
+        p.on = call.on;
+        p.method = "plot";
+        p.args = vertical ? std::vector<Json>{numbersJson(a), numbersJson(b)} : std::vector<Json>{numbersJson(b), numbersJson(a)};
+        p.kwargs.emplace_back("drawstyle", Json::string(drawstyle));
+        for (const auto& kw : call.kwargs)
+            if (kw.first != "x" && kw.first != "weights" && kw.first != "complementary" && kw.first != "orientation" && kw.first != "compress")
+                p.kwargs.push_back(kw);
+        if (!plot(ax, p, error)) return false;
+        Artist& line = *ax.children.back();
+        (vertical ? line.stickyY : line.stickyX) = {0.0, 1.0};
         return true;
     }
 
