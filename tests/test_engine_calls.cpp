@@ -2278,6 +2278,50 @@ INSTANTIATE_TEST_SUITE_P(
         Refusal{R"({"on": "axs[0]", "call": "tricontour", "args": [[0, 1, 0, 1], [0, 0, 1, 1], [1, 2, 3, 4]], "kwargs": {"corner_mask": true}})",
                 "axs[0].tricontour: TriContourSet.set() got an unexpected keyword argument 'corner_mask'"}));
 
+// psd, csd, cohere, the single spectra and specgram: matplotlib's errors, and what is not done yet
+class SpectralRefusals : public testing::TestWithParam<Refusal> {};
+
+TEST_P(SpectralRefusals, NameTheCallAndTheReason) {
+    EXPECT_EQ(draw(kSubplots + GetParam().call).error, GetParam().error);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    Engine, SpectralRefusals,
+    testing::Values(
+        Refusal{R"({"on": "axs[0]", "call": "psd", "args": [[1, 2, 3, 4]], "kwargs": {"NFFT": 16, "noverlap": 16}})",
+                "axs[0].psd: noverlap must be less than NFFT"},
+        Refusal{R"({"on": "axs[0]", "call": "psd", "args": [[1, 2, 3, 4]], "kwargs": {"NFFT": 0}})", "axs[0].psd: noverlap must be less than NFFT"},
+        Refusal{R"({"on": "axs[0]", "call": "psd", "args": [[1, 2, 3, 4]], "kwargs": {"NFFT": 16, "pad_to": 0}})",
+                "axs[0].psd: Invalid number of FFT data points (0) specified."},
+        Refusal{R"({"on": "axs[0]", "call": "psd", "args": [[1, 2, 3, 4]], "kwargs": {"NFFT": 2, "window": [1, 1]}})",
+                "axs[0].psd: 'list' object has no attribute 'reshape'"},
+        Refusal{R"({"on": "axs[0]", "call": "psd", "args": [[1, 2, 3, 4]], "kwargs": {"NFFT": 4, "window": {"$array": {"dtype": "float64", "data": [1, 1]}}}})",
+                "axs[0].psd: The window length must match the data's first dimension"},
+        Refusal{R"({"on": "axs[0]", "call": "psd", "args": [[1, 2, 3, 4]], "kwargs": {"window": {"$func": "np.mean"}}})",
+                "axs[0].psd: window must be mlab.window_hanning, mlab.window_none or an array of numbers ({\"$array\": ...})"},
+        Refusal{R"({"on": "axs[0]", "call": "psd", "args": [[1, 2, 3, 4]], "kwargs": {"sides": "both"}})",
+                "axs[0].psd: 'both' is not a valid value for sides. Supported values are 'default', 'onesided', 'twosided'"},
+        Refusal{R"({"on": "axs[0]", "call": "csd", "args": [[1, 2, 3, 4], [1, 2, 3, 4]], "kwargs": {"detrend": {"$func": "mlab.detrend_mean"}}})",
+                "axs[0].csd: detrending other than detrend_none is not supported yet"},
+        Refusal{R"({"on": "axs[0]", "call": "csd", "args": [[1, 2, 3, 4]]})", "axs[0].csd: missing 1 required positional argument: 'y'"},
+        Refusal{R"({"on": "axs[0]", "call": "cohere", "args": [[1, 2, 3, 4], [1, 2, 3, 4]], "kwargs": {"NFFT": 4}})",
+                "axs[0].cohere: Coherence is calculated by averaging over *NFFT* length segments.  Your signal is too short for your choice of *NFFT*."},
+        Refusal{R"({"on": "axs[0]", "call": "magnitude_spectrum", "args": [[1, 2, 3, 4]], "kwargs": {"scale": "log"}})",
+                "axs[0].magnitude_spectrum: 'log' is not a valid value for scale. Supported values are None, 'default', 'linear', 'dB'"},
+        Refusal{R"({"on": "axs[0]", "call": "specgram", "args": [[1, 2, 3, 4]], "kwargs": {"NFFT": 4, "noverlap": 2, "mode": "complex"}})",
+                "axs[0].specgram: Cannot plot a complex specgram"},
+        Refusal{R"({"on": "axs[0]", "call": "specgram", "args": [[1, 2, 3, 4]], "kwargs": {"NFFT": 4, "noverlap": 2, "mode": "angle", "scale": "dB"}})",
+                "axs[0].specgram: Cannot use dB scale with angle or phase mode"},
+        Refusal{R"({"on": "axs[0]", "call": "specgram", "args": [[1, 2, 3, 4]], "kwargs": {"NFFT": 4, "noverlap": 2, "scale": "log"}})",
+                "axs[0].specgram: Unknown scale 'log'"},
+        Refusal{R"({"on": "axs[0]", "call": "specgram", "args": [[1, 2, 3, 4]], "kwargs": {"NFFT": 4, "noverlap": 2, "mode": "bogus"}})",
+                "axs[0].specgram: 'bogus' is not a valid value for mode."},
+        Refusal{R"({"on": "axs[0]", "call": "specgram", "args": [[1, 2, 3, 4]], "kwargs": {"NFFT": 4, "noverlap": 2, "origin": "lower"}})",
+                "axs[0].specgram: specgram() got an unexpected keyword argument 'origin'"},
+        Refusal{R"({"on": "axs[0]", "call": "psd", "args": [[1, 2, 3, 4]], "as": ["p"]})", "axs[0].psd: naming the result is not supported yet"},
+        Refusal{R"({"on": "axs[0]", "call": "hexbin", "args": [[1, 2], [1, 2]], "kwargs": {"C": [1, 2], "reduce_C_function": {"$func": "mlab.window_none"}}})",
+                "axs[0].hexbin: reduce_C_function must be np.mean, np.sum, np.max, np.min, np.median or len"}));
+
 class BrokenBarhRefusals : public testing::TestWithParam<Refusal> {};
 
 TEST_P(BrokenBarhRefusals, NameTheCallAndTheReason) {

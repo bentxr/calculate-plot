@@ -11,6 +11,8 @@
 #include "support/log10.hpp"
 #include "engine/contour_set.hpp"
 #include "engine/table.hpp"
+#include "engine/spectral.hpp"
+#include "support/npy_complex.hpp"
 #include "support/blas_dot.hpp"
 #include "support/npy_correlate.hpp"
 #include "engine/quiver.hpp"
@@ -222,7 +224,7 @@ public:
             {"hlines", "hlines"}, {"vlines", "vlines"}, {"grid", "grid"}, {"legend", "legend"}, {"text", "text"},
             {"title", "set_title"}, {"xlabel", "set_xlabel"}, {"ylabel", "set_ylabel"}, {"xlim", "set_xlim"},
             {"ylim", "set_ylim"}, {"xscale", "set_xscale"}, {"yscale", "set_yscale"}, {"bar", "bar"}, {"barh", "barh"},
-            {"hist", "hist"}, {"fill", "fill"}, {"step", "step"}, {"stairs", "stairs"}, {"stem", "stem"}, {"boxplot", "boxplot"}, {"violinplot", "violinplot"}, {"pie", "pie"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}, {"imshow", "imshow"}, {"matshow", "matshow"}, {"spy", "spy"}, {"pcolormesh", "pcolormesh"}, {"pcolor", "pcolor"}, {"contour", "contour"}, {"contourf", "contourf"}, {"clabel", "clabel"}, {"hexbin", "hexbin"}, {"quiver", "quiver"}, {"quiverkey", "quiverkey"}, {"barbs", "barbs"}, {"streamplot", "streamplot"}, {"triplot", "triplot"}, {"tripcolor", "tripcolor"}, {"tricontour", "tricontour"}, {"tricontourf", "tricontourf"}, {"stackplot", "stackplot"}, {"broken_barh", "broken_barh"}, {"axline", "axline"}, {"eventplot", "eventplot"}, {"arrow", "arrow"}, {"table", "table"}, {"ecdf", "ecdf"}, {"xcorr", "xcorr"}, {"acorr", "acorr"}};
+            {"hist", "hist"}, {"fill", "fill"}, {"step", "step"}, {"stairs", "stairs"}, {"stem", "stem"}, {"boxplot", "boxplot"}, {"violinplot", "violinplot"}, {"pie", "pie"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}, {"imshow", "imshow"}, {"matshow", "matshow"}, {"spy", "spy"}, {"pcolormesh", "pcolormesh"}, {"pcolor", "pcolor"}, {"contour", "contour"}, {"contourf", "contourf"}, {"clabel", "clabel"}, {"hexbin", "hexbin"}, {"quiver", "quiver"}, {"quiverkey", "quiverkey"}, {"barbs", "barbs"}, {"streamplot", "streamplot"}, {"triplot", "triplot"}, {"tripcolor", "tripcolor"}, {"tricontour", "tricontour"}, {"tricontourf", "tricontourf"}, {"stackplot", "stackplot"}, {"broken_barh", "broken_barh"}, {"axline", "axline"}, {"eventplot", "eventplot"}, {"arrow", "arrow"}, {"table", "table"}, {"ecdf", "ecdf"}, {"xcorr", "xcorr"}, {"acorr", "acorr"}, {"psd", "psd"}, {"csd", "csd"}, {"cohere", "cohere"}, {"specgram", "specgram"}, {"magnitude_spectrum", "magnitude_spectrum"}, {"angle_spectrum", "angle_spectrum"}, {"phase_spectrum", "phase_spectrum"}};
         return ofAxes;
     }
 
@@ -1926,6 +1928,10 @@ private:
         if (call.method == "table") return table(ax, call, error);
         if (call.method == "ecdf") return ecdf(ax, call, error);
         if (call.method == "xcorr" || call.method == "acorr") return xcorr(ax, call, error);
+        if (call.method == "psd" || call.method == "csd" || call.method == "cohere" || call.method == "magnitude_spectrum" ||
+            call.method == "angle_spectrum" || call.method == "phase_spectrum")
+            return spectrum(ax, call, error);
+        if (call.method == "specgram") return spectrum(ax, call, error) && noteMappable(ax, call);
         if (call.method == "tripcolor") return tripcolor(ax, call, error) && noteMappable(ax, call);
         if (call.method == "clabel") {
             const Json* cs = argument(call, 0, "CS");
@@ -5746,6 +5752,245 @@ private:
         return plot(ax, p, error);
     }
 
+    // psd, csd, cohere, magnitude_spectrum, angle_spectrum, phase_spectrum and specgram: the spectra mlab computes,
+    // drawn as a line (plot) with its labels, or as an image (imshow) of the segments
+    bool spectrum(Axes& ax, const model::Call& call, std::string* error) {
+        const std::string where = call.on + "." + call.method;
+        const std::string& m = call.method;
+        const bool single = m == "magnitude_spectrum" || m == "angle_spectrum" || m == "phase_spectrum";
+        const bool two = m == "csd" || m == "cohere";
+        std::vector<const char*> names;
+        if (m == "psd" || m == "csd")
+            names = {"x", "y", "NFFT", "Fs", "Fc", "detrend", "window", "noverlap", "pad_to", "sides", "scale_by_freq", "return_line"};
+        else if (m == "cohere")
+            names = {"x", "y", "NFFT", "Fs", "Fc", "detrend", "window", "noverlap", "pad_to", "sides", "scale_by_freq"};
+        else if (m == "magnitude_spectrum")
+            names = {"x", "Fs", "Fc", "window", "pad_to", "sides", "scale"};
+        else if (single)
+            names = {"x", "Fs", "Fc", "window", "pad_to", "sides"};
+        else
+            names = {"x", "NFFT", "Fs", "Fc", "detrend", "window", "noverlap", "cmap", "xextent", "pad_to", "sides",
+                     "scale_by_freq", "mode", "scale", "vmin", "vmax"};
+        if (!two) names.erase(std::remove_if(names.begin(), names.end(), [](const char* n) { return std::strcmp(n, "y") == 0; }), names.end());
+        if (call.args.size() > names.size()) return *error = where + ": too many positional arguments", false;
+        if (!call.as.empty()) return *error = where + ": naming the result is not supported yet", false;
+        std::map<std::string, const Json*> given;
+        for (std::size_t i = 0; i < call.args.size(); ++i) given[names[i]] = &call.args[i];
+        std::vector<std::pair<std::string, Json>> rest;  // the keywords for plot or imshow
+        for (const auto& kw : call.kwargs) {
+            if (std::find_if(names.begin(), names.end(), [&](const char* n) { return kw.first == n; }) == names.end()) {
+                rest.push_back(kw);
+                continue;
+            }
+            if (given.count(kw.first)) return *error = where + ": got multiple values for argument '" + kw.first + "'", false;
+            given[kw.first] = &kw.second;
+        }
+        const auto get = [&](const char* name) -> const Json* {
+            const auto it = given.find(name);
+            return it == given.end() || it->second->isNull() ? nullptr : it->second;
+        };
+        // the signals: real ones (complex ones are not written in figure files)
+        mlab::Signal x, y;
+        for (int k = 0; k < (two ? 2 : 1); ++k) {
+            const char* name = k ? "y" : "x";
+            if (!given.count(name)) return *error = where + ": missing 1 required positional argument: '" + name + "'", false;
+            std::vector<double> v;
+            if (!numbers(*given[name], &v)) return *error = where + ": " + name + " must be a list of numbers", false;
+            for (double d : v) (k ? y : x).values.emplace_back(d, 0.0);
+        }
+        mlab::SpectralOptions o;
+        const auto integer = [&](const char* name, std::optional<long long>* out) {
+            const Json* v = get(name);
+            if (!v) return true;
+            if (!v->isNumber() || !v->isInteger()) return *error = where + ": " + name + " must be an integer or None", false;
+            return *out = (long long)v->asNumber(), true;
+        };
+        if (!integer("NFFT", &o.NFFT) || !integer("noverlap", &o.noverlap) || !integer("pad_to", &o.padTo)) return false;
+        double number = 0;
+        if (const Json* v = get("Fs")) {
+            if (!readNumber(*v, &number)) return *error = where + ": Fs must be a number", false;
+            o.Fs = number;
+        }
+        double fc = 0;
+        if (const Json* v = get("Fc"); v && !readNumber(*v, &fc)) return *error = where + ": Fc must be a number", false;
+        if (m == "cohere" && given.count("Fc") && given["Fc"]->isNull())
+            return *error = where + ": unsupported operand type(s) for +=: 'float' and 'NoneType'", false;
+        if (const Json* v = get("sides")) {
+            if (!v->isString()) return *error = where + ": sides must be a string", false;
+            o.sides = v->asString();
+        }
+        if (const Json* v = get("scale_by_freq")) {
+            if (!v->isBool()) return *error = where + ": scale_by_freq must be True, False or None", false;
+            o.scaleByFreq = v->asBool();
+        }
+        if (const Json* v = get("detrend")) {
+            const bool func = v->isObject() && v->members().size() == 1 && v->members()[0].first == "$func";
+            const std::string name = func ? v->members()[0].second.asString() : v->isString() ? v->asString() : "";
+            if (name != "mlab.detrend_none" && name != "none") {
+                if (name == "mlab.detrend_mean" || name == "mlab.detrend_linear" || name == "mean" || name == "constant" ||
+                    name == "default" || name == "linear")
+                    return *error = where + ": detrending other than detrend_none is not supported yet", false;
+                return *error = where + ": detrend must be mlab.detrend_none, mlab.detrend_mean, mlab.detrend_linear or a name of one", false;
+            }
+        }
+        // the window: unset or window_hanning (np.hanning), window_none (ones), or the given values; NFFT long
+        const long long nfft = single ? (long long)x.values.size() : o.NFFT ? *o.NFFT : 256;
+        if (const Json* v = get("window")) {
+            const bool func = v->isObject() && v->members().size() == 1 && v->members()[0].first == "$func";
+            const std::string name = func ? v->members()[0].second.asString() : "";
+            if (name == "mlab.window_none") {
+                o.window = std::vector<double>(std::size_t(std::max(nfft, 0LL)), 1.0);
+            } else if (name != "mlab.window_hanning") {
+                // (an array: mlab reshapes it, which a list cannot do)
+                const bool array = v->isObject() && v->members().size() == 1 && v->members()[0].first == "$array";
+                if (v->isArray()) return *error = where + ": 'list' object has no attribute 'reshape'", false;
+                std::vector<double> w;
+                const Json* data = array ? v->members()[0].second.find("data") : nullptr;
+                if (func || !data || !numbers(*data, &w))
+                    return *error = where + ": window must be mlab.window_hanning, mlab.window_none or an array of numbers ({\"$array\": ...})", false;
+                o.window = w;
+            }
+        }
+        std::string scale;
+        if (const Json* v = get("scale")) {
+            if (!v->isString()) return *error = where + ": scale must be a string or None", false;
+            scale = v->asString();
+        }
+        const auto shifted = [&](std::vector<double> freqs) {  // freqs += Fc
+            if (given.count("Fc") && get("Fc"))
+                for (double& f : freqs) f += fc;
+            return freqs;
+        };
+        const auto drawLine = [&](const std::vector<double>& fx, const std::vector<double>& fy) {
+            model::Call p;
+            p.on = call.on;
+            p.method = "plot";
+            p.args = {numbersJson(fx), numbersJson(fy)};
+            p.kwargs = rest;
+            return plot(ax, p, error);
+        };
+        const auto label = [&](const char* method, const std::string& text) {
+            model::Call l;
+            l.on = call.on;
+            l.method = method;
+            l.args = {Json::string(text)};
+            return axesCall(ax, l, error);
+        };
+        const auto gridOn = [&]() {
+            model::Call g;
+            g.on = call.on;
+            g.method = "grid";
+            g.args = {Json::boolean(true)};
+            return grid(ax, g, error);
+        };
+        // psd's and csd's y ticks: integers from floor(vmin) to ceil(vmax), every 10 * int(log10(vmax - vmin)) (at least 1)
+        const auto integerTicks = [&]() {
+            const auto view = ax.yaxis->viewInterval();
+            const double vmin = std::min(view[0], view[1]), vmax = std::max(view[0], view[1]);
+            const double lg = support::log10(vmax - vmin);
+            if (!std::isfinite(lg) || !std::isfinite(vmin) || !std::isfinite(vmax))
+                return *error = where + ": the view limits of the y axis must be finite", false;
+            const long long step = std::max(10 * (long long)std::trunc(lg), 1LL);
+            const long long start = (long long)std::floor(vmin), stop = (long long)std::ceil(vmax) + 1;
+            std::vector<double> ticks;
+            for (long long t = start; t < stop; t += step) ticks.push_back(double(t));
+            return ax.yaxis->setTicks(ticks, std::nullopt, error) || (*error = where + ": " + *error, false);
+        };
+        const auto log10Of = [](double factor, std::vector<double> v) {
+            for (double& d : v) d = factor * support::log10(d);
+            return v;
+        };
+        if (m == "psd" || m == "csd") {
+            if (const Json* v = get("return_line"); v && !v->isBool()) return *error = where + ": return_line must be True, False or None", false;
+            std::vector<mlab::Complex> pxy;
+            std::vector<double> freqs;
+            if (!mlab::csd(x, m == "csd" ? &y : nullptr, o, &pxy, &freqs, error)) return *error = where + ": " + *error, false;
+            std::vector<double> power;
+            for (const auto& z : pxy) power.push_back(m == "psd" ? z.real() : support::npyAbsolute({z.real(), z.imag()}));
+            if (!drawLine(shifted(freqs), log10Of(10, power))) return false;
+            if (!label("set_xlabel", "Frequency")) return false;
+            const bool perHz = !o.scaleByFreq || *o.scaleByFreq;
+            if (!label("set_ylabel", m == "psd" ? std::string("Power Spectral Density (") + (perHz ? "dB/Hz" : "dB") + ")"
+                                                : std::string("Cross Spectrum Magnitude (dB)")))
+                return false;
+            return gridOn() && integerTicks();
+        }
+        if (m == "cohere") {
+            std::vector<double> cxy, freqs;
+            if (!mlab::cohere(x, y, o, &cxy, &freqs, error)) return *error = where + ": " + *error, false;
+            return drawLine(shifted(freqs), cxy) && label("set_xlabel", "Frequency") && label("set_ylabel", "Coherence") && gridOn();
+        }
+        if (single) {
+            std::string yunits;
+            if (m == "magnitude_spectrum") {
+                const Json* v = given.count("scale") ? given["scale"] : nullptr;
+                if (!v || v->isNull() || scale == "default" || scale == "linear") yunits = "energy";
+                else if (scale == "dB") yunits = "dB";
+                else return *error = where + ": " + repr(*v) + " is not a valid value for scale. Supported values are None, 'default', 'linear', 'dB'", false;
+            }
+            std::vector<double> spec, freqs;
+            if (!mlab::singleSpectrum(m.substr(0, m.find('_')), x, o, &spec, &freqs, error)) return *error = where + ": " + *error, false;
+            if (!drawLine(shifted(freqs), yunits == "dB" ? log10Of(20., spec) : spec)) return false;
+            if (!label("set_xlabel", "Frequency")) return false;
+            return label("set_ylabel", m == "magnitude_spectrum" ? "Magnitude (" + yunits + ")" : m == "angle_spectrum" ? "Angle (radians)" : "Phase (radians)");
+        }
+        // specgram: NFFT 256, Fc 0, noverlap 128 and Fs 2 unless given
+        if (!o.NFFT) o.NFFT = 256;
+        if (!o.noverlap) o.noverlap = 128;
+        if (!o.Fs) o.Fs = 2;
+        std::string mode;
+        if (const Json* v = get("mode")) {
+            if (!v->isString()) return *error = where + ": mode must be a string or None", false;
+            mode = o.mode = v->asString();
+        }
+        if (mode == "complex") return *error = where + ": Cannot plot a complex specgram", false;
+        const bool angular = mode == "angle" || mode == "phase";
+        if (scale.empty() || scale == "default") scale = angular ? "linear" : "dB";
+        else if (angular && scale == "dB") return *error = where + ": Cannot use dB scale with angle or phase mode", false;
+        mlab::Spectrum s;
+        if (!mlab::specgram(x, o, &s, error)) return *error = where + ": " + *error, false;
+        if (scale != "linear" && scale != "dB") return *error = where + ": Unknown scale " + repr(*given["scale"]), false;
+        const double factor = mode.empty() || mode == "default" || mode == "psd" ? 10. : 20.;
+        std::vector<Json> rows;  // np.flipud(Z)
+        for (std::size_t i = s.result.size(); i-- > 0;) {
+            std::vector<double> row;
+            for (const auto& z : s.result[i]) row.push_back(scale == "dB" ? factor * support::log10(z.real()) : z.real());
+            rows.push_back(numbersJson(row));
+        }
+        double xmin = 0, xmax = 0;
+        if (const Json* v = get("xextent")) {
+            const Json* seq = sequence(*v);
+            if (!seq || seq->size() != 2 || !readNumber((*seq)[0], &xmin) || !readNumber((*seq)[1], &xmax))
+                return *error = where + ": xextent must be a pair of numbers", false;
+        } else {
+            if (s.t.empty()) return *error = where + ": the signal has no segments", false;
+            // padding is needed for the first and last segment
+            const double pad = double(*o.NFFT - *o.noverlap) / *o.Fs / 2;
+            xmin = *std::min_element(s.t.begin(), s.t.end()) - pad;
+            xmax = *std::max_element(s.t.begin(), s.t.end()) + pad;
+        }
+        const std::vector<double> freqs = shifted(s.freqs);
+        for (const auto& kw : rest)
+            if (kw.first == "origin") return *error = where + ": specgram() got an unexpected keyword argument 'origin'", false;
+        model::Call im;
+        im.on = call.on;
+        im.method = "imshow";
+        im.args = {Json::array(rows)};
+        if (const Json* v = get("cmap")) im.kwargs.emplace_back("cmap", *v);
+        im.kwargs.emplace_back("extent", numbersJson({xmin, xmax, freqs.front(), freqs.back()}));
+        for (const char* name : {"vmin", "vmax"})
+            if (const Json* v = get(name)) im.kwargs.emplace_back(name, *v);
+        im.kwargs.emplace_back("origin", Json::string("upper"));
+        for (const auto& kw : rest) im.kwargs.push_back(kw);
+        if (!imshow(ax, im, error)) return false;
+        // axis('auto'): autoscaling on, aspect 'auto', autoscale_view(tight=False)
+        ax.xaxis->autoscaleOn = ax.yaxis->autoscaleOn = true;
+        ax.aspect.reset();
+        ax.tight = false;
+        ax.requestAutoscaleView(true, true);
+        return true;
+    }
+
     bool colorsCall(const model::Call& call, std::string* error) {
         const std::string where = "colors." + call.method;
         if (call.as.size() > 1) return *error = where + " returns one object: name it once", false;
@@ -6969,6 +7214,8 @@ private:
             if (!(f->isObject() && f->members().size() == 1 && f->members()[0].first == "$func"))
                 return *error = where + ": reduce_C_function must be a function named with {\"$func\": name}", false;
             reduce = f->members()[0].second.asString();
+            if (reduce.rfind("mlab.", 0) == 0)
+                return *error = where + ": reduce_C_function must be np.mean, np.sum, np.max, np.min, np.median or len", false;
         }
         // reduce_C_function of the values of a bin (NumPy's reductions of float64, or of int64 for integer C)
         const auto reduceValues = [&](const std::vector<double>& v) {

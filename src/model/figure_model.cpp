@@ -8,6 +8,7 @@
 #include "svg/svg_renderer.h"
 
 #include <cctype>
+#include <functional>
 #include <set>
 
 namespace calculate_plot::model {
@@ -49,7 +50,9 @@ bool isObjectReference(const std::string& s, std::string& name) {
 }  // namespace
 
 const std::set<std::string>& namedFunctions() {
-    static const std::set<std::string> names = {"np.mean", "np.sum", "np.max", "np.min", "np.median", "len"};
+    static const std::set<std::string> names = {"np.mean", "np.sum", "np.max", "np.min", "np.median", "len",
+                                                "mlab.window_hanning", "mlab.window_none", "mlab.detrend_none",
+                                                "mlab.detrend_mean", "mlab.detrend_linear"};
     return names;
 }
 
@@ -114,7 +117,9 @@ bool validValue(const Json& v, const std::set<std::string>& known, std::string* 
             // {"$func": name}: a function by its name, among those figure files may pass (a reduction for hexbin)
             const Json& name = v.members()[0].second;
             if (v.members().size() == 1 && name.isString() && namedFunctions().count(name.asString())) return true;
-            if (error) *error = "{\"$func\": ...} must be one of np.mean, np.sum, np.max, np.min, np.median, len";
+            if (error)
+                *error = "{\"$func\": ...} must be one of np.mean, np.sum, np.max, np.min, np.median, len, mlab.window_hanning, "
+                         "mlab.window_none, mlab.detrend_none, mlab.detrend_mean, mlab.detrend_linear";
             return false;
         }
         if (v.members()[0].first == "$lambda") {
@@ -230,7 +235,7 @@ std::optional<Figure> parseFigure(std::string_view json, std::string* error) {
     if (!calls || !calls->isArray()) return fail("\"calls\" must be a list");
     // the modules the script imports: calls may be on "colors" (matplotlib.colors) and "mtri" (matplotlib.tri), and no
     // result takes their names
-    static const std::set<std::string> modules = {"plt", "np", "colors", "mtri", "locale", "datetime"};
+    static const std::set<std::string> modules = {"plt", "np", "colors", "mtri", "mlab", "locale", "datetime"};
     std::set<std::string> known = {"colors", "mtri"};
     for (const Json& c : calls->items()) {
         if (!c.isObject()) return fail("each call is an object");
@@ -304,8 +309,24 @@ bool uses(const Json& v, bool datetime) {
 }
 
 std::string exportPython(const Figure& figure, std::string_view version) {
-    bool datetimes = false, numpy = false, colorsModule = false, triModule = false;
+    bool datetimes = false, numpy = false, colorsModule = false, triModule = false, mlabModule = false;
+    // a function of matplotlib.mlab named anywhere in the calls ({"$func": "mlab...."})
+    std::function<bool(const Json&)> mlabUsed = [&](const Json& v) {
+        if (v.isArray()) {
+            for (const Json& item : v.items())
+                if (mlabUsed(item)) return true;
+            return false;
+        }
+        if (!v.isObject()) return false;
+        for (const auto& [key, value] : v.members()) {
+            if (key == "$func" && value.isString() && value.asString().rfind("mlab.", 0) == 0) return true;
+            if (mlabUsed(value)) return true;
+        }
+        return false;
+    };
     for (const auto& call : figure.calls) {
+        for (const auto& a : call.args) mlabModule = mlabModule || mlabUsed(a);
+        for (const auto& kw : call.kwargs) mlabModule = mlabModule || mlabUsed(kw.second);
         colorsModule = colorsModule || call.on == "colors";
         triModule = triModule || call.on == "mtri";
         for (const auto& a : call.args) datetimes = datetimes || uses(a, true), numpy = numpy || uses(a, false);
@@ -316,6 +337,7 @@ std::string exportPython(const Figure& figure, std::string_view version) {
                       std::string(datetimes ? "import datetime\n" : "") +
                       "import locale\n\n"
                       "import matplotlib.pyplot as plt\n" + std::string(colorsModule ? "from matplotlib import colors\n" : "") +
+                      std::string(mlabModule ? "from matplotlib import mlab\n" : "") +
                       std::string(triModule ? "import matplotlib.tri as mtri\n" : "") +
                       std::string(numpy ? "import numpy as np\n" : "") + "\n"
                       // HarfBuzz takes the language of a text that sets none from LC_CTYPE, the first

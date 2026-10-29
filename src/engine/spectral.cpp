@@ -86,12 +86,13 @@ bool spectralHelper(const Signal& xs, const Signal* ys, const SpectralOptions& o
     if (!(0 <= noverlap && noverlap < NFFT)) return *error = "noverlap must be less than NFFT", false;
     std::string mode = o.mode == "default" ? "psd" : o.mode;
     if (mode != "psd" && mode != "complex" && mode != "magnitude" && mode != "angle" && mode != "phase")
-        return *error = "'" + o.mode + "' is not a valid value for mode; supported values are 'default', 'psd', 'complex', 'magnitude', 'angle', 'phase'", false;
+        // (matplotlib adds the values close to it, which difflib finds)
+        return *error = "'" + o.mode + "' is not a valid value for mode.", false;
     if (!same && mode != "psd") return *error = "x and y must be equal if mode is not 'psd'", false;
     std::string sides = o.sides;
     if (sides == "default") sides = xs.complex ? "twosided" : "onesided";
     if (sides != "onesided" && sides != "twosided")
-        return *error = "'" + o.sides + "' is not a valid value for sides; supported values are 'default', 'onesided', 'twosided'", false;
+        return *error = "'" + o.sides + "' is not a valid value for sides. Supported values are 'default', 'onesided', 'twosided'", false;
     std::vector<Complex> x = xs.values, y = ys ? ys->values : std::vector<Complex>{};
     if ((long long)x.size() < NFFT) x.resize(std::size_t(NFFT), Complex(0.0, 0.0));
     if (!same && (long long)y.size() < NFFT) y.resize(std::size_t(NFFT), Complex(0.0, 0.0));
