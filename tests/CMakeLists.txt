@@ -65,6 +65,7 @@ add_executable(calculate-plot-tests
     test_trace_renderer.cpp
     test_ticker.cpp
     test_transforms.cpp
+    test_triangulation.cpp
     test_version.cpp
     test_xml_writer.cpp
 )

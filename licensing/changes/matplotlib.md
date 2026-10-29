@@ -361,6 +361,9 @@ it comes from in its first lines. The changes, as a whole:
   with the MarkerStyle(transform=_ScaledRotation) turn, the non-rectilinear data limits of _update_line_limits,
   _update_patch_limits, vlines and hlines; pyplot.polar; PolarAxes.start_pan / drag_pan / can_zoom and format_coord
   in src/engine/navigation.cpp (the toolbar's result as set_rlabel_position / set_rmax calls).
+- **Delaunay triangulation** (src/tri/delaunay.cpp): src/_qhull_wrapper.cpp's delaunay and delaunay_impl with its
+  helpers, without pybind11: the arrays are vectors, the exceptions return values; Qhull's messages go to /dev/null as
+  when Python is not verbose.
 - **Meshes** (src/engine/collections.cpp QuadMesh and PolyQuadMesh, src/engine/engine.cpp pcolormesh, pcolor,
   pcolorfast; src/engine/image.cpp PcolorImage): collections.py's _MeshData, PolyQuadMesh and QuadMesh (_convert_mesh_to_triangles for Gouraud shading, draw), backend_bases.py's RendererBase.draw_quad_mesh
   (the SVG renderer's path collection of the cells), axes/_axes.py's pcolormesh, pcolor, pcolorfast,

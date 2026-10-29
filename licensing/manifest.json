@@ -391,6 +391,36 @@
    "remarks": "Built unmodified from the release archive with its own Z_PREFIX option (renames every symbol with z_)."
   },
   {
+   "id": "qhull",
+   "name": "Qhull",
+   "version": "8.0.2",
+   "homepage": "http://www.qhull.org",
+   "use": "runtime",
+   "licence": "Qhull",
+   "licenceFiles": [
+    {
+     "path": "LICENSES/Qhull.txt",
+     "upstream": "https://raw.githubusercontent.com/qhull/qhull/v8.0.2/COPYING.txt",
+     "sha256": "106d55c931fd6a84822e5345d900273d059f1c27310d02567ccb313c5d18c55d"
+    }
+   ],
+   "fetch": [
+    {
+     "url": "https://github.com/qhull/qhull/archive/v8.0.2/qhull-8.0.2.tar.gz",
+     "sha256": "8774e9a12c70b0180b95d6b0b563c5aa4bea8d5960c15e18ae3b6d2521d64f8b"
+    }
+   ],
+   "vendored": [],
+   "derived": [],
+   "header": [],
+   "notices": [
+    "This software includes Qhull from C.B. Barber and The Geometry Center.",
+    "Qhull, Copyright (c) 1993-2020 C.B. Barber and The Geometry Center, University of Minnesota"
+   ],
+   "changes": null,
+   "remarks": "Built from the unmodified release archive: the reentrant library (src/libqhull_r), the files matplotlib's build compiles. matplotlib applies a patch to it that changes only diagnostic messages, which are discarded here as there."
+  },
+  {
    "id": "agg",
    "name": "Anti-Grain Geometry",
    "version": "2.4 (Matplotlib 3.11.2's copy)",
@@ -530,6 +560,8 @@
     "src/engine/streamplot.hpp",
     "src/engine/polar.cpp",
     "src/engine/polar.hpp",
+    "src/tri/delaunay.cpp",
+    "src/tri/delaunay.hpp",
     "src/engine/renderer.hpp",
     "src/engine/text.cpp",
     "src/engine/text.hpp",

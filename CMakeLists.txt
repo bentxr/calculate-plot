@@ -18,6 +18,7 @@ endif()
 include(FetchContent)
 include(cmake/text-libraries.cmake)
 include(cmake/zlib.cmake)
+include(cmake/qhull.cmake)
 include(cmake/agg.cmake)
 
 add_library(calculate-plot-warnings INTERFACE)
@@ -92,6 +93,7 @@ add_library(calculate-plot STATIC
     src/engine/quiver.cpp
     src/engine/streamplot.cpp
     src/engine/polar.cpp
+    src/tri/delaunay.cpp
     src/contour/contour.cpp
     src/contour/mpl2014.cpp
     src/engine/trace_renderer.cpp
@@ -144,7 +146,7 @@ set_source_files_properties(src/agg/backend_agg.cpp src/render/replay.cpp src/re
     "-Wno-unused-parameter;-Wno-shadow;-Wno-sign-compare;-Wno-missing-field-initializers")
 target_compile_definitions(calculate-plot PRIVATE CALCULATE_PLOT_VERSION="${PROJECT_VERSION}")
 target_compile_options(calculate-plot PRIVATE -fno-exceptions)
-target_link_libraries(calculate-plot PUBLIC calculate-plot-raqm calculate-plot-zlib calculate-plot-agg PRIVATE calculate-plot-warnings)
+target_link_libraries(calculate-plot PUBLIC calculate-plot-raqm calculate-plot-zlib calculate-plot-qhull calculate-plot-agg PRIVATE calculate-plot-warnings)
 
 add_library(cplot-cli STATIC cli/cli.cpp)
 target_include_directories(cplot-cli PUBLIC ${PROJECT_SOURCE_DIR}/cli PRIVATE ${PROJECT_SOURCE_DIR}/src)
