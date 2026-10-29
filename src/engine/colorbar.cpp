@@ -273,11 +273,11 @@ public:
         ax_.colorbarLocator = [ax, vertical, aspect, shrink, offset](const std::array<double, 4>& pos) {
             const double w = pos[2] - pos[0], h = pos[3] - pos[1];
             if (vertical) {
-                if (aspect) ax->boxAspect = *aspect * shrink;
+                if (aspect) ax->boxAspect = *aspect * shrink, ax->adjustable = "datalim";  // set_box_aspect
                 const std::array<double, 4> s{pos[0], pos[1], pos[0] + 1 * w, pos[1] + shrink * h};
                 return std::array<double, 4>{s[0], s[1] + offset * h, s[2], s[3] + offset * h};
             }
-            if (aspect) ax->boxAspect = 1 / (*aspect * shrink);
+            if (aspect) ax->boxAspect = 1 / (*aspect * shrink), ax->adjustable = "datalim";
             const std::array<double, 4> s{pos[0], pos[1], pos[0] + shrink * w, pos[1] + 1 * h};
             return std::array<double, 4>{s[0] + offset * w, s[1], s[2] + offset * w, s[3]};
         };
@@ -727,6 +727,7 @@ bool makeColorbar(Figure& fig, const Mappable& mappable, Axes* cax, const std::v
         }
         cax->anchor = anchor;
         cax->boxAspect = horizontal ? 1.0 / o.aspect : o.aspect;
+        cax->adjustable = "datalim";  // (set_box_aspect)
         cax->aspect.reset();
         infoAspect = o.aspect;  // cax._colorbar_info['aspect']
         cax->xaxis->grid(false, "both", {}, false);

@@ -596,6 +596,7 @@ private:
         cbax.setPosition(transforms::Bbox(pbcb));
         cbax.anchor = info.anchor;
         cbax.boxAspect = info.location == "bottom" || info.location == "top" ? 1 / info.aspect : info.aspect;
+        cbax.adjustable = "datalim";  // (set_box_aspect)
         cbax.aspect.reset();
     }
 

@@ -1491,8 +1491,9 @@ TEST(AxesCalls, SetGoesThroughTheSetters) {
     EXPECT_EQ(error(R"({"on": "axs[0]", "call": "set", "kwargs": {"aspect": "equal"}})"), "");
     EXPECT_EQ(error(R"({"on": "axs[0]", "call": "set", "kwargs": {"facecolor": "r"}})"), "axs[0].set: set(facecolor=...) is not supported yet");
     EXPECT_EQ(error(R"({"on": "axs[0]", "call": "set_aspect", "args": [-1]})"), "axs[0].set_aspect: aspect must be finite and positive ");
-    EXPECT_EQ(error(R"({"on": "axs[0]", "call": "set_aspect", "args": [1, "datalim"]})"),
-              "axs[0].set_aspect: adjustable 'datalim' is not supported yet");
+    EXPECT_EQ(error(R"({"on": "axs[0]", "call": "set_aspect", "args": [1, "datalim"]})"), "");
+    EXPECT_EQ(error(R"({"on": "axs[0]", "call": "set_aspect", "args": [1, "data"]})"),
+              "axs[0].set_aspect: 'data' is not a valid value for adjustable. Supported values are 'box', 'datalim'");
     EXPECT_EQ(error(R"({"on": "axs[0]", "call": "set_aspect", "args": [1], "kwargs": {"anchor": "X"}})"),
               "axs[0].set_aspect: argument must be among C, SW, S, SE, E, NE, N, NW, W");
     EXPECT_EQ(error(R"({"on": "axs[0]", "call": "set", "kwargs": {"xlim": [0, {"$float": "nan"}]}})").find("axs[0].set_xlim"), 0u);
@@ -1967,13 +1968,20 @@ TEST(LayoutEngineCalls, SubplotsAdjustIsIgnoredUnderTheConstrainedLayout) {
 }
 
 // Twinned Axes take adjustable 'datalim', where an aspect changes the data limits: not ported
-TEST(TwinCalls, AspectsOfTwinsAreRefused) {
-    EXPECT_EQ(draw(kSubplots + R"({"on": "axs[0]", "call": "set_aspect", "args": [2]}, {"on": "axs[0]", "call": "twinx"})").error,
-              "axs[0].twinx: twins of an Axes with an aspect (adjustable 'datalim') are not supported yet");
-    EXPECT_EQ(draw(kSubplots + R"({"on": "axs[0]", "call": "pie", "args": [[1, 2]]}, {"on": "axs[0]", "call": "twiny"})").error,
-              "axs[0].twiny: twins of an Axes with an aspect (adjustable 'datalim') are not supported yet");
-    EXPECT_EQ(draw(kSubplots + R"({"on": "axs[0]", "call": "twinx"}, {"on": "axs[0]", "call": "pie", "args": [[1, 2]]})").error,
-              "axs[0].pie: a pie on twinned Axes (adjustable 'datalim') is not supported yet");
+// Twins have adjustable 'datalim' (an aspect changes their data limits); matplotlib raises at drawing time where
+// adjustable 'box' meets twins, or 'datalim' meets an Axes sharing both axes; a polar Axes cannot take 'datalim'
+TEST(TwinCalls, AspectsOfTwinsMeetTheirDataLimits) {
+    EXPECT_EQ(draw(kSubplots + R"({"on": "axs[0]", "call": "set_aspect", "args": [2]}, {"on": "axs[0]", "call": "twinx"})").error, "");
+    EXPECT_EQ(draw(kSubplots + R"({"on": "axs[0]", "call": "twinx"}, {"on": "axs[0]", "call": "pie", "args": [[1, 2]]})").error, "");
+    EXPECT_EQ(draw(kSubplots + R"({"on": "axs[0]", "call": "twinx"}, {"on": "axs[0]", "call": "set_aspect", "args": [2, "box"]})").error,
+              "Adjustable 'box' is not allowed in a twinned Axes; use 'datalim' instead");
+    EXPECT_EQ(draw(R"({"call": "subplots", "args": [1, 2], "kwargs": {"sharex": true, "sharey": true}, "as": ["fig", "axs"]},
+                      {"on": "axs[0]", "call": "set_aspect", "args": [2, "datalim"]})")
+                  .error,
+              "set_aspect(..., adjustable='datalim') or axis('equal') are not allowed when both axes are shared.  Try set_aspect(..., "
+              "adjustable='box').");
+    EXPECT_EQ(draw(R"({"call": "subplot", "kwargs": {"projection": "polar"}, "as": ["ax"]}, {"on": "ax", "call": "set_adjustable", "args": ["datalim"]})").error,
+              "ax.set_adjustable: Cannot set Axes adjustable to 'datalim' for Axes which override 'get_data_ratio'");
 }
 
 // contour raises what matplotlib raises, and refuses what is not ported
@@ -2277,6 +2285,28 @@ INSTANTIATE_TEST_SUITE_P(
                 "axs[0].tricontourf: z array must not contain non-finite values within the triangulation"},
         Refusal{R"({"on": "axs[0]", "call": "tricontour", "args": [[0, 1, 0, 1], [0, 0, 1, 1], [1, 2, 3, 4]], "kwargs": {"corner_mask": true}})",
                 "axs[0].tricontour: TriContourSet.set() got an unexpected keyword argument 'corner_mask'"}));
+
+// axis(...): matplotlib's errors
+class AxisOptionRefusals : public testing::TestWithParam<Refusal> {};
+
+TEST_P(AxisOptionRefusals, NameTheCallAndTheReason) {
+    EXPECT_EQ(draw(kSubplots + GetParam().call).error, GetParam().error);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    Engine, AxisOptionRefusals,
+    testing::Values(
+        Refusal{R"({"on": "axs[0]", "call": "axis", "args": ["Bogus"]})", "axs[0].axis: Unrecognized string 'bogus' to axis; try 'on' or 'off'"},
+        Refusal{R"({"on": "axs[0]", "call": "axis", "args": [[0, 1, 2]]})",
+                "axs[0].axis: The first argument to axis() must be an iterable of the form [xmin, xmax, ymin, ymax]"},
+        Refusal{R"({"on": "axs[0]", "call": "axis", "args": [3]})", "axs[0].axis: object of type 'int' has no len()"},
+        Refusal{R"({"on": "axs[0]", "call": "axis", "kwargs": {"xmin": 0, "zmin": 1}})", "axs[0].axis: axis() got an unexpected keyword argument 'zmin'"},
+        Refusal{R"({"on": "axs[0]", "call": "axis", "args": ["on"], "kwargs": {"xmin": 1}})",
+                "axs[0].axis: axis() got an unexpected keyword argument 'xmin'"},
+        Refusal{R"({"call": "subplot", "kwargs": {"projection": "polar"}, "as": ["ax"]}, {"on": "ax", "call": "axis", "args": ["equal"]})",
+                "ax.axis: Cannot set Axes adjustable to 'datalim' for Axes which override 'get_data_ratio'"},
+        Refusal{R"({"on": "axs[0]", "call": "set_xlim", "args": [0, 1], "kwargs": {"auto": "yes"}})",
+                "axs[0].set_xlim: auto must be True, False or None"}));
 
 // margins, set_xmargin / set_ymargin and locator_params: matplotlib's errors
 class MarginRefusals : public testing::TestWithParam<Refusal> {};

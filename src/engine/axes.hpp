@@ -330,6 +330,11 @@ public:
     // (nanmin / nanmax) grow the data limits and an autoscale is requested.
     Collection& addLinesCollection(std::unique_ptr<Collection> collection);
     void requestAutoscaleView(bool x, bool y);
+    // autoscale_view(tight=, scalex=True, scaley=True) at once (`tight` unset keeps _tight)
+    void autoscaleViewNow(std::optional<bool> tightValue) {
+        if (tightValue) tight = *tightValue;
+        autoscaleView(true, true);
+    }
     // update_datalim(xys): nothing unless some value is finite; then the data limits grow by the points
     void updateDatalim(const std::vector<std::array<double, 2>>& xys, bool updatex = true, bool updatey = true);
     void setScale(bool x, const std::string& name, const AxisScaleOptions& options = AxisScaleOptions());  // set_xscale / set_yscale
@@ -362,6 +367,9 @@ public:
     // set_aspect: a number (height of one data unit over its width), or unset for 'auto'; adjustable
     // 'box' (the Axes' box shrinks); anchor: where the shrunk box sits in the original (Bbox.coefs)
     std::optional<double> aspect;
+    // set_adjustable: 'box' (the box shrinks to the aspect) or 'datalim' (the data limits grow to it; twins and
+    // Axes with a box aspect)
+    std::string adjustable = "box";
     std::array<double, 2> anchor{0.5, 0.5};
     // apply_aspect(): the active position from the original one and the aspect
     void applyAspect();

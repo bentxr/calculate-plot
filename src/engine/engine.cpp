@@ -224,7 +224,7 @@ public:
             {"hlines", "hlines"}, {"vlines", "vlines"}, {"grid", "grid"}, {"legend", "legend"}, {"text", "text"},
             {"title", "set_title"}, {"xlabel", "set_xlabel"}, {"ylabel", "set_ylabel"}, {"xlim", "set_xlim"},
             {"ylim", "set_ylim"}, {"xscale", "set_xscale"}, {"yscale", "set_yscale"}, {"bar", "bar"}, {"barh", "barh"},
-            {"hist", "hist"}, {"fill", "fill"}, {"step", "step"}, {"stairs", "stairs"}, {"stem", "stem"}, {"boxplot", "boxplot"}, {"violinplot", "violinplot"}, {"pie", "pie"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}, {"imshow", "imshow"}, {"matshow", "matshow"}, {"spy", "spy"}, {"pcolormesh", "pcolormesh"}, {"pcolor", "pcolor"}, {"contour", "contour"}, {"contourf", "contourf"}, {"clabel", "clabel"}, {"hexbin", "hexbin"}, {"quiver", "quiver"}, {"quiverkey", "quiverkey"}, {"barbs", "barbs"}, {"streamplot", "streamplot"}, {"triplot", "triplot"}, {"tripcolor", "tripcolor"}, {"tricontour", "tricontour"}, {"tricontourf", "tricontourf"}, {"stackplot", "stackplot"}, {"broken_barh", "broken_barh"}, {"axline", "axline"}, {"eventplot", "eventplot"}, {"arrow", "arrow"}, {"table", "table"}, {"ecdf", "ecdf"}, {"xcorr", "xcorr"}, {"acorr", "acorr"}, {"margins", "margins"}, {"locator_params", "locator_params"}, {"psd", "psd"}, {"csd", "csd"}, {"cohere", "cohere"}, {"specgram", "specgram"}, {"magnitude_spectrum", "magnitude_spectrum"}, {"angle_spectrum", "angle_spectrum"}, {"phase_spectrum", "phase_spectrum"}};
+            {"hist", "hist"}, {"fill", "fill"}, {"step", "step"}, {"stairs", "stairs"}, {"stem", "stem"}, {"boxplot", "boxplot"}, {"violinplot", "violinplot"}, {"pie", "pie"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}, {"imshow", "imshow"}, {"matshow", "matshow"}, {"spy", "spy"}, {"pcolormesh", "pcolormesh"}, {"pcolor", "pcolor"}, {"contour", "contour"}, {"contourf", "contourf"}, {"clabel", "clabel"}, {"hexbin", "hexbin"}, {"quiver", "quiver"}, {"quiverkey", "quiverkey"}, {"barbs", "barbs"}, {"streamplot", "streamplot"}, {"triplot", "triplot"}, {"tripcolor", "tripcolor"}, {"tricontour", "tricontour"}, {"tricontourf", "tricontourf"}, {"stackplot", "stackplot"}, {"broken_barh", "broken_barh"}, {"axline", "axline"}, {"eventplot", "eventplot"}, {"arrow", "arrow"}, {"table", "table"}, {"ecdf", "ecdf"}, {"xcorr", "xcorr"}, {"acorr", "acorr"}, {"margins", "margins"}, {"locator_params", "locator_params"}, {"axis", "axis"}, {"psd", "psd"}, {"csd", "csd"}, {"cohere", "cohere"}, {"specgram", "specgram"}, {"magnitude_spectrum", "magnitude_spectrum"}, {"angle_spectrum", "angle_spectrum"}, {"phase_spectrum", "phase_spectrum"}};
         return ofAxes;
     }
 
@@ -1579,6 +1579,92 @@ private:
             if (!axis.setTicks(ticks, labels, error)) return *error = where + ": " + *error, false;
             return true;
         }
+        if (call.method == "axis") {
+            // axis(arg=None, /, *, emit=True, **kwargs): an option ('on', 'off', 'equal', 'tight', 'scaled', 'auto',
+            // 'image', 'square', True, False) or the limits ([xmin, xmax, ymin, ymax], or xmin= ... ymax=); then the
+            // limits read (which brings a pending autoscale up to date)
+            if (call.args.size() > 1) return *error = where + ": too many positional arguments", false;
+            if (!call.as.empty()) return *error = where + ": naming the result is not supported yet", false;
+            bool emit = true;
+            if (const Json* e = keyword(call, "emit")) {
+                if (!e->isBool()) return *error = where + ": emit must be True or False", false;
+                emit = e->asBool();
+            }
+            const Json* arg = call.args.empty() || call.args[0].isNull() ? nullptr : &call.args[0];
+            std::vector<std::string> unused;  // the keywords axis() does not take
+            const auto equalBox = [&]() {  // set_aspect('equal', adjustable='box', anchor='C')
+                ax.aspect = 1.0;
+                ax.adjustable = "box";
+                ax.anchor = {0.5, 0.5};
+            };
+            const auto autoscaleOn = [&](bool on) { ax.xaxis->autoscaleOn = ax.yaxis->autoscaleOn = on; };
+            if (arg && (arg->isString() || arg->isBool())) {
+                std::string option = arg->isBool() ? (arg->asBool() ? "on" : "off") : arg->asString();
+                for (char& ch : option) ch = char(std::tolower((unsigned char)ch));  // (str.lower)
+                for (const auto& kw : call.kwargs)
+                    if (kw.first != "emit") unused.push_back(kw.first);
+                if (option == "on" || option == "off") {
+                    ax.axisOn = option == "on";
+                } else if (option == "equal" || option == "tight" || option == "scaled" || option == "auto" || option == "image" ||
+                           option == "square") {
+                    autoscaleOn(true);
+                    ax.aspect.reset();  // set_aspect('auto')
+                    ax.autoscaleViewNow(false);
+                    if (option == "equal") {
+                        ax.aspect = 1.0;  // set_aspect('equal', adjustable='datalim')
+                        if (!setAdjustable(ax, Json::string("datalim"), where, error)) return false;
+                    } else if (option == "scaled") {
+                        equalBox();
+                        autoscaleOn(false);
+                    } else if (option == "tight") {
+                        ax.autoscaleViewNow(true);
+                        autoscaleOn(false);
+                    } else if (option == "image") {
+                        ax.autoscaleViewNow(true);
+                        autoscaleOn(false);
+                        equalBox();
+                    } else {  // square: both spans the larger one, from the lower limits
+                        equalBox();
+                        autoscaleOn(false);
+                        const auto xlim = ax.xaxis->viewInterval(), ylim = ax.yaxis->viewInterval();
+                        const double dx = xlim[1] - xlim[0], dy = ylim[1] - ylim[0];
+                        const double edge = dy > dx ? dy : dx;  // max(np.diff(xlim), np.diff(ylim))[0]
+                        ax.xaxis->setLim(xlim[0], xlim[0] + edge, false, emit);
+                        ax.yaxis->setLim(ylim[0], ylim[0] + edge, false, emit);
+                    }
+                } else {
+                    return *error = where + ": Unrecognized string " + repr(Json::string(option)) + " to axis; try 'on' or 'off'", false;
+                }
+            } else {
+                const Json* limits[4] = {nullptr, nullptr, nullptr, nullptr};
+                if (arg) {
+                    const Json* seq = sequence(*arg);
+                    if (!seq) return *error = where + ": object of type '" + std::string(arg->isNumber() ? (arg->isInteger() ? "int" : "float") : "object") + "' has no len()", false;
+                    if (seq->size() != 4)
+                        return *error = where + ": The first argument to axis() must be an iterable of the form [xmin, xmax, ymin, ymax]", false;
+                    for (std::size_t i = 0; i < 4; ++i) limits[i] = &(*seq)[i];
+                    for (const auto& kw : call.kwargs)
+                        if (kw.first != "emit") unused.push_back(kw.first);
+                } else {
+                    static const char* const names[] = {"xmin", "xmax", "ymin", "ymax"};
+                    for (const auto& kw : call.kwargs) {
+                        const auto at = std::find_if(std::begin(names), std::end(names), [&](const char* n) { return kw.first == n; });
+                        if (at != std::end(names)) limits[at - std::begin(names)] = &kw.second;
+                        else if (kw.first != "emit") unused.push_back(kw.first);
+                    }
+                }
+                markDateUnits(ax, call);
+                for (int k = 0; k < 2; ++k) {
+                    const Json* lo = limits[2 * k];
+                    const Json* hi = limits[2 * k + 1];
+                    const bool keep = (!lo || lo->isNull()) && (!hi || hi->isNull());  // auto None: the autoscaling as it is
+                    if (!setLimits(ax, k == 0, lo, hi, keep ? std::nullopt : std::optional<bool>(false), emit, where, error)) return false;
+                }
+            }
+            if (!unused.empty()) return *error = where + ": axis() got an unexpected keyword argument '" + unused.front() + "'", false;
+            ax.xaxis->viewInterval(), ax.yaxis->viewInterval();  // get_xlim(), get_ylim()
+            return true;
+        }
         if (call.method == "set_xmargin" || call.method == "set_ymargin") {
             // set_xmargin(m): above -0.5; the view autoscaled again
             const bool isX = call.method == "set_xmargin";
@@ -1857,28 +1943,36 @@ private:
             current_ = t;
             return nameResult(call, t, error);
         }
+        if (call.method == "set_adjustable") {
+            // set_adjustable(adjustable, share=False)
+            const Json* a = argument(call, 0, "adjustable");
+            if (call.args.size() > 2) return *error = where + ": too many positional arguments", false;
+            if (!a) return *error = where + ": missing 1 required positional argument: 'adjustable'", false;
+            if (const Json* share = argument(call, 1, "share"); share && share->isBool() && share->asBool())
+                return *error = where + ": share=True is not supported yet", false;
+            return setAdjustable(ax, *a, where, error);
+        }
         if (call.method == "set_aspect") {
             // set_aspect(aspect, adjustable=None, anchor=None, share=False)
             const Json* a = argument(call, 0, "aspect");
             double value = 0;
             if (!a) return *error = where + ": aspect is required", false;
-            if (ax.twinned && !(a->isString() && a->asString() == "auto"))
-                return *error = where + ": aspects of twinned Axes (adjustable 'datalim') are not supported yet", false;
+            std::optional<double> aspect;
             if (a->isString() && a->asString() == "auto") {
-                ax.aspect.reset();
+                aspect.reset();
             } else if (a->isString() && a->asString() == "equal") {
-                ax.aspect = 1.0;
+                aspect = 1.0;
             } else if (readNumber(*a, &value)) {
                 if (!(value > 0) || !std::isfinite(value)) return *error = where + ": aspect must be finite and positive ", false;
-                ax.aspect = value;
+                aspect = value;
             } else {
                 return *error = where + ": could not convert that to float", false;
             }
-            if (const Json* adj = argument(call, 1, "adjustable"); adj && !adj->isNull()) {
-                if (adj->isString() && adj->asString() == "datalim") return *error = where + ": adjustable 'datalim' is not supported yet", false;
-                if (!adj->isString() || adj->asString() != "box")
-                    return *error = where + ": that is not a valid value for adjustable; supported values are 'box', 'datalim'", false;
-            }
+            if (const Json* share = argument(call, 3, "share"); share && share->isBool() && share->asBool())
+                return *error = where + ": share=True is not supported yet", false;
+            ax.aspect = aspect;
+            const Json* adj = argument(call, 1, "adjustable");
+            if (!setAdjustable(ax, adj && !adj->isNull() ? *adj : Json::string(ax.adjustable), where, error)) return false;
             if (const Json* anc = argument(call, 2, "anchor"); anc && !anc->isNull()) {
                 // Bbox.coefs, or a pair
                 static const std::pair<const char*, std::array<double, 2>> coefs[] = {
@@ -1895,8 +1989,6 @@ private:
                     ax.anchor = {px, py};
                 }
             }
-            if (const Json* share = argument(call, 3, "share"); share && share->isBool() && share->asBool())
-                return *error = where + ": share=True is not supported yet", false;
             return true;
         }
         if (call.method == "set_axis_off" || call.method == "set_axis_on") {
@@ -1988,38 +2080,30 @@ private:
             return textProperties(axis.label, given, TextKeywords::Update, where, error);
         }
         if (call.method == "set_xlim" || call.method == "set_ylim") {
+            // set_xlim(left=None, right=None, *, emit=True, auto=False)
             const bool isX = call.method == "set_xlim";
             const char* lo = isX ? "left" : "bottom";
             const char* hi = isX ? "right" : "top";
-            if (!keywords(call, {lo, hi}, error)) return false;
+            if (!keywords(call, {lo, hi, "emit", "auto"}, error)) return false;
+            bool emit = true;
+            std::optional<bool> autoscale = false;
+            if (const Json* e = keyword(call, "emit")) {
+                if (!e->isBool()) return *error = where + ": emit must be True or False", false;
+                emit = e->asBool();
+            }
+            if (const Json* a = keyword(call, "auto")) {
+                if (a->isNull()) autoscale.reset();
+                else if (a->isBool()) autoscale = a->asBool();
+                else return *error = where + ": auto must be True, False or None", false;
+            }
             markDateUnits(ax, call);  // (_set_lim: _process_unit_info first)
-            Axis& axis = isX ? *ax.xaxis : *ax.yaxis;
             const Json* given[2] = {call.args.size() > 0 ? &call.args[0] : keyword(call, lo),
                                     call.args.size() > 1 ? &call.args[1] : keyword(call, hi)};
             if (call.args.size() == 1 && sequence(call.args[0]) && sequence(call.args[0])->size() == 2) {
                 given[0] = &(*sequence(call.args[0]))[0];
                 given[1] = &(*sequence(call.args[0]))[1];
             }
-            double v[2] = {0, 0};
-            bool missing = false;
-            for (int i = 0; i < 2; ++i) {
-                if (!given[i] || given[i]->isNull()) {
-                    missing = true;
-                    continue;
-                }
-                if (!readNumber(*given[i], &v[i])) return *error = where + ": limits must be numbers", false;
-                if (!std::isfinite(v[i])) return *error = where + ": limits cannot be NaN or Inf", false;
-                // (numpy holds a larger integer as an object, which isfinite does not take)
-                if (given[i]->isNumber() && given[i]->isInteger() && !fitsIn64Bits(given[i]->numberText()))
-                    return *error = where + ": an integer limit must fit in 64 bits", false;
-            }
-            if (missing) {  // the old limits fill in, read through viewLim (a pending autoscale runs first)
-                const auto view = axis.viewInterval();
-                for (int i = 0; i < 2; ++i)
-                    if (!given[i] || given[i]->isNull()) v[i] = view[i];
-            }
-            axis.setLim(v[0], v[1], false);
-            return true;
+            return setLimits(ax, isX, given[0], given[1], autoscale, emit, where, error);
         }
         if (call.method == "text") return axesText(ax, call, error);
         if (call.method == "annotate") return annotate(ax, call, error);
@@ -4396,8 +4480,6 @@ private:
     // no ticks and limits of 1.25 around the centre
     bool pie(Axes& ax, const model::Call& call, std::string* error) {
         const std::string where = call.on + ".pie";
-        // (pie sets the aspect 'equal', which twinned Axes would meet by their data limits: not ported)
-        if (ax.twinned) return *error = where + ": a pie on twinned Axes (adjustable 'datalim') is not supported yet", false;
         static const char* const names[] = {"x", "explode", "labels", "colors", "autopct", "pctdistance", "shadow", "labeldistance",
                                             "startangle", "radius", "counterclock", "wedgeprops", "textprops", "center", "frame",
                                             "rotatelabels", "normalize", "hatch"};
@@ -5887,6 +5969,44 @@ private:
         p.args = {Json::array(lags), numbersJson(correls)};
         p.kwargs = kwargs;
         return plot(ax, p, error);
+    }
+
+    // Axis._set_lim(v0, v1, emit=, auto=) from the limits given (None or missing: the old one, read through viewLim)
+    bool setLimits(Axes& ax, bool isX, const Json* g0, const Json* g1, std::optional<bool> autoscale, bool emit, const std::string& where,
+                   std::string* error) {
+        Axis& axis = isX ? *ax.xaxis : *ax.yaxis;
+        const Json* given[2] = {g0, g1};
+        double v[2] = {0, 0};
+        bool missing = false;
+        for (int i = 0; i < 2; ++i) {
+            if (!given[i] || given[i]->isNull()) {
+                missing = true;
+                continue;
+            }
+            if (!readNumber(*given[i], &v[i])) return *error = where + ": limits must be numbers", false;
+            if (!std::isfinite(v[i])) return *error = where + ": limits cannot be NaN or Inf", false;
+            // (numpy holds a larger integer as an object, which isfinite does not take)
+            if (given[i]->isNumber() && given[i]->isInteger() && !fitsIn64Bits(given[i]->numberText()))
+                return *error = where + ": an integer limit must fit in 64 bits", false;
+        }
+        if (missing) {  // the old limits fill in, read through viewLim (a pending autoscale runs first)
+            const auto view = axis.viewInterval();
+            for (int i = 0; i < 2; ++i)
+                if (!given[i] || given[i]->isNull()) v[i] = view[i];
+        }
+        axis.setLim(v[0], v[1], autoscale, emit);
+        return true;
+    }
+
+    // set_adjustable(adjustable): 'box' or 'datalim'; not 'datalim' for an Axes whose data ratio is its own (polar)
+    bool setAdjustable(Axes& ax, const Json& a, const std::string& where, std::string* error) {
+        const std::string v = a.isString() ? a.asString() : "";
+        if (v != "box" && v != "datalim")
+            return *error = where + ": " + repr(a) + " is not a valid value for adjustable. Supported values are 'box', 'datalim'", false;
+        if (v == "datalim" && ax.polar)
+            return *error = where + ": Cannot set Axes adjustable to 'datalim' for Axes which override 'get_data_ratio'", false;
+        ax.adjustable = v;
+        return true;
     }
 
     // psd, csd, cohere, magnitude_spectrum, angle_spectrum, phase_spectrum and specgram: the spectra mlab computes,

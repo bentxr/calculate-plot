@@ -1914,8 +1914,6 @@ void Axes::share(bool x, Axes& other) {
 
 Axes* Axes::twin(bool x, std::string* error) {
     if (!subplotSpec) return *error = "a twin of an Axes without a subplot spec is not supported yet", nullptr;
-    // (the twins' adjustable becomes 'datalim': an aspect then changes the data limits, which is not ported)
-    if (aspect) return *error = "twins of an Axes with an aspect (adjustable 'datalim') are not supported yet", nullptr;
     // _make_twin_axes: add_subplot(ss, sharex=self) (or sharey)
     Axes* t = figure.addSubplot(*subplotSpec);
     Axis& mine = x ? *xaxis : *yaxis;
@@ -1926,7 +1924,7 @@ Axes* Axes::twin(bool x, std::string* error) {
     theirs.setScale(mine.scale(), mine.scaleOptions());  // (the same scale: its base, functions...)
     t->updateTransScale();
     theirs.setLim(lim[0], lim[1], mine.autoscaleOn, false);
-    // (set_adjustable('datalim') on both: what an aspect would change is refused for twins)
+    adjustable = t->adjustable = "datalim";  // set_adjustable('datalim') on both
     t->zorder = zorder;
     if (!twinned) twinned = std::make_shared<std::vector<Axes*>>(std::vector<Axes*>{this});
     twinned->push_back(t);
@@ -2212,29 +2210,75 @@ void Axes::applyAspect() {
     // fig_aspect: of Bbox.unit() through transSubfigure
     const auto f = figure.bbox->points();
     const double figAspect = (f[3] - f[1]) / (f[2] - f[0]);
-    double boxAspectValue = 0;
-    if (boxAspect) {
-        boxAspectValue = *boxAspect;  // adjustable 'datalim' with a box aspect (aspect 'auto')
-    } else {
-        // get_data_ratio: the bounds through the scales
-        const auto bound = [](const Axis& axis) {
-            const auto v = axis.viewInterval();
-            const double lo = v[0] < v[1] ? v[0] : v[1], hi = v[0] < v[1] ? v[1] : v[0];  // get_xbound
-            return std::array<double, 2>{axis.scaleForward(lo), axis.scaleForward(hi)};
-        };
+    // Bbox.shrunk_to_aspect(box_aspect, pb, fig_aspect), then anchored(anchor, pb)
+    const auto shrunk = [&](double boxAspectValue, const std::array<double, 4>& pb) {
+        const double w = pb[2] - pb[0], h = pb[3] - pb[1];
+        double H = w * boxAspectValue / figAspect, W = w;
+        if (!(H <= h)) W = h * figAspect / boxAspectValue, H = h;
+        // the shrunk box holds its corners; anchored reads its bounds back from them
+        const double x1 = pb[0] + W, y1 = pb[1] + H;
+        const double dx = (pb[0] + anchor[0] * (w - (x1 - pb[0]))) - pb[0];
+        const double dy = (pb[1] + anchor[1] * (h - (y1 - pb[1]))) - pb[1];
+        return std::array<double, 4>{pb[0] + dx, pb[1] + dy, x1 + dx, y1 + dy};
+    };
+    // get_xbound / get_ybound through the scales
+    const auto bound = [](const Axis& axis) {
+        const auto v = axis.viewInterval();
+        const double lo = v[0] < v[1] ? v[0] : v[1], hi = v[0] < v[1] ? v[1] : v[0];
+        return std::array<double, 2>{axis.scaleForward(lo), axis.scaleForward(hi)};
+    };
+    if (adjustable == "box") {
+        if (twinned) return support::noteRaised("Adjustable 'box' is not allowed in a twinned Axes; use 'datalim' instead");
+        if (!aspect) return support::noteRaised("an aspect 'auto' with adjustable 'box' and a box aspect is not supported yet");
+        // aspect * get_data_ratio() (PolarAxes.get_data_ratio: 1)
         const auto tx = bound(*xaxis), ty = bound(*yaxis);
         const double xsize = std::max(std::fabs(tx[1] - tx[0]), 1e-30), ysize = std::max(std::fabs(ty[1] - ty[0]), 1e-30);
-        boxAspectValue = *aspect * (polar ? 1.0 : ysize / xsize);  // (PolarAxes.get_data_ratio: 1)
+        position->setPoints(shrunk(*aspect * (polar ? 1.0 : ysize / xsize), original));
+        return;
     }
-    // Bbox.shrunk_to_aspect(box_aspect, pb, fig_aspect), then anchored(anchor, pb)
-    const double w = original[2] - original[0], h = original[3] - original[1];
-    double H = w * boxAspectValue / figAspect, W = w;
-    if (!(H <= h)) W = h * figAspect / boxAspectValue, H = h;
-    // the shrunk box holds its corners; anchored reads its bounds back from them
-    const double x1 = original[0] + W, y1 = original[1] + H;
-    const double dx = (original[0] + anchor[0] * (w - (x1 - original[0]))) - original[0];
-    const double dy = (original[1] + anchor[1] * (h - (y1 - original[1]))) - original[1];
-    position->setPoints({original[0] + dx, original[1] + dy, x1 + dx, y1 + dy});
+    // adjustable 'datalim': the box shrinks to the box aspect, if any; then the data limits grow to the aspect
+    std::array<double, 4> pos = original;
+    if (boxAspect) pos = shrunk(*boxAspect, original);
+    position->setPoints(pos);
+    if (!aspect) return;
+    const auto tx = bound(*xaxis), ty = bound(*yaxis);
+    const double xmin = tx[0], xmax = tx[1], ymin = ty[0], ymax = ty[1];
+    const double xsize = std::max(std::fabs(xmax - xmin), 1e-30), ysize = std::max(std::fabs(ymax - ymin), 1e-30);
+    const double boxAspectValue = figAspect * ((pos[3] - pos[1]) / (pos[2] - pos[0]));
+    const double dataRatio = boxAspectValue / *aspect;
+    const double yExpander = dataRatio * xsize / ysize - 1;
+    // if y_expander > 0, the dy/dx viewLim ratio needs to increase
+    if (std::fabs(yExpander) < 0.005) return;
+    const auto dl = dataLim->points();
+    const double x0 = xaxis->scaleForward(dl[0]), x1 = xaxis->scaleForward(dl[2]);
+    const double y0 = yaxis->scaleForward(dl[1]), y1 = yaxis->scaleForward(dl[3]);
+    const double xr = 1.05 * (x1 - x0), yr = 1.05 * (y1 - y0);
+    const double xmarg = xsize - xr, ymarg = ysize - yr;
+    const double Ysize = dataRatio * xsize, Xsize = ysize / dataRatio;
+    const double Xmarg = Xsize - xr, Ymarg = Ysize - yr;
+    const double xm = 0, ym = 0;
+    const bool sharedX = shared(true).members.size() > 1, sharedY = shared(false).members.size() > 1;
+    if (sharedX && sharedY)
+        return support::noteRaised("set_aspect(..., adjustable='datalim') or axis('equal') are not allowed when both axes are shared.  "
+                                   "Try set_aspect(..., adjustable='box').");
+    // if y is shared, only x may change, and so on
+    bool adjustY = false;
+    if (!sharedY) {
+        bool adjy = false;
+        if (xmarg > xm && ymarg > ym) adjy = (Ymarg > 0 && yExpander < 0) || (Xmarg < 0 && yExpander > 0);
+        else adjy = yExpander > 0;
+        adjustY = sharedX || adjy;
+    }
+    // set_ybound(y_trf.inverted().transform([y0, y1])): set_ylim(sorted((lower, upper), reverse=inverted), auto=None)
+    Axis& axis = adjustY ? *yaxis : *xaxis;
+    const double c = adjustY ? 0.5 * (ymin + ymax) : 0.5 * (xmin + xmax);
+    const double size = adjustY ? Ysize : Xsize;
+    double lower = axis.scaleInverse(c - size / 2.0), upper = axis.scaleInverse(c + size / 2.0);
+    const auto view = axis.viewInterval();
+    const bool inverted = view[1] < view[0];
+    if (inverted ? lower < upper : upper < lower) std::swap(lower, upper);
+    if (!std::isfinite(lower) || !std::isfinite(upper)) return support::noteRaised("Axis limits cannot be NaN or Inf");
+    axis.setLim(lower, upper, std::nullopt, true);
 }
 
 std::optional<transforms::Bbox> Axes::tightbbox(Renderer& renderer, bool forLayoutOnly) {
