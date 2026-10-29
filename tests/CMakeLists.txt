@@ -86,4 +86,5 @@ if(EMSCRIPTEN)
 endif()
 
 include(GoogleTest)
-gtest_discover_tests(calculate-plot-tests DISCOVERY_MODE PRE_TEST)
+# (listing the tests under node takes seconds on the CI machines: more than the default 5 s limit)
+gtest_discover_tests(calculate-plot-tests DISCOVERY_MODE PRE_TEST DISCOVERY_TIMEOUT 120)
