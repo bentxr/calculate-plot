@@ -223,6 +223,23 @@ TEST(FigureModel, AFunctionIsTheBodyOfALambda) {
     }
 }
 
+// {"$func": name} is one of a few functions by name (hexbin's reductions), written as that name; numpy is imported
+// for NumPy's.
+TEST(FigureModel, AFunctionByNameIsWrittenAsTheName) {
+    const auto f = parsed(R"j({"version":1,"calls":[{"call":"subplots","as":["fig","ax"]},
+        {"on":"ax","call":"hexbin","args":[[1,2],[3,4],[5,6]],"kwargs":{"reduce_C_function":{"$func":"np.median"}}}]})j");
+    const std::string script = m::exportPython(f, "x");
+    EXPECT_NE(script.find("ax.hexbin([1, 2], [3, 4], [5, 6], reduce_C_function=np.median)"), std::string::npos) << script;
+    EXPECT_NE(script.find("import numpy as np\n"), std::string::npos) << script;
+    const auto g = parsed(R"j({"version":1,"calls":[{"call":"subplots","as":["fig","ax"]},
+        {"on":"ax","call":"hexbin","args":[[1,2],[3,4],[5,6]],"kwargs":{"reduce_C_function":{"$func":"len"}}}]})j");
+    EXPECT_EQ(m::exportPython(g, "x").find("import numpy"), std::string::npos);
+    for (const char* bad : {R"j({"$func":"np.std"})j", R"j({"$func":1})j", R"j({"$func":"len","b":2})j"}) {
+        const std::string json = std::string(R"j({"version":1,"calls":[{"call":"figure","args":[)j") + bad + "]}]}";
+        EXPECT_NE(refused(json).find("$func"), std::string::npos) << bad;
+    }
+}
+
 // matplotlib.colors' classes are called on "colors" (norms, colormaps): `from matplotlib import colors` is imported
 // when a call is on it.
 TEST(FigureModel, ColorsObjectsAreMadeOnTheColorsModule) {

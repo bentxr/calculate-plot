@@ -7,6 +7,7 @@
 #include "engine/axes.hpp"
 #include "engine/colorbar.hpp"
 #include "engine/contour_labels.hpp"
+#include "support/log10.hpp"
 #include "engine/contour_set.hpp"
 #include "engine/figure.hpp"
 #include "engine/image.hpp"
@@ -199,7 +200,7 @@ public:
             {"hlines", "hlines"}, {"vlines", "vlines"}, {"grid", "grid"}, {"legend", "legend"}, {"text", "text"},
             {"title", "set_title"}, {"xlabel", "set_xlabel"}, {"ylabel", "set_ylabel"}, {"xlim", "set_xlim"},
             {"ylim", "set_ylim"}, {"xscale", "set_xscale"}, {"yscale", "set_yscale"}, {"bar", "bar"}, {"barh", "barh"},
-            {"hist", "hist"}, {"fill", "fill"}, {"step", "step"}, {"stairs", "stairs"}, {"stem", "stem"}, {"boxplot", "boxplot"}, {"violinplot", "violinplot"}, {"pie", "pie"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}, {"imshow", "imshow"}, {"matshow", "matshow"}, {"spy", "spy"}, {"pcolormesh", "pcolormesh"}, {"pcolor", "pcolor"}, {"contour", "contour"}, {"contourf", "contourf"}, {"clabel", "clabel"}};
+            {"hist", "hist"}, {"fill", "fill"}, {"step", "step"}, {"stairs", "stairs"}, {"stem", "stem"}, {"boxplot", "boxplot"}, {"violinplot", "violinplot"}, {"pie", "pie"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}, {"imshow", "imshow"}, {"matshow", "matshow"}, {"spy", "spy"}, {"pcolormesh", "pcolormesh"}, {"pcolor", "pcolor"}, {"contour", "contour"}, {"contourf", "contourf"}, {"clabel", "clabel"}, {"hexbin", "hexbin"}};
         return ofAxes;
     }
 
@@ -1653,6 +1654,7 @@ private:
         if (call.method == "pcolor") return pcolor(ax, call, error) && noteMappable(ax, call);
         if (call.method == "pcolorfast") return pcolorfast(ax, call, error) && noteMappable(ax, call);
         if (call.method == "contour" || call.method == "contourf") return contour(ax, call, error) && noteMappable(ax, call);
+        if (call.method == "hexbin") return hexbin(ax, call, error) && noteMappable(ax, call);
         if (call.method == "clabel") {
             const Json* cs = argument(call, 0, "CS");
             if (call.args.size() > 2) return *error = where + ": clabel() takes from 2 to 3 positional arguments but " + std::to_string(call.args.size() + 1) + " were given", false;
@@ -5350,6 +5352,314 @@ private:
         AggTraceRenderer renderer(size[0], size[1], figure_->dpi, figure_->rc(), options_.locale, options_.fontDirectory);
         if (!engine::clabel(cs, ax, renderer, o, error)) return *error = where + ": " + *error, false;
         if (!renderer.error().empty()) return *error = where + ": " + renderer.error(), false;
+        return true;
+    }
+
+    // Axes.hexbin(x, y, C=None, gridsize=100, bins=None, xscale='linear', yscale='linear', extent=None, cmap=None,
+    // norm=None, vmin=None, vmax=None, alpha=None, linewidths=None, edgecolors='face', reduce_C_function=np.mean,
+    // mincnt=None, marginals=False, colorizer=None, **kwargs): a PolyCollection of one hexagon at the offsets of the
+    // bins that have data
+    bool hexbin(Axes& ax, const model::Call& call, std::string* error) {
+        const std::string where = call.on + ".hexbin";
+        static const char* const names[] = {"x", "y", "C", "gridsize", "bins", "xscale", "yscale", "extent", "cmap", "norm", "vmin",
+                                            "vmax", "alpha", "linewidths", "edgecolors", "reduce_C_function", "mincnt", "marginals", "colorizer"};
+        if (call.args.size() > std::size(names)) return *error = where + ": too many positional arguments", false;
+        if (call.as.size() > 1) return *error = where + ": hexbin makes one collection (\"as\" names one)", false;
+        model::Call c = call;  // (the positional arguments by name)
+        c.args.clear();
+        for (std::size_t i = 0; i < call.args.size(); ++i) c.kwargs.insert(c.kwargs.begin() + long(i), {names[i], call.args[i]});
+        const auto get = [&](const char* name) -> const Json* {
+            const Json* v = keyword(c, name);
+            return v && !v->isNull() ? v : nullptr;
+        };
+        std::vector<double> x, y, C;
+        if (!get("x") || !get("y")) return *error = where + ": hexbin() missing required arguments 'x' and 'y'", false;
+        if (!numbers(*get("x"), &x) || !numbers(*get("y"), &y)) return *error = where + ": x and y must be lists of numbers", false;
+        if (x.size() != y.size()) return *error = where + ": x and y of different lengths are not supported yet", false;
+        const Json* cJson = get("C");
+        bool cInteger = false;
+        if (cJson) {
+            if (!numbers(*cJson, &C) || C.size() != x.size()) return *error = where + ": C must be a list of numbers, one per point", false;
+            cInteger = true;
+            for (const Json& v : sequence(*cJson)->items()) cInteger = cInteger && v.isInteger() && !v.isBool();
+        }
+        // cbook.delete_masked_points: the points where x, y or C is not finite left out
+        {
+            std::vector<double> kx, ky, kc;
+            for (std::size_t i = 0; i < x.size(); ++i)
+                if (std::isfinite(x[i]) && std::isfinite(y[i]) && (!cJson || std::isfinite(C[i])))
+                    kx.push_back(x[i]), ky.push_back(y[i]), cJson ? kc.push_back(C[i]) : void();
+            x = kx, y = ky, C = kc;
+        }
+        // the grid's size
+        long long nx = 100, ny = 0;
+        if (const Json* g = get("gridsize")) {
+            const Json* pair = sequence(*g);
+            if (pair && pair->size() == 2 && (*pair)[0].isInteger() && (*pair)[1].isInteger()) {
+                nx = (long long)(*pair)[0].asNumber(), ny = (long long)(*pair)[1].asNumber();
+            } else if (g->isInteger() && !g->isBool()) {
+                nx = (long long)g->asNumber();
+                ny = (long long)(double(nx) / std::sqrt(3.0));
+            } else {
+                return *error = where + ": gridsize must be an integer or a pair of integers", false;
+            }
+        } else {
+            ny = (long long)(double(nx) / std::sqrt(3.0));
+        }
+        if (nx < 1 || ny < 1 || nx > 2000 || ny > 2000) return *error = where + ": grids other than 1 to 2000 hexagons a side are not supported yet", false;
+        // the scales: the logarithms of the data
+        const auto scaleOf = [&](const char* name, std::string* out) {
+            const Json* v = get(name);
+            *out = "linear";
+            if (!v) return true;
+            if (!v->isString()) return *error = where + ": " + name + " must be 'linear' or 'log'", false;
+            *out = v->asString();
+            return true;
+        };
+        std::string xscale, yscale;
+        if (!scaleOf("xscale", &xscale) || !scaleOf("yscale", &yscale)) return false;
+        std::vector<double> tx = x, ty = y;
+        if (xscale == "log") {
+            for (double v : x)
+                if (v <= 0.0) return *error = where + ": x contains non-positive values, so cannot be log-scaled", false;
+            for (double& v : tx) v = support::log10(v);
+        }
+        if (yscale == "log") {
+            for (double v : y)
+                if (v <= 0.0) return *error = where + ": y contains non-positive values, so cannot be log-scaled", false;
+            for (double& v : ty) v = support::log10(v);
+        }
+        double xmin = 0, xmax = 1, ymin = 0, ymax = 1;
+        if (const Json* e = get("extent")) {
+            std::vector<double> ext;
+            if (!numbers(*e, &ext) || ext.size() != 4) return *error = where + ": extent must be (xmin, xmax, ymin, ymax)", false;
+            xmin = ext[0], xmax = ext[1], ymin = ext[2], ymax = ext[3];
+            if (xmin > xmax) return *error = where + ": In extent, xmax must be greater than xmin", false;
+            if (ymin > ymax) return *error = where + ": In extent, ymax must be greater than ymin", false;
+        } else {
+            if (!x.empty()) xmin = support::npMin(tx), xmax = support::npMax(tx), ymin = support::npMin(ty), ymax = support::npMax(ty);
+            std::tie(xmin, xmax) = axes::nonsingular(xmin, xmax, 0.1);
+            std::tie(ymin, ymax) = axes::nonsingular(ymin, ymax, 0.1);
+        }
+        const long long nx1 = nx + 1, ny1 = ny + 1, nx2 = nx, ny2 = ny;
+        const double padding = 1.e-9 * (xmax - xmin);
+        xmin -= padding;
+        xmax += padding;
+        const double sx = (xmax - xmin) / double(nx), sy = (ymax - ymin) / double(ny);
+        // .astype(int) of a float: truncation (x86 gives the smallest int64 for what does not fit)
+        const auto toInt = [](double v) {
+            return std::isfinite(v) && std::fabs(v) < 9.2e18 ? (long long)v : std::numeric_limits<long long>::min();
+        };
+        const std::size_t npts = x.size();
+        std::vector<long long> i1(npts), i2(npts);
+        std::vector<bool> bdist(npts);
+        for (std::size_t i = 0; i < npts; ++i) {
+            const double ix = (tx[i] - xmin) / sx, iy = (ty[i] - ymin) / sy;
+            const long long ix1 = toInt(std::nearbyint(ix)), iy1 = toInt(std::nearbyint(iy));
+            const long long ix2 = toInt(std::floor(ix)), iy2 = toInt(std::floor(iy));
+            i1[i] = 0 <= ix1 && ix1 < nx1 && 0 <= iy1 && iy1 < ny1 ? ix1 * ny1 + iy1 + 1 : 0;
+            i2[i] = 0 <= ix2 && ix2 < nx2 && 0 <= iy2 && iy2 < ny2 ? ix2 * ny2 + iy2 + 1 : 0;
+            const double a = ix - double(ix1), b = iy - double(iy1), c2 = ix - double(ix2) - 0.5, d = iy - double(iy2) - 0.5;
+            bdist[i] = a * a + 3.0 * (b * b) < c2 * c2 + 3.0 * (d * d);
+        }
+        // the value of each hexagon: its count, or C reduced; NaN where it has too few points
+        const std::size_t n1 = std::size_t(nx1 * ny1), n2 = std::size_t(nx2 * ny2);
+        std::vector<double> accum(n1 + n2, 0.0);
+        std::optional<double> mincnt;
+        if (const Json* m = get("mincnt")) {
+            double v = 0;
+            if (!readNumber(*m, &v)) return *error = where + ": mincnt must be a number", false;
+            mincnt = v;
+        }
+        std::string reduce = "np.mean";
+        if (const Json* f = get("reduce_C_function")) {
+            if (!(f->isObject() && f->members().size() == 1 && f->members()[0].first == "$func"))
+                return *error = where + ": reduce_C_function must be a function named with {\"$func\": name}", false;
+            reduce = f->members()[0].second.asString();
+        }
+        // reduce_C_function of the values of a bin (NumPy's reductions of float64, or of int64 for integer C)
+        const auto reduceValues = [&](const std::vector<double>& v) {
+            if (reduce == "len") return double(v.size());
+            if (reduce == "np.max") return support::npMax(v);
+            if (reduce == "np.min") return support::npMin(v);
+            if (reduce == "np.median") return support::npMedian(v, cInteger);
+            if (reduce == "np.sum") {
+                if (!cInteger) return support::npSum(v);
+                long long total = 0;
+                for (double d : v) total += (long long)d;
+                return double(total);
+            }
+            return support::npMean(v, cInteger);
+        };
+        if (!cJson) {
+            for (std::size_t i = 0; i < npts; ++i) {
+                if (bdist[i] && i1[i]) accum[std::size_t(i1[i] - 1)] += 1;
+                if (!bdist[i] && i2[i]) accum[n1 + std::size_t(i2[i] - 1)] += 1;
+            }
+            if (mincnt)
+                for (double& a : accum)
+                    if (a < *mincnt) a = std::numeric_limits<double>::quiet_NaN();
+            C.assign(npts, 1.0);
+        } else {
+            std::vector<std::vector<double>> values(n1 + n2);
+            for (std::size_t i = 0; i < npts; ++i) {
+                if (bdist[i] && i1[i]) values[std::size_t(i1[i] - 1)].push_back(C[i]);
+                if (!bdist[i] && i2[i]) values[n1 + std::size_t(i2[i] - 1)].push_back(C[i]);
+            }
+            const double least = mincnt ? *mincnt : 1;
+            for (std::size_t k = 0; k < values.size(); ++k)
+                accum[k] = double(values[k].size()) >= least ? reduceValues(values[k]) : std::numeric_limits<double>::quiet_NaN();
+        }
+        // the offsets of the hexagons with a value: the two grids, one shifted by half a hexagon
+        std::vector<std::array<double, 2>> offsets;
+        std::vector<double> values;
+        for (std::size_t k = 0; k < n1 + n2; ++k) {
+            if (std::isnan(accum[k])) continue;
+            double ox, oy;
+            if (k < n1) ox = double(k / std::size_t(ny1)), oy = double(k % std::size_t(ny1));
+            else ox = double((k - n1) / std::size_t(ny2)) + 0.5, oy = double((k - n1) % std::size_t(ny2)) + 0.5;
+            offsets.push_back({ox * sx + xmin, oy * sy + ymin});
+            values.push_back(accum[k]);
+        }
+        static const double unit[6][2] = {{.5, -.5}, {.5, .5}, {0., 1.}, {-.5, .5}, {-.5, -.5}, {0., -1.}};
+        std::vector<std::array<double, 2>> polygon;
+        for (const auto& u : unit) polygon.push_back({sx * u[0], (sy / 3) * u[1]});
+        if (xscale == "log" || yscale == "log") {
+            for (auto& p : polygon) {
+                if (xscale == "log") p[0] = std::pow(10.0, p[0]);
+                if (yscale == "log") p[1] = std::pow(10.0, p[1]);
+            }
+            for (const char* axis : {"x", "y"}) {
+                if ((axis[0] == 'x' ? xscale : yscale) != "log") continue;
+                double& lo = axis[0] == 'x' ? xmin : ymin;
+                double& hi = axis[0] == 'x' ? xmax : ymax;
+                lo = std::pow(10.0, lo), hi = std::pow(10.0, hi);
+                model::Call sc;
+                sc.on = call.on;
+                sc.method = axis[0] == 'x' ? "set_xscale" : "set_yscale";
+                sc.args = {Json::string("log")};
+                if (!axesCall(ax, sc, error)) return false;
+            }
+        }
+        auto col = std::make_unique<PolyCollection>(rc_, std::vector<std::vector<std::array<double, 2>>>{polygon});
+        col->offsets = offsets;
+        col->offsetTransform = std::make_shared<transforms::AffineDeltaTransform>(ax.transData);
+        col->setEdgecolor(ColorArg{ColorArg::Face, {}});
+        col->setLinewidths({rc_.number("patch.linewidth")});
+        // bins: 'log' makes the norm a LogNorm; a number or edges replace the values by their bin indices
+        const Json* binsJson = get("bins");
+        const Json* normJson = get("norm");
+        std::optional<double> vmin, vmax;
+        for (const char* name : {"vmin", "vmax"})
+            if (const Json* v = get(name)) {
+                double d = 0;
+                if (!readNumber(*v, &d)) return *error = where + ": " + name + " must be a number", false;
+                (name[1] == 'm' && name[2] == 'i' ? vmin : vmax) = d;
+            }
+        bool normObject = false;
+        colors::Colormap cmap;
+        if (!colorizer(&cmap, &col->norm, get("cmap"), normJson, nullptr, false, where, &normObject, error)) return false;
+        col->cmap = cmap;
+        colors::MaskedArray array;
+        array.data = values;
+        if (binsJson && binsJson->isString()) {
+            if (binsJson->asString() != "log") return *error = where + ": bins must be 'log', a number of bins or their edges", false;
+            if (!normJson) {
+                colors::NormSpec spec;
+                spec.kind = "LogNorm";
+                spec.vmin = vmin, spec.vmax = vmax;
+                col->norm = std::make_shared<colors::Norm>();
+                if (!colors::Norm::make(spec, col->norm.get(), error)) return *error = where + ": " + *error, false;
+                vmin.reset(), vmax.reset();
+            }
+        } else if (binsJson) {
+            std::vector<double> edges;
+            if (binsJson->isInteger() && !binsJson->isBool()) {
+                if (values.empty()) return *error = where + ": min() iterable argument is empty", false;
+                const double minimum = *std::min_element(values.begin(), values.end());
+                const double maximum = *std::max_element(values.begin(), values.end());
+                const long long nb = (long long)binsJson->asNumber() - 1;  // one less edge than bins
+                for (long long k = 0; k < nb; ++k) edges.push_back(minimum + (maximum - minimum) * double(k) / double(nb));
+            } else if (!numbers(*binsJson, &edges)) {
+                return *error = where + ": bins must be 'log', a number of bins or their edges", false;
+            }
+            std::sort(edges.begin(), edges.end());
+            for (double& v : array.data) v = double(std::lower_bound(edges.begin(), edges.end(), v) - edges.begin());
+            array.dtype = colors::DType::Int64;
+        }
+        col->array = array;
+        model::Call rest = c;  // the collection's own keywords (alpha, linewidths, edgecolors, zorder, ...)
+        rest.kwargs.clear();
+        for (const auto& kw : c.kwargs) {
+            static const std::set<std::string> own = {"x", "y", "C", "gridsize", "bins", "xscale", "yscale", "extent", "cmap", "norm", "vmin",
+                                                      "vmax", "reduce_C_function", "mincnt", "marginals"};
+            if (own.count(kw.first) || ((kw.first == "linewidths" || kw.first == "alpha") && kw.second.isNull())) continue;
+            rest.kwargs.push_back(kw);
+        }
+        if (!meshKeywords(*col, rest, {}, where, &vmin, &vmax, error)) return false;
+        bool marginals = false;
+        if (const Json* m = get("marginals")) {
+            if (!m->isBool()) return *error = where + ": marginals must be True or False", false;
+            marginals = m->asBool();
+        }
+        // the norm given (or bins' LogNorm) is shared with the marginals; else each has a Normalize of its own
+        const std::shared_ptr<colors::Norm> sharedNorm = normJson || (binsJson && binsJson->isString()) ? col->norm : nullptr;
+        const std::optional<double> alpha = col->alpha;
+        if (!scaleNorm(*col, normObject, vmin, vmax, where, error)) return false;
+        ax.updateDatalim({{xmin, ymin}, {xmax, ymax}});
+        ax.tight = true;  // _request_autoscale_view(tight=True)
+        ax.requestAutoscaleView(true, true);
+        ax.addCollection(std::move(col), false);
+        if (!marginals) return true;
+        // the marginals: bars along the bottom and the left edges (5 % of the Axes) of C reduced over the points in
+        // each of nx (2 ny) bins of x (y)
+        model::Call extra = rest;  // (hexbin's **kwargs: what is not one of its parameters)
+        extra.kwargs.clear();
+        for (const auto& kw : rest.kwargs)
+            if (kw.first != "alpha" && kw.first != "linewidths" && kw.first != "edgecolors") extra.kwargs.push_back(kw);
+        for (int axis = 0; axis < 2; ++axis) {
+            const bool isX = axis == 0;
+            const std::vector<double>& z = isX ? x : y;
+            const double zmin = isX ? xmin : ymin, zmax = isX ? xmax : ymax;
+            const long long nbins = isX ? nx : 2 * ny;
+            std::vector<double> edges;
+            if ((isX ? xscale : yscale) == "log") {
+                // np.geomspace: 10 ** linspace(log10(zmin), log10(zmax)), its ends zmin and zmax
+                for (double e : support::npLinspace(support::log10(zmin), support::log10(zmax), nbins + 1)) edges.push_back(std::pow(10.0, e));
+                edges.front() = zmin, edges.back() = zmax;
+            } else {
+                edges = support::npLinspace(zmin, zmax, nbins + 1);
+            }
+            std::vector<std::vector<double>> inBin(static_cast<std::size_t>(nbins));
+            for (std::size_t i = 0; i < z.size(); ++i) {
+                const long long b = (long long)(std::lower_bound(edges.begin(), edges.end(), z[i]) - edges.begin()) - 1;
+                if (b >= 0 && b < nbins) inBin[std::size_t(b)].push_back(C[i]);
+            }
+            std::vector<std::vector<std::array<double, 2>>> verts;
+            colors::MaskedArray barValues;
+            for (long long b = 0; b < nbins; ++b) {
+                if (inBin[std::size_t(b)].empty()) continue;
+                const double value = reduceValues(inBin[std::size_t(b)]);
+                if (std::isnan(value)) continue;
+                const double e0 = edges[std::size_t(b)], e1 = edges[std::size_t(b) + 1];
+                std::vector<std::array<double, 2>> v{{e0, 0.0}, {e0, .05}, {e1, .05}, {e1, 0.0}};
+                if (!isX)
+                    for (auto& pt : v) std::swap(pt[0], pt[1]);
+                verts.push_back(v);
+                barValues.data.push_back(value);
+            }
+            auto bar = std::make_unique<PolyCollection>(rc_, verts);
+            bar->transform = isX ? ax.xaxisTransform : ax.yaxisTransform;  // get_xaxis_transform(which="grid")
+            bar->transformSet = true;
+            bar->setEdgecolor(ColorArg{ColorArg::Face, {}});
+            bar->array = barValues;
+            bar->cmap = cmap;
+            bar->norm = sharedNorm ? sharedNorm : std::make_shared<colors::Norm>();
+            bar->setAlpha(alpha);
+            std::optional<double> ignoredMin, ignoredMax;
+            if (!meshKeywords(*bar, extra, {}, where, &ignoredMin, &ignoredMax, error)) return false;
+            ax.addCollection(std::move(bar), false);
+        }
         return true;
     }
 

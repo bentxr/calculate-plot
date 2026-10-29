@@ -2093,6 +2093,33 @@ TEST(ClabelCalls, EquallyStraightBlocksAreRefused) {
               "cs.clabel: contour labels where blocks of the contour are equally straight are not supported yet");
 }
 
+// hexbin raises what matplotlib raises, and refuses what is not ported
+class HexbinRefusals : public testing::TestWithParam<Refusal> {};
+
+TEST_P(HexbinRefusals, NameTheCallAndTheReason) {
+    EXPECT_EQ(draw(kSubplots + GetParam().call).error, GetParam().error);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    Engine, HexbinRefusals,
+    testing::Values(
+        Refusal{R"({"on": "axs[0]", "call": "hexbin", "args": [[0, 1, 2], [1, 2, 3]], "kwargs": {"xscale": "log"}})",
+                "axs[0].hexbin: x contains non-positive values, so cannot be log-scaled"},
+        Refusal{R"({"on": "axs[0]", "call": "hexbin", "args": [[1, 2], [-1, 2]], "kwargs": {"yscale": "log"}})",
+                "axs[0].hexbin: y contains non-positive values, so cannot be log-scaled"},
+        Refusal{R"({"on": "axs[0]", "call": "hexbin", "args": [[1, 2], [1, 2]], "kwargs": {"extent": [3, 1, 0, 1]}})",
+                "axs[0].hexbin: In extent, xmax must be greater than xmin"},
+        Refusal{R"({"on": "axs[0]", "call": "hexbin", "args": [[1, 2], [1, 2]], "kwargs": {"extent": [0, 1, 3, 1]}})",
+                "axs[0].hexbin: In extent, ymax must be greater than ymin"},
+        Refusal{R"({"on": "axs[0]", "call": "hexbin", "args": [[1, 2], [1, 2], [1, 2]], "kwargs": {"reduce_C_function": "mean"}})",
+                "axs[0].hexbin: reduce_C_function must be a function named with {\"$func\": name}"},
+        Refusal{R"({"on": "axs[0]", "call": "hexbin", "args": [[1, 2], [1, 2]], "kwargs": {"bins": 3, "mincnt": 5}})",
+                "axs[0].hexbin: min() iterable argument is empty"},
+        Refusal{R"({"on": "axs[0]", "call": "hexbin", "args": [[1, 2], [1, 2, 3]]})",
+                "axs[0].hexbin: x and y of different lengths are not supported yet"},
+        Refusal{R"({"on": "axs[0]", "call": "hexbin", "args": [[1, 2], [1, 2]], "kwargs": {"gridsize": 2.5}})",
+                "axs[0].hexbin: gridsize must be an integer or a pair of integers"}));
+
 // contour lines never look at hatches, whatever they are
 TEST(ContourCalls, LinesIgnoreHatches) {
     EXPECT_EQ(draw(kSubplots + R"({"on": "axs[0]", "call": "contour", "args": [[[0, 1], [2, 3]]], "kwargs": {"hatches": null}})").error, "");

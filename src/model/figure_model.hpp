@@ -3,6 +3,7 @@
 #include "support/json.hpp"
 
 #include <optional>
+#include <set>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -36,5 +37,8 @@ std::optional<Figure> parseFigure(std::string_view json, std::string* error);
 
 // A plain Python script that draws the same figure with matplotlib.
 std::string exportPython(const Figure& figure, std::string_view version);
+
+// The functions a figure file may name with {"$func": name} (written as that name in the script)
+const std::set<std::string>& namedFunctions();
 
 }  // namespace calculate_plot::model

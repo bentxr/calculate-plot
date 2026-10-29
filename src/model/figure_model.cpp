@@ -46,6 +46,15 @@ bool isObjectReference(const std::string& s, std::string& name) {
     return true;
 }
 
+}  // namespace
+
+const std::set<std::string>& namedFunctions() {
+    static const std::set<std::string> names = {"np.mean", "np.sum", "np.max", "np.min", "np.median", "len"};
+    return names;
+}
+
+namespace {
+
 // `known`: the names earlier calls gave their results, which {"$ref": name} may use
 bool validValue(const Json& v, const std::set<std::string>& known, std::string* error) {
     if (v.isArray()) {
@@ -101,6 +110,13 @@ bool validValue(const Json& v, const std::set<std::string>& known, std::string* 
             if (error) *error = "{\"$datetime\": ...} must be a date and time as YYYY-MM-DDTHH:MM:SS (a year from 1 to 9999)";
             return false;
         }
+        if (v.members()[0].first == "$func") {
+            // {"$func": name}: a function by its name, among those figure files may pass (a reduction for hexbin)
+            const Json& name = v.members()[0].second;
+            if (v.members().size() == 1 && name.isString() && namedFunctions().count(name.asString())) return true;
+            if (error) *error = "{\"$func\": ...} must be one of np.mean, np.sum, np.max, np.min, np.median, len";
+            return false;
+        }
         if (v.members()[0].first == "$lambda") {
             const Json& body = v.members()[0].second;
             std::string why = "it must be text";
@@ -120,7 +136,7 @@ bool validValue(const Json& v, const std::set<std::string>& known, std::string* 
         }
         if (v.members().size() != 1 || v.members()[0].first != "$tuple" || !v.members()[0].second.isArray()) {
             if (error)
-                *error = "an object value must be {\"$tuple\": [...]}, {\"$dict\": {...}}, {\"$float\": ...}, {\"$new\": ...}, {\"$ref\": ...}, {\"$datetime\": ...} or {\"$lambda\": ...}, not " +
+                *error = "an object value must be {\"$tuple\": [...]}, {\"$dict\": {...}}, {\"$float\": ...}, {\"$new\": ...}, {\"$ref\": ...}, {\"$datetime\": ...}, {\"$lambda\": ...} or {\"$func\": ...}, not " +
                          (v.members().empty() ? std::string("{}") : v.members()[0].first);
             return false;
         }
@@ -153,6 +169,7 @@ std::string python(const Json& v) {
         }
         if (v.members()[0].first == "$ref") return v.members()[0].second.asString();
         if (v.members()[0].first == "$lambda") return "lambda x: " + v.members()[0].second.asString();
+        if (v.members()[0].first == "$func") return v.members()[0].second.asString();
         if (v.members()[0].first == "$datetime") {  // repr(datetime.datetime): the seconds only when not 0
             axes::dates::DateTime dt;
             axes::dates::parseIso(v.members()[0].second.asString(), &dt);
@@ -274,6 +291,7 @@ bool uses(const Json& v, bool datetime) {
     for (const auto& [key, value] : v.members()) {
         if (datetime && key == "$datetime") return true;
         if (!datetime && key == "$array") return true;
+        if (!datetime && key == "$func" && value.isString() && value.asString().rfind("np.", 0) == 0) return true;
         if (!datetime && key == "$lambda" && value.isString()) {
             std::string why;
             const auto f = support::PyLambda::parse(value.asString(), &why);

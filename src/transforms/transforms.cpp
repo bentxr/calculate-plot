@@ -485,6 +485,8 @@ std::optional<std::string> CompositeTransform::str() const {
     return strMethod(generic_ ? "CompositeGenericTransform" : "CompositeAffine2D", {a_->str(), b_->str()});
 }
 
+std::optional<std::string> AffineDeltaTransform::str() const { return strMethod("AffineDeltaTransform", {base_->str()}); }
+
 std::optional<std::string> TransformWrapper::str() const { return strMethod("TransformWrapper", {child_->str()}); }
 
 }  // namespace calculate_plot::transforms

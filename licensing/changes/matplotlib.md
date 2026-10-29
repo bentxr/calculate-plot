@@ -328,6 +328,11 @@ it comes from in its first lines. The changes, as a whole:
   operations in their order; np.argsort's order of equal distances (x86-simd-sort's) is not reproduced: a choice
   between equally straight blocks is refused; colors.py's ListedColormap under
   and over colours and its monochrome property (src/colors/colormap.cpp).
+- **Hexagonal binning** (src/engine/engine.cpp hexbin): axes/_axes.py's Axes.hexbin (the grid, the two lattices,
+  bincount or reduce_C_function per hexagon, mincnt, bins, the log scales, the marginals with np.geomspace /
+  np.linspace edges) and cbook.delete_masked_points for its data, translated to C++ with NumPy's operations in their
+  order; transforms.py's AffineDeltaTransform (src/transforms/transforms.cpp). reduce_C_function is one of np.mean,
+  np.sum, np.max, np.min, np.median and len, named in figure files with {"$func": name}.
 - **Meshes** (src/engine/collections.cpp QuadMesh and PolyQuadMesh, src/engine/engine.cpp pcolormesh, pcolor,
   pcolorfast; src/engine/image.cpp PcolorImage): collections.py's _MeshData, PolyQuadMesh and QuadMesh (_convert_mesh_to_triangles for Gouraud shading, draw), backend_bases.py's RendererBase.draw_quad_mesh
   (the SVG renderer's path collection of the cells), axes/_axes.py's pcolormesh, pcolor, pcolorfast,

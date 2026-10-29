@@ -357,6 +357,22 @@ private:
     TransformPtr scaleTrans_;
 };
 
+// AffineDeltaTransform: the affine part of a transform without its translation (for offsets that move by
+// distances, as hexbin's hexagons do).
+class AffineDeltaTransform : public Transform {
+public:
+    explicit AffineDeltaTransform(TransformPtr base) : base_(std::move(base)) {}
+    Matrix matrix() const override {
+        Matrix m = base_->matrix();
+        m.tx = m.ty = 0;
+        return m;
+    }
+    std::optional<std::string> str() const override;
+
+private:
+    TransformPtr base_;
+};
+
 // TransformWrapper: stands for another transform that can be replaced later (Axes.transScale).
 // Never an identity for composition, as in matplotlib (only IdentityTransform drops out).
 class TransformWrapper : public Transform {
