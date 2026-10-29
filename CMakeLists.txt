@@ -150,6 +150,8 @@ set_source_files_properties(src/agg/backend_agg.cpp src/render/replay.cpp src/re
     src/svg/svg_renderer.cpp src/render/svg_replay.cpp
     PROPERTIES COMPILE_OPTIONS
     "-Wno-unused-parameter;-Wno-shadow;-Wno-sign-compare;-Wno-missing-field-initializers")
+# pocketfft's header, vendored unmodified: GCC 13 takes a complex value it builds for unset ("may be used uninitialized")
+set_source_files_properties(src/support/npy_fft.cpp PROPERTIES COMPILE_OPTIONS "$<$<CXX_COMPILER_ID:GNU>:-Wno-maybe-uninitialized>")
 target_compile_definitions(calculate-plot PRIVATE CALCULATE_PLOT_VERSION="${PROJECT_VERSION}")
 target_compile_options(calculate-plot PRIVATE -fno-exceptions)
 target_link_libraries(calculate-plot PUBLIC calculate-plot-raqm calculate-plot-zlib calculate-plot-qhull calculate-plot-agg PRIVATE calculate-plot-warnings)
