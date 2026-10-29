@@ -1300,7 +1300,198 @@ private:
             if (m != "set_xlabel" && m != "set_ylabel" && m != "tick_params")
                 return *error = where + ": " + m + " on a secondary axis is not supported yet", false;
         }
+        bool handled = false;
+        if (!polarCall(ax, call, &handled, error)) return false;
+        if (handled) return true;
         return axesCallOn(ax, call, error);
+    }
+
+    // PolarAxes' own methods (an AttributeError on another Axes); set_rlim, set_rscale and set_rticks are set_ylim,
+    // set_yscale and set_yticks
+    bool polarCall(Axes& ax, const model::Call& call, bool* handled, std::string* error) {
+        static const char* const methods[] = {"set_theta_offset", "set_theta_zero_location", "set_theta_direction",
+                                              "set_thetamin", "set_thetamax", "set_thetalim", "set_rorigin", "set_rmin",
+                                              "set_rmax", "set_rlim", "set_rlabel_position", "set_rscale", "set_rticks",
+                                              "set_rgrids", "set_thetagrids"};
+        const std::string& m = call.method;
+        if (std::find(std::begin(methods), std::end(methods), m) == std::end(methods)) return true;
+        *handled = true;
+        const std::string where = call.on + "." + m;
+        if (!ax.polar) return *error = where + ": 'Axes' object has no attribute '" + m + "'", false;
+        PolarAxesState& p = *ax.polar;
+        const auto number = [&](std::size_t i, const char* name, double* out) {
+            const Json* v = argument(call, i, name);
+            if (!v) return *error = where + ": " + name + " is required", false;
+            if (!readNumber(*v, out)) return *error = where + ": " + name + " must be a number", false;
+            return true;
+        };
+        const auto only = [&](std::initializer_list<const char*> names) {
+            if (call.args.size() > names.size()) return *error = where + ": too many positional arguments", false;
+            return keywords(call, names, error);
+        };
+        const auto setOffset = [&](double offset) {
+            auto mtx = p.offset->matrix();
+            mtx.tx = offset;
+            p.offset->setMatrix(mtx);
+        };
+        double v = 0;
+        if (m == "set_theta_offset") return only({"offset"}) && number(0, "offset", &v) && (setOffset(v), true);
+        if (m == "set_theta_zero_location") {
+            if (!only({"loc", "offset"})) return false;
+            const Json* loc = argument(call, 0, "loc");
+            if (!loc) return *error = where + ": loc is required", false;
+            static const std::pair<const char*, double> mapping[] = {
+                {"N", M_PI * 0.5}, {"NW", M_PI * 0.75}, {"W", M_PI}, {"SW", M_PI * 1.25},
+                {"S", M_PI * 1.5}, {"SE", M_PI * 1.75}, {"E", 0}, {"NE", M_PI * 0.25}};
+            const double* base = nullptr;
+            for (const auto& [name, angle] : mapping)
+                if (loc->isString() && loc->asString() == name) base = &angle;
+            if (!base) return *error = where + ": " + repr(*loc), false;  // (KeyError)
+            double offset = 0;
+            if (const Json* o = argument(call, 1, "offset"); o && !readNumber(*o, &offset)) return *error = where + ": offset must be a number", false;
+            setOffset(*base + offset * (M_PI / 180.0));  // mapping[loc] + np.deg2rad(offset)
+            return true;
+        }
+        if (m == "set_theta_direction") {
+            if (!only({"direction"})) return false;
+            const Json* d = argument(call, 0, "direction");
+            if (!d) return *error = where + ": direction is required", false;
+            double sign = 0;
+            if (d->isString()) {
+                const std::string name = d->asString();
+                sign = name == "clockwise" ? -1 : (name == "counterclockwise" || name == "anticlockwise") ? 1 : 0;
+            } else if (d->isBool()) {
+                sign = d->asBool() ? 1 : 0;  // (True == 1)
+            } else if (readNumber(*d, &v) && (v == 1 || v == -1)) {
+                sign = v;
+            }
+            if (sign == 0)
+                return *error = where + ": " + repr(*d) +
+                                " is not a valid value for direction; supported values are -1, 1, 'clockwise', 'counterclockwise', 'anticlockwise'",
+                       false;
+            auto mtx = p.direction->matrix();
+            mtx.sx = sign;
+            p.direction->setMatrix(mtx);
+            return true;
+        }
+        // set_thetamin / set_thetamax / set_rmin / set_rmax: the view limits themselves (read through viewLim)
+        const auto setView = [&](std::size_t index, double value) {
+            ax.unstaleViewLim();
+            auto pts = ax.viewLim->points();
+            pts[index] = value;
+            ax.viewLim->setPoints(pts);
+        };
+        if (m == "set_thetamin" || m == "set_thetamax") {
+            const char* name = m == "set_thetamin" ? "thetamin" : "thetamax";
+            if (!only({name}) || !number(0, name, &v)) return false;
+            setView(m == "set_thetamin" ? 0 : 2, v * (M_PI / 180.0));  // np.deg2rad
+            return true;
+        }
+        if (m == "set_rmin" || m == "set_rmax") {
+            const char* name = m == "set_rmin" ? "rmin" : "rmax";
+            if (!only({name}) || !number(0, name, &v)) return false;
+            setView(m == "set_rmin" ? 1 : 3, v);
+            return true;
+        }
+        if (m == "set_rorigin") {
+            if (!only({"rorigin"})) return false;
+            const Json* r = argument(call, 0, "rorigin");
+            if (!r) return *error = where + ": rorigin is required", false;
+            if (r->isNull()) p.originViewLim->locked[1].reset();
+            else if (readNumber(*r, &v)) p.originViewLim->locked[1] = v;
+            else return *error = where + ": rorigin must be a number or None", false;
+            return true;
+        }
+        if (m == "set_rlabel_position") {
+            if (!only({"value"}) || !number(0, "value", &v)) return false;
+            p.rLabelPosition->clear().translate(v * (M_PI / 180.0), 0.0);
+            return true;
+        }
+        if (m == "set_thetalim") {
+            // set_xlim(*args, **kwargs) with thetamin / thetamax in degrees as xmin / xmax; a range beyond a full circle
+            // is taken back
+            if (call.args.size() > 2) return *error = where + ": too many positional arguments", false;
+            if (!keywords(call, {"thetamin", "thetamax"}, error)) return false;
+            const auto orig = ax.xaxis->viewInterval();
+            double lim[2] = {orig[0], orig[1]};
+            std::vector<double> pair;
+            if (call.args.size() == 1 && numbers(call.args[0], &pair) && pair.size() == 2) {
+                lim[0] = pair[0], lim[1] = pair[1];
+            } else {
+                for (std::size_t i = 0; i < call.args.size(); ++i)
+                    if (!readFinite(call.args[i], &lim[i])) return *error = where + ": the limits must be numbers", false;
+            }
+            for (int i = 0; i < 2; ++i)
+                if (const Json* d = keyword(call, i == 0 ? "thetamin" : "thetamax")) {
+                    if (call.args.size() > std::size_t(i)) return *error = where + ": the limit is given twice", false;
+                    if (!readFinite(*d, &lim[i])) return *error = where + ": the limits must be numbers", false;
+                    lim[i] *= M_PI / 180.0;
+                }
+            ax.xaxis->setLim(lim[0], lim[1], false);
+            const auto now = ax.xaxis->viewInterval();
+            if (std::fabs(now[1] - now[0]) > 2 * M_PI) {
+                ax.xaxis->setLim(orig[0], orig[1], false);
+                return *error = where + ": The angle range must be less than a full circle", false;
+            }
+            return true;
+        }
+        if (m == "set_rlim" || m == "set_rscale" || m == "set_rticks") {
+            model::Call as = call;
+            as.method = m == "set_rlim" ? "set_ylim" : m == "set_rscale" ? "set_yscale" : "set_yticks";
+            if (m == "set_rlim") {
+                // rmin and rmax: bottom and top, given once
+                for (const char* alias : {"rmin", "rmax"}) {
+                    const auto it = std::find_if(as.kwargs.begin(), as.kwargs.end(), [&](const auto& kw) { return kw.first == alias; });
+                    if (it == as.kwargs.end()) continue;
+                    const bool bottom = alias[1] == 'm' && alias[2] == 'i';
+                    const bool positional = as.args.size() > (bottom ? 0u : 1u) && !as.args[bottom ? 0 : 1].isNull();
+                    const bool named = keyword(call, bottom ? "bottom" : "top") && !keyword(call, bottom ? "bottom" : "top")->isNull();
+                    if (positional || named)
+                        return *error = where + (bottom ? ": Cannot supply both positional \"bottom\"argument and kwarg \"rmin\""
+                                                        : ": Cannot supply both positional \"top\"argument and kwarg \"rmax\""),
+                               false;
+                    it->first = bottom ? "bottom" : "top";
+                }
+            }
+            return axesCallOn(ax, as, error);
+        }
+        // set_rgrids(radii, labels=None, angle=None, fmt=None) and set_thetagrids(angles, labels=None, fmt=None)
+        const bool radial = m == "set_rgrids";
+        if (!(radial ? only({"radii", "labels", "angle", "fmt"}) : only({"angles", "labels", "fmt"}))) return false;
+        std::vector<double> at;
+        const Json* given = argument(call, 0, radial ? "radii" : "angles");
+        if (!given || !numbers(*given, &at)) return *error = where + ": " + (radial ? "radii" : "angles") + " must be a list of numbers", false;
+        if (!radial)
+            for (double& a : at) a *= M_PI / 180.0;  // np.deg2rad
+        std::optional<std::vector<std::string>> labels;
+        if (const Json* l = argument(call, 1, "labels"); l && !l->isNull()) {
+            const Json* seq = sequence(*l);
+            if (!seq) return *error = where + ": labels must be a list of strings", false;
+            labels = std::vector<std::string>{};
+            for (const Json& t : seq->items()) {
+                if (!t.isString()) return *error = where + ": labels must be strings (others are not supported yet)", false;
+                labels->push_back(t.asString());
+            }
+        }
+        Axis& axis = radial ? *ax.yaxis : *ax.xaxis;
+        if (!axis.setTicks(at, std::nullopt, error) || (labels && !axis.setTicks(at, labels, error)))
+            return *error = where + ": " + *error, false;
+        if (const Json* f = argument(call, radial ? 3 : 2, "fmt"); !labels && f && !f->isNull()) {
+            if (!f->isString()) return *error = where + ": fmt must be a string", false;
+            Axis& owner = axis.tickerAxis();  // FormatStrFormatter(fmt)
+            owner.strFormat = f->asString();
+            owner.strFormatMethod = false;
+            owner.nullMajorFormatter = false;
+            owner.fixedLabels.reset();
+            owner.dictLabels.reset();
+        }
+        if (radial) {
+            double angle = p.rlabelPosition();  // (None: get_rlabel_position())
+            if (const Json* a = argument(call, 2, "angle"); a && !a->isNull() && !readNumber(*a, &angle))
+                return *error = where + ": angle must be a number", false;
+            p.rLabelPosition->clear().translate(angle * (M_PI / 180.0), 0.0);
+        }
+        return true;
     }
 
     bool axesCallOn(Axes& ax, const model::Call& call, std::string* error) {

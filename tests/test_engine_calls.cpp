@@ -2214,6 +2214,28 @@ INSTANTIATE_TEST_SUITE_P(
                 "plt.subplots: subplot_kw facecolor is not supported yet"},
         Refusal{R"({"call": "subplot", "args": [111], "kwargs": {"polar": "yes"}})", "plt.subplot: polar must be True or False"},
         Refusal{POLAR R"({"on": "ax", "call": "set_xscale", "args": ["log"]})",
-                "ax.set_xscale: The xscale cannot be set on a polar plot"}));
+                "ax.set_xscale: The xscale cannot be set on a polar plot"},
+        Refusal{R"({"call": "subplots", "as": ["fig", "ax"]}, {"on": "ax", "call": "set_theta_offset", "args": [1]})",
+                "ax.set_theta_offset: 'Axes' object has no attribute 'set_theta_offset'"},
+        Refusal{POLAR R"({"on": "ax", "call": "set_theta_direction", "args": ["up"]})",
+                "ax.set_theta_direction: 'up' is not a valid value for direction; supported values are -1, 1, 'clockwise', "
+                "'counterclockwise', 'anticlockwise'"},
+        Refusal{POLAR R"({"on": "ax", "call": "set_theta_direction", "args": [2]})",
+                "ax.set_theta_direction: 2 is not a valid value for direction; supported values are -1, 1, 'clockwise', "
+                "'counterclockwise', 'anticlockwise'"},
+        Refusal{POLAR R"({"on": "ax", "call": "set_theta_zero_location", "args": ["NNE"]})", "ax.set_theta_zero_location: 'NNE'"},
+        Refusal{POLAR R"({"on": "ax", "call": "set_thetalim", "args": [0, 7]})",
+                "ax.set_thetalim: The angle range must be less than a full circle"},
+        Refusal{POLAR R"({"on": "ax", "call": "set_rlim", "args": [0], "kwargs": {"rmin": 1}})",
+                "ax.set_rlim: Cannot supply both positional \"bottom\"argument and kwarg \"rmin\""},
+        Refusal{POLAR R"({"on": "ax", "call": "set_rlim", "kwargs": {"top": 2, "rmax": 1}})",
+                "ax.set_rlim: Cannot supply both positional \"top\"argument and kwarg \"rmax\""},
+        Refusal{POLAR R"({"on": "ax", "call": "set_rgrids", "args": [[1, 2]], "kwargs": {"labels": ["a"]}})",
+                "ax.set_rgrids: The number of FixedLocator locations (2), usually from a call to set_ticks, does not match the "
+                "number of labels (1)."},
+        Refusal{POLAR R"({"on": "ax", "call": "set_thetagrids", "args": [[0, 90]], "kwargs": {"color": "red"}})",
+                "ax.set_thetagrids: unsupported keyword color"},
+        Refusal{POLAR R"({"on": "ax", "call": "tick_params", "kwargs": {"bottom": true}})",
+                "tick marks of polar axes are not supported yet"}));
 #undef FIG
 #undef POLAR

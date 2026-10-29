@@ -352,7 +352,10 @@ it comes from in its first lines. The changes, as a whole:
   ThetaLocator, ThetaFormatter, RadialLocator, ThetaTick's and RadialTick's update_position and the theta and radial
   axes' clear and _set_scale are translated into the library's one Axes class, which takes a polar state
   (src/engine/polar.cpp, src/engine/axes.cpp); spines.py's arc spines (set_patch_arc, _adjust_location of arcs) join
-  its Spine; the polar clip path is the live Wedge patch (TransformedPatchPath).
+  its Spine; the polar clip path is the live Wedge patch (TransformedPatchPath). PolarAxes' setters (set_theta_offset,
+  set_theta_zero_location, set_theta_direction, set_thetamin / set_thetamax / set_thetalim, set_rorigin, set_rmin /
+  set_rmax / set_rlim, set_rlabel_position, set_rscale, set_rticks, set_rgrids, set_thetagrids) are calls of the
+  figure files (src/engine/engine.cpp polarCall).
 - **Meshes** (src/engine/collections.cpp QuadMesh and PolyQuadMesh, src/engine/engine.cpp pcolormesh, pcolor,
   pcolorfast; src/engine/image.cpp PcolorImage): collections.py's _MeshData, PolyQuadMesh and QuadMesh (_convert_mesh_to_triangles for Gouraud shading, draw), backend_bases.py's RendererBase.draw_quad_mesh
   (the SVG renderer's path collection of the cells), axes/_axes.py's pcolormesh, pcolor, pcolorfast,
