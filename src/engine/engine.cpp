@@ -10,6 +10,7 @@
 #include "engine/contour_labels.hpp"
 #include "support/log10.hpp"
 #include "engine/contour_set.hpp"
+#include "engine/table.hpp"
 #include "engine/quiver.hpp"
 #include "engine/streamplot.hpp"
 #include "engine/figure.hpp"
@@ -219,7 +220,7 @@ public:
             {"hlines", "hlines"}, {"vlines", "vlines"}, {"grid", "grid"}, {"legend", "legend"}, {"text", "text"},
             {"title", "set_title"}, {"xlabel", "set_xlabel"}, {"ylabel", "set_ylabel"}, {"xlim", "set_xlim"},
             {"ylim", "set_ylim"}, {"xscale", "set_xscale"}, {"yscale", "set_yscale"}, {"bar", "bar"}, {"barh", "barh"},
-            {"hist", "hist"}, {"fill", "fill"}, {"step", "step"}, {"stairs", "stairs"}, {"stem", "stem"}, {"boxplot", "boxplot"}, {"violinplot", "violinplot"}, {"pie", "pie"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}, {"imshow", "imshow"}, {"matshow", "matshow"}, {"spy", "spy"}, {"pcolormesh", "pcolormesh"}, {"pcolor", "pcolor"}, {"contour", "contour"}, {"contourf", "contourf"}, {"clabel", "clabel"}, {"hexbin", "hexbin"}, {"quiver", "quiver"}, {"quiverkey", "quiverkey"}, {"barbs", "barbs"}, {"streamplot", "streamplot"}, {"triplot", "triplot"}, {"tripcolor", "tripcolor"}, {"tricontour", "tricontour"}, {"tricontourf", "tricontourf"}, {"stackplot", "stackplot"}, {"broken_barh", "broken_barh"}, {"axline", "axline"}, {"eventplot", "eventplot"}, {"arrow", "arrow"}};
+            {"hist", "hist"}, {"fill", "fill"}, {"step", "step"}, {"stairs", "stairs"}, {"stem", "stem"}, {"boxplot", "boxplot"}, {"violinplot", "violinplot"}, {"pie", "pie"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}, {"imshow", "imshow"}, {"matshow", "matshow"}, {"spy", "spy"}, {"pcolormesh", "pcolormesh"}, {"pcolor", "pcolor"}, {"contour", "contour"}, {"contourf", "contourf"}, {"clabel", "clabel"}, {"hexbin", "hexbin"}, {"quiver", "quiver"}, {"quiverkey", "quiverkey"}, {"barbs", "barbs"}, {"streamplot", "streamplot"}, {"triplot", "triplot"}, {"tripcolor", "tripcolor"}, {"tricontour", "tricontour"}, {"tricontourf", "tricontourf"}, {"stackplot", "stackplot"}, {"broken_barh", "broken_barh"}, {"axline", "axline"}, {"eventplot", "eventplot"}, {"arrow", "arrow"}, {"table", "table"}};
         return ofAxes;
     }
 
@@ -1920,6 +1921,7 @@ private:
         if (call.method == "broken_barh") return brokenBarh(ax, call, error);
         if (call.method == "eventplot") return eventplot(ax, call, error);
         if (call.method == "arrow") return arrow(ax, call, error);
+        if (call.method == "table") return table(ax, call, error);
         if (call.method == "tripcolor") return tripcolor(ax, call, error) && noteMappable(ax, call);
         if (call.method == "clabel") {
             const Json* cs = argument(call, 0, "CS");
@@ -5391,6 +5393,193 @@ private:
             if (!patchProperty(*poly, name, *value, where, error)) return false;
         ax.addPatch(std::move(poly));
         ax.requestAutoscaleView(true, true);
+        return true;
+    }
+
+    // table(cellText=None, cellColours=None, cellLoc='right', colWidths=None, rowLabels=None, rowColours=None,
+    // rowLoc='left', colLabels=None, colColours=None, colLoc='center', loc='bottom', bbox=None, edges='closed',
+    // **kwargs): a Table of the cells, the column labels in row 0 and the row labels in column -1 (sized to their text
+    // unless there are row colours alone), added to the Axes (add_table)
+    bool table(Axes& ax, const model::Call& call, std::string* error) {
+        const std::string where = call.on + "." + call.method;
+        static const char* const names[] = {"cellText", "cellColours", "cellLoc", "colWidths", "rowLabels", "rowColours", "rowLoc",
+                                            "colLabels", "colColours", "colLoc", "loc", "bbox", "edges"};
+        if (call.args.size() > std::size(names)) return *error = where + ": too many positional arguments", false;
+        if (!call.as.empty()) return *error = where + ": naming the table is not supported yet", false;
+        const auto get = [&](std::size_t i) -> const Json* {
+            const Json* v = argument(call, i, names[i]);
+            return v && !v->isNull() ? v : nullptr;
+        };
+        const auto textOf = [&](const Json& v, std::string* out) {
+            if (v.isString()) return *out = v.asString(), true;  // (str() of what is not text)
+            if (v.isNumber()) return *out = v.isInteger() ? v.numberText() : support::pythonRepr(v.asNumber()), true;
+            return false;
+        };
+        const auto strings = [&](const Json* v, const char* name, std::vector<std::string>* out) {
+            const Json* seq = v ? sequence(*v) : nullptr;
+            if (!seq) return *error = where + ": " + name + " must be a list of strings", false;
+            out->clear();
+            for (const Json& e : seq->items()) {
+                std::string t;
+                if (!textOf(e, &t)) return *error = where + ": " + name + " must be a list of strings", false;
+                out->push_back(t);
+            }
+            return true;
+        };
+        // a list of colours, or a string of one-letter colours ('w' * n)
+        const auto colourList = [&](const Json* v, const char* name, std::vector<colors::Spec>* out) {
+            out->clear();
+            if (v->isString()) {
+                for (char ch : v->asString()) out->push_back(colors::Spec(std::string(1, ch)));
+                return true;
+            }
+            const Json* seq = sequence(*v);
+            if (!seq) return *error = where + ": " + name + " must be a list of colours", false;
+            for (const Json& e : seq->items()) {
+                colors::Spec c;
+                if (!color(e, &c)) return *error = where + ": " + name + " must be a list of colours", false;
+                out->push_back(c);
+            }
+            return true;
+        };
+        const Json* cellTextJson = get(0);
+        const Json* cellColoursJson = get(1);
+        if (!cellTextJson && !cellColoursJson)
+            return *error = where + ": At least one argument from \"cellColours\" or \"cellText\" must be provided to create a table.", false;
+        std::vector<std::vector<std::string>> cellText;
+        std::vector<std::vector<colors::Spec>> cellColours;
+        if (cellColoursJson) {
+            const Json* rows = sequence(*cellColoursJson);
+            if (!rows || rows->size() == 0) return *error = where + ": cellColours must be rows of colours", false;
+            for (const Json& r : rows->items()) {
+                std::vector<colors::Spec> row;
+                if (!colourList(&r, "cellColours", &row)) return false;
+                cellColours.push_back(row);
+            }
+        }
+        if (cellTextJson) {
+            const Json* rows = sequence(*cellTextJson);
+            if (!rows || rows->size() == 0) return *error = where + ": cellText must be rows of strings", false;
+            for (const Json& r : rows->items()) {
+                std::vector<std::string> row;
+                if (!strings(&r, "cellText", &row)) return false;
+                cellText.push_back(row);
+            }
+        } else {
+            cellText.assign(cellColours.size(), std::vector<std::string>(cellColours[0].size(), ""));
+        }
+        const std::size_t rows = cellText.size(), cols = cellText[0].size();
+        for (const auto& row : cellText)
+            if (row.size() != cols) return *error = where + ": Each row in 'cellText' must have " + std::to_string(cols) + " columns", false;
+        if (cellColoursJson) {
+            if (cellColours.size() != rows) return *error = where + ": 'cellColours' must have " + std::to_string(rows) + " rows", false;
+            for (const auto& row : cellColours)
+                if (row.size() != cols) return *error = where + ": Each row in 'cellColours' must have " + std::to_string(cols) + " columns", false;
+        } else {
+            cellColours.assign(rows, std::vector<colors::Spec>(cols, colors::Spec(std::string("w"))));
+        }
+        const auto textArg = [&](std::size_t i, const char* fallback, std::string* out) {
+            *out = fallback;
+            if (const Json* v = get(i)) {
+                if (!v->isString()) return *error = where + ": " + names[i] + " must be a string", false;
+                *out = v->asString();
+            }
+            return true;
+        };
+        std::string cellLoc, rowLoc, colLoc, loc, edges;
+        if (!textArg(2, "right", &cellLoc) || !textArg(6, "left", &rowLoc) || !textArg(9, "center", &colLoc) || !textArg(10, "bottom", &loc) ||
+            !textArg(12, "closed", &edges))
+            return false;
+        for (const std::string* l : {&cellLoc, &rowLoc, &colLoc})
+            if (*l != "left" && *l != "center" && *l != "right")
+                return *error = where + ": " + repr(Json::string(*l)) + " is not a valid value for horizontalalignment; supported values are 'left', 'center', 'right'", false;
+        std::vector<double> colWidths(cols, 1.0 / double(cols));
+        if (const Json* w = get(3)) {
+            if (!numbers(*w, &colWidths) || colWidths.size() < cols) return *error = where + ": colWidths must be a number per column", false;
+        }
+        std::optional<std::vector<std::string>> rowLabels, colLabels;
+        std::optional<std::vector<colors::Spec>> rowColours, colColours;
+        std::vector<std::string> list;
+        std::vector<colors::Spec> clist;
+        if (const Json* v = get(4)) {
+            if (!strings(v, "rowLabels", &list)) return false;
+            rowLabels = list;
+        }
+        if (const Json* v = get(5)) {
+            if (!colourList(v, "rowColours", &clist)) return false;
+            rowColours = clist;
+        }
+        if (const Json* v = get(7)) {
+            if (!strings(v, "colLabels", &list)) return false;
+            colLabels = list;
+        }
+        if (const Json* v = get(8)) {
+            if (!colourList(v, "colColours", &clist)) return false;
+            colColours = clist;
+        }
+        std::optional<std::array<double, 4>> bbox;
+        if (const Json* v = get(11)) {
+            std::vector<double> b;
+            if (!numbers(*v, &b) || b.size() != 4) return *error = where + ": bbox must be [left, bottom, width, height]", false;
+            bbox = std::array<double, 4>{b[0], b[1], b[2], b[3]};
+        }
+        double rowLabelWidth = 0;
+        if (!rowLabels) {
+            if (rowColours) {
+                rowLabels = std::vector<std::string>(rows, "");
+                rowLabelWidth = colWidths[0];
+            }
+        } else if (!rowColours) {
+            rowColours = std::vector<colors::Spec>(rows, colors::Spec(std::string("w")));
+        }
+        if (rowLabels && rowLabels->size() != rows) return *error = where + ": 'rowLabels' must be of length " + std::to_string(rows), false;
+        int offset = 1;
+        if (!colLabels) {
+            if (colColours) colLabels = std::vector<std::string>(cols, "");
+            else offset = 0;
+        } else if (!colColours) {
+            colColours = std::vector<colors::Spec>(cols, colors::Spec(std::string("w")));
+        }
+        if (rowColours && rowColours->size() < rows) return *error = where + ": rowColours must have a colour per row", false;
+        if (colColours && colColours->size() < cols) return *error = where + ": colColours must have a colour per column", false;
+        if (colLabels && colLabels->size() < cols) return *error = where + ": colLabels must have a label per column", false;
+        auto t = Table::make(rc_, ax, loc, bbox, error);
+        if (!t) return *error = where + ": " + *error, false;
+        // the other keywords (Table._internal_update): the font size, the zorder
+        std::optional<double> fontsize;
+        for (const auto& [name, value] : call.kwargs) {
+            if (std::find(std::begin(names), std::end(names), name) != std::end(names)) continue;
+            double n = 0;
+            if (name == "fontsize") {
+                if (!readNumber(value, &n)) return *error = where + ": fontsize must be a number", false;
+                fontsize = n;
+            } else if (name == "zorder") {
+                if (!readFinite(value, &n)) return *error = where + ": zorder must be a number", false;
+                t->zorder = n;
+            } else {
+                return *error = where + ": " + name + " is not supported yet", false;
+            }
+        }
+        if (edges != "open" && edges != "closed" && edges != "horizontal" && edges != "vertical")
+            for (char ch : edges)
+                if (std::string("BRTL").find(ch) == std::string::npos)
+                    return *error = where + ": Invalid edge param " + edges + ", must only be one of open, closed, horizontal, vertical or string of B, R, T, L", false;
+        t->edges = edges;
+        const double height = t->approxTextHeight();
+        for (std::size_t r = 0; r < rows; ++r)
+            for (std::size_t c = 0; c < cols; ++c)
+                t->addCell(int(r) + offset, int(c), colWidths[c], height, cellText[r][c], cellColours[r][c], cellLoc);
+        if (colLabels)
+            for (std::size_t c = 0; c < cols; ++c) t->addCell(0, int(c), colWidths[c], height, (*colLabels)[c], (*colColours)[c], colLoc);
+        if (rowLabels) {
+            for (std::size_t r = 0; r < rows; ++r)
+                t->addCell(int(r) + offset, -1, rowLabelWidth != 0 ? rowLabelWidth : 1e-15, height, (*rowLabels)[r], (*rowColours)[r], rowLoc);
+            if (rowLabelWidth == 0) t->autoColumns.push_back(-1);
+        }
+        if (fontsize) t->setFontsize(*fontsize);
+        // add_table: the Axes' figure; its own transform (transAxes); not clipped (clip_on False)
+        if (t->label.empty()) t->label = "_child" + std::to_string(ax.children.size());
+        ax.children.push_back(std::move(t));
         return true;
     }
 

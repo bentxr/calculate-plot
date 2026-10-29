@@ -2303,4 +2303,14 @@ INSTANTIATE_TEST_SUITE_P(
         Refusal{R"({"on": "axs[0]", "call": "eventplot", "args": [[1, 2]], "kwargs": {"linelengths": []}})",
                 "axs[0].eventplot: linelengths cannot be empty"},
         Refusal{R"({"on": "axs[0]", "call": "eventplot", "args": [[1, 2]], "kwargs": {"orientation": "diagonal"}})",
-                "axs[0].eventplot: 'diagonal' is not a valid value for orientation; supported values are 'horizontal', 'vertical'"}));
+                "axs[0].eventplot: 'diagonal' is not a valid value for orientation; supported values are 'horizontal', 'vertical'"},
+        Refusal{R"({"on": "axs[0]", "call": "table", "kwargs": {"loc": "bottom"}})",
+                "axs[0].table: At least one argument from \"cellColours\" or \"cellText\" must be provided to create a table."},
+        Refusal{R"({"on": "axs[0]", "call": "table", "kwargs": {"cellText": [["a", "b"], ["c"]]}})",
+                "axs[0].table: Each row in 'cellText' must have 2 columns"},
+        Refusal{R"({"on": "axs[0]", "call": "table", "kwargs": {"cellText": [["a"]], "rowLabels": ["x", "y"]}})",
+                "axs[0].table: 'rowLabels' must be of length 1"},
+        Refusal{R"({"on": "axs[0]", "call": "table", "kwargs": {"cellText": [["a"]], "loc": "middle"}})",
+                "axs[0].table: Unrecognized location 'middle'. Valid locations are\n\tbest\n\tupper right\n\tupper left\n\tlower left\n\t"
+                "lower right\n\tcenter left\n\tcenter right\n\tlower center\n\tupper center\n\tcenter\n\ttop right\n\ttop left\n\t"
+                "bottom left\n\tbottom right\n\tright\n\tleft\n\ttop\n\tbottom"}));

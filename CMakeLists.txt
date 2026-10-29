@@ -92,6 +92,7 @@ add_library(calculate-plot STATIC
     src/engine/contour_set.cpp
     src/engine/quiver.cpp
     src/engine/streamplot.cpp
+    src/engine/table.cpp
     src/engine/polar.cpp
     src/tri/delaunay.cpp
     src/tri/triangulation.cpp

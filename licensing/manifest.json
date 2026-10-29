@@ -558,6 +558,8 @@
     "src/engine/quiver.hpp",
     "src/engine/streamplot.cpp",
     "src/engine/streamplot.hpp",
+    "src/engine/table.cpp",
+    "src/engine/table.hpp",
     "src/engine/polar.cpp",
     "src/engine/polar.hpp",
     "src/tri/delaunay.cpp",
