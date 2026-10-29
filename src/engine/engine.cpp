@@ -5251,11 +5251,12 @@ private:
             for (std::size_t i = 1; i < n; ++i) tiled[i] += tiled[i - 1];
             offsets = tiled;
         }
-        if (lengths.size() == 1) lengths.assign(n, lengths[0]);
-        if (widths.size() == 1) widths.assign(n, widths[0]);
-        if (colours.size() == 1) colours.assign(n, colours[0]);
-        if (alpha.size() == 1) alpha.assign(n, alpha[0]);
-        if (styles.size() == 1) styles.assign(n, styles[0]);
+        // (each value copied before the vector is filled with it)
+        if (lengths.size() == 1) lengths = std::vector<double>(n, lengths[0]);
+        if (widths.size() == 1) widths = std::vector<double>(n, widths[0]);
+        if (colours.size() == 1) colours = std::vector<std::optional<colors::Rgba>>(n, colours[0]);
+        if (alpha.size() == 1) alpha = std::vector<std::optional<double>>(n, alpha[0]);
+        if (styles.size() == 1) styles = std::vector<std::string>(n, styles[0]);
         const auto unequal = [&](std::size_t size, const char* name) {
             if (size == n) return false;
             *error = where + ": " + name + " and positions are unequal sized sequences";
