@@ -9,6 +9,7 @@
 #include "engine/contour_labels.hpp"
 #include "support/log10.hpp"
 #include "engine/contour_set.hpp"
+#include "engine/quiver.hpp"
 #include "engine/figure.hpp"
 #include "engine/image.hpp"
 #include "engine/inset.hpp"
@@ -200,7 +201,7 @@ public:
             {"hlines", "hlines"}, {"vlines", "vlines"}, {"grid", "grid"}, {"legend", "legend"}, {"text", "text"},
             {"title", "set_title"}, {"xlabel", "set_xlabel"}, {"ylabel", "set_ylabel"}, {"xlim", "set_xlim"},
             {"ylim", "set_ylim"}, {"xscale", "set_xscale"}, {"yscale", "set_yscale"}, {"bar", "bar"}, {"barh", "barh"},
-            {"hist", "hist"}, {"fill", "fill"}, {"step", "step"}, {"stairs", "stairs"}, {"stem", "stem"}, {"boxplot", "boxplot"}, {"violinplot", "violinplot"}, {"pie", "pie"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}, {"imshow", "imshow"}, {"matshow", "matshow"}, {"spy", "spy"}, {"pcolormesh", "pcolormesh"}, {"pcolor", "pcolor"}, {"contour", "contour"}, {"contourf", "contourf"}, {"clabel", "clabel"}, {"hexbin", "hexbin"}};
+            {"hist", "hist"}, {"fill", "fill"}, {"step", "step"}, {"stairs", "stairs"}, {"stem", "stem"}, {"boxplot", "boxplot"}, {"violinplot", "violinplot"}, {"pie", "pie"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}, {"imshow", "imshow"}, {"matshow", "matshow"}, {"spy", "spy"}, {"pcolormesh", "pcolormesh"}, {"pcolor", "pcolor"}, {"contour", "contour"}, {"contourf", "contourf"}, {"clabel", "clabel"}, {"hexbin", "hexbin"}, {"quiver", "quiver"}, {"quiverkey", "quiverkey"}};
         return ofAxes;
     }
 
@@ -1655,6 +1656,8 @@ private:
         if (call.method == "pcolorfast") return pcolorfast(ax, call, error) && noteMappable(ax, call);
         if (call.method == "contour" || call.method == "contourf") return contour(ax, call, error) && noteMappable(ax, call);
         if (call.method == "hexbin") return hexbin(ax, call, error) && noteMappable(ax, call);
+        if (call.method == "quiver") return quiver(ax, call, error) && noteMappable(ax, call);
+        if (call.method == "quiverkey") return quiverkey(ax, call, error);
         if (call.method == "clabel") {
             const Json* cs = argument(call, 0, "CS");
             if (call.args.size() > 2) return *error = where + ": clabel() takes from 2 to 3 positional arguments but " + std::to_string(call.args.size() + 1) + " were given", false;
@@ -5663,6 +5666,237 @@ private:
         return true;
     }
 
+    // A 1-D or 2-D array of numbers (np.atleast_1d of a number, a list or a list of lists), its rows and columns
+    // (one row for 1-D), raveled
+    bool raveled(const Json& v, std::vector<double>* out, std::size_t* rows, std::size_t* cols) {
+        double d = 0;
+        out->clear();
+        if (readNumber(v, &d)) return *out = {d}, *rows = 1, *cols = 1, true;
+        const Json* s = sequence(v);
+        if (!s) return false;
+        if (s->size() && sequence((*s)[0])) {
+            *rows = s->size(), *cols = 0;
+            for (const Json& row : s->items()) {
+                std::vector<double> r;
+                if (!numbers(row, &r) || (*cols && r.size() != *cols)) return false;
+                *cols = r.size();
+                out->insert(out->end(), r.begin(), r.end());
+            }
+            return true;
+        }
+        if (!numbers(v, out)) return false;
+        *rows = 1, *cols = out->size();
+        return true;
+    }
+
+    // Axes.quiver([X, Y], U, V, [C], /, **kwargs): a Quiver of arrows at X, Y
+    bool quiver(Axes& ax, const model::Call& call, std::string* error) {
+        const std::string where = call.on + ".quiver";
+        const std::size_t nargs = call.args.size();
+        if (nargs < 2 || nargs > 5)
+            return *error = where + ": quiver() takes from 2 to 5 positional arguments but " + std::to_string(nargs) + " were given", false;
+        if (call.as.size() > 1) return *error = where + ": a quiver is one object (\"as\" names one)", false;
+        // _parse_args: U, V (and C) after X, Y when given; X, Y on U's grid when they match its shape
+        const std::size_t first = nargs >= 4 ? 2 : 0;
+        std::vector<double> X, Y, U, V, C;
+        std::size_t nr = 0, nc = 0, r = 0, c = 0;
+        const char* bad = ": X, Y, U, V and C must be numbers or arrays of numbers of one or two dimensions";
+        if (!raveled(call.args[first], &U, &nr, &nc) || !raveled(call.args[first + 1], &V, &r, &c)) return *error = where + bad, false;
+        const bool hasC = nargs == 3 || nargs == 5;
+        if (hasC && !raveled(call.args.back(), &C, &r, &c)) return *error = where + bad, false;
+        if (first == 2) {
+            if (!raveled(call.args[0], &X, &r, &c) || !raveled(call.args[1], &Y, &r, &c)) return *error = where + bad, false;
+            if (X.size() == nc && Y.size() == nr) {
+                std::vector<double> mx, my;
+                for (double yv : Y)
+                    for (double xv : X) mx.push_back(xv), my.push_back(yv);
+                X = mx, Y = my;
+            } else if (X.size() != Y.size()) {
+                return *error = where + ": X and Y must be the same size, but X.size is " + std::to_string(X.size()) + " and Y.size is " +
+                                std::to_string(Y.size()) + ".", false;
+            }
+        } else {
+            for (std::size_t i = 0; i < nr; ++i)
+                for (std::size_t j = 0; j < nc; ++j) X.push_back(double(j)), Y.push_back(double(i));
+        }
+        QuiverOptions o;
+        static const char* const unitNames[] = {"x", "y", "xy", "width", "height", "dots", "inches"};
+        const auto validUnits = [&](const std::string& value) {
+            if (std::find(std::begin(unitNames), std::end(unitNames), value) != std::end(unitNames)) return true;
+            return *error = where + ": '" + value + "' is not a valid value for units.", false;  // (raised when drawn)
+        };
+        std::optional<colors::Spec> color = colors::Spec(std::string("k"));
+        std::optional<std::vector<colors::Spec>> colorList_;
+        model::Call rest = call;  // the PolyCollection's keywords
+        rest.kwargs.clear();
+        std::vector<std::pair<std::string, Json>> polykw;
+        const Json* cmapJson = nullptr;
+        const Json* normJson = nullptr;
+        for (const auto& [name, value] : call.kwargs) {
+            double v = 0;
+            const bool none = value.isNull();
+            if (name == "scale" || name == "width") {
+                if (none) continue;
+                if (!readNumber(value, &v)) return *error = where + ": " + name + " must be a number", false;
+                (name == "scale" ? o.scale : o.width) = v;
+            } else if (name == "headwidth" || name == "headlength" || name == "headaxislength" || name == "minshaft" || name == "minlength") {
+                if (!readNumber(value, &v)) return *error = where + ": " + name + " must be a number", false;
+                (name == "headwidth" ? o.headwidth : name == "headlength" ? o.headlength : name == "headaxislength" ? o.headaxislength
+                 : name == "minshaft" ? o.minshaft : o.minlength) = v;
+            } else if (name == "units" || name == "scale_units") {
+                if (none && name == "scale_units") continue;
+                if (!value.isString()) return *error = where + ": " + name + " must be a string", false;
+                if (name == "units" || value.asString() != "xy")
+                    if (!validUnits(value.asString())) return false;
+                if (name == "units") o.units = value.asString();
+                else o.scaleUnits = value.asString();
+            } else if (name == "angles") {
+                std::vector<double> a;
+                if (value.isString()) {
+                    if (value.asString() != "uv" && value.asString() != "xy") return *error = where + ": angles must be 'uv', 'xy' or an array of angles", false;
+                    o.angles = value.asString();
+                } else if (numbers(value, &a) || (readNumber(value, &v) && (a = {v}, true))) {
+                    if (a.size() != X.size()) return *error = where + ": angles must be one per arrow (others are not supported yet)", false;
+                    o.anglesArray = a;
+                } else {
+                    return *error = where + ": angles must be 'uv', 'xy' or an array of angles", false;
+                }
+            } else if (name == "pivot") {
+                if (!value.isString()) return *error = where + ": pivot must be 'tail', 'middle' or 'tip'", false;
+                o.pivot = value.asString();
+            } else if (name == "color" || name == "facecolor" || name == "facecolors" || name == "fc") {
+                if (name != "color" && none) continue;
+                std::vector<colors::Spec> l;
+                colors::Spec one;
+                if (this->color(value, &one)) colorList_ = std::vector<colors::Spec>{one};
+                else if (colorList(value, &l)) colorList_ = l;
+                else return *error = where + ": " + name + " must be a colour or a list of colours", false;
+                polykw.push_back({name, value});
+            } else if (name == "cmap" || name == "norm") {
+                (name == "cmap" ? cmapJson : normJson) = &value;
+                polykw.push_back({name, value});
+            } else if (name == "transform") {
+                return *error = where + ": transform is not supported yet", false;
+            } else {
+                rest.kwargs.push_back({name, value});
+                polykw.push_back({name, value});
+            }
+        }
+        std::optional<std::vector<double>> cvalues;
+        if (hasC) cvalues = C;
+        auto q = Quiver::make(rc_, ax, X, Y, U, V, cvalues, o, error);
+        if (!q) return *error = where + ": " + *error, false;
+        if (colorList_) q->setFacecolor(ColorArg{ColorArg::Colors, *colorList_});
+        else q->setFacecolor(ColorArg::of(*color));
+        bool normObject = false;
+        colors::Colormap cmap;
+        if (!colorizer(&cmap, &q->norm, cmapJson, normJson, nullptr, false, where, &normObject, error)) return false;
+        q->cmap = cmap;
+        std::optional<double> vmin, vmax;
+        if (!meshKeywords(*q, rest, {}, where, &vmin, &vmax, error)) return false;
+        if (vmin || vmax) return *error = where + ": vmin and vmax are not supported yet", false;
+        Quiver* ref = q.get();
+        ax.addCollection(std::move(q), true);
+        if (call.as.size() == 1) quivers_[call.as[0]] = {ref, polykw};
+        return true;
+    }
+
+    // Axes.quiverkey(Q, X, Y, U, label, *, angle=0, coordinates='axes', color=None, labelsep=0.1, labelpos='N',
+    // labelcolor=None, fontproperties=None, zorder=None, **kwargs): a QuiverKey added to the Axes
+    bool quiverkey(Axes& ax, const model::Call& call, std::string* error) {
+        const std::string where = call.on + ".quiverkey";
+        static const char* const positional[] = {"Q", "X", "Y", "U", "label"};
+        if (call.args.size() > 5) return *error = where + ": quiverkey() takes 6 positional arguments but " + std::to_string(call.args.size() + 1) + " were given", false;
+        const Json* given[5];
+        for (std::size_t i = 0; i < 5; ++i) {
+            given[i] = argument(call, i, positional[i]);
+            if (!given[i]) return *error = where + ": quiverkey() missing 1 required positional argument: '" + positional[i] + "'", false;
+        }
+        if (!call.as.empty()) return *error = where + ": naming the key is not supported yet", false;
+        const Json& qref = *given[0];
+        const auto it = qref.isObject() && qref.members().size() == 1 && qref.members()[0].first == "$ref" && qref.members()[0].second.isString()
+                            ? quivers_.find(qref.members()[0].second.asString()) : quivers_.end();
+        if (it == quivers_.end()) return *error = where + ": Q must be a quiver the figure file named ({\"$ref\": name})", false;
+        double x = 0, y = 0, u = 0;
+        if (!readNumber(*given[1], &x) || !readNumber(*given[2], &y) || !readNumber(*given[3], &u))
+            return *error = where + ": X, Y and U must be numbers", false;
+        if (!given[4]->isString()) return *error = where + ": label must be a string", false;
+        Quiver& q = *it->second.first;
+        auto key = std::make_unique<QuiverKey>(rc_, q, x, y, u, given[4]->asString());
+        // the arrow takes the quiver's PolyCollection keywords, then the key's own
+        model::Call vectorKw = call;
+        vectorKw.args.clear();
+        vectorKw.kwargs.clear();
+        std::optional<colors::Spec> face = colors::Spec(std::string("k"));
+        std::vector<std::pair<std::string, Json>> kws = it->second.second;
+        static const std::set<std::string> own = {"Q", "X", "Y", "U", "label", "angle", "coordinates", "color", "labelsep", "labelpos",
+                                                  "labelcolor", "fontproperties", "zorder"};
+        for (const auto& kw : call.kwargs)
+            if (!own.count(kw.first)) kws.push_back(kw);
+        key->vector->setLinewidths({0.0});
+        for (const auto& [name, value] : kws) {
+            if (name == "color" || name == "facecolor" || name == "facecolors" || name == "fc") {
+                std::vector<colors::Spec> l;
+                colors::Spec one;
+                if (color(value, &one)) key->vector->setFacecolor(ColorArg::of(one));
+                else if (colorList(value, &l)) key->vector->setFacecolor(ColorArg{ColorArg::Colors, l});
+            } else if (name != "cmap" && name != "norm") {
+                vectorKw.kwargs.push_back({name, value});
+            }
+        }
+        bool faceSet = false;
+        for (const auto& kw : kws) faceSet = faceSet || kw.first == "color" || kw.first == "facecolor" || kw.first == "facecolors" || kw.first == "fc";
+        if (!faceSet) key->vector->setFacecolor(ColorArg::of(*face));
+        std::optional<double> vmin, vmax;
+        if (!meshKeywords(*key->vector, vectorKw, {}, where, &vmin, &vmax, error)) return false;
+        std::vector<std::pair<std::string, const Json*>> textKw;
+        for (const auto& [name, value] : call.kwargs) {
+            double v = 0;
+            if (name == "angle" || name == "labelsep") {
+                if (!readNumber(value, &v)) return *error = where + ": " + name + " must be a number", false;
+                (name == "angle" ? key->angle : key->labelsep) = v;
+            } else if (name == "coordinates") {
+                static const char* const coords[] = {"data", "axes", "figure", "inches"};
+                if (!value.isString() || std::find(std::begin(coords), std::end(coords), value.asString()) == std::end(coords))
+                    return *error = where + ": " + repr(value) + " is not a valid value for coordinates. Supported values are 'data', 'axes', 'figure', 'inches'", false;
+                key->coordinates = value.asString();
+            } else if (name == "color") {
+                if (value.isNull()) continue;
+                colors::Spec spec;
+                if (!color(value, &spec)) return *error = where + ": color must be a colour", false;
+                key->color = spec;
+            } else if (name == "labelpos") {
+                if (!value.isString() || value.asString().size() != 1 || std::string("NSEW").find(value.asString()) == std::string::npos)
+                    return *error = where + ": " + repr(value), false;  // (KeyError)
+                key->labelpos = value.asString();
+            } else if (name == "labelcolor") {
+                if (!value.isNull()) textKw.push_back({"color", &value});
+            } else if (name == "fontproperties") {
+                if (value.isNull()) continue;
+                const Json* d = value.isObject() && value.members().size() == 1 && value.members()[0].first == "$dict" ? &value.members()[0].second : nullptr;
+                if (!d) return *error = where + ": fontproperties must be a dict ({\"$dict\": {...}})", false;
+                static const std::map<std::string, std::string> fontKeys = {{"family", "fontfamily"}, {"style", "fontstyle"}, {"variant", "fontvariant"},
+                                                                            {"weight", "fontweight"}, {"stretch", "fontstretch"}, {"size", "fontsize"}};
+                for (const auto& [k, fv] : d->members()) {
+                    const auto f = fontKeys.find(k);
+                    if (f == fontKeys.end()) return *error = where + ": FontProperties.__init__() got an unexpected keyword argument '" + k + "'", false;
+                    textKw.push_back({f->second, &fv});
+                }
+            } else if (name == "zorder") {
+                if (value.isNull()) continue;
+                if (!readFinite(value, &v)) return *error = where + ": zorder must be a number", false;
+                key->zorder = v;
+            }
+        }
+        static const std::map<char, std::pair<const char*, const char*>> align = {
+            {'N', {"center", "bottom"}}, {'S', {"center", "top"}}, {'E', {"left", "center"}}, {'W', {"right", "center"}}};
+        key->text->horizontalAlignment = align.at(key->labelpos[0]).first;
+        key->text->verticalAlignment = align.at(key->labelpos[0]).second;
+        if (!textProperties(*key->text, textKw, TextKeywords::Construct, where, error)) return false;
+        ax.addOtherArtist(std::move(key));
+        return true;
+    }
+
     // Axes.pcolor([X, Y,] C, *, shading=None, alpha=None, norm=None, cmap=None, vmin=None, vmax=None, colorizer=None,
     // **kwargs): a PolyQuadMesh of the cells, without those with a masked corner or value
     bool pcolor(Axes& ax, const model::Call& call, std::string* error) {
@@ -7142,6 +7376,8 @@ private:
     std::map<std::string, std::shared_ptr<colors::Norm>> norms_;  // the norms colors.* calls made
     std::map<std::string, Mappable> mappables_;             // the images and collections named by "as"
     std::map<std::string, std::pair<ContourSet*, Axes*>> contourSets_;  // the contour sets named by "as", and their Axes
+    // the quivers named by "as", and the PolyCollection keywords they were made with (polykw, for their keys)
+    std::map<std::string, std::pair<Quiver*, std::vector<std::pair<std::string, Json>>>> quivers_;
     std::map<const Axes*, Mappable> currentImages_;         // pyplot's current image of each Axes (sci)
     std::map<std::string, std::vector<Axes*>> axesArrays_;  // the arrays of Axes plt.subplots returned
     std::set<std::string> addedPatches_;

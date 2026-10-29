@@ -283,6 +283,8 @@ public:
     Patch& addPatch(std::unique_ptr<Patch> patch);  // Axes.add_patch
     // Axes.add_artist of a patch: in data coordinates, clipped to the Axes, but no data limits
     Patch& addArtist(std::unique_ptr<Patch> patch);
+    // Axes.add_artist of another artist (a quiver key): its transform transData unless set, no data limits
+    Artist& addOtherArtist(std::unique_ptr<Artist> artist);
     Text& addText(std::unique_ptr<Text> text);          // Axes._add_text, as Axes.text does it
     // Axes.add_image: a child in data coordinates (no data limits: AxesImage.set_extent does those)
     Artist& addImage(std::unique_ptr<Artist> image);

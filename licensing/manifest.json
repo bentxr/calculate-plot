@@ -524,6 +524,8 @@
     "src/engine/lines.hpp",
     "src/engine/path.cpp",
     "src/engine/path.hpp",
+    "src/engine/quiver.cpp",
+    "src/engine/quiver.hpp",
     "src/engine/renderer.hpp",
     "src/engine/text.cpp",
     "src/engine/text.hpp",
@@ -589,6 +591,8 @@
    "vendored": [],
    "derived": [
     "src/support/histogram.cpp",
+    "src/support/npy_complex.cpp",
+    "src/support/npy_complex.hpp",
     "src/support/npy_logf.cpp",
     "src/support/npy_logf.hpp",
     "src/support/numpy_str.cpp",

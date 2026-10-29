@@ -89,6 +89,7 @@ add_library(calculate-plot STATIC
     src/engine/colorbar.cpp
     src/engine/contour_labels.cpp
     src/engine/contour_set.cpp
+    src/engine/quiver.cpp
     src/contour/contour.cpp
     src/contour/mpl2014.cpp
     src/engine/trace_renderer.cpp
@@ -123,6 +124,7 @@ add_library(calculate-plot STATIC
     src/support/histogram.cpp
     src/support/pynum.cpp
     src/support/log10.cpp
+    src/support/npy_complex.cpp
     src/support/npy_logf.cpp
     src/support/numpy_str.cpp
     src/support/pylambda.cpp

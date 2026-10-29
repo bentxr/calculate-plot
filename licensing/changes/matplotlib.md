@@ -333,6 +333,10 @@ it comes from in its first lines. The changes, as a whole:
   np.linspace edges) and cbook.delete_masked_points for its data, translated to C++ with NumPy's operations in their
   order; transforms.py's AffineDeltaTransform (src/transforms/transforms.cpp). reduce_C_function is one of np.mean,
   np.sum, np.max, np.min, np.median and len, named in figure files with {"$func": name}.
+- **Quivers** (src/engine/quiver.cpp, src/engine/engine.cpp quiver and quiverkey): quiver.py's Quiver (_parse_args,
+  set_UVC, _init, _dots_per_unit, _set_transform, _angles_lengths, _make_verts, _h_arrows, draw) and QuiverKey (_init,
+  _text_shift, draw), and axes/_axes.py's Axes.quiver and Axes.quiverkey, translated to C++ with NumPy's operations
+  in their order (NumPy's complex multiplication and absolute value from src/support/npy_complex.cpp).
 - **Meshes** (src/engine/collections.cpp QuadMesh and PolyQuadMesh, src/engine/engine.cpp pcolormesh, pcolor,
   pcolorfast; src/engine/image.cpp PcolorImage): collections.py's _MeshData, PolyQuadMesh and QuadMesh (_convert_mesh_to_triangles for Gouraud shading, draw), backend_bases.py's RendererBase.draw_quad_mesh
   (the SVG renderer's path collection of the cells), axes/_axes.py's pcolormesh, pcolor, pcolorfast,

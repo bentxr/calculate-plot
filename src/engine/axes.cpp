@@ -1569,6 +1569,14 @@ Patch& Axes::addArtist(std::unique_ptr<Patch> p) {
     return static_cast<Patch&>(*children.back());
 }
 
+Artist& Axes::addOtherArtist(std::unique_ptr<Artist> a) {
+    if (!a->transformSet) a->transform = transData;  // _set_artist_props
+    a->clipBox = std::make_shared<transforms::TransformedBbox>(
+        std::make_shared<transforms::Bbox>(std::array<double, 4>{0, 0, 1, 1}), patch->fullTransform());
+    children.push_back(std::move(a));
+    return *children.back();
+}
+
 std::vector<std::pair<std::string, support::Json>> Axes::patchDefaults(const std::vector<std::string>& given,
                                                                        const std::vector<std::string>& ignore) {
     const auto cycle = rc_.propCycle();

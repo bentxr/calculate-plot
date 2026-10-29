@@ -37,3 +37,7 @@ where the bin rules treat them otherwise):
   default print options (precision 8, floatmode 'maxprec'), for 2-D float64 arrays of finite values whose rows fit
   the line width (no wrapping, no non-finite values), with dragon4.c's rounding: the shortest digits, or the value
   correctly rounded at the precision when those need more (here through pythonRepr, fixed and printf's %.8e).
+- **complex arithmetic** (src/support/npy_complex.cpp): loops_arithm_fp.dispatch.c.src's simd_cmul_f64 and
+  loops_unary_complex.dispatch.c.src's simd_cabsolute_f64 for AVX2 and FMA (the reference machine's complex128
+  multiplication and np.abs), translated from vector intrinsics to one value at a time (std::fma for the fused
+  multiply-adds), for quiver's arrows.

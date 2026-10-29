@@ -2120,6 +2120,37 @@ INSTANTIATE_TEST_SUITE_P(
         Refusal{R"({"on": "axs[0]", "call": "hexbin", "args": [[1, 2], [1, 2]], "kwargs": {"gridsize": 2.5}})",
                 "axs[0].hexbin: gridsize must be an integer or a pair of integers"}));
 
+// quiver and quiverkey raise what matplotlib raises (some only when drawing), and refuse what is not ported
+class QuiverRefusals : public testing::TestWithParam<Refusal> {};
+
+TEST_P(QuiverRefusals, NameTheCallAndTheReason) {
+    EXPECT_EQ(draw(kSubplots + GetParam().call).error, GetParam().error);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    Engine, QuiverRefusals,
+    testing::Values(
+        Refusal{R"({"on": "axs[0]", "call": "quiver", "args": [[1, 2], [1, 2]], "kwargs": {"pivot": "top"}})",
+                "axs[0].quiver: 'top' is not a valid value for pivot. Supported values are 'tail', 'middle', 'tip'"},
+        Refusal{R"({"on": "axs[0]", "call": "quiver", "args": [[1, 2], [1, 2]], "kwargs": {"units": "km"}})",
+                "axs[0].quiver: 'km' is not a valid value for units."},
+        Refusal{R"({"on": "axs[0]", "call": "quiver", "args": [[1, 2], [1, 2]], "kwargs": {"scale_units": "km"}})",
+                "axs[0].quiver: 'km' is not a valid value for units."},
+        Refusal{R"({"on": "axs[0]", "call": "quiver", "args": [[1, 2, 3], [1, 2], [1, 2], [1, 2]]})",
+                "axs[0].quiver: X and Y must be the same size, but X.size is 3 and Y.size is 2."},
+        Refusal{R"({"on": "axs[0]", "call": "quiver", "args": [[1, 2], [1, 2], [1, 2, 3], [1, 2]]})",
+                "axs[0].quiver: Argument U has a size 3 which does not match 2, the number of arrow positions"},
+        Refusal{R"({"on": "axs[0]", "call": "quiver", "args": [[1]]})",
+                "axs[0].quiver: quiver() takes from 2 to 5 positional arguments but 1 were given"},
+        Refusal{R"({"on": "axs[0]", "call": "quiver", "args": [[1, 2], [1, 2]], "as": "q"},
+                   {"on": "axs[0]", "call": "quiverkey", "args": [{"$ref": "q"}, 0, 0, 1, "a"], "kwargs": {"coordinates": "km"}})",
+                "axs[0].quiverkey: 'km' is not a valid value for coordinates. Supported values are 'data', 'axes', 'figure', 'inches'"},
+        Refusal{R"({"on": "axs[0]", "call": "quiver", "args": [[1, 2], [1, 2]], "as": "q"},
+                   {"on": "axs[0]", "call": "quiverkey", "args": [{"$ref": "q"}, 0, 0, 1, "a"], "kwargs": {"labelpos": "X"}})",
+                "axs[0].quiverkey: 'X'"},
+        Refusal{R"({"on": "axs[0]", "call": "quiverkey", "args": [[1, 2], 0, 0, 1, "a"]})",
+                "axs[0].quiverkey: Q must be a quiver the figure file named ({\"$ref\": name})"}));
+
 // contour lines never look at hatches, whatever they are
 TEST(ContourCalls, LinesIgnoreHatches) {
     EXPECT_EQ(draw(kSubplots + R"({"on": "axs[0]", "call": "contour", "args": [[[0, 1], [2, 3]]], "kwargs": {"hatches": null}})").error, "");
