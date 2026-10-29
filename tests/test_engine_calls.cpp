@@ -2278,6 +2278,39 @@ INSTANTIATE_TEST_SUITE_P(
         Refusal{R"({"on": "axs[0]", "call": "tricontour", "args": [[0, 1, 0, 1], [0, 0, 1, 1], [1, 2, 3, 4]], "kwargs": {"corner_mask": true}})",
                 "axs[0].tricontour: TriContourSet.set() got an unexpected keyword argument 'corner_mask'"}));
 
+// margins, set_xmargin / set_ymargin and locator_params: matplotlib's errors
+class MarginRefusals : public testing::TestWithParam<Refusal> {};
+
+TEST_P(MarginRefusals, NameTheCallAndTheReason) {
+    EXPECT_EQ(draw(kSubplots + GetParam().call).error, GetParam().error);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    Engine, MarginRefusals,
+    testing::Values(
+        Refusal{R"({"on": "axs[0]", "call": "margins", "args": [0.1], "kwargs": {"x": 0.2}})",
+                "axs[0].margins: Cannot pass both positional and keyword arguments for x and/or y."},
+        Refusal{R"({"on": "axs[0]", "call": "margins", "args": [0.1, 0.2, 0.3]})",
+                "axs[0].margins: Must pass a single positional argument for all margins, or one for each margin (x, y)."},
+        Refusal{R"({"on": "axs[0]", "call": "margins", "kwargs": {"y": -1}})", "axs[0].margins: margin must be greater than -0.5"},
+        Refusal{R"({"on": "axs[0]", "call": "margins", "kwargs": {"z": 1}})",
+                "axs[0].margins: _AxesBase.margins() got an unexpected keyword argument 'z'"},
+        Refusal{R"({"on": "axs[0]", "call": "set_xmargin", "args": [-0.5]})", "axs[0].set_xmargin: margin must be greater than -0.5"},
+        Refusal{R"({"on": "axs[0]", "call": "locator_params", "kwargs": {"axis": "z"}})",
+                "axs[0].locator_params: 'z' is not a valid value for axis. Supported values are 'x', 'y', 'both'"},
+        Refusal{R"({"on": "axs[0]", "call": "locator_params", "kwargs": {"foo": 1}})",
+                "axs[0].locator_params: set_params() got an unexpected keyword argument 'foo'"},
+        Refusal{R"({"on": "axs[0]", "call": "locator_params", "kwargs": {"prune": "middle"}})",
+                "axs[0].locator_params: 'middle' is not a valid value for prune. Supported values are 'upper', 'lower', 'both', None"},
+        Refusal{R"({"on": "axs[0]", "call": "locator_params", "kwargs": {"steps": [2, 1]}})",
+                "axs[0].locator_params: steps argument must be an increasing sequence of numbers between 1 and 10 inclusive"},
+        Refusal{R"({"on": "axs[0]", "call": "locator_params", "kwargs": {"steps": [0.5, 2]}})",
+                "axs[0].locator_params: steps argument must be an increasing sequence of numbers between 1 and 10 inclusive"},
+        Refusal{R"({"on": "axs[0]", "call": "set_xticks", "args": [[1, 2, 3]]}, {"on": "axs[0]", "call": "locator_params", "kwargs": {"axis": "x", "steps": [1, 2]}})",
+                "axs[0].locator_params: FixedLocator.set_params() got an unexpected keyword argument 'steps'"},
+        Refusal{R"({"on": "axs[0]", "call": "set_yscale", "args": ["log"]}, {"on": "axs[0]", "call": "locator_params", "kwargs": {"axis": "y", "numticks": 4}})",
+                "axs[0].locator_params: parameters of this axis' locator are not supported yet"}));
+
 // psd, csd, cohere, the single spectra and specgram: matplotlib's errors, and what is not done yet
 class SpectralRefusals : public testing::TestWithParam<Refusal> {};
 
