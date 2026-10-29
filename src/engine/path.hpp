@@ -33,6 +33,8 @@ struct Path {
     // Path.arc(theta1, theta2): the unit circle's arc from theta1 to theta2 degrees, as cubic Bezier
     // curves (n = 2 ** ceil(sweep / (pi/2)) of them)
     static Path arc(double theta1, double theta2, const rc::Params& rc);
+    // the same arc's vertices and codes
+    static void arcData(double theta1, double theta2, std::vector<double>* vertices, std::vector<unsigned char>* codes);
     // Path.unit_rectangle(): (0, 0), (1, 0), (1, 1), (0, 1), closed.
     static Path unitRectangle(const rc::Params& rc);
     // The same path made under other rcParams (its simplification settings are theirs).

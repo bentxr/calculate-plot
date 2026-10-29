@@ -398,18 +398,42 @@ bool stepPatchPath(const std::vector<double>& values, const std::vector<double>&
     return true;
 }
 
-Wedge::Wedge(const rc::Params& rc, double x, double y, double radius, double t1, double t2)
-    : Patch(rc), cx(x), cy(y), r(radius), theta1(t1), theta2(t2) {
-    // _recompute_path: the arc, then the centre and back (no inner ring)
-    const bool full = std::fabs((theta2 - theta1) - 360) <= 1e-12;
-    const Path arc = full ? Path::arc(0, 360, rc) : Path::arc(theta1, theta2, rc);
-    std::vector<double> v = *arc.vertices;
-    std::vector<unsigned char> codes = *arc.codes;
-    v.insert(v.end(), {0, 0, 0, 0});
-    codes.push_back(full ? MOVETO : LINETO);
-    codes.push_back(CLOSEPOLY);
-    for (std::size_t k = 0; k + 1 < v.size(); k += 2) v[k] = v[k] * r + cx, v[k + 1] = v[k + 1] * r + cy;  // v * r + center
+Wedge::Wedge(const rc::Params& rc, double x, double y, double radius, double t1, double t2, std::optional<double> w)
+    : Patch(rc), cx(x), cy(y), r(radius), theta1(t1), theta2(t2), width(w) {
+    std::vector<double> v;
+    std::vector<unsigned char> codes;
+    pathData(cx, cy, r, theta1, theta2, width, &v, &codes);
     path_ = Path::make(std::move(v), std::move(codes), rc);
+}
+
+void Wedge::pathData(double cx, double cy, double r, double theta1, double theta2, std::optional<double> width,
+                     std::vector<double>* vertices, std::vector<unsigned char>* pathCodes) {
+    // _recompute_path: the outer arc, then the inner one reversed (an annulus) or the centre, and back
+    const bool full = std::fabs((theta2 - theta1) - 360) <= 1e-12;
+    std::vector<double> arc;
+    std::vector<unsigned char> arcCodes;
+    if (full)
+        Path::arcData(0, 360, &arc, &arcCodes);
+    else
+        Path::arcData(theta1, theta2, &arc, &arcCodes);
+    const unsigned char connector = full ? MOVETO : LINETO;
+    std::vector<double> v = arc;
+    std::vector<unsigned char> codes = arcCodes;
+    if (width) {
+        // arc.vertices[::-1] * (r - width) / r
+        for (std::size_t k = arc.size(); k >= 2; k -= 2) v.insert(v.end(), {arc[k - 2] * (r - *width) / r, arc[k - 1] * (r - *width) / r});
+        v.insert(v.end(), {0, 0});
+        codes.push_back(connector);
+        codes.insert(codes.end(), arcCodes.begin() + 1, arcCodes.end());
+        codes.push_back(CLOSEPOLY);
+    } else {
+        v.insert(v.end(), {0, 0, 0, 0});
+        codes.push_back(connector);
+        codes.push_back(CLOSEPOLY);
+    }
+    for (std::size_t k = 0; k + 1 < v.size(); k += 2) v[k] = v[k] * r + cx, v[k + 1] = v[k + 1] * r + cy;  // v * r + center
+    *vertices = std::move(v);
+    *pathCodes = std::move(codes);
 }
 
 }  // namespace calculate_plot::engine

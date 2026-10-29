@@ -225,13 +225,18 @@ private:
     Path path_;
 };
 
-// patches.Wedge(center, r, theta1, theta2): the arc of the circle from theta1 to theta2 degrees,
-// closed through the centre (a full circle when they are 360 apart).
+// patches.Wedge(center, r, theta1, theta2, width): the arc of the circle from theta1 to theta2 degrees,
+// closed through the centre (a full circle when they are 360 apart), or an annulus `width` wide.
 class Wedge : public Patch {
 public:
-    Wedge(const rc::Params& rc, double cx, double cy, double r, double theta1, double theta2);
+    Wedge(const rc::Params& rc, double cx, double cy, double r, double theta1, double theta2,
+          std::optional<double> width = std::nullopt);
     Path path() const override { return path_; }
+    // the vertices and codes of that path
+    static void pathData(double cx, double cy, double r, double theta1, double theta2, std::optional<double> width,
+                         std::vector<double>* vertices, std::vector<unsigned char>* codes);
     double cx, cy, r, theta1, theta2;
+    std::optional<double> width;
 
 private:
     Path path_;

@@ -4,6 +4,7 @@
 // Licence: LICENSES/Matplotlib.txt. Changes: licensing/changes/matplotlib.md
 
 #include "engine/path.hpp"
+#include "engine/polar.hpp"
 #include "agg/path_text.h"
 
 #include "rc/rc_params.hpp"
@@ -15,6 +16,13 @@
 namespace calculate_plot::engine {
 
 Path Path::arc(double theta1, double theta2, const rc::Params& rc) {
+    std::vector<double> v;
+    std::vector<unsigned char> codes;
+    arcData(theta1, theta2, &v, &codes);
+    return make(std::move(v), std::move(codes), rc);
+}
+
+void Path::arcData(double theta1, double theta2, std::vector<double>* vertices, std::vector<unsigned char>* pathCodes) {
     const double halfpi = M_PI * 0.5;
     double eta1 = theta1;
     const double nTurns = (theta2 - theta1) / 360;
@@ -40,7 +48,8 @@ Path Path::arc(double theta1, double theta2, const rc::Params& rc) {
         v.insert(v.end(), {xA + alpha * xAdot, yA + alpha * yAdot, xB - alpha * xBdot, yB - alpha * yBdot, xB, yB});
         codes.insert(codes.end(), {CURVE4, CURVE4, CURVE4});
     }
-    return make(std::move(v), std::move(codes), rc);
+    *vertices = std::move(v);
+    *pathCodes = std::move(codes);
 }
 
 Path Path::make(std::vector<double> vertices, std::vector<unsigned char> codes, const rc::Params& rc, bool closed) {
@@ -82,8 +91,23 @@ std::vector<Path> aggChunks(const Path& path, bool filled, bool hatched, const r
     return chunks;
 }
 
-Path transformPathNonAffine(const Path& path, const transforms::Transform& transform) {
-    if (transform.isAffine() || !path.vertices) return path;
+namespace {
+
+// Whether a transform has a part that transforms paths otherwise than vertex by vertex (PolarTransform)
+bool transformsPaths(const transforms::Transform& t) {
+    if (dynamic_cast<const PolarTransform*>(&t)) return true;
+    if (const auto* w = dynamic_cast<const transforms::TransformWrapper*>(&t)) return transformsPaths(*w->child());
+    if (const auto* c = dynamic_cast<const transforms::CompositeTransform*>(&t))
+        return transformsPaths(*c->a()) || transformsPaths(*c->b());
+    return false;
+}
+
+bool affineIsIdentity(const transforms::Transform& t) {
+    if (const auto* w = dynamic_cast<const transforms::TransformWrapper*>(&t)) return affineIsIdentity(*w->child());
+    return t.isIdentity();
+}
+
+Path pointwise(const Path& path, const transforms::Transform& transform) {
     Path out = path;
     std::vector<double> v = *path.vertices;
     for (std::size_t i = 0; i + 1 < v.size(); i += 2) {
@@ -92,6 +116,31 @@ Path transformPathNonAffine(const Path& path, const transforms::Transform& trans
     }
     out.vertices = std::make_shared<std::vector<double>>(std::move(v));
     return out;
+}
+
+}  // namespace
+
+Path transformPathNonAffine(const Path& path, const transforms::Transform& transform) {
+    if (transform.isAffine() || !path.vertices) return path;
+    if (!transformsPaths(transform)) return pointwise(path, transform);
+    if (const auto* polar = dynamic_cast<const PolarTransform*>(&transform)) return polar->transformPath(path);
+    if (const auto* w = dynamic_cast<const transforms::TransformWrapper*>(&transform)) return transformPathNonAffine(path, *w->child());
+    // CompositeGenericTransform.transform_path_non_affine: the first part's alone when the second is affine, else
+    // the second's of the first's transform_path (its affine part applied after; the path's settings kept, as
+    // Path(vertices, codes, _interpolation_steps) makes them again under the same rcParams)
+    const auto& c = dynamic_cast<const transforms::CompositeTransform&>(transform);
+    if (c.b()->isAffine()) return transformPathNonAffine(path, *c.a());
+    Path first = transformPathNonAffine(path, *c.a());
+    if (!affineIsIdentity(*c.a())) {  // (IdentityTransform.transform_path_affine returns the path)
+        const transforms::Matrix m = c.a()->matrix();
+        std::vector<double> v = *first.vertices;
+        for (std::size_t i = 0; i + 1 < v.size(); i += 2) {
+            const auto p = transforms::apply(m, v[i], v[i + 1]);
+            v[i] = p[0], v[i + 1] = p[1];
+        }
+        first.vertices = std::make_shared<std::vector<double>>(std::move(v));
+    }
+    return transformPathNonAffine(first, *c.b());
 }
 
 Path Path::madeWith(const rc::Params& rc) const {

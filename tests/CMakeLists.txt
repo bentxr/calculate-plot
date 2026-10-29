@@ -47,6 +47,7 @@ add_executable(calculate-plot-tests
     test_model.cpp
     test_notices.cpp
     test_png.cpp
+    test_polar.cpp
     test_rc.cpp
     test_rc_validate.cpp
     test_schema.cpp

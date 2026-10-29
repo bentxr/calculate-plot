@@ -342,6 +342,12 @@ it comes from in its first lines. The changes, as a whole:
   StreamMask, DomainMap, _get_integrator, _integrate_rk12, _euler_step, interpgrid and _gen_starting_points,
   translated to C++ with the exceptions as return values; the arrows as FancyArrowPatch objects in data coordinates
   (patches.py's FancyArrowPatch.get_path back through its transform, src/engine/arrows.cpp).
+- **Polar projection** (src/engine/polar.cpp): projections/polar.py's PolarTransform (transform_non_affine and
+  transform_path_non_affine, with path.py's Path.iter_segments through the cleanup_path port and cbook.py's
+  simple_linear_interpolation), InvertedPolarTransform, PolarAffine and _WedgeBbox (with patches.py's Wedge of a
+  width), translated to C++; the axis a transform asks for its radial origin is given as the Axes' lockable origin
+  box (transforms.py's LockableBbox, src/transforms/transforms.hpp). CompositeGenericTransform's and
+  TransformWrapper's transform_path_non_affine (src/engine/path.cpp) are followed for transforms with a polar part.
 - **Meshes** (src/engine/collections.cpp QuadMesh and PolyQuadMesh, src/engine/engine.cpp pcolormesh, pcolor,
   pcolorfast; src/engine/image.cpp PcolorImage): collections.py's _MeshData, PolyQuadMesh and QuadMesh (_convert_mesh_to_triangles for Gouraud shading, draw), backend_bases.py's RendererBase.draw_quad_mesh
   (the SVG renderer's path collection of the cells), axes/_axes.py's pcolormesh, pcolor, pcolorfast,

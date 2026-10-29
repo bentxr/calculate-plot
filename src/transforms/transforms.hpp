@@ -62,6 +62,22 @@ private:
     std::array<double, 4> points_;
 };
 
+// LockableBbox(bbox): the box's corners, each of x0, y0, x1, y1 replaced by its locked value when it has one.
+class LockableBbox : public BboxBase {
+public:
+    explicit LockableBbox(BboxPtr bbox) : bbox_(std::move(bbox)) {}
+    std::array<double, 4> points() const override {
+        std::array<double, 4> p = bbox_->points();
+        for (std::size_t i = 0; i < 4; ++i)
+            if (locked[i]) p[i] = *locked[i];
+        return p;
+    }
+    std::array<std::optional<double>, 4> locked;  // locked_x0, locked_y0, locked_x1, locked_y1
+
+private:
+    BboxPtr bbox_;
+};
+
 // Bbox.union: the box around the boxes (at least one).
 Bbox unionOf(const std::vector<Bbox>& boxes);
 

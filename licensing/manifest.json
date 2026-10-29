@@ -528,6 +528,8 @@
     "src/engine/quiver.hpp",
     "src/engine/streamplot.cpp",
     "src/engine/streamplot.hpp",
+    "src/engine/polar.cpp",
+    "src/engine/polar.hpp",
     "src/engine/renderer.hpp",
     "src/engine/text.cpp",
     "src/engine/text.hpp",
