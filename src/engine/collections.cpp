@@ -484,6 +484,31 @@ void LineCollection::setSegments(const std::vector<std::vector<std::array<double
     }
 }
 
+Collection::DataLim PolyCollection::dataLim(const transforms::TransformPtr& transData) const {
+    const auto separately = transforms::containsBranchSeparately(transform, transData);
+    if (!(separately[0] || separately[1])) return Collection::dataLim(transData);
+    // get_path_collection_extents(transform.get_affine() - transData, paths non-affine-transformed, ...): the offsets
+    // are the one at the origin through the identity
+    const auto dataTrf = transforms::subtract(std::make_shared<transforms::Affine2D>(transform->matrix()), transData);
+    const double inf = std::numeric_limits<double>::infinity();
+    DataLim d{{inf, inf, -inf, -inf}, {inf, inf}};
+    for (const auto& p : paths) {
+        const auto& v = *p.vertices;
+        for (std::size_t i = 0; i + 1 < v.size(); i += 2) {
+            if (p.codes && (*p.codes)[i / 2] == CLOSEPOLY) continue;  // (update_path_extents skips end_poly)
+            std::array<double, 2> q = transform->transformNonAffine(v[i], v[i + 1]);
+            q = dataTrf->transformNonAffine(q[0], q[1]);
+            q = transforms::apply(dataTrf->matrix(), q[0], q[1]);
+            if (!std::isfinite(q[0]) || !std::isfinite(q[1])) continue;
+            d.points[0] = std::min(d.points[0], q[0]), d.points[2] = std::max(d.points[2], q[0]);
+            d.points[1] = std::min(d.points[1], q[1]), d.points[3] = std::max(d.points[3], q[1]);
+            if (q[0] > 0) d.minpos[0] = std::min(d.minpos[0], q[0]);
+            if (q[1] > 0) d.minpos[1] = std::min(d.minpos[1], q[1]);
+        }
+    }
+    return d;
+}
+
 Collection::DataLim LineCollection::dataLim(const transforms::TransformPtr& transData) const {
     // Collection.get_datalim: the paths through the non-affine part of their transform, then
     // through data_trf = transform.get_affine() - transData, and get_path_collection_extents of

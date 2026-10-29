@@ -2277,3 +2277,17 @@ INSTANTIATE_TEST_SUITE_P(
                 "axs[0].tricontourf: z array must not contain non-finite values within the triangulation"},
         Refusal{R"({"on": "axs[0]", "call": "tricontour", "args": [[0, 1, 0, 1], [0, 0, 1, 1], [1, 2, 3, 4]], "kwargs": {"corner_mask": true}})",
                 "axs[0].tricontour: TriContourSet.set() got an unexpected keyword argument 'corner_mask'"}));
+
+class BrokenBarhRefusals : public testing::TestWithParam<Refusal> {};
+
+TEST_P(BrokenBarhRefusals, NameTheCallAndTheReason) {
+    EXPECT_EQ(draw(kSubplots + GetParam().call).error, GetParam().error);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    Engine, BrokenBarhRefusals,
+    testing::Values(
+        Refusal{R"({"on": "axs[0]", "call": "broken_barh", "args": [[[1, 2]], [0, 1]], "kwargs": {"align": "middle"}})",
+                "axs[0].broken_barh: 'middle' is not a valid value for align; supported values are 'bottom', 'center', 'top'"},
+        Refusal{R"({"on": "axs[0]", "call": "broken_barh", "args": [[[1, 2, 3]], [0, 1]]})",
+                "axs[0].broken_barh: each range in xrange must be a sequence with two elements (i.e. xrange must be an (N, 2) array)"}));

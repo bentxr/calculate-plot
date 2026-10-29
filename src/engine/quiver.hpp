@@ -35,6 +35,8 @@ public:
     static std::unique_ptr<Quiver> make(const rc::Params& rc, Axes& ax, std::vector<double> x, std::vector<double> y,
                                         std::vector<double> u, std::vector<double> v, std::optional<std::vector<double>> c,
                                         const QuiverOptions& options, std::string* error);
+    // Quiver.get_datalim: the arrows' positions (the base Collection's offsets)
+    DataLim dataLim(const transforms::TransformPtr& transData) const override { return Collection::dataLim(transData); }
 
     // _make_verts(XY, U, V, angles): the arrows' vertices in width units, NaN for masked ones
     std::vector<std::vector<std::array<double, 2>>> makeVerts(const std::vector<std::array<double, 2>>& xy,

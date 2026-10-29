@@ -219,7 +219,7 @@ public:
             {"hlines", "hlines"}, {"vlines", "vlines"}, {"grid", "grid"}, {"legend", "legend"}, {"text", "text"},
             {"title", "set_title"}, {"xlabel", "set_xlabel"}, {"ylabel", "set_ylabel"}, {"xlim", "set_xlim"},
             {"ylim", "set_ylim"}, {"xscale", "set_xscale"}, {"yscale", "set_yscale"}, {"bar", "bar"}, {"barh", "barh"},
-            {"hist", "hist"}, {"fill", "fill"}, {"step", "step"}, {"stairs", "stairs"}, {"stem", "stem"}, {"boxplot", "boxplot"}, {"violinplot", "violinplot"}, {"pie", "pie"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}, {"imshow", "imshow"}, {"matshow", "matshow"}, {"spy", "spy"}, {"pcolormesh", "pcolormesh"}, {"pcolor", "pcolor"}, {"contour", "contour"}, {"contourf", "contourf"}, {"clabel", "clabel"}, {"hexbin", "hexbin"}, {"quiver", "quiver"}, {"quiverkey", "quiverkey"}, {"barbs", "barbs"}, {"streamplot", "streamplot"}, {"triplot", "triplot"}, {"tripcolor", "tripcolor"}, {"tricontour", "tricontour"}, {"tricontourf", "tricontourf"}, {"stackplot", "stackplot"}};
+            {"hist", "hist"}, {"fill", "fill"}, {"step", "step"}, {"stairs", "stairs"}, {"stem", "stem"}, {"boxplot", "boxplot"}, {"violinplot", "violinplot"}, {"pie", "pie"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}, {"imshow", "imshow"}, {"matshow", "matshow"}, {"spy", "spy"}, {"pcolormesh", "pcolormesh"}, {"pcolor", "pcolor"}, {"contour", "contour"}, {"contourf", "contourf"}, {"clabel", "clabel"}, {"hexbin", "hexbin"}, {"quiver", "quiver"}, {"quiverkey", "quiverkey"}, {"barbs", "barbs"}, {"streamplot", "streamplot"}, {"triplot", "triplot"}, {"tripcolor", "tripcolor"}, {"tricontour", "tricontour"}, {"tricontourf", "tricontourf"}, {"stackplot", "stackplot"}, {"broken_barh", "broken_barh"}};
         return ofAxes;
     }
 
@@ -1916,6 +1916,7 @@ private:
         if (call.method == "streamplot") return streamplot(ax, call, error);
         if (call.method == "triplot") return triplot(ax, call, error);
         if (call.method == "stackplot") return stackplot(ax, call, error);
+        if (call.method == "broken_barh") return brokenBarh(ax, call, error);
         if (call.method == "tripcolor") return tripcolor(ax, call, error) && noteMappable(ax, call);
         if (call.method == "clabel") {
             const Json* cs = argument(call, 0, "CS");
@@ -5007,6 +5008,84 @@ private:
             if (!fillBetween(ax, f, error)) return false;
             if (i == 0) ax.children.back()->stickyY = {0.0};  // coll.sticky_edges.y[:] = [0]
         }
+        return true;
+    }
+
+    // broken_barh(xranges, yrange, align='bottom', **kwargs): one PolyCollection of a rectangle per (x0, width) at
+    // (ypos, height), the height standing on, centred on or hanging from ypos
+    bool brokenBarh(Axes& ax, const model::Call& call, std::string* error) {
+        const std::string where = call.on + "." + call.method;
+        if (call.args.size() > 2) return *error = where + ": too many positional arguments", false;
+        if (!call.as.empty()) return *error = where + ": naming broken_barh's collection is not supported yet", false;
+        const Json* xr = argument(call, 0, "xranges");
+        const Json* yr = argument(call, 1, "yrange");
+        if (!xr || !yr) return *error = where + ": broken_barh() missing required arguments 'xranges' and 'yrange'", false;
+        std::vector<double> yv;
+        if (!numbers(*yr, &yv) || yv.size() != 2) return *error = where + ": yrange must be (ypos, height)", false;
+        std::string align = "bottom";
+        if (const Json* a = keyword(call, "align")) {
+            if (!a->isString() || (a->asString() != "bottom" && a->asString() != "center" && a->asString() != "top"))
+                return *error = where + ": " + repr(*a) + " is not a valid value for align; supported values are 'bottom', 'center', 'top'", false;
+            align = a->asString();
+        }
+        double y0 = yv[0], y1 = 0;
+        const double dy = yv[1];
+        if (align == "bottom") {
+            y1 = y0 + dy;
+        } else if (align == "center") {
+            y1 = y0 + dy / 2;
+            y0 = y0 - dy / 2;
+        } else {
+            y1 = y0;
+            y0 = y0 - dy;
+        }
+        const Json* seq = sequence(*xr);
+        if (!seq) return *error = where + ": xranges must be a sequence of (x0, width) pairs", false;
+        std::vector<std::vector<std::array<double, 2>>> verts;
+        for (const Json& r : seq->items()) {
+            std::vector<double> pair;
+            if (!numbers(r, &pair) || pair.size() != 2)
+                return *error = where + ": each range in xrange must be a sequence with two elements (i.e. xrange must be an (N, 2) array)", false;
+            const double x0 = pair[0], x1 = pair[0] + pair[1];
+            verts.push_back({{x0, y0}, {x0, y1}, {x1, y1}, {x1, y0}});
+        }
+        auto col = std::make_unique<PolyCollection>(rc_, verts);
+        // Collection's own parameters (facecolors, edgecolors, linewidths, hatch, zorder) first, then the others
+        // through their setters (color sets the face and the edge)
+        const auto colours = [&](const Json& v, const std::string& name, std::vector<colors::Spec>* out) {
+            colors::Spec one;
+            if (color(v, &one)) return *out = {one}, true;
+            if (colorList(v, out)) return true;
+            return *error = where + ": " + name + " must be a colour or a list of colours", false;
+        };
+        std::vector<colors::Spec> list;
+        model::Call rest;
+        std::vector<std::pair<std::string, const Json*>> after;
+        for (const auto& [name, value] : call.kwargs) {
+            if (name == "xranges" || name == "yrange" || name == "align") continue;
+            if (name == "facecolors") {
+                if (value.isNull()) continue;
+                if (!colours(value, name, &list)) return false;
+                col->setFacecolor(ColorArg{ColorArg::Colors, list});
+            } else if (name == "hatch") {
+                if (!value.isNull() && !value.isString()) return *error = where + ": hatch must be a string", false;
+                if (value.isString()) col->hatch = value.asString();
+            } else if (name == "color" || name == "facecolor" || name == "fc") {
+                after.emplace_back(name, &value);
+            } else {
+                rest.kwargs.push_back({name, value});
+            }
+        }
+        std::optional<double> vmin, vmax;
+        if (!meshKeywords(*col, rest, {}, where, &vmin, &vmax, error)) return false;
+        if (vmin || vmax) return *error = where + ": vmin and vmax are not supported yet", false;
+        for (const auto& [name, value] : after) {
+            if (value->isNull()) continue;
+            if (!colours(*value, name, &list)) return false;
+            col->setFacecolor(ColorArg{ColorArg::Colors, list});
+            if (name == "color") col->setEdgecolor(ColorArg{ColorArg::Colors, list});
+        }
+        ax.addCollection(std::move(col), true);
         return true;
     }
 

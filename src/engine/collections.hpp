@@ -113,6 +113,9 @@ private:
 class PolyCollection : public Collection {
 public:
     PolyCollection(const rc::Params& rc, const std::vector<std::vector<std::array<double, 2>>>& verts);
+    // Collection.get_datalim: with a transform that contains transData, the extents of the paths' vertices (what
+    // closes a polygon not counted) brought back to data coordinates; else the offsets' (the base Collection's)
+    DataLim dataLim(const transforms::TransformPtr& transData) const override;
 };
 
 // FillBetweenPolyCollection('x', t, f1, f2, where=): the regions between two curves.
