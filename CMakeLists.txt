@@ -133,6 +133,7 @@ add_library(calculate-plot STATIC
     src/support/log10.cpp
     src/support/npy_complex.cpp
     src/support/npy_correlate.cpp
+    src/support/npy_fft.cpp
     src/support/npy_logf.cpp
     src/support/numpy_str.cpp
     src/support/pylambda.cpp

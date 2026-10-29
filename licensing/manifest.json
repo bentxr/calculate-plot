@@ -391,6 +391,39 @@
    "remarks": "Built unmodified from the release archive with its own Z_PREFIX option (renames every symbol with z_)."
   },
   {
+   "id": "pocketfft",
+   "name": "pocketfft",
+   "version": "33ae5dc",
+   "homepage": "https://github.com/mreineck/pocketfft",
+   "use": "runtime",
+   "licence": "BSD-3-Clause",
+   "licenceFiles": [
+    {
+     "path": "LICENSES/pocketfft.txt",
+     "upstream": "https://raw.githubusercontent.com/mreineck/pocketfft/33ae5dc94c9cdc7f1c78346504a85de87cadaa12/LICENSE.md",
+     "sha256": "a85ca13fdf90160b64a0698215868c13b74d835ad0a4e2ba44713b8c5058a056"
+    }
+   ],
+   "fetch": [],
+   "vendored": [],
+   "derived": [
+    "src/support/pocketfft_hdronly.h"
+   ],
+   "header": [
+    "Copyright (C) 2010-2022 Max-Planck-Society",
+    "LICENSES/pocketfft.txt"
+   ],
+   "notices": [
+    "Copyright (C) 2010-2022 Max-Planck-Society",
+    "Copyright (C) 2019-2020 Peter Bell",
+    "Copyright (C) 2003, 2007-14 Matteo Frigo",
+    "Copyright (C) 2003, 2007-14 Massachusetts Institute of Technology",
+    "Copyright (C) 2024 Tan Ping Liang, Peter Bell"
+   ],
+   "changes": "licensing/changes/pocketfft.md",
+   "remarks": "The C++ header-only pocketfft at commit 33ae5dc94c9cdc7f1c78346504a85de87cadaa12, which NumPy 2.5.3 uses for np.fft, its exceptions turned into an abort (the library builds without exceptions); the transforms unchanged."
+  },
+  {
    "id": "qhull",
    "name": "Qhull",
    "version": "8.0.2",
@@ -637,6 +670,8 @@
     "src/support/npy_complex.hpp",
     "src/support/npy_correlate.cpp",
     "src/support/npy_correlate.hpp",
+    "src/support/npy_fft.cpp",
+    "src/support/npy_fft.hpp",
     "src/support/npy_logf.cpp",
     "src/support/npy_logf.hpp",
     "src/support/numpy_str.cpp",

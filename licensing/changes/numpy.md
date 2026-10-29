@@ -44,3 +44,6 @@ where the bin rules treat them otherwise):
 - **np.correlate** (src/support/npy_correlate.cpp): multiarraymodule.c's _pyarray_correlate for mode 'full' with
   arraytypes.c.src's small_correlate, DOUBLE_dot (OpenBLAS's ddot through src/support/blas_dot.cpp) and LONG_dot,
   translated to C++ for arrays of one length, for xcorr and acorr.
+- **np.fft** (src/support/npy_fft.cpp): _pocketfft_umath.cpp's fft_loop and rfft_impl (copy_input, the plan's exec
+  with the factor of norm=None, rfft's R0 from I0) and _pocketfft.py's _raw_fft, translated to C++ for one
+  transform at a time over the vendored pocketfft.

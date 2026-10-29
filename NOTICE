@@ -68,6 +68,17 @@ Copyright (C) 1995-2026 Jean-loup Gailly and Mark Adler. Used unmodified, under 
 (LICENSES/zlib-1.3.2.txt), to read and write PNG files.
 
 
+pocketfft 33ae5dc (C++, as NumPy 2.5.3 bundles it)
+---------------------------------------------------
+Copyright (C) 2010-2022 Max-Planck-Society
+Copyright (C) 2019-2020 Peter Bell
+Copyright (C) 2003, 2007-14 Matteo Frigo
+Copyright (C) 2003, 2007-14 Massachusetts Institute of Technology
+Copyright (C) 2024 Tan Ping Liang, Peter Bell
+Under the BSD 3-Clause licence (LICENSES/pocketfft.txt), with its exceptions turned into an abort
+(licensing/changes/pocketfft.md), for the Fourier transforms of the spectral plots.
+
+
 Qhull 8.0.2
 -----------
 This software includes Qhull from C.B. Barber and The Geometry Center.
