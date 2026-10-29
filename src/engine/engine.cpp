@@ -219,7 +219,7 @@ public:
             {"hlines", "hlines"}, {"vlines", "vlines"}, {"grid", "grid"}, {"legend", "legend"}, {"text", "text"},
             {"title", "set_title"}, {"xlabel", "set_xlabel"}, {"ylabel", "set_ylabel"}, {"xlim", "set_xlim"},
             {"ylim", "set_ylim"}, {"xscale", "set_xscale"}, {"yscale", "set_yscale"}, {"bar", "bar"}, {"barh", "barh"},
-            {"hist", "hist"}, {"fill", "fill"}, {"step", "step"}, {"stairs", "stairs"}, {"stem", "stem"}, {"boxplot", "boxplot"}, {"violinplot", "violinplot"}, {"pie", "pie"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}, {"imshow", "imshow"}, {"matshow", "matshow"}, {"spy", "spy"}, {"pcolormesh", "pcolormesh"}, {"pcolor", "pcolor"}, {"contour", "contour"}, {"contourf", "contourf"}, {"clabel", "clabel"}, {"hexbin", "hexbin"}, {"quiver", "quiver"}, {"quiverkey", "quiverkey"}, {"barbs", "barbs"}, {"streamplot", "streamplot"}, {"triplot", "triplot"}, {"tripcolor", "tripcolor"}, {"tricontour", "tricontour"}, {"tricontourf", "tricontourf"}, {"stackplot", "stackplot"}, {"broken_barh", "broken_barh"}, {"axline", "axline"}};
+            {"hist", "hist"}, {"fill", "fill"}, {"step", "step"}, {"stairs", "stairs"}, {"stem", "stem"}, {"boxplot", "boxplot"}, {"violinplot", "violinplot"}, {"pie", "pie"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}, {"imshow", "imshow"}, {"matshow", "matshow"}, {"spy", "spy"}, {"pcolormesh", "pcolormesh"}, {"pcolor", "pcolor"}, {"contour", "contour"}, {"contourf", "contourf"}, {"clabel", "clabel"}, {"hexbin", "hexbin"}, {"quiver", "quiver"}, {"quiverkey", "quiverkey"}, {"barbs", "barbs"}, {"streamplot", "streamplot"}, {"triplot", "triplot"}, {"tripcolor", "tripcolor"}, {"tricontour", "tricontour"}, {"tricontourf", "tricontourf"}, {"stackplot", "stackplot"}, {"broken_barh", "broken_barh"}, {"axline", "axline"}, {"eventplot", "eventplot"}};
         return ofAxes;
     }
 
@@ -1918,6 +1918,7 @@ private:
         if (call.method == "triplot") return triplot(ax, call, error);
         if (call.method == "stackplot") return stackplot(ax, call, error);
         if (call.method == "broken_barh") return brokenBarh(ax, call, error);
+        if (call.method == "eventplot") return eventplot(ax, call, error);
         if (call.method == "tripcolor") return tripcolor(ax, call, error) && noteMappable(ax, call);
         if (call.method == "clabel") {
             const Json* cs = argument(call, 0, "CS");
@@ -5138,6 +5139,174 @@ private:
         if (xy2) points.push_back(*xy2);
         ax.updateDatalim(points);
         ax.requestAutoscaleView(true, true);
+        return true;
+    }
+
+    // eventplot(positions, orientation='horizontal', lineoffsets=1, linelengths=1, linewidths=None, colors=None,
+    // alpha=None, linestyles='solid', **kwargs): an EventCollection (a LineCollection of the sorted positions'
+    // segments) per row of positions, the per-row parameters broadcast as matplotlib does; the data limits by the
+    // corners of all the rows
+    bool eventplot(Axes& ax, const model::Call& call, std::string* error) {
+        const std::string where = call.on + "." + call.method;
+        static const char* const names[] = {"positions", "orientation", "lineoffsets", "linelengths", "linewidths", "colors", "alpha", "linestyles"};
+        if (call.args.size() > std::size(names)) return *error = where + ": too many positional arguments", false;
+        if (!call.as.empty()) return *error = where + ": naming eventplot's collections is not supported yet", false;
+        const auto get = [&](std::size_t i) -> const Json* {
+            const Json* v = argument(call, i, names[i]);
+            return v;
+        };
+        const Json* posJson = get(0);
+        if (!posJson) return *error = where + ": eventplot() missing 1 required positional argument: 'positions'", false;
+        std::vector<std::vector<double>> positions;
+        double one = 0;
+        if (readNumber(*posJson, &one)) {
+            positions = {{one}};
+        } else if (const Json* seq = sequence(*posJson)) {
+            bool nested = false;
+            for (const Json& e : seq->items()) nested = nested || sequence(e);
+            if (nested) {
+                for (const Json& e : seq->items()) {
+                    std::vector<double> row;
+                    if (!numbers(e, &row)) return *error = where + ": positions must be numbers or lists of numbers", false;
+                    positions.push_back(row);
+                }
+            } else {
+                std::vector<double> row;
+                if (!numbers(*posJson, &row)) return *error = where + ": positions must be numbers or lists of numbers", false;
+                positions = {row};
+            }
+        } else {
+            return *error = where + ": positions must be numbers or lists of numbers", false;
+        }
+        const std::size_t n = positions.size();
+        std::string orientation = "horizontal";
+        if (const Json* o = get(1)) {
+            if (!o->isString() || (o->asString() != "horizontal" && o->asString() != "vertical"))
+                return *error = where + ": " + repr(*o) + " is not a valid value for orientation; supported values are 'horizontal', 'vertical'", false;
+            orientation = o->asString();
+        }
+        // a number, or a list of them
+        const auto list = [&](const Json* v, double fallback, const char* name, std::vector<double>* out) {
+            double x = fallback;
+            if (!v || v->isNull()) return *out = {fallback}, true;
+            if (readNumber(*v, &x)) return *out = {x}, true;
+            if (numbers(*v, out)) return true;
+            return *error = where + ": " + name + " must be a number or a list of numbers", false;
+        };
+        std::vector<double> offsets, lengths, widths, alphas;
+        if (!list(get(2), 1, "lineoffsets", &offsets) || !list(get(3), 1, "linelengths", &lengths)) return false;
+        // the keyword color / linewidth / linestyle when the parameter is not given (_local_over_kwdict)
+        const auto localOver = [&](std::size_t i, const char* kw) -> const Json* {
+            const Json* v = get(i);
+            if (v && !v->isNull()) return v;
+            return keyword(call, kw);
+        };
+        const Json* widthJson = localOver(4, "linewidth");
+        bool widthNone = !widthJson || widthJson->isNull();
+        if (!widthNone && !list(widthJson, 0, "linewidths", &widths)) return false;
+        if (widthNone) widths = {std::numeric_limits<double>::quiet_NaN()};  // (None: the default width)
+        std::vector<std::optional<double>> alpha;
+        if (const Json* a = get(6); a && !a->isNull()) {
+            if (!list(a, 1, "alpha", &alphas)) return false;
+            for (double v : alphas) alpha.push_back(v);
+        } else {
+            alpha = {std::nullopt};
+        }
+        std::vector<std::optional<colors::Rgba>> colours;
+        if (const Json* c = localOver(5, "color"); c && !c->isNull()) {
+            std::vector<colors::Spec> specs;
+            if (!colorList(*c, &specs)) return *error = where + ": colors must be a colour or a list of colours", false;
+            for (const auto& spec : specs) {
+                const auto rgba = colors::toRgba(spec, std::nullopt, rc_, nullptr);
+                if (!rgba) return *error = where + ": colors must be colours", false;
+                colours.push_back(*rgba);
+            }
+        } else {
+            colours = {std::nullopt};
+        }
+        std::vector<std::string> styles;
+        if (const Json* l = localOver(7, "linestyle"); l && !l->isNull()) {
+            if (l->isString()) styles = {l->asString()};
+            else if (const Json* seq = sequence(*l)) {
+                for (const Json& st : seq->items()) {
+                    if (!st.isString()) return *error = where + ": linestyles must be named styles (others are not supported yet)", false;
+                    styles.push_back(st.asString());
+                }
+            } else {
+                return *error = where + ": linestyles must be a style or a list of styles", false;
+            }
+        } else {
+            styles = {"solid"};
+        }
+        if (offsets.empty()) return *error = where + ": lineoffsets cannot be empty", false;
+        if (lengths.empty()) return *error = where + ": linelengths cannot be empty", false;
+        if (styles.empty()) return *error = where + ": linestyles cannot be empty", false;
+        if (widths.empty()) return *error = where + ": linewidths cannot be empty", false;
+        if (alpha.empty()) return *error = where + ": alpha cannot be empty", false;
+        if (colours.empty()) colours = {std::nullopt};
+        // one value of each for every row: lineoffsets 0, d, 2d, ... (np.cumsum of the tiled offset with a first 0)
+        if (offsets.size() == 1 && n != 1) {
+            std::vector<double> tiled(n, offsets[0]);
+            tiled[0] = 0;
+            for (std::size_t i = 1; i < n; ++i) tiled[i] += tiled[i - 1];
+            offsets = tiled;
+        }
+        if (lengths.size() == 1) lengths.assign(n, lengths[0]);
+        if (widths.size() == 1) widths.assign(n, widths[0]);
+        if (colours.size() == 1) colours.assign(n, colours[0]);
+        if (alpha.size() == 1) alpha.assign(n, alpha[0]);
+        if (styles.size() == 1) styles.assign(n, styles[0]);
+        const auto unequal = [&](std::size_t size, const char* name) {
+            if (size == n) return false;
+            *error = where + ": " + name + " and positions are unequal sized sequences";
+            return true;
+        };
+        if (unequal(offsets.size(), "lineoffsets") || unequal(lengths.size(), "linelengths") || unequal(widths.size(), "linewidths") ||
+            unequal(colours.size(), "colors") || unequal(alpha.size(), "alpha") || unequal(styles.size(), "linestyles"))
+            return false;
+        const bool horizontal = orientation == "horizontal";
+        for (std::size_t r = 0; r < n; ++r) {
+            std::vector<double> sorted = positions[r];
+            std::sort(sorted.begin(), sorted.end(), [](double a, double b) { return !std::isnan(a) && (std::isnan(b) || a < b); });
+            std::vector<std::vector<std::array<double, 2>>> segments;
+            const double hi = offsets[r] + lengths[r] / 2, lo = offsets[r] - lengths[r] / 2;
+            for (double p : sorted) segments.push_back(horizontal ? std::vector<std::array<double, 2>>{{p, hi}, {p, lo}}
+                                                                  : std::vector<std::array<double, 2>>{{hi, p}, {lo, p}});
+            auto coll = std::make_unique<LineCollection>(rc_, segments);
+            coll->groupName = "EventCollection";
+            if (!std::isnan(widths[r])) coll->setLinewidths({widths[r]});
+            if (!coll->setLinestyles({styles[r]})) return *error = where + ": linestyles other than 'solid', 'dashed', 'dashdot' and 'dotted' are not supported yet", false;
+            if (colours[r]) coll->setEdgecolor(ColorArg::of(colors::Spec(std::vector<double>(colours[r]->begin(), colours[r]->end()))));
+            coll->setAlpha(alpha[r]);
+            // add_collection(autolim=False), then the other keywords
+            model::Call rest;
+            for (const auto& kw : call.kwargs) {
+                bool own = false;
+                for (const char* nm : names) own = own || kw.first == nm;
+                if (!own && kw.first != "color" && kw.first != "linewidth" && kw.first != "linestyle") rest.kwargs.push_back(kw);
+            }
+            Collection& added = ax.addCollection(std::move(coll), false);
+            std::optional<double> vmin, vmax;
+            if (!meshKeywords(added, rest, {}, where, &vmin, &vmax, error)) return false;
+            if (vmin || vmax) return *error = where + ": vmin and vmax are not supported yet", false;
+        }
+        // the corners: the positions' extremes, the offsets' reach by whole lengths
+        bool any = false;
+        double minpos = 0, maxpos = 0;
+        for (const auto& row : positions) {
+            if (row.empty()) continue;
+            const double mn = support::npMin(row), mx = support::npMax(row);
+            minpos = any ? std::min(minpos, mn) : mn;
+            maxpos = any ? std::max(maxpos, mx) : mx;
+            any = true;
+        }
+        if (any) {
+            double minline = offsets[0] - lengths[0], maxline = offsets[0] + lengths[0];
+            for (std::size_t r = 1; r < n; ++r) minline = std::min(minline, offsets[r] - lengths[r]), maxline = std::max(maxline, offsets[r] + lengths[r]);
+            if (horizontal) ax.updateDatalim({{minpos, minline}, {maxpos, maxline}});
+            else ax.updateDatalim({{minline, minpos}, {maxline, maxpos}});
+            ax.requestAutoscaleView(true, true);
+        }
         return true;
     }
 

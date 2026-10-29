@@ -2297,4 +2297,10 @@ INSTANTIATE_TEST_SUITE_P(
         Refusal{R"({"on": "axs[0]", "call": "set_yscale", "args": ["log"]}, {"on": "axs[0]", "call": "axline", "args": [[1, 1]], "kwargs": {"slope": 2}})",
                 "axs[0].axline: 'slope' cannot be used with non-linear scales"},
         Refusal{R"({"on": "axs[0]", "call": "axline", "args": [[1, 2], [1, 2]]})",
-                "Cannot draw a line through two identical points (x=(np.float64(1.0), np.float64(1.0)), y=(np.float64(2.0), np.float64(2.0)))"}));
+                "Cannot draw a line through two identical points (x=(np.float64(1.0), np.float64(1.0)), y=(np.float64(2.0), np.float64(2.0)))"},
+        Refusal{R"({"on": "axs[0]", "call": "eventplot", "args": [[[1, 2], [3]]], "kwargs": {"lineoffsets": [1, 2, 3]}})",
+                "axs[0].eventplot: lineoffsets and positions are unequal sized sequences"},
+        Refusal{R"({"on": "axs[0]", "call": "eventplot", "args": [[1, 2]], "kwargs": {"linelengths": []}})",
+                "axs[0].eventplot: linelengths cannot be empty"},
+        Refusal{R"({"on": "axs[0]", "call": "eventplot", "args": [[1, 2]], "kwargs": {"orientation": "diagonal"}})",
+                "axs[0].eventplot: 'diagonal' is not a valid value for orientation; supported values are 'horizontal', 'vertical'"}));
