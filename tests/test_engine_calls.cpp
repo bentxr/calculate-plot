@@ -2260,4 +2260,14 @@ INSTANTIATE_TEST_SUITE_P(
                 "axs[0].triplot: triangles are indices into the points and must be in the range 0 <= i < 3 but found value 3"},
         Refusal{R"({"on": "axs[0]", "call": "triplot", "args": [[0, 1, 0], [0, 0, 1], [[0, 1, 2]]], "kwargs": {"mask": [true, false]}})",
                 "axs[0].triplot: mask array must have same length as triangles array"},
-        Refusal{R"({"on": "mtri", "call": "Delaunay", "args": []})", "mtri.Delaunay is not supported yet"}));
+        Refusal{R"({"on": "mtri", "call": "Delaunay", "args": []})", "mtri.Delaunay is not supported yet"},
+        Refusal{R"({"on": "axs[0]", "call": "tripcolor", "args": [[0, 1, 0], [0, 0, 1]]})",
+                "axs[0].tripcolor: tripcolor() missing 1 required positional argument: 'c'; or 1 required keyword-only argument: 'facecolors'"},
+        Refusal{R"({"on": "axs[0]", "call": "tripcolor", "args": [[0, 1, 0], [0, 0, 1], [1, 2]]})",
+                "axs[0].tripcolor: The length of c must match either the number of points or the number of triangles"},
+        Refusal{R"({"on": "axs[0]", "call": "tripcolor", "args": [[0, 1, 0], [0, 0, 1]], "kwargs": {"facecolors": [1, 2]}})",
+                "axs[0].tripcolor: The length of facecolors must match the number of triangles"},
+        Refusal{R"({"on": "axs[0]", "call": "tripcolor", "args": [[0, 1, 0], [0, 0, 1], [1, 2, 3]], "kwargs": {"shading": "smooth"}})",
+                "axs[0].tripcolor: 'smooth' is not a valid value for shading; supported values are 'flat', 'gouraud'"},
+        Refusal{R"({"on": "axs[0]", "call": "tripcolor", "args": [[0, 1, 0], [0, 0, 1]], "kwargs": {"facecolors": [1], "shading": "gouraud"}})",
+                "axs[0].tripcolor: shading='gouraud' can only be used when the colors are specified at the points, not at the faces."}));

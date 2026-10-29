@@ -219,7 +219,7 @@ public:
             {"hlines", "hlines"}, {"vlines", "vlines"}, {"grid", "grid"}, {"legend", "legend"}, {"text", "text"},
             {"title", "set_title"}, {"xlabel", "set_xlabel"}, {"ylabel", "set_ylabel"}, {"xlim", "set_xlim"},
             {"ylim", "set_ylim"}, {"xscale", "set_xscale"}, {"yscale", "set_yscale"}, {"bar", "bar"}, {"barh", "barh"},
-            {"hist", "hist"}, {"fill", "fill"}, {"step", "step"}, {"stairs", "stairs"}, {"stem", "stem"}, {"boxplot", "boxplot"}, {"violinplot", "violinplot"}, {"pie", "pie"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}, {"imshow", "imshow"}, {"matshow", "matshow"}, {"spy", "spy"}, {"pcolormesh", "pcolormesh"}, {"pcolor", "pcolor"}, {"contour", "contour"}, {"contourf", "contourf"}, {"clabel", "clabel"}, {"hexbin", "hexbin"}, {"quiver", "quiver"}, {"quiverkey", "quiverkey"}, {"barbs", "barbs"}, {"streamplot", "streamplot"}, {"triplot", "triplot"}};
+            {"hist", "hist"}, {"fill", "fill"}, {"step", "step"}, {"stairs", "stairs"}, {"stem", "stem"}, {"boxplot", "boxplot"}, {"violinplot", "violinplot"}, {"pie", "pie"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}, {"imshow", "imshow"}, {"matshow", "matshow"}, {"spy", "spy"}, {"pcolormesh", "pcolormesh"}, {"pcolor", "pcolor"}, {"contour", "contour"}, {"contourf", "contourf"}, {"clabel", "clabel"}, {"hexbin", "hexbin"}, {"quiver", "quiver"}, {"quiverkey", "quiverkey"}, {"barbs", "barbs"}, {"streamplot", "streamplot"}, {"triplot", "triplot"}, {"tripcolor", "tripcolor"}};
         return ofAxes;
     }
 
@@ -1914,6 +1914,7 @@ private:
         if (call.method == "barbs") return barbs(ax, call, error) && noteMappable(ax, call);
         if (call.method == "streamplot") return streamplot(ax, call, error);
         if (call.method == "triplot") return triplot(ax, call, error);
+        if (call.method == "tripcolor") return tripcolor(ax, call, error) && noteMappable(ax, call);
         if (call.method == "clabel") {
             const Json* cs = argument(call, 0, "CS");
             if (call.args.size() > 2) return *error = where + ": clabel() takes from 2 to 3 positional arguments but " + std::to_string(call.args.size() + 1) + " were given", false;
@@ -4737,6 +4738,122 @@ private:
             p.kwargs.emplace_back(k, k == "linestyle" ? Json::string("None") : v);
         }
         return plot(ax, p, error);
+    }
+
+    // tripcolor(triangulation or x, y, [triangles], c, *, alpha=1.0, norm=None, cmap=None, vmin=None, vmax=None,
+    // shading='flat', facecolors=None, **kwargs): a PolyCollection of the unmasked triangles coloured by c at the
+    // triangles or the mean of c at their points, or a Gouraud-shaded TriMesh of c at the points
+    bool tripcolor(Axes& ax, const model::Call& call, std::string* error) {
+        const std::string where = call.on + "." + call.method;
+        std::string shading = "flat";
+        if (const Json* sh = keyword(call, "shading")) {
+            if (!sh->isString() || (sh->asString() != "flat" && sh->asString() != "gouraud"))
+                return *error = where + ": " + repr(*sh) + " is not a valid value for shading; supported values are 'flat', 'gouraud'", false;
+            shading = sh->asString();
+        }
+        std::shared_ptr<tri::Triangulation> t;
+        std::size_t next = 0;
+        if (!triangulationOf(call, where, &t, &next, error)) return false;
+        const std::size_t ntri = t->triangles().size(), npoints = t->x().size();
+        // the colours: of the faces or of the points
+        std::vector<double> pointColors, faceColors;
+        bool pointsGiven = false, integral = false;
+        const auto values = [&](const Json& v, std::vector<double>* out) {
+            if (!numbers(v, out)) return *error = where + ": the colour values must be a list of numbers", false;
+            integral = integers(v);
+            return true;
+        };
+        if (const Json* fc = keyword(call, "facecolors"); fc && !fc->isNull()) {
+            if (!values(*fc, &faceColors)) return false;  // (positional c has no effect then: a warning)
+            if (faceColors.size() != ntri) return *error = where + ": The length of facecolors must match the number of triangles", false;
+        } else {
+            if (call.args.size() <= next)
+                return *error = where + ": tripcolor() missing 1 required positional argument: 'c'; or 1 required keyword-only argument: 'facecolors'", false;
+            if (call.args.size() > next + 1) return *error = where + ": Unexpected positional parameters", false;
+            std::vector<double> c;
+            if (!values(call.args[next], &c)) return false;
+            if (c.size() == npoints) pointColors = c, pointsGiven = true;
+            else if (c.size() == ntri) faceColors = c;
+            else return *error = where + ": The length of c must match either the number of points or the number of triangles", false;
+        }
+        // linewidths, edgecolors and antialiased as in pcolor
+        const Json* ec = keyword(call, "edgecolors");
+        if (!ec) ec = keyword(call, "edgecolor");
+        if (ec && !ec->isString()) return *error = where + ": edgecolors other than a colour name are not supported yet", false;
+        const Json* aa = keyword(call, "antialiased");
+        if (!aa) aa = keyword(call, "antialiaseds");
+        if (shading == "gouraud" && !pointsGiven)
+            return *error = where + ": shading='gouraud' can only be used when the colors are specified at the points, not at the faces.", false;
+        std::unique_ptr<Collection> col;
+        colors::MaskedArray array;
+        const tri::Triangulation::Triangles masked = t->maskedTriangles();
+        if (shading == "gouraud") {
+            std::vector<std::array<std::array<double, 2>, 3>> corners;
+            for (const auto& tr : masked) {
+                std::array<std::array<double, 2>, 3> c{};
+                for (std::size_t k = 0; k < 3; ++k) c[k] = {t->x()[std::size_t(tr[k])], t->y()[std::size_t(tr[k])]};
+                corners.push_back(c);
+            }
+            col = std::make_unique<TriMesh>(rc_, std::move(corners), masked);
+            array.data = pointColors;
+            array.dtype = integral ? colors::DType::Int64 : colors::DType::Float64;
+        } else {
+            std::vector<std::vector<std::array<double, 2>>> verts;
+            for (const auto& tr : masked) {
+                std::vector<std::array<double, 2>> v;
+                for (int k : tr) v.push_back({t->x()[std::size_t(k)], t->y()[std::size_t(k)]});
+                verts.push_back(v);
+            }
+            col = std::make_unique<PolyCollection>(rc_, verts);
+            if (pointsGiven) {
+                // point_colors[maskedTris].mean(axis=1): ((a + b) + c) / 3 in float64
+                for (const auto& tr : masked)
+                    array.data.push_back(((pointColors[std::size_t(tr[0])] + pointColors[std::size_t(tr[1])]) + pointColors[std::size_t(tr[2])]) / 3.0);
+                array.dtype = colors::DType::Float64;
+            } else {
+                for (std::size_t i = 0; i < ntri; ++i)
+                    if (!t->isMasked(int(i))) array.data.push_back(faceColors[i]);
+                array.dtype = integral ? colors::DType::Int64 : colors::DType::Float64;
+            }
+        }
+        // safe_masked_invalid: what is not finite is masked
+        array.mask.assign(array.data.size(), false);
+        bool anyMasked = false;
+        for (std::size_t i = 0; i < array.data.size(); ++i)
+            if (!std::isfinite(array.data[i])) array.mask[i] = anyMasked = true;
+        if (!anyMasked) array.mask.clear();
+        col->array = array;
+        bool normObject = false;
+        colors::Colormap cmap;
+        if (!colorizer(&cmap, &col->norm, keyword(call, "cmap"), keyword(call, "norm"), nullptr, false, where, &normObject, error)) return false;
+        col->cmap = cmap;
+        double a = 1.0;
+        if (const Json* al = keyword(call, "alpha"); al && !al->isNull() && !readAlpha(*al, &a))
+            return *error = where + ": alpha must be a number from 0 to 1", false;
+        col->setLinewidths({0.25});
+        col->setEdgecolor(ColorArg{ColorArg::None, {}});
+        std::string ecLower = ec ? ec->asString() : std::string("none");  // ec.lower()
+        for (char& ch : ecLower) ch = char(std::tolower(static_cast<unsigned char>(ch)));
+        if (!aa && ecLower == "none") col->setAntialiaseds({false});
+        if (aa) {
+            if (!aa->isBool()) return *error = where + ": antialiased must be True or False", false;
+            col->setAntialiaseds({aa->asBool()});
+        }
+        col->setAlpha(a);
+        std::optional<double> vmin, vmax;
+        if (!meshKeywords(*col, call, {"shading", "antialiased", "antialiaseds", "cmap", "norm", "facecolors", "triangles", "mask", "x", "y", "c"},
+                          where, &vmin, &vmax, error))
+            return false;
+        if (!scaleNorm(*col, normObject, vmin, vmax, where, error)) return false;
+        // ax.grid(False); the points' box in the data limits and an autoscale at once; the collection without limits
+        ax.xaxis->grid(false, "major", TickSwitches(), false);
+        ax.yaxis->grid(false, "major", TickSwitches(), false);
+        const double minx = support::npMin(t->x()), maxx = support::npMax(t->x()), miny = support::npMin(t->y()), maxy = support::npMax(t->y());
+        ax.updateDatalim({{minx, miny}, {maxx, maxy}});
+        ax.requestAutoscaleView(true, true);
+        ax.unstaleViewLim();
+        ax.addCollection(std::move(col), false);
+        return true;
     }
 
     bool colorsCall(const model::Call& call, std::string* error) {

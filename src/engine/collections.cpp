@@ -637,6 +637,45 @@ void QuadMesh::draw(Renderer& renderer) {
     renderer.closeGroup(groupName);
 }
 
+TriMesh::TriMesh(const rc::Params& rc, std::vector<std::array<std::array<double, 2>, 3>> corners, std::vector<std::array<int, 3>> points)
+    : Collection(rc), corners_(std::move(corners)), points_(std::move(points)) {
+    groupName = "TriMesh";
+    // convert_mesh_to_paths: a path of the three corners each
+    for (const auto& c : corners_) paths.push_back(Path::make({c[0][0], c[0][1], c[1][0], c[1][1], c[2][0], c[2][1]}, {}, rc));
+}
+
+void TriMesh::draw(Renderer& renderer) {
+    if (!visible) return;
+    renderer.openGroup(groupName, gid);
+    std::string problem;
+    if (!updateScalarMappable(&problem)) {
+        renderer.unsupported(problem);
+        renderer.closeGroup(groupName);
+        return;
+    }
+    // (draw_gouraud_triangles takes transform.frozen(): its affine part)
+    if (!transform->isAffine()) {
+        renderer.unsupported("Gouraud-shaded triangles on a scale or projection that is not linear are not supported yet");
+        renderer.closeGroup(groupName);
+        return;
+    }
+    GC gc = renderer.newGc();
+    setGcClip(gc);
+    gc.linewidth = linewidths().empty() ? 0.0 : linewidths()[0];
+    const auto& faces = facecolorsResolved();  // of each point: self._facecolors[triangles]
+    std::vector<std::array<std::array<double, 4>, 3>> colors;
+    for (const auto& t : points_) {
+        std::array<std::array<double, 4>, 3> c{};
+        for (std::size_t k = 0; k < 3; ++k) {
+            const auto& f = faces[faces.size() == 1 ? 0 : std::size_t(t[k])];
+            c[k] = {f[0], f[1], f[2], f[3]};
+        }
+        colors.push_back(c);
+    }
+    renderer.drawGouraudTriangles(gc, corners_, colors, transform->matrix());
+    renderer.closeGroup(groupName);
+}
+
 std::vector<bool> PolyQuadMesh::unmaskedCells(int rows, int cols, const std::vector<std::array<double, 2>>& c,
                                               const std::vector<bool>& cellMasked) {
     // _get_unmasked_polys: a cell with a masked corner (X or Y) or a masked value is not drawn

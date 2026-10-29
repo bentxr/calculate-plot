@@ -200,6 +200,19 @@ private:
     bool gouraud_, antialiased_;
 };
 
+// TriMesh(triangulation): the triangles of a triangulation drawn with Gouraud shading, each corner the colour its
+// point's value maps to (tripcolor's shading='gouraud')
+class TriMesh : public Collection {
+public:
+    // the unmasked triangles: their corners and the points they are
+    TriMesh(const rc::Params& rc, std::vector<std::array<std::array<double, 2>, 3>> corners, std::vector<std::array<int, 3>> points);
+    void draw(Renderer& renderer) override;
+
+private:
+    std::vector<std::array<std::array<double, 2>, 3>> corners_;
+    std::vector<std::array<int, 3>> points_;
+};
+
 // PolyQuadMesh (pcolor): each cell of the grid a polygon of the PolyCollection, but for those with a masked
 // corner or value; the colours shown are those of the cells drawn.
 class PolyQuadMesh : public PolyCollection {
