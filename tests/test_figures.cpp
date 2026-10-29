@@ -14,6 +14,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <set>
@@ -87,6 +88,17 @@ TEST_P(Figures, DrawCallsEqualMatplotlibs) {
     EXPECT_EQ(firstDifference(*got, *want, "trace"), "");
 }
 
+// A case whose pixels depend on the last bits of the C library's atan2, sin or cos (glibc's are the references;
+// musl's differ on some inputs, see the decision on libms) carries a LIBM file: its first line "pixels-off-glibc: N"
+// is how many pixels may differ with another C library. With glibc they are all equal.
+long pixelsAllowedOffGlibc(const std::string& name) {
+    const fs::path libm = figures() / name / "LIBM";
+    if (calculate_plot::testing_support::kReferenceLibm || !fs::exists(libm)) return 0;
+    const std::string text = readFile(libm);
+    const std::string key = "pixels-off-glibc: ";
+    return text.rfind(key, 0) == 0 ? std::strtol(text.c_str() + key.size(), nullptr, 10) : 0;
+}
+
 TEST_P(Figures, PixelsEqualMatplotlibs) {
     calculate_plot::render::ReplayOptions options;
     options.text = calculate_plot::render::TextMode::Glyphs;
@@ -96,7 +108,12 @@ TEST_P(Figures, PixelsEqualMatplotlibs) {
     std::string error;
     const auto want = calculate_plot::png::decodePng(readFile(figures() / GetParam() / "ref.png"), &error);
     ASSERT_TRUE(want.has_value()) << error;
-    EXPECT_EQ(pixelDifference(result.image, *want), "");
+    const std::string difference = pixelDifference(result.image, *want);
+    if (const long allowed = pixelsAllowedOffGlibc(GetParam()); allowed && !difference.empty() && difference.find(" pixels differ") != std::string::npos) {
+        EXPECT_LE(std::strtol(difference.c_str(), nullptr, 10), allowed) << difference;
+        return;
+    }
+    EXPECT_EQ(difference, "");
 }
 
 std::string drawnSvgTrace(const std::string& name) {

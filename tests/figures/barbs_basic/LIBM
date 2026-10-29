@@ -1,0 +1,4 @@
+pixels-off-glibc: 3
+The barbs are turned by Affine2D().rotate of atan2(v, u) + pi / 2, whose cos and sin (and the atan2) come from the
+C library. musl (the WASM build) differs from glibc 2.44 (the references) in the last bit for some of these inputs,
+which moves three antialiased pixels; the draw calls agree within 1e-12 and the SVG bytes are equal.

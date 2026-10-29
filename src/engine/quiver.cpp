@@ -6,8 +6,10 @@
 
 #include "engine/axes.hpp"
 #include "engine/figure.hpp"
+#include "engine/lines.hpp"
 #include "support/histogram.hpp"
 #include "support/npy_complex.hpp"
+#include "support/pynum.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -272,6 +274,110 @@ void QuiverKey::draw(Renderer& renderer) {
     text->y = pos[1] + shift[side][1];
     text->figure = &ax.figure;
     text->draw(renderer);
+}
+
+Barbs::Barbs(const rc::Params& rc) : PolyCollection(rc, {}) { groupName = "Barbs"; }
+
+std::unique_ptr<Barbs> Barbs::make(const rc::Params& rc, Axes& ax, std::vector<double> x, std::vector<double> y,
+                                   std::vector<double> u, std::vector<double> v, std::optional<std::vector<double>> c,
+                                   const BarbsOptions& o, std::string* error) {
+    std::unique_ptr<Barbs> b(new Barbs(rc));
+    // set_UVC: flip broadcast when one; cbook.delete_masked_points; _check_consistent_shapes
+    std::vector<bool> flip = o.flip.size() == 1 ? std::vector<bool>(u.size(), o.flip[0]) : o.flip;
+    const std::size_t n = x.size();
+    if (y.size() != n || u.size() != n || v.size() != n || (c && c->size() != n) || flip.size() != n)
+        return *error = "The shapes of the passed in arrays do not match", nullptr;
+    std::vector<std::array<double, 2>> xy;
+    std::vector<double> ku, kv, kc;
+    std::vector<bool> kflip;
+    for (std::size_t i = 0; i < n; ++i) {
+        if (!std::isfinite(x[i]) || !std::isfinite(y[i]) || !std::isfinite(u[i]) || !std::isfinite(v[i]) || (c && !std::isfinite((*c)[i]))) continue;
+        xy.push_back({x[i], y[i]});
+        ku.push_back(u[i]), kv.push_back(v[i]), kflip.push_back(flip[i]);
+        if (c) kc.push_back((*c)[i]);
+    }
+    // the parts of the barbs: _find_tails of the magnitudes
+    const double length = o.length;
+    const double spacing = length * o.spacing, fullHeight = length * o.height, fullWidth = length * o.width,
+                 emptyRad = length * o.emptybarb;
+    const double endx = 0.0, endy = o.endy;
+    // an empty barb: a CirclePolygon's vertices (unit_regular_polygon(20) through its patch transform, closed), and
+    // back over itself unless filled
+    std::vector<std::array<double, 2>> emptyBarb;
+    {
+        transforms::Affine2D patch;
+        patch.scale(emptyRad).rotate(0).translate(0, 0);
+        const transforms::Matrix m = patch.matrix();
+        const Path& unit = unitPolygon20Path();
+        for (std::size_t k = 0; k + 1 < unit.size(); ++k) emptyBarb.push_back(transforms::apply(m, (*unit.vertices)[2 * k], (*unit.vertices)[2 * k + 1]));
+        emptyBarb.push_back(emptyBarb.front());
+        if (!o.fillEmpty) {
+            const std::vector<std::array<double, 2>> circ = emptyBarb;
+            emptyBarb.insert(emptyBarb.end(), circ.rbegin(), circ.rend());
+        }
+    }
+    std::vector<std::vector<std::array<double, 2>>> barbs;
+    for (std::size_t i = 0; i < ku.size(); ++i) {
+        double mag = std::hypot(ku[i], kv[i]);
+        if (o.rounding) mag = o.half * std::nearbyint(mag / o.half);  // half * np.around(mag / half)
+        const auto [nflags, rest1] = support::divmod(mag, o.flag);
+        const auto [nbarbs, rest2] = support::divmod(rest1, o.full);
+        const bool halfBarb = rest2 >= o.half;
+        if (!(halfBarb || nflags > 0 || nbarbs > 0)) {
+            barbs.push_back(emptyBarb);
+            continue;
+        }
+        const double angle = -(std::atan2(kv[i], ku[i]) + M_PI / 2);
+        std::vector<std::array<double, 2>> poly{{endx, endy}};
+        double offset = length;
+        const double barbHeight = kflip[i] ? -fullHeight : fullHeight;
+        for (long long k = 0; k < (long long)nflags; ++k) {
+            if (offset != length) offset += spacing / 2.;
+            poly.push_back({endx, endy + offset});
+            poly.push_back({endx + barbHeight, endy - fullWidth / 2 + offset});
+            poly.push_back({endx, endy - fullWidth + offset});
+            offset -= fullWidth + spacing;
+        }
+        for (long long k = 0; k < (long long)nbarbs; ++k) {
+            poly.push_back({endx, endy + offset});
+            poly.push_back({endx + barbHeight, endy + offset + fullWidth / 2});
+            poly.push_back({endx, endy + offset});
+            offset -= spacing;
+        }
+        if (halfBarb) {
+            if (offset == length) {
+                poly.push_back({endx, endy + offset});
+                offset -= 1.5 * spacing;
+            }
+            poly.push_back({endx, endy + offset});
+            poly.push_back({endx + barbHeight / 2, endy + offset + fullWidth / 4});
+            poly.push_back({endx, endy + offset});
+        }
+        // turned to the vector's direction: Affine2D().rotate(-angle)
+        transforms::Affine2D turn;
+        turn.rotate(-angle);
+        const transforms::Matrix m = turn.matrix();
+        for (auto& p : poly) p = transforms::apply(m, p[0], p[1]);
+        barbs.push_back(poly);
+    }
+    // set_verts (closed), the colours' values, the offsets; drawn in points (IdentityTransform) at the offsets
+    b->paths = PolyCollection(rc, barbs).paths;
+    if (c) {
+        colors::MaskedArray a;
+        a.data = kc;
+        b->array = a;
+    }
+    b->offsets = xy;
+    b->offsetTransform = ax.transData;
+    b->transform = std::make_shared<transforms::IdentityTransform>();
+    b->transformSet = true;
+    b->barbSize_ = length * length / 4;
+    return b;
+}
+
+void Barbs::beforeDraw() {
+    const double scale = std::sqrt(barbSize_) * figure->dpi / 72.0 * 1.0;  // set_sizes((barb_size,), dpi) * _factor
+    transforms = {transforms::Matrix{scale, 0.0, 0.0, 0.0, scale, 0.0}};
 }
 
 }  // namespace calculate_plot::engine

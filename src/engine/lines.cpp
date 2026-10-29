@@ -153,6 +153,8 @@ const Path& markerData(const std::string& name) {
 
 const Path& unitStarPath() { return markerData("star5_hatch"); }
 
+const Path& unitPolygon20Path() { return markerData("polygon20"); }
+
 namespace {
 
 // markers.py's constant from NumPy's cos (data/marker_paths.json)

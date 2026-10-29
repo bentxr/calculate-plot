@@ -24,6 +24,8 @@ bool markerFromJson(const support::Json& value, std::string* marker, std::string
 // Path.unit_circle() and Path.unit_regular_star(5) (inner circle 0.5), as hatches take them.
 const Path& unitCirclePath();
 const Path& unitStarPath();
+// Path.unit_regular_polygon(20), a CirclePolygon's (barbs' empty barbs), as NumPy's sin and cos make it
+const Path& unitPolygon20Path();
 
 // MarkerStyle: a marker's path, its transform (unit size), and how it is stroked and filled.
 class MarkerStyle {

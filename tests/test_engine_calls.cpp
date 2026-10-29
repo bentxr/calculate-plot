@@ -2149,7 +2149,12 @@ INSTANTIATE_TEST_SUITE_P(
                    {"on": "axs[0]", "call": "quiverkey", "args": [{"$ref": "q"}, 0, 0, 1, "a"], "kwargs": {"labelpos": "X"}})",
                 "axs[0].quiverkey: 'X'"},
         Refusal{R"({"on": "axs[0]", "call": "quiverkey", "args": [[1, 2], 0, 0, 1, "a"]})",
-                "axs[0].quiverkey: Q must be a quiver the figure file named ({\"$ref\": name})"}));
+                "axs[0].quiverkey: Q must be a quiver the figure file named ({\"$ref\": name})"},
+        Refusal{R"({"on": "axs[0]", "call": "barbs", "args": [[1, 2], [1, 2]], "kwargs": {"pivot": "Top"}})", "axs[0].barbs: 'top'"},
+        Refusal{R"({"on": "axs[0]", "call": "barbs", "args": [[1, 2], [1, 2]], "kwargs": {"flip_barb": [true, false, true]}})",
+                "axs[0].barbs: The shapes of the passed in arrays do not match"},
+        Refusal{R"({"on": "axs[0]", "call": "barbs", "args": [[1]]})",
+                "axs[0].barbs: barbs() takes from 2 to 5 positional arguments but 1 were given"}));
 
 // contour lines never look at hatches, whatever they are
 TEST(ContourCalls, LinesIgnoreHatches) {

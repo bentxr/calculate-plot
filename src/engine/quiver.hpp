@@ -79,4 +79,32 @@ private:
     double x_, y_, u_;
 };
 
+// Barbs' keywords
+struct BarbsOptions {
+    double endy = 0;  // the pivot as a shift along the staff (pivot_points of 'tip' / 'middle', or a number)
+    double length = 7;
+    double spacing = 0.125, height = 0.4, width = 0.25, emptybarb = 0.15;  // sizes
+    double half = 5, full = 10, flag = 50;                                 // barb_increments
+    bool fillEmpty = false, rounding = true;
+    std::vector<bool> flip{false};  // flip_barb: one for all, or one per barb
+};
+
+// Barbs: a PolyCollection of wind barbs, made at once (set_UVC), in points scaled by sqrt(length ** 2 / 4) at the
+// offsets in data coordinates
+class Barbs : public PolyCollection {
+public:
+    // Barbs(ax, X, Y, U, V, C): the points where X, Y, U, V or C is not finite left out. False and matplotlib's
+    // message when it raises.
+    static std::unique_ptr<Barbs> make(const rc::Params& rc, Axes& ax, std::vector<double> x, std::vector<double> y,
+                                       std::vector<double> u, std::vector<double> v, std::optional<std::vector<double>> c,
+                                       const BarbsOptions& options, std::string* error);
+
+protected:
+    void beforeDraw() override;  // _CollectionWithSizes.draw: the sizes at the figure's dpi
+
+private:
+    explicit Barbs(const rc::Params& rc);
+    double barbSize_ = 0;
+};
+
 }  // namespace calculate_plot::engine

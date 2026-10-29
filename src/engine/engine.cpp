@@ -201,7 +201,7 @@ public:
             {"hlines", "hlines"}, {"vlines", "vlines"}, {"grid", "grid"}, {"legend", "legend"}, {"text", "text"},
             {"title", "set_title"}, {"xlabel", "set_xlabel"}, {"ylabel", "set_ylabel"}, {"xlim", "set_xlim"},
             {"ylim", "set_ylim"}, {"xscale", "set_xscale"}, {"yscale", "set_yscale"}, {"bar", "bar"}, {"barh", "barh"},
-            {"hist", "hist"}, {"fill", "fill"}, {"step", "step"}, {"stairs", "stairs"}, {"stem", "stem"}, {"boxplot", "boxplot"}, {"violinplot", "violinplot"}, {"pie", "pie"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}, {"imshow", "imshow"}, {"matshow", "matshow"}, {"spy", "spy"}, {"pcolormesh", "pcolormesh"}, {"pcolor", "pcolor"}, {"contour", "contour"}, {"contourf", "contourf"}, {"clabel", "clabel"}, {"hexbin", "hexbin"}, {"quiver", "quiver"}, {"quiverkey", "quiverkey"}};
+            {"hist", "hist"}, {"fill", "fill"}, {"step", "step"}, {"stairs", "stairs"}, {"stem", "stem"}, {"boxplot", "boxplot"}, {"violinplot", "violinplot"}, {"pie", "pie"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}, {"imshow", "imshow"}, {"matshow", "matshow"}, {"spy", "spy"}, {"pcolormesh", "pcolormesh"}, {"pcolor", "pcolor"}, {"contour", "contour"}, {"contourf", "contourf"}, {"clabel", "clabel"}, {"hexbin", "hexbin"}, {"quiver", "quiver"}, {"quiverkey", "quiverkey"}, {"barbs", "barbs"}};
         return ofAxes;
     }
 
@@ -1658,6 +1658,7 @@ private:
         if (call.method == "hexbin") return hexbin(ax, call, error) && noteMappable(ax, call);
         if (call.method == "quiver") return quiver(ax, call, error) && noteMappable(ax, call);
         if (call.method == "quiverkey") return quiverkey(ax, call, error);
+        if (call.method == "barbs") return barbs(ax, call, error) && noteMappable(ax, call);
         if (call.method == "clabel") {
             const Json* cs = argument(call, 0, "CS");
             if (call.args.size() > 2) return *error = where + ": clabel() takes from 2 to 3 positional arguments but " + std::to_string(call.args.size() + 1) + " were given", false;
@@ -5689,6 +5690,159 @@ private:
         return true;
     }
 
+    // quiver's _parse_args: U, V (and C) after X, Y when given; X, Y on U's grid when they match its shape, else
+    // U's grid of indices
+    bool vectorArgs(const model::Call& call, const std::string& where, std::vector<double>* X, std::vector<double>* Y,
+                    std::vector<double>* U, std::vector<double>* V, std::vector<double>* C, std::string* error) {
+        const std::size_t nargs = call.args.size();
+        const std::size_t first = nargs >= 4 ? 2 : 0;
+        std::size_t nr = 0, nc = 0, r = 0, c = 0;
+        const char* bad = ": X, Y, U, V and C must be numbers or arrays of numbers of one or two dimensions";
+        if (!raveled(call.args[first], U, &nr, &nc) || !raveled(call.args[first + 1], V, &r, &c)) return *error = where + bad, false;
+        if ((nargs == 3 || nargs == 5) && !raveled(call.args.back(), C, &r, &c)) return *error = where + bad, false;
+        if (first == 2) {
+            if (!raveled(call.args[0], X, &r, &c) || !raveled(call.args[1], Y, &r, &c)) return *error = where + bad, false;
+            if (X->size() == nc && Y->size() == nr) {
+                std::vector<double> mx, my;
+                for (double yv : *Y)
+                    for (double xv : *X) mx.push_back(xv), my.push_back(yv);
+                *X = mx, *Y = my;
+            } else if (X->size() != Y->size()) {
+                return *error = where + ": X and Y must be the same size, but X.size is " + std::to_string(X->size()) + " and Y.size is " +
+                                std::to_string(Y->size()) + ".", false;
+            }
+        } else {
+            for (std::size_t i = 0; i < nr; ++i)
+                for (std::size_t j = 0; j < nc; ++j) X->push_back(double(j)), Y->push_back(double(i));
+        }
+        return true;
+    }
+
+    // Axes.barbs([X, Y], U, V, [C], /, *, pivot='tip', length=7, barbcolor=None, flagcolor=None, sizes=None,
+    // fill_empty=False, barb_increments=None, rounding=True, flip_barb=False, **kwargs): a Barbs collection
+    bool barbs(Axes& ax, const model::Call& call, std::string* error) {
+        const std::string where = call.on + ".barbs";
+        const std::size_t nargs = call.args.size();
+        if (nargs < 2 || nargs > 5)
+            return *error = where + ": barbs() takes from 2 to 5 positional arguments but " + std::to_string(nargs) + " were given", false;
+        if (call.as.size() > 1) return *error = where + ": barbs make one collection (\"as\" names one)", false;
+        std::vector<double> X, Y, U, V, C;
+        if (!vectorArgs(call, where, &X, &Y, &U, &V, &C, error)) return false;
+        const bool hasC = nargs == 3 || nargs == 5;
+        BarbsOptions o;
+        std::string pivot = "tip";
+        std::optional<double> pivotNumber;
+        std::optional<colors::Spec> barbcolor, flagcolor;
+        model::Call rest = call;
+        rest.kwargs.clear();
+        const Json* cmapJson = nullptr;
+        const Json* normJson = nullptr;
+        bool linewidthGiven = false, faceGiven = false;
+        std::optional<colors::Spec> face;
+        std::optional<colors::Spec> both;
+        // a {"$dict": {...}} of numbers by name
+        const auto numberDict = [&](const Json& value, const std::string& name, const std::map<std::string, double*>& into) {
+            if (value.isNull()) return true;
+            const Json* d = value.isObject() && value.members().size() == 1 && value.members()[0].first == "$dict" ? &value.members()[0].second : nullptr;
+            if (!d) return *error = where + ": " + name + " must be a dict ({\"$dict\": {...}})", false;
+            for (const auto& [k, v] : d->members()) {
+                double n = 0;
+                const auto it = into.find(k);
+                if (it == into.end()) continue;  // (other keys are not read)
+                if (!readNumber(v, &n)) return *error = where + ": " + name + "['" + k + "'] must be a number", false;
+                *it->second = n;
+            }
+            return true;
+        };
+        for (const auto& [name, value] : call.kwargs) {
+            double v = 0;
+            if (name == "pivot") {
+                if (readNumber(value, &v)) pivotNumber = v;
+                else if (value.isString()) pivot = value.asString();
+                else return *error = where + ": pivot must be 'tip', 'middle' or a number", false;
+            } else if (name == "length") {
+                if (!readNumber(value, &v)) return *error = where + ": length must be a number", false;
+                o.length = v;
+            } else if (name == "barbcolor" || name == "flagcolor") {
+                if (value.isNull()) continue;
+                colors::Spec spec;
+                if (!color(value, &spec)) return *error = where + ": " + name + " must be a colour (colour lists are not supported yet)", false;
+                (name == "barbcolor" ? barbcolor : flagcolor) = spec;
+            } else if (name == "sizes") {
+                if (!numberDict(value, name, {{"spacing", &o.spacing}, {"height", &o.height}, {"width", &o.width}, {"emptybarb", &o.emptybarb}})) return false;
+            } else if (name == "barb_increments") {
+                if (!numberDict(value, name, {{"half", &o.half}, {"full", &o.full}, {"flag", &o.flag}})) return false;
+            } else if (name == "fill_empty" || name == "rounding") {
+                if (!value.isBool()) return *error = where + ": " + name + " must be True or False", false;
+                (name == "fill_empty" ? o.fillEmpty : o.rounding) = value.asBool();
+            } else if (name == "flip_barb") {
+                if (value.isBool()) {
+                    o.flip = {value.asBool()};
+                } else if (const Json* seq = sequence(value)) {
+                    o.flip.clear();
+                    for (const Json& f : seq->items()) {
+                        if (!f.isBool()) return *error = where + ": flip_barb must be True, False or a list of them", false;
+                        o.flip.push_back(f.asBool());
+                    }
+                } else {
+                    return *error = where + ": flip_barb must be True, False or a list of them", false;
+                }
+            } else if (name == "cmap" || name == "norm") {
+                (name == "cmap" ? cmapJson : normJson) = &value;
+            } else if (name == "facecolor" || name == "facecolors" || name == "fc") {
+                colors::Spec spec;
+                if (!color(value, &spec)) return *error = where + ": " + name + " must be a colour (colour lists are not supported yet)", false;
+                face = spec, faceGiven = true;
+            } else if (name == "color") {
+                colors::Spec spec;
+                if (!color(value, &spec)) return *error = where + ": color must be a colour (colour lists are not supported yet)", false;
+                both = spec;
+            } else if (name == "transform") {
+                return *error = where + ": transform is not supported yet", false;
+            } else {
+                linewidthGiven = linewidthGiven || name == "linewidth" || name == "lw";
+                rest.kwargs.push_back({name, value});
+            }
+        }
+        // the pivot: a number (float(pivot)), else 'tip' or 'middle'
+        if (pivotNumber) {
+            o.endy = *pivotNumber;
+        } else {
+            double parsed = 0;
+            std::string lower = pivot;
+            for (char& ch : lower) ch = char(std::tolower((unsigned char)ch));
+            if (support::readDouble(pivot, parsed)) o.endy = parsed;
+            else if (lower == "tip") o.endy = 0.0;
+            else if (lower == "middle") o.endy = -o.length / 2.;
+            else return *error = where + ": '" + lower + "'", false;  // (KeyError)
+        }
+        std::optional<std::vector<double>> cvalues;
+        if (hasC) cvalues = C;
+        auto b = Barbs::make(rc_, ax, X, Y, U, V, cvalues, o, error);
+        if (!b) return *error = where + ": " + *error, false;
+        // the flags' colour (facecolors) and the barbs' (edgecolors): the same unless both are given
+        if (!barbcolor || !flagcolor) {
+            b->setEdgecolor(ColorArg{ColorArg::Face, {}});
+            if (flagcolor) b->setFacecolor(ColorArg::of(*flagcolor));
+            else if (barbcolor) b->setFacecolor(ColorArg::of(*barbcolor));
+            else b->setFacecolor(ColorArg::of(faceGiven ? *face : colors::Spec(std::string("k"))));
+        } else {
+            b->setEdgecolor(ColorArg::of(*barbcolor));
+            b->setFacecolor(ColorArg::of(*flagcolor));
+        }
+        bool normObject = false;
+        colors::Colormap cmap;
+        if (!colorizer(&cmap, &b->norm, cmapJson, normJson, nullptr, false, where, &normObject, error)) return false;
+        b->cmap = cmap;
+        std::optional<double> vmin, vmax;
+        if (!meshKeywords(*b, rest, {}, where, &vmin, &vmax, error)) return false;
+        if (vmin || vmax) return *error = where + ": vmin and vmax are not supported yet", false;
+        if (both) b->setFacecolor(ColorArg::of(*both)), b->setEdgecolor(ColorArg::of(*both));  // (set_color, after)
+        if (!linewidthGiven) b->setLinewidths({1.0});  // (kwargs['linewidth'] = 1, applied last)
+        ax.addCollection(std::move(b), true);
+        return true;
+    }
+
     // Axes.quiver([X, Y], U, V, [C], /, **kwargs): a Quiver of arrows at X, Y
     bool quiver(Axes& ax, const model::Call& call, std::string* error) {
         const std::string where = call.on + ".quiver";
@@ -5696,29 +5850,9 @@ private:
         if (nargs < 2 || nargs > 5)
             return *error = where + ": quiver() takes from 2 to 5 positional arguments but " + std::to_string(nargs) + " were given", false;
         if (call.as.size() > 1) return *error = where + ": a quiver is one object (\"as\" names one)", false;
-        // _parse_args: U, V (and C) after X, Y when given; X, Y on U's grid when they match its shape
-        const std::size_t first = nargs >= 4 ? 2 : 0;
         std::vector<double> X, Y, U, V, C;
-        std::size_t nr = 0, nc = 0, r = 0, c = 0;
-        const char* bad = ": X, Y, U, V and C must be numbers or arrays of numbers of one or two dimensions";
-        if (!raveled(call.args[first], &U, &nr, &nc) || !raveled(call.args[first + 1], &V, &r, &c)) return *error = where + bad, false;
+        if (!vectorArgs(call, where, &X, &Y, &U, &V, &C, error)) return false;
         const bool hasC = nargs == 3 || nargs == 5;
-        if (hasC && !raveled(call.args.back(), &C, &r, &c)) return *error = where + bad, false;
-        if (first == 2) {
-            if (!raveled(call.args[0], &X, &r, &c) || !raveled(call.args[1], &Y, &r, &c)) return *error = where + bad, false;
-            if (X.size() == nc && Y.size() == nr) {
-                std::vector<double> mx, my;
-                for (double yv : Y)
-                    for (double xv : X) mx.push_back(xv), my.push_back(yv);
-                X = mx, Y = my;
-            } else if (X.size() != Y.size()) {
-                return *error = where + ": X and Y must be the same size, but X.size is " + std::to_string(X.size()) + " and Y.size is " +
-                                std::to_string(Y.size()) + ".", false;
-            }
-        } else {
-            for (std::size_t i = 0; i < nr; ++i)
-                for (std::size_t j = 0; j < nc; ++j) X.push_back(double(j)), Y.push_back(double(i));
-        }
         QuiverOptions o;
         static const char* const unitNames[] = {"x", "y", "xy", "width", "height", "dots", "inches"};
         const auto validUnits = [&](const std::string& value) {
