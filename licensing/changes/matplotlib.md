@@ -381,7 +381,9 @@ it comes from in its first lines. The changes, as a whole:
   _single_spectrum_helper, psd, csd, specgram and cohere, translated to C++ with NumPy's operations in their order
   (np.hanning, sliding windows, np.fft.fft through src/support/npy_fft.cpp, complex products and quotients,
   pairwise sums of real and complex windows, the mean over Fortran-ordered segments, np.fft.fftfreq, np.roll,
-  np.unwrap, np.arange of floats); detrending other than none is not ported yet.
+  np.unwrap, np.arange of floats); detrending other than none is not ported yet. axes/_axes.py's psd, csd, cohere,
+  magnitude_spectrum, angle_spectrum, phase_spectrum (lines through Axes.plot, with psd's and csd's integer y ticks)
+  and specgram (an image through Axes.imshow, then _base.py's axis('auto')) in src/engine/engine.cpp spectrum.
 - **Tables** (src/engine/table.cpp, src/engine/engine.cpp table): table.py's Cell, Table (alignment, auto font size,
   auto column width, placement by loc or bbox) and table(), with axes/_base.py's add_table, translated to C++.
 - **Meshes** (src/engine/collections.cpp QuadMesh and PolyQuadMesh, src/engine/engine.cpp pcolormesh, pcolor,
