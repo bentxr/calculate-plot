@@ -1,4 +1,5 @@
 #include "engine/engine.hpp"
+#include "tri/triangulation.hpp"
 
 #include "agg/path_text.h"
 #include "axes/dates.hpp"
@@ -189,6 +190,7 @@ public:
             }
         }
         if (call.on == "colors") return colorsCall(call, error);
+        if (call.on == "mtri") return triCall(call, error);
         if (contourSets_.count(call.on)) {
             const std::string where = call.on + "." + call.method;
             if (call.method != "clabel") return *error = "unsupported call: " + where, false;
@@ -217,7 +219,7 @@ public:
             {"hlines", "hlines"}, {"vlines", "vlines"}, {"grid", "grid"}, {"legend", "legend"}, {"text", "text"},
             {"title", "set_title"}, {"xlabel", "set_xlabel"}, {"ylabel", "set_ylabel"}, {"xlim", "set_xlim"},
             {"ylim", "set_ylim"}, {"xscale", "set_xscale"}, {"yscale", "set_yscale"}, {"bar", "bar"}, {"barh", "barh"},
-            {"hist", "hist"}, {"fill", "fill"}, {"step", "step"}, {"stairs", "stairs"}, {"stem", "stem"}, {"boxplot", "boxplot"}, {"violinplot", "violinplot"}, {"pie", "pie"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}, {"imshow", "imshow"}, {"matshow", "matshow"}, {"spy", "spy"}, {"pcolormesh", "pcolormesh"}, {"pcolor", "pcolor"}, {"contour", "contour"}, {"contourf", "contourf"}, {"clabel", "clabel"}, {"hexbin", "hexbin"}, {"quiver", "quiver"}, {"quiverkey", "quiverkey"}, {"barbs", "barbs"}, {"streamplot", "streamplot"}};
+            {"hist", "hist"}, {"fill", "fill"}, {"step", "step"}, {"stairs", "stairs"}, {"stem", "stem"}, {"boxplot", "boxplot"}, {"violinplot", "violinplot"}, {"pie", "pie"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}, {"imshow", "imshow"}, {"matshow", "matshow"}, {"spy", "spy"}, {"pcolormesh", "pcolormesh"}, {"pcolor", "pcolor"}, {"contour", "contour"}, {"contourf", "contourf"}, {"clabel", "clabel"}, {"hexbin", "hexbin"}, {"quiver", "quiver"}, {"quiverkey", "quiverkey"}, {"barbs", "barbs"}, {"streamplot", "streamplot"}, {"triplot", "triplot"}};
         return ofAxes;
     }
 
@@ -1911,6 +1913,7 @@ private:
         if (call.method == "quiverkey") return quiverkey(ax, call, error);
         if (call.method == "barbs") return barbs(ax, call, error) && noteMappable(ax, call);
         if (call.method == "streamplot") return streamplot(ax, call, error);
+        if (call.method == "triplot") return triplot(ax, call, error);
         if (call.method == "clabel") {
             const Json* cs = argument(call, 0, "CS");
             if (call.args.size() > 2) return *error = where + ": clabel() takes from 2 to 3 positional arguments but " + std::to_string(call.args.size() + 1) + " were given", false;
@@ -4556,6 +4559,186 @@ private:
 
 
     // The classes of matplotlib.colors a figure file makes on "colors": norms, each kept under its "as" name.
+    // np.asarray(triangles, dtype=np.int32) of a figure file's value, of shape (N, 3): false when it is not one
+    bool triangleRows(const Json& v, tri::Triangulation::Triangles* out) {
+        const Json* rows = sequence(v);
+        if (!rows || rows->size() == 0) return false;
+        out->clear();
+        for (const Json& r : rows->items()) {
+            const Json* row = sequence(r);
+            if (!row || row->size() != 3) return false;
+            std::array<int, 3> t{};
+            for (std::size_t k = 0; k < 3; ++k) {
+                const Json& n = (*row)[k];
+                if (!n.isNumber() || !n.isInteger()) return false;  // (other values are not taken yet)
+                double d = 0;
+                if (!readNumber(n, &d) || d < -2147483648.0 || d > 2147483647.0) return false;
+                t[k] = int(d);
+            }
+            out->push_back(t);
+        }
+        return true;
+    }
+
+    // np.asarray(mask, dtype=bool)
+    bool maskValues(const Json& v, std::vector<bool>* out, const std::string& where, std::string* error) {
+        const Json* seq = sequence(v);
+        if (!seq) return *error = where + ": mask must be a list of booleans", false;
+        out->clear();
+        for (const Json& m : seq->items()) {
+            double d = 0;
+            if (m.isBool()) out->push_back(m.asBool());
+            else if (readNumber(m, &d)) out->push_back(d != 0);
+            else return *error = where + ": mask must be a list of booleans", false;
+        }
+        return true;
+    }
+
+    // mtri.Triangulation(x, y, triangles=None, mask=None) (import matplotlib.tri as mtri), named by "as"
+    bool triCall(const model::Call& call, std::string* error) {
+        const std::string where = "mtri." + call.method;
+        if (call.method != "Triangulation") return *error = where + " is not supported yet", false;
+        if (call.as.size() > 1) return *error = where + " returns one object: name it once", false;
+        if (call.args.size() > 4) return *error = where + ": too many positional arguments", false;
+        if (!keywords(call, {"x", "y", "triangles", "mask"}, error)) return false;
+        const Json* xs = argument(call, 0, "x");
+        const Json* ys = argument(call, 1, "y");
+        std::vector<double> x, y;
+        if (!xs || !ys || !numbers(*xs, &x) || !numbers(*ys, &y)) return *error = where + ": x and y must be lists of numbers", false;
+        std::optional<tri::Triangulation::Triangles> triangles;
+        if (const Json* t = argument(call, 2, "triangles"); t && !t->isNull()) {
+            tri::Triangulation::Triangles rows;
+            if (!triangleRows(*t, &rows)) return *error = where + ": triangles must be a (N, 3) int array", false;
+            triangles = std::move(rows);
+        }
+        std::optional<std::vector<bool>> mask;
+        if (const Json* m = argument(call, 3, "mask"); m && !m->isNull()) {
+            std::vector<bool> values;
+            if (!maskValues(*m, &values, where, error)) return false;
+            mask = std::move(values);
+        }
+        auto t = std::make_shared<tri::Triangulation>();
+        if (!tri::Triangulation::make(std::move(x), std::move(y), std::move(triangles), std::move(mask), t.get(), error))
+            return *error = where + ": " + *error, false;
+        if (!call.as.empty()) triangulations_[call.as[0]] = t;
+        return true;
+    }
+
+    // Triangulation.get_from_args_and_kwargs: a triangulation the file made ({"$ref": name}) or one of x, y,
+    // [triangles] and the keywords triangles and mask; the arguments it leaves (`rest`, from `next`) and the other
+    // keywords
+    bool triangulationOf(const model::Call& call, const std::string& where, std::shared_ptr<tri::Triangulation>* out,
+                         std::size_t* next, std::string* error) {
+        if (call.args.empty()) return *error = where + ": the triangulation or x and y are required", false;
+        const Json& first = call.args[0];
+        if (first.isObject() && first.members().size() == 1 && first.members()[0].first == "$ref") {
+            const auto it = triangulations_.find(first.members()[0].second.asString());
+            if (it == triangulations_.end()) return *error = where + ": the triangulation must be one the figure file named", false;
+            *out = it->second;
+            *next = 1;  // (triangles and mask keywords have no effect then: a warning)
+            return true;
+        }
+        if (call.args.size() < 2) return *error = where + ": x and y are required", false;
+        std::vector<double> x, y;
+        if (!numbers(call.args[0], &x) || !numbers(call.args[1], &y)) return *error = where + ": x and y must be lists of numbers", false;
+        *next = 2;
+        std::optional<tri::Triangulation::Triangles> triangles;
+        tri::Triangulation::Triangles rows;
+        if (const Json* t = keyword(call, "triangles"); t && !t->isNull()) {
+            if (triangleRows(*t, &rows)) triangles = rows;
+        } else if (call.args.size() > 2 && triangleRows(call.args[2], &rows)) {
+            triangles = rows;
+            *next = 3;
+        }
+        std::optional<std::vector<bool>> mask;
+        if (const Json* m = keyword(call, "mask"); m && !m->isNull()) {
+            std::vector<bool> values;
+            if (!maskValues(*m, &values, where, error)) return false;
+            mask = std::move(values);
+        }
+        *out = std::make_shared<tri::Triangulation>();
+        if (!tri::Triangulation::make(std::move(x), std::move(y), std::move(triangles), std::move(mask), out->get(), error))
+            return *error = where + ": " + *error, false;
+        return true;
+    }
+
+    // triplot(triangulation or x, y, [triangles], [fmt], *, mask=, **kwargs): the edges as one line broken by NaN
+    // (Path's default zorder 1, no markers), then the points as markers (no line, no label)
+    bool triplot(Axes& ax, const model::Call& call, std::string* error) {
+        const std::string where = call.on + "." + call.method;
+        std::shared_ptr<tri::Triangulation> t;
+        std::size_t next = 0;
+        if (!triangulationOf(call, where, &t, &next, error)) return false;
+        if (call.args.size() > next + 1) return *error = where + ": only a format string may follow the triangulation", false;
+        std::string fmt;
+        if (call.args.size() > next) {
+            if (!call.args[next].isString()) return *error = where + ": the format must be a string", false;
+            fmt = call.args[next].asString();
+        }
+        std::optional<std::string> linestyle, marker;
+        std::optional<colors::Spec> color;
+        if (!plotFormat(fmt, &linestyle, &marker, &color, error)) return *error = where + ": " + *error, false;
+        // normalize_kwargs(kwargs, Line2D), then the format's parts where not given (a dict: keys keep their place)
+        std::vector<std::pair<std::string, Json>> kw;
+        const auto put = [&](const std::string& key, const Json& value, bool replace) {
+            for (auto& [k, v] : kw)
+                if (k == key) {
+                    if (replace) v = value;
+                    return;
+                }
+            kw.emplace_back(key, value);
+        };
+        for (const auto& [name, value] : call.kwargs) {
+            if (name == "triangles" || name == "mask" || name == "x" || name == "y") continue;
+            const std::string full = fullName(name, lineAliases());
+            for (const auto& [k, v] : kw)
+                if (k == full) return *error = where + ": Got both '" + full + "' and an alias of it, which are aliases of one another", false;
+            kw.emplace_back(full, value);
+        }
+        put("linestyle", Json::string(*linestyle), false);
+        put("marker", Json::string(*marker), false);
+        if (color) put("color", colorJson(*color), false);
+        const auto valueOf = [&](const char* key) -> const Json* {
+            for (const auto& [k, v] : kw)
+                if (k == key) return &v;
+            return nullptr;
+        };
+        const auto none = [](const Json* v) {
+            return !v || v->isNull() || (v->isString() && (v->asString() == "None" || v->asString().empty() || v->asString() == " "));
+        };
+        const bool lines = !none(valueOf("linestyle")), markers = !none(valueOf("marker"));
+        // the lines
+        std::vector<double> lx, ly;
+        if (lines) {
+            const double nan = std::numeric_limits<double>::quiet_NaN();
+            for (const auto& e : t->edges()) {
+                lx.insert(lx.end(), {t->x()[std::size_t(e[0])], t->x()[std::size_t(e[1])], nan});
+                ly.insert(ly.end(), {t->y()[std::size_t(e[0])], t->y()[std::size_t(e[1])], nan});
+            }
+        }
+        model::Call p;
+        p.on = call.on;
+        p.method = "plot";
+        p.args = {numbersJson(lx), numbersJson(ly)};
+        p.kwargs = kw;
+        for (auto& [k, v] : p.kwargs)
+            if (k == "marker") v = Json::string("None");
+        if (const Json* z = valueOf("zorder")) {
+            (void)z;
+        } else {
+            p.kwargs.emplace_back("zorder", Json::integer(1));
+        }
+        if (!plot(ax, p, error)) return false;
+        // the markers
+        p.args = markers ? std::vector<Json>{numbersJson(t->x()), numbersJson(t->y())} : std::vector<Json>{numbersJson({}), numbersJson({})};
+        p.kwargs.clear();
+        for (const auto& [k, v] : kw) {
+            if (k == "label") continue;
+            p.kwargs.emplace_back(k, k == "linestyle" ? Json::string("None") : v);
+        }
+        return plot(ax, p, error);
+    }
+
     bool colorsCall(const model::Call& call, std::string* error) {
         const std::string where = "colors." + call.method;
         if (call.as.size() > 1) return *error = where + " returns one object: name it once", false;
@@ -8038,6 +8221,7 @@ private:
     // The patches plt.Polygon made, by the names the figure file gave them, until add_patch takes them
     std::map<std::string, std::unique_ptr<Polygon>> patches_;
     std::map<std::string, std::shared_ptr<colors::Norm>> norms_;  // the norms colors.* calls made
+    std::map<std::string, std::shared_ptr<tri::Triangulation>> triangulations_;  // the mtri.Triangulation calls'
     std::map<std::string, Mappable> mappables_;             // the images and collections named by "as"
     std::map<std::string, std::pair<ContourSet*, Axes*>> contourSets_;  // the contour sets named by "as", and their Axes
     // the quivers named by "as", and the PolyCollection keywords they were made with (polykw, for their keys)

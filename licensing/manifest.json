@@ -562,6 +562,8 @@
     "src/engine/polar.hpp",
     "src/tri/delaunay.cpp",
     "src/tri/delaunay.hpp",
+    "src/tri/triangulation.cpp",
+    "src/tri/triangulation.hpp",
     "src/engine/renderer.hpp",
     "src/engine/text.cpp",
     "src/engine/text.hpp",

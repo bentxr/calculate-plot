@@ -2239,3 +2239,25 @@ INSTANTIATE_TEST_SUITE_P(
                 "tick marks of polar axes are not supported yet"}));
 #undef FIG
 #undef POLAR
+
+class TriRefusals : public testing::TestWithParam<Refusal> {};
+
+TEST_P(TriRefusals, NameTheCallAndTheReason) {
+    EXPECT_EQ(draw(kSubplots + GetParam().call).error, GetParam().error);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    Engine, TriRefusals,
+    testing::Values(
+        Refusal{R"({"on": "axs[0]", "call": "triplot", "args": [[0, 1, 2], [0, 1]]})",
+                "axs[0].triplot: x and y must be equal-length 1D arrays, but found shapes (3,) and (2,)"},
+        Refusal{R"({"on": "axs[0]", "call": "triplot", "args": [[0, 1], [0, 1]]})",
+                "axs[0].triplot: x and y arrays must have a length of at least 3"},
+        Refusal{R"({"on": "axs[0]", "call": "triplot", "args": [[0, 1, 2, 3], [0, 1, 2, 3]]})",
+                "axs[0].triplot: Error in qhull Delaunay triangulation calculation: singular input data (exitcode=2); use python "
+                "verbose option (-v) to see original qhull error."},
+        Refusal{R"({"on": "axs[0]", "call": "triplot", "args": [[0, 1, 0], [0, 0, 1], [[0, 1, 3]]]})",
+                "axs[0].triplot: triangles are indices into the points and must be in the range 0 <= i < 3 but found value 3"},
+        Refusal{R"({"on": "axs[0]", "call": "triplot", "args": [[0, 1, 0], [0, 0, 1], [[0, 1, 2]]], "kwargs": {"mask": [true, false]}})",
+                "axs[0].triplot: mask array must have same length as triangles array"},
+        Refusal{R"({"on": "mtri", "call": "Delaunay", "args": []})", "mtri.Delaunay is not supported yet"}));

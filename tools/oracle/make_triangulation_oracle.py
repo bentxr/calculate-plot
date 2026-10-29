@@ -55,7 +55,31 @@ for name, x, y in SETS:
         entry["error"] = str(e)
     cases.append(entry)
 
-(ROOT / "tests" / "oracle" / "triangulation.json").write_text(json.dumps({"cases": cases}, separators=(",", ":")) + "\n")
+# given triangles (some clockwise, which the C++ triangulation turns anticlockwise in place), with and without a
+# mask: the edges, the neighbours and the triangles after the edges were asked for; and Delaunay ones with a mask
+given = []
+gx, gy = np.meshgrid(np.arange(4.0), np.arange(3.0))
+x, y = gx.ravel(), gy.ravel()
+tris = []
+for j in range(2):
+    for i in range(3):
+        a, b, c, d = j * 4 + i, j * 4 + i + 1, (j + 1) * 4 + i, (j + 1) * 4 + i + 1
+        tris += [[a, b, d], [a, c, d] if (i + j) % 2 else [a, d, c]]
+for name, triangles, mask in [("given", tris, None), ("given masked", tris, [k % 4 == 1 for k in range(len(tris))]),
+                              ("delaunay masked", None, "every third")]:
+    xs, ys = (x, y) if triangles is not None else (rng.uniform(0, 1, 25), rng.uniform(0, 1, 25))
+    t = Triangulation(xs, ys, triangles)
+    if mask == "every third":
+        mask = [k % 3 == 0 for k in range(len(t.triangles))]
+    if mask is not None:
+        t.set_mask(mask)
+    entry = {"name": name, "x": [h(v) for v in xs], "y": [h(v) for v in ys],
+             "triangles": None if triangles is None else triangles, "mask": mask,
+             "edges": t.edges.tolist(), "neighbors": t.neighbors.tolist(), "after": t.triangles.tolist()}
+    given.append(entry)
+
+(ROOT / "tests" / "oracle" / "triangulation.json").write_text(
+    json.dumps({"cases": cases, "given": given}, separators=(",", ":")) + "\n")
 print(len(cases), "sets,", sum("error" in c for c in cases), "errors")
 for c in cases:
     if "error" in c:

@@ -228,9 +228,10 @@ std::optional<Figure> parseFigure(std::string_view json, std::string* error) {
     }
     const Json* calls = doc->find("calls");
     if (!calls || !calls->isArray()) return fail("\"calls\" must be a list");
-    // the modules the script imports: calls may be on "colors" (matplotlib.colors), and no result takes their names
-    static const std::set<std::string> modules = {"plt", "np", "colors", "locale", "datetime"};
-    std::set<std::string> known = {"colors"};
+    // the modules the script imports: calls may be on "colors" (matplotlib.colors) and "mtri" (matplotlib.tri), and no
+    // result takes their names
+    static const std::set<std::string> modules = {"plt", "np", "colors", "mtri", "locale", "datetime"};
+    std::set<std::string> known = {"colors", "mtri"};
     for (const Json& c : calls->items()) {
         if (!c.isObject()) return fail("each call is an object");
         Call call;
@@ -303,9 +304,10 @@ bool uses(const Json& v, bool datetime) {
 }
 
 std::string exportPython(const Figure& figure, std::string_view version) {
-    bool datetimes = false, numpy = false, colorsModule = false;
+    bool datetimes = false, numpy = false, colorsModule = false, triModule = false;
     for (const auto& call : figure.calls) {
         colorsModule = colorsModule || call.on == "colors";
+        triModule = triModule || call.on == "mtri";
         for (const auto& a : call.args) datetimes = datetimes || uses(a, true), numpy = numpy || uses(a, false);
         for (const auto& kw : call.kwargs) datetimes = datetimes || uses(kw.second, true), numpy = numpy || uses(kw.second, false);
     }
@@ -314,6 +316,7 @@ std::string exportPython(const Figure& figure, std::string_view version) {
                       std::string(datetimes ? "import datetime\n" : "") +
                       "import locale\n\n"
                       "import matplotlib.pyplot as plt\n" + std::string(colorsModule ? "from matplotlib import colors\n" : "") +
+                      std::string(triModule ? "import matplotlib.tri as mtri\n" : "") +
                       std::string(numpy ? "import numpy as np\n" : "") + "\n"
                       // HarfBuzz takes the language of a text that sets none from LC_CTYPE, the first
                       // time it shapes one; the measuring of a text never uses the text's own language,
