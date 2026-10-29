@@ -564,6 +564,8 @@
     "src/tri/delaunay.hpp",
     "src/tri/triangulation.cpp",
     "src/tri/triangulation.hpp",
+    "src/tri/tri_contour.cpp",
+    "src/tri/tri_contour.hpp",
     "src/engine/renderer.hpp",
     "src/engine/text.cpp",
     "src/engine/text.hpp",

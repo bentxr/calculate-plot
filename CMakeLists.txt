@@ -95,6 +95,7 @@ add_library(calculate-plot STATIC
     src/engine/polar.cpp
     src/tri/delaunay.cpp
     src/tri/triangulation.cpp
+    src/tri/tri_contour.cpp
     src/contour/contour.cpp
     src/contour/mpl2014.cpp
     src/engine/trace_renderer.cpp

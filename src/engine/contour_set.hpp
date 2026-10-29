@@ -6,6 +6,7 @@
 
 #include "engine/collections.hpp"
 #include "engine/image.hpp"
+#include "tri/triangulation.hpp"
 
 #include <array>
 #include <memory>
@@ -41,6 +42,10 @@ struct ContourArgs {
     std::optional<bool> antialiased, cornerMask;
     long long nchunk = 0;
     std::optional<std::string> algorithm;  // None: rcParams["contour.algorithm"]
+    // a TriContourSet's (tricontour, tricontourf): the triangulation and z at its points (x, y and z above unused)
+    std::shared_ptr<tri::Triangulation> triangulation;
+    std::vector<double> triZ;
+    colors::DType triZDtype = colors::DType::Float64;
 };
 
 // A QuadContourSet: one path of lines (or of filled regions) per level, drawn as a collection.

@@ -219,7 +219,7 @@ public:
             {"hlines", "hlines"}, {"vlines", "vlines"}, {"grid", "grid"}, {"legend", "legend"}, {"text", "text"},
             {"title", "set_title"}, {"xlabel", "set_xlabel"}, {"ylabel", "set_ylabel"}, {"xlim", "set_xlim"},
             {"ylim", "set_ylim"}, {"xscale", "set_xscale"}, {"yscale", "set_yscale"}, {"bar", "bar"}, {"barh", "barh"},
-            {"hist", "hist"}, {"fill", "fill"}, {"step", "step"}, {"stairs", "stairs"}, {"stem", "stem"}, {"boxplot", "boxplot"}, {"violinplot", "violinplot"}, {"pie", "pie"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}, {"imshow", "imshow"}, {"matshow", "matshow"}, {"spy", "spy"}, {"pcolormesh", "pcolormesh"}, {"pcolor", "pcolor"}, {"contour", "contour"}, {"contourf", "contourf"}, {"clabel", "clabel"}, {"hexbin", "hexbin"}, {"quiver", "quiver"}, {"quiverkey", "quiverkey"}, {"barbs", "barbs"}, {"streamplot", "streamplot"}, {"triplot", "triplot"}, {"tripcolor", "tripcolor"}};
+            {"hist", "hist"}, {"fill", "fill"}, {"step", "step"}, {"stairs", "stairs"}, {"stem", "stem"}, {"boxplot", "boxplot"}, {"violinplot", "violinplot"}, {"pie", "pie"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}, {"imshow", "imshow"}, {"matshow", "matshow"}, {"spy", "spy"}, {"pcolormesh", "pcolormesh"}, {"pcolor", "pcolor"}, {"contour", "contour"}, {"contourf", "contourf"}, {"clabel", "clabel"}, {"hexbin", "hexbin"}, {"quiver", "quiver"}, {"quiverkey", "quiverkey"}, {"barbs", "barbs"}, {"streamplot", "streamplot"}, {"triplot", "triplot"}, {"tripcolor", "tripcolor"}, {"tricontour", "tricontour"}, {"tricontourf", "tricontourf"}};
         return ofAxes;
     }
 
@@ -1907,7 +1907,8 @@ private:
         if (call.method == "pcolormesh") return pcolormesh(ax, call, error) && noteMappable(ax, call);
         if (call.method == "pcolor") return pcolor(ax, call, error) && noteMappable(ax, call);
         if (call.method == "pcolorfast") return pcolorfast(ax, call, error) && noteMappable(ax, call);
-        if (call.method == "contour" || call.method == "contourf") return contour(ax, call, error) && noteMappable(ax, call);
+        if (call.method == "contour" || call.method == "contourf" || call.method == "tricontour" || call.method == "tricontourf")
+            return contour(ax, call, error) && noteMappable(ax, call);
         if (call.method == "hexbin") return hexbin(ax, call, error) && noteMappable(ax, call);
         if (call.method == "quiver") return quiver(ax, call, error) && noteMappable(ax, call);
         if (call.method == "quiverkey") return quiverkey(ax, call, error);
@@ -5716,11 +5717,22 @@ private:
     bool contour(Axes& ax, const model::Call& call, std::string* error) {
         const std::string where = call.on + "." + call.method;
         const std::size_t nargs = call.args.size();
-        if (nargs < 1 || nargs > 4)
+        const bool triangular = call.method == "tricontour" || call.method == "tricontourf";
+        if (!triangular && (nargs < 1 || nargs > 4))
             return *error = where + ": " + call.method + "() takes from 1 to 4 positional arguments but " + std::to_string(nargs) + " were given", false;
         if (call.as.size() > 1) return *error = where + ": a contour set is one object (\"as\" names one)", false;
         ContourArgs a;
-        a.filled = call.method == "contourf";
+        a.filled = call.method == "contourf" || call.method == "tricontourf";
+        const Json* levels = keyword(call, "levels");
+        if (triangular) {
+            // TriContourSet._contour_args: the triangulation, then z, then the levels
+            std::size_t next = 0;
+            if (!triangulationOf(call, where, &a.triangulation, &next, error)) return false;
+            if (nargs <= next) return *error = where + ": not enough values to unpack (expected at least 1, got 0)", false;
+            if (!numbers(call.args[next], &a.triZ)) return *error = where + ": z must be a list of numbers", false;
+            a.triZDtype = integers(call.args[next]) ? colors::DType::Int64 : colors::DType::Float64;
+            if ((!levels || levels->isNull()) && nargs > next + 1) levels = &call.args[next + 1];
+        } else {
         const auto dims = [](const Json& v) {  // np.ndim of nested lists (of an $array's data)
             const Json* e = &v;
             if (e->isObject() && e->members().size() == 1 && e->members()[0].first == "$array") e = e->members()[0].second.find("data");
@@ -5740,8 +5752,8 @@ private:
             a.x = x, a.y = y;
         }
         // levels: positional after Z, or the keyword (which wins); an integer asks a locator for them
-        const Json* levels = keyword(call, "levels");
         if ((!levels || levels->isNull()) && (nargs == 2 || nargs == 4)) levels = &call.args.back();
+        }
         if (levels && !levels->isNull()) {
             std::vector<double> l;
             if (levels->isBool()) a.nlevels = levels->asBool() ? 1 : 0;
@@ -5762,6 +5774,9 @@ private:
             double v = 0;
             if (name == "levels" || name == "cmap" || name == "norm") continue;
             if (name == "color") return *error = where + ": ContourSet.__init__() got an unexpected keyword argument 'color'", false;
+            if (triangular && (name == "triangles" || name == "mask")) continue;
+            if (triangular && (name == "corner_mask" || name == "nchunk" || name == "algorithm"))
+                return *error = where + ": TriContourSet.set() got an unexpected keyword argument '" + name + "'", false;
             const bool none = value.isNull();
             if (name == "linewidths") {
                 if (none) continue;

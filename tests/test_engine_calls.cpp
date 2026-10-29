@@ -2270,4 +2270,10 @@ INSTANTIATE_TEST_SUITE_P(
         Refusal{R"({"on": "axs[0]", "call": "tripcolor", "args": [[0, 1, 0], [0, 0, 1], [1, 2, 3]], "kwargs": {"shading": "smooth"}})",
                 "axs[0].tripcolor: 'smooth' is not a valid value for shading; supported values are 'flat', 'gouraud'"},
         Refusal{R"({"on": "axs[0]", "call": "tripcolor", "args": [[0, 1, 0], [0, 0, 1]], "kwargs": {"facecolors": [1], "shading": "gouraud"}})",
-                "axs[0].tripcolor: shading='gouraud' can only be used when the colors are specified at the points, not at the faces."}));
+                "axs[0].tripcolor: shading='gouraud' can only be used when the colors are specified at the points, not at the faces."},
+        Refusal{R"({"on": "axs[0]", "call": "tricontour", "args": [[0, 1, 0, 1], [0, 0, 1, 1], [1, 2, 3]]})",
+                "axs[0].tricontour: z array must have same length as triangulation x and y arrays"},
+        Refusal{R"({"on": "axs[0]", "call": "tricontourf", "args": [[0, 1, 0, 1], [0, 0, 1, 1], [1, 2, {"$float": "nan"}, 3]]})",
+                "axs[0].tricontourf: z array must not contain non-finite values within the triangulation"},
+        Refusal{R"({"on": "axs[0]", "call": "tricontour", "args": [[0, 1, 0, 1], [0, 0, 1, 1], [1, 2, 3, 4]], "kwargs": {"corner_mask": true}})",
+                "axs[0].tricontour: TriContourSet.set() got an unexpected keyword argument 'corner_mask'"}));

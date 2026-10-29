@@ -4,6 +4,7 @@
 // Licence: LICENSES/Matplotlib.txt. Changes: licensing/changes/matplotlib.md
 
 #include "engine/contour_set.hpp"
+#include "tri/tri_contour.hpp"
 
 #include "axes/log_ticker.hpp"
 #include "axes/ticker.hpp"
@@ -68,79 +69,106 @@ std::unique_ptr<ContourSet> ContourSet::make(const rc::Params& rc, const Contour
         negativeLinestyles = v.asString();
     }
 
-    // QuadContourSet._process_args: the generator of mpl2014 (the only one taken yet)
-    const std::string algorithm = a.algorithm ? *a.algorithm : rc.text("contour.algorithm");
-    if (algorithm != "mpl2005" && algorithm != "mpl2014" && algorithm != "serial" && algorithm != "threaded")
-        return *error = "'" + algorithm + "' is not a valid value for contour.algorithm; supported values are ['mpl2005', 'mpl2014', 'serial', 'threaded']", nullptr;
-    if (algorithm != "mpl2014") return *error = "the " + algorithm + " contour algorithm is not supported yet", nullptr;
-    const bool cornerMask = a.cornerMask ? *a.cornerMask : rc.boolean("contour.corner_mask");
-
-    // _contour_args: the grid from x and y (_check_xyz) or from z's shape (_initialize_x_y)
     const ImageArray& z = a.z;
-    if (z.channels != 0) return *error = "Input z must be 2D, not 3D", nullptr;
-    if (z.rows < 2 || z.cols < 2)
-        return *error = "Input z must be at least a (2, 2) shaped array, but has shape " + shapeText(z.rows, z.cols), nullptr;
-    const int Ny = z.rows, Nx = z.cols;
+    std::unique_ptr<contour::Generator> generator;
+    std::unique_ptr<tri::TriContourGenerator> triGenerator;
+    colors::DType zDtype = z.dtype;
+    std::vector<bool> mask;
     Grid X, Y;
-    if (a.x) {
-        const Grid& x = *a.x;
-        const Grid& y = *a.y;
-        const bool x1 = a.xDims == 1, y1 = a.yDims == 1;
-        if (x1 != y1)
-            return *error = std::string("Number of dimensions of x (") + (x1 ? "1" : "2") + ") and y (" + (y1 ? "1" : "2") + ") do not match", nullptr;
-        if (x1) {
-            if (int(x[0].size()) != Nx)
-                return *error = "Length of x (" + std::to_string(x[0].size()) + ") must match number of columns in z (" + std::to_string(Nx) + ")", nullptr;
-            if (int(y[0].size()) != Ny)
-                return *error = "Length of y (" + std::to_string(y[0].size()) + ") must match number of rows in z (" + std::to_string(Ny) + ")", nullptr;
-            meshgrid(x[0], y[0], &X, &Y);
-        } else {
-            if (int(x.size()) != Ny || int(x[0].size()) != Nx)
-                return *error = "Shapes of x " + shapeText(int(x.size()), int(x[0].size())) + " and z " + shapeText(Ny, Nx) + " do not match", nullptr;
-            if (int(y.size()) != Ny || int(y[0].size()) != Nx)
-                return *error = "Shapes of y " + shapeText(int(y.size()), int(y[0].size())) + " and z " + shapeText(Ny, Nx) + " do not match", nullptr;
-            X = x, Y = y;
+    int Ny = 0, Nx = 0;
+    bool cornerMask = false;
+    if (a.triangulation) {
+        // TriContourSet._contour_args: z at the points; the points of the unmasked triangles must have finite z
+        tri::Triangulation& t = *a.triangulation;
+        const std::vector<double>& tz = a.triZ;
+        if (tz.size() != t.x().size()) return *error = "z array must have same length as triangulation x and y arrays", nullptr;
+        std::vector<bool> used(tz.size(), false);
+        for (const auto& tr : t.maskedTriangles())
+            for (int k : tr) used[std::size_t(k)] = true;
+        double lo = std::numeric_limits<double>::infinity(), hi = -lo;
+        bool any = false;
+        for (std::size_t i = 0; i < tz.size(); ++i) {
+            if (!used[i]) continue;
+            if (!std::isfinite(tz[i])) return *error = "z array must not contain non-finite values within the triangulation", nullptr;
+            lo = any ? std::min(lo, tz[i]) : tz[i], hi = any ? std::max(hi, tz[i]) : tz[i];
+            any = true;
         }
+        if (!any) return *error = "contours of a triangulation without unmasked triangles are not supported yet", nullptr;
+        c.zmin = lo, c.zmax = hi;
+        if (c.logscale && c.zmin <= 0) return *error = std::string("Cannot ") + (a.filled ? "contourf" : "contour") + " log of negative values.", nullptr;
+        zDtype = a.triZDtype;
     } else {
-        std::vector<double> xs(std::size_t(Nx), 0.0), ys(std::size_t(Ny), 0.0);
-        if (!origin) {  // (not for image-matching)
-            if (!a.extent) {
-                for (int j = 0; j < Nx; ++j) xs[std::size_t(j)] = j;
-                for (int i = 0; i < Ny; ++i) ys[std::size_t(i)] = i;
+        // QuadContourSet._process_args: the generator of mpl2014 (the only one taken yet)
+        const std::string algorithm = a.algorithm ? *a.algorithm : rc.text("contour.algorithm");
+        if (algorithm != "mpl2005" && algorithm != "mpl2014" && algorithm != "serial" && algorithm != "threaded")
+            return *error = "'" + algorithm + "' is not a valid value for contour.algorithm; supported values are ['mpl2005', 'mpl2014', 'serial', 'threaded']", nullptr;
+        if (algorithm != "mpl2014") return *error = "the " + algorithm + " contour algorithm is not supported yet", nullptr;
+        cornerMask = a.cornerMask ? *a.cornerMask : rc.boolean("contour.corner_mask");
+
+        // _contour_args: the grid from x and y (_check_xyz) or from z's shape (_initialize_x_y)
+        if (z.channels != 0) return *error = "Input z must be 2D, not 3D", nullptr;
+        if (z.rows < 2 || z.cols < 2)
+            return *error = "Input z must be at least a (2, 2) shaped array, but has shape " + shapeText(z.rows, z.cols), nullptr;
+        Ny = z.rows, Nx = z.cols;
+        if (a.x) {
+            const Grid& x = *a.x;
+            const Grid& y = *a.y;
+            const bool x1 = a.xDims == 1, y1 = a.yDims == 1;
+            if (x1 != y1)
+                return *error = std::string("Number of dimensions of x (") + (x1 ? "1" : "2") + ") and y (" + (y1 ? "1" : "2") + ") do not match", nullptr;
+            if (x1) {
+                if (int(x[0].size()) != Nx)
+                    return *error = "Length of x (" + std::to_string(x[0].size()) + ") must match number of columns in z (" + std::to_string(Nx) + ")", nullptr;
+                if (int(y[0].size()) != Ny)
+                    return *error = "Length of y (" + std::to_string(y[0].size()) + ") must match number of rows in z (" + std::to_string(Ny) + ")", nullptr;
+                meshgrid(x[0], y[0], &X, &Y);
             } else {
-                xs = support::npLinspace((*a.extent)[0], (*a.extent)[1], Nx);
-                ys = support::npLinspace((*a.extent)[2], (*a.extent)[3], Ny);
+                if (int(x.size()) != Ny || int(x[0].size()) != Nx)
+                    return *error = "Shapes of x " + shapeText(int(x.size()), int(x[0].size())) + " and z " + shapeText(Ny, Nx) + " do not match", nullptr;
+                if (int(y.size()) != Ny || int(y[0].size()) != Nx)
+                    return *error = "Shapes of y " + shapeText(int(y.size()), int(y[0].size())) + " and z " + shapeText(Ny, Nx) + " do not match", nullptr;
+                X = x, Y = y;
             }
         } else {
-            const std::array<double, 4> e = a.extent ? *a.extent : std::array<double, 4>{0, double(Nx), 0, double(Ny)};
-            const double dx = (e[1] - e[0]) / Nx, dy = (e[3] - e[2]) / Ny;
-            for (int j = 0; j < Nx; ++j) xs[std::size_t(j)] = e[0] + (j + 0.5) * dx;
-            for (int i = 0; i < Ny; ++i) ys[std::size_t(i)] = e[2] + (i + 0.5) * dy;
-            if (*origin == "upper") std::reverse(ys.begin(), ys.end());
+            std::vector<double> xs(std::size_t(Nx), 0.0), ys(std::size_t(Ny), 0.0);
+            if (!origin) {  // (not for image-matching)
+                if (!a.extent) {
+                    for (int j = 0; j < Nx; ++j) xs[std::size_t(j)] = j;
+                    for (int i = 0; i < Ny; ++i) ys[std::size_t(i)] = i;
+                } else {
+                    xs = support::npLinspace((*a.extent)[0], (*a.extent)[1], Nx);
+                    ys = support::npLinspace((*a.extent)[2], (*a.extent)[3], Ny);
+                }
+            } else {
+                const std::array<double, 4> e = a.extent ? *a.extent : std::array<double, 4>{0, double(Nx), 0, double(Ny)};
+                const double dx = (e[1] - e[0]) / Nx, dy = (e[3] - e[2]) / Ny;
+                for (int j = 0; j < Nx; ++j) xs[std::size_t(j)] = e[0] + (j + 0.5) * dx;
+                for (int i = 0; i < Ny; ++i) ys[std::size_t(i)] = e[2] + (i + 0.5) * dy;
+                if (*origin == "upper") std::reverse(ys.begin(), ys.end());
+            }
+            meshgrid(xs, ys, &X, &Y);
         }
-        meshgrid(xs, ys, &X, &Y);
-    }
-    // z masked where not finite; its limits from the rest (on a log scale, values <= 0 masked too)
-    std::vector<bool> mask(z.size());
-    for (std::size_t i = 0; i < z.size(); ++i) mask[i] = z.masked(i) || !std::isfinite(z.data[i]);
-    const auto limits = [&]() {
-        double lo = std::numeric_limits<double>::infinity(), hi = -lo;
-        for (std::size_t i = 0; i < z.size(); ++i)
-            if (!mask[i]) lo = std::min(lo, z.data[i]), hi = std::max(hi, z.data[i]);
-        c.zmin = lo, c.zmax = hi;
-        return lo <= hi;
-    };
-    if (!limits()) return *error = "contours of a z without a valid value are not supported yet", nullptr;
-    if (c.logscale && c.zmin <= 0) {
-        for (std::size_t i = 0; i < z.size(); ++i) mask[i] = mask[i] || z.data[i] <= 0;  // (a warning)
+        // z masked where not finite; its limits from the rest (on a log scale, values <= 0 masked too)
+        mask.assign(z.size(), false);
+        for (std::size_t i = 0; i < z.size(); ++i) mask[i] = z.masked(i) || !std::isfinite(z.data[i]);
+        const auto limits = [&]() {
+            double lo = std::numeric_limits<double>::infinity(), hi = -lo;
+            for (std::size_t i = 0; i < z.size(); ++i)
+                if (!mask[i]) lo = std::min(lo, z.data[i]), hi = std::max(hi, z.data[i]);
+            c.zmin = lo, c.zmax = hi;
+            return lo <= hi;
+        };
         if (!limits()) return *error = "contours of a z without a valid value are not supported yet", nullptr;
+        if (c.logscale && c.zmin <= 0) {
+            for (std::size_t i = 0; i < z.size(); ++i) mask[i] = mask[i] || z.data[i] <= 0;  // (a warning)
+            if (!limits()) return *error = "contours of a z without a valid value are not supported yet", nullptr;
+        }
     }
-
     // _process_contour_level_args: the levels given, or picked by a locator (_autolev); bool z has its own
     std::optional<long long> n = a.nlevels;
     if (a.levels) {
         c.levels = *a.levels;
-    } else if (!n && z.dtype == colors::DType::Bool) {
+    } else if (!n && zDtype == colors::DType::Bool) {
         c.levels = a.filled ? std::vector<double>{0, .5, 1} : std::vector<double>{.5};
     } else {
         std::vector<double> lev;
@@ -176,21 +204,28 @@ std::unique_ptr<ContourSet> ContourSet::make(const rc::Params& rc, const Contour
     for (std::size_t i = 1; i < c.levels.size(); ++i)
         if (!(c.levels[i] - c.levels[i - 1] > 0.0)) return *error = "Contour levels must be increasing", nullptr;
 
-    // the generator, then the grid's extent
-    std::vector<double> xv, yv, zv;
-    for (int i = 0; i < Ny; ++i)
-        for (int j = 0; j < Nx; ++j) {
-            const double xx = X[std::size_t(i)][std::size_t(j)], yy = Y[std::size_t(i)][std::size_t(j)];
-            if (!std::isfinite(xx) || !std::isfinite(yy)) return *error = "contours of x and y that are not finite are not supported yet", nullptr;
-            xv.push_back(xx), yv.push_back(yy);
-            const std::size_t k = std::size_t(i) * std::size_t(Nx) + std::size_t(j);
-            zv.push_back(mask[k] ? std::numeric_limits<double>::quiet_NaN() : z.data[k]);
-        }
-    auto generator = contour::Generator::make(xv, yv, zv, Ny, Nx, cornerMask, a.nchunk, error);
-    if (!generator) return nullptr;
-    c.mins = {*std::min_element(xv.begin(), xv.end()), *std::min_element(yv.begin(), yv.end())};
-    c.maxs = {*std::max_element(xv.begin(), xv.end()), *std::max_element(yv.begin(), yv.end())};
-
+    if (a.triangulation) {
+        tri::Triangulation& t = *a.triangulation;
+        triGenerator = std::make_unique<tri::TriContourGenerator>(t, a.triZ);
+        c.mins = {support::npMin(t.x()), support::npMin(t.y())};
+        c.maxs = {support::npMax(t.x()), support::npMax(t.y())};
+        c.groupName = "TriContourSet";
+    } else {
+        // the generator, then the grid's extent
+        std::vector<double> xv, yv, zv;
+        for (int i = 0; i < Ny; ++i)
+            for (int j = 0; j < Nx; ++j) {
+                const double xx = X[std::size_t(i)][std::size_t(j)], yy = Y[std::size_t(i)][std::size_t(j)];
+                if (!std::isfinite(xx) || !std::isfinite(yy)) return *error = "contours of x and y that are not finite are not supported yet", nullptr;
+                xv.push_back(xx), yv.push_back(yy);
+                const std::size_t k = std::size_t(i) * std::size_t(Nx) + std::size_t(j);
+                zv.push_back(mask[k] ? std::numeric_limits<double>::quiet_NaN() : z.data[k]);
+            }
+        generator = contour::Generator::make(xv, yv, zv, Ny, Nx, cornerMask, a.nchunk, error);
+        if (!generator) return nullptr;
+        c.mins = {*std::min_element(xv.begin(), xv.end()), *std::min_element(yv.begin(), yv.end())};
+        c.maxs = {*std::max_element(xv.begin(), xv.end()), *std::max_element(yv.begin(), yv.end())};
+    }
     // _process_levels: the extended levels and the layers
     c.extendedLevels = c.levels;
     const double lower = c.logscale ? 1e-250 : -1e250, upper = 1e250;
@@ -262,11 +297,24 @@ std::unique_ptr<ContourSet> ContourSet::make(const rc::Params& rc, const Contour
     }
     const std::size_t npaths = a.filled ? lowers.size() : c.levels.size();
     for (std::size_t l = 0; l < npaths; ++l) {
+        std::vector<double> vertices;
+        std::vector<unsigned char> codes;
+        if (triGenerator) {
+            // _make_paths_from_contour_generator: the pieces concatenated; a filled contour is one piece, also
+            // when empty (codes then an empty array, not None)
+            const auto p = a.filled ? triGenerator->filled(lowers[l], uppers[l]) : triGenerator->lines(c.levels[l]);
+            for (std::size_t k = 0; k < p.vertices.size(); ++k) {
+                vertices.insert(vertices.end(), p.vertices[k].begin(), p.vertices[k].end());
+                codes.insert(codes.end(), p.codes[k].begin(), p.codes[k].end());
+            }
+            Path path = Path::make(std::move(vertices), std::move(codes), rc);
+            if (a.filled && !path.codes) path.codes = std::make_shared<const std::vector<unsigned char>>();
+            c.paths.push_back(std::move(path));
+            continue;
+        }
         contour::Paths p;
         if (!a.filled) p = generator->lines(c.levels[l]);
         else if (!generator->filled(lowers[l], uppers[l], &p, error)) return nullptr;
-        std::vector<double> vertices;
-        std::vector<unsigned char> codes;
         for (std::size_t k = 0; k < p.vertices.size(); ++k) {
             vertices.insert(vertices.end(), p.vertices[k].begin(), p.vertices[k].end());
             codes.insert(codes.end(), p.codes[k].begin(), p.codes[k].end());

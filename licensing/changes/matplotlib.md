@@ -366,7 +366,9 @@ it comes from in its first lines. The changes, as a whole:
   when Python is not verbose. tri/_triangulation.py's Triangulation and src/tri/_tri.cpp's Triangulation
   (calculate_edges, calculate_neighbors, calculate_boundaries, calculate_plane_coefficients, correct_triangles) are one
   class (src/tri/triangulation.cpp) without pybind11; tri/_triplot.py's triplot and tri/_tripcolor.py's tripcolor
-  are in src/engine/engine.cpp, collections.py's TriMesh in src/engine/collections.cpp.
+  are in src/engine/engine.cpp, collections.py's TriMesh in src/engine/collections.cpp. src/tri/_tri.cpp's
+  TriContourGenerator is src/tri/tri_contour.cpp (vectors for the NumPy arrays); tri/_tricontour.py's TriContourSet
+  (_contour_args) joins src/engine/contour_set.cpp's ContourSet as its triangulation input.
 - **Meshes** (src/engine/collections.cpp QuadMesh and PolyQuadMesh, src/engine/engine.cpp pcolormesh, pcolor,
   pcolorfast; src/engine/image.cpp PcolorImage): collections.py's _MeshData, PolyQuadMesh and QuadMesh (_convert_mesh_to_triangles for Gouraud shading, draw), backend_bases.py's RendererBase.draw_quad_mesh
   (the SVG renderer's path collection of the cells), axes/_axes.py's pcolormesh, pcolor, pcolorfast,
