@@ -375,7 +375,8 @@ it comes from in its first lines. The changes, as a whole:
   axes/_axes.py's axline with lines.py's AxLine (get_transform made at each drawing; src/engine/lines.cpp), and
   eventplot with collections.py's EventCollection (set_positions) as a LineCollection, and arrow with
   patches.py's FancyArrow (_make_verts; np.dot as BLAS's dgemm sums) as a Polygon.
-- **ecdf** (src/engine/engine.cpp ecdf): axes/_axes.py's ecdf, a stepped line through Axes.plot.
+- **ecdf** (src/engine/engine.cpp ecdf): axes/_axes.py's ecdf, a stepped line through Axes.plot. xcorr and acorr
+  through vlines / axhline or plot (np.correlate in src/support/npy_correlate.cpp).
 - **Tables** (src/engine/table.cpp, src/engine/engine.cpp table): table.py's Cell, Table (alignment, auto font size,
   auto column width, placement by loc or bbox) and table(), with axes/_base.py's add_table, translated to C++.
 - **Meshes** (src/engine/collections.cpp QuadMesh and PolyQuadMesh, src/engine/engine.cpp pcolormesh, pcolor,

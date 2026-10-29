@@ -41,3 +41,6 @@ where the bin rules treat them otherwise):
   loops_unary_complex.dispatch.c.src's simd_cabsolute_f64 for AVX2 and FMA (the reference machine's complex128
   multiplication and np.abs), translated from vector intrinsics to one value at a time (std::fma for the fused
   multiply-adds), for quiver's arrows.
+- **np.correlate** (src/support/npy_correlate.cpp): multiarraymodule.c's _pyarray_correlate for mode 'full' with
+  arraytypes.c.src's small_correlate, DOUBLE_dot (OpenBLAS's ddot through src/support/blas_dot.cpp) and LONG_dot,
+  translated to C++ for arrays of one length, for xcorr and acorr.

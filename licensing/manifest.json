@@ -635,6 +635,8 @@
     "src/support/histogram.cpp",
     "src/support/npy_complex.cpp",
     "src/support/npy_complex.hpp",
+    "src/support/npy_correlate.cpp",
+    "src/support/npy_correlate.hpp",
     "src/support/npy_logf.cpp",
     "src/support/npy_logf.hpp",
     "src/support/numpy_str.cpp",

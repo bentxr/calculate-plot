@@ -11,6 +11,8 @@
 #include "support/log10.hpp"
 #include "engine/contour_set.hpp"
 #include "engine/table.hpp"
+#include "support/blas_dot.hpp"
+#include "support/npy_correlate.hpp"
 #include "engine/quiver.hpp"
 #include "engine/streamplot.hpp"
 #include "engine/figure.hpp"
@@ -220,7 +222,7 @@ public:
             {"hlines", "hlines"}, {"vlines", "vlines"}, {"grid", "grid"}, {"legend", "legend"}, {"text", "text"},
             {"title", "set_title"}, {"xlabel", "set_xlabel"}, {"ylabel", "set_ylabel"}, {"xlim", "set_xlim"},
             {"ylim", "set_ylim"}, {"xscale", "set_xscale"}, {"yscale", "set_yscale"}, {"bar", "bar"}, {"barh", "barh"},
-            {"hist", "hist"}, {"fill", "fill"}, {"step", "step"}, {"stairs", "stairs"}, {"stem", "stem"}, {"boxplot", "boxplot"}, {"violinplot", "violinplot"}, {"pie", "pie"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}, {"imshow", "imshow"}, {"matshow", "matshow"}, {"spy", "spy"}, {"pcolormesh", "pcolormesh"}, {"pcolor", "pcolor"}, {"contour", "contour"}, {"contourf", "contourf"}, {"clabel", "clabel"}, {"hexbin", "hexbin"}, {"quiver", "quiver"}, {"quiverkey", "quiverkey"}, {"barbs", "barbs"}, {"streamplot", "streamplot"}, {"triplot", "triplot"}, {"tripcolor", "tripcolor"}, {"tricontour", "tricontour"}, {"tricontourf", "tricontourf"}, {"stackplot", "stackplot"}, {"broken_barh", "broken_barh"}, {"axline", "axline"}, {"eventplot", "eventplot"}, {"arrow", "arrow"}, {"table", "table"}, {"ecdf", "ecdf"}};
+            {"hist", "hist"}, {"fill", "fill"}, {"step", "step"}, {"stairs", "stairs"}, {"stem", "stem"}, {"boxplot", "boxplot"}, {"violinplot", "violinplot"}, {"pie", "pie"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}, {"imshow", "imshow"}, {"matshow", "matshow"}, {"spy", "spy"}, {"pcolormesh", "pcolormesh"}, {"pcolor", "pcolor"}, {"contour", "contour"}, {"contourf", "contourf"}, {"clabel", "clabel"}, {"hexbin", "hexbin"}, {"quiver", "quiver"}, {"quiverkey", "quiverkey"}, {"barbs", "barbs"}, {"streamplot", "streamplot"}, {"triplot", "triplot"}, {"tripcolor", "tripcolor"}, {"tricontour", "tricontour"}, {"tricontourf", "tricontourf"}, {"stackplot", "stackplot"}, {"broken_barh", "broken_barh"}, {"axline", "axline"}, {"eventplot", "eventplot"}, {"arrow", "arrow"}, {"table", "table"}, {"ecdf", "ecdf"}, {"xcorr", "xcorr"}, {"acorr", "acorr"}};
         return ofAxes;
     }
 
@@ -1923,6 +1925,7 @@ private:
         if (call.method == "arrow") return arrow(ax, call, error);
         if (call.method == "table") return table(ax, call, error);
         if (call.method == "ecdf") return ecdf(ax, call, error);
+        if (call.method == "xcorr" || call.method == "acorr") return xcorr(ax, call, error);
         if (call.method == "tripcolor") return tripcolor(ax, call, error) && noteMappable(ax, call);
         if (call.method == "clabel") {
             const Json* cs = argument(call, 0, "CS");
@@ -5666,6 +5669,81 @@ private:
         Artist& line = *ax.children.back();
         (vertical ? line.stickyY : line.stickyX) = {0.0, 1.0};
         return true;
+    }
+
+    // xcorr(x, y, normed=True, detrend=mlab.detrend_none, usevlines=True, maxlags=10, **kwargs) and acorr(x, **kwargs)
+    // (xcorr(x, x)): the correlations at the lags, as vlines from 0 and an axhline, or as markers (plot)
+    bool xcorr(Axes& ax, const model::Call& call, std::string* error) {
+        const std::string where = call.on + "." + call.method;
+        const bool auto_ = call.method == "acorr";
+        static const char* const names[] = {"x", "y", "normed", "detrend", "usevlines", "maxlags"};
+        const std::size_t positional = auto_ ? 1 : 2;
+        if (call.args.size() > positional) return *error = where + ": too many positional arguments", false;
+        if (!call.as.empty()) return *error = where + ": naming the result is not supported yet", false;
+        std::vector<double> x, y;
+        const Json* xj = argument(call, 0, "x");
+        if (!xj || !numbers(*xj, &x)) return *error = where + ": x must be a list of numbers", false;
+        const Json* yj = auto_ ? xj : argument(call, 1, "y");
+        if (!yj || !numbers(*yj, &y)) return *error = where + ": y must be a list of numbers", false;
+        const bool integer = integers(*xj) && integers(*yj);
+        bool normed = true, usevlines = true;
+        long long maxlags = 10;
+        bool allLags = false;
+        for (const char* name : {"normed", "usevlines"})
+            if (const Json* v = keyword(call, name)) {
+                if (!v->isBool()) return *error = where + ": " + name + " must be True or False", false;
+                (name[0] == 'n' ? normed : usevlines) = v->asBool();
+            }
+        if (const Json* d = keyword(call, "detrend"); d && !d->isNull()) return *error = where + ": detrend is not supported yet", false;
+        if (const Json* m = keyword(call, "maxlags")) {
+            if (m->isNull()) allLags = true;
+            else if (!m->isNumber() || !m->isInteger()) return *error = where + ": maxlags must be an integer or None", false;
+            else maxlags = (long long)m->asNumber();
+        }
+        const long long nx = (long long)x.size();
+        if (nx != (long long)y.size()) return *error = where + ": x and y must be equal length", false;
+        if (nx == 0) return *error = where + ": first array argument cannot be empty", false;
+        std::vector<double> c = support::npCorrelateFull(x, y, integer);
+        if (normed) {
+            const double xx = integer ? support::npCorrelateFull(x, x, true)[std::size_t(nx - 1)] : 0.0 + support::blasDot(x, x);
+            const double yy = integer ? support::npCorrelateFull(y, y, true)[std::size_t(nx - 1)] : 0.0 + support::blasDot(y, y);
+            const double norm = std::sqrt(xx * yy);
+            for (double& v : c) v = v / norm;
+        }
+        if (allLags) maxlags = nx - 1;
+        if (maxlags >= nx || maxlags < 1) return *error = where + ": maxlags must be None or strictly positive < " + std::to_string(nx), false;
+        std::vector<Json> lags;
+        std::vector<double> correls;
+        for (long long k = -maxlags; k <= maxlags; ++k) {
+            lags.push_back(Json::integer(k));
+            correls.push_back(c[std::size_t(nx - 1 + k)]);
+        }
+        std::vector<std::pair<std::string, Json>> kwargs;
+        for (const auto& kw : call.kwargs)
+            if (std::find(std::begin(names), std::end(names), kw.first) == std::end(names)) kwargs.push_back(kw);
+        model::Call p;
+        p.on = call.on;
+        if (usevlines) {
+            p.method = "vlines";
+            p.args = {Json::array(lags), Json::array({Json::integer(0)}), numbersJson(correls)};
+            p.kwargs = kwargs;
+            if (!lines(ax, p, error)) return false;
+            // the label goes to the vertical lines alone
+            kwargs.erase(std::remove_if(kwargs.begin(), kwargs.end(), [](const auto& kw) { return kw.first == "label"; }), kwargs.end());
+            p.method = "axhline";
+            p.args.clear();
+            p.kwargs = kwargs;
+            return axline(ax, p, error);
+        }
+        const auto has = [&](const char* k) {
+            return std::any_of(kwargs.begin(), kwargs.end(), [&](const auto& kw) { return kw.first == k; });
+        };
+        if (!has("marker")) kwargs.emplace_back("marker", Json::string("o"));
+        if (!has("linestyle")) kwargs.emplace_back("linestyle", Json::string("None"));
+        p.method = "plot";
+        p.args = {Json::array(lags), numbersJson(correls)};
+        p.kwargs = kwargs;
+        return plot(ax, p, error);
     }
 
     bool colorsCall(const model::Call& call, std::string* error) {
