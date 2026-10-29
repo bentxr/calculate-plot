@@ -526,6 +526,8 @@
     "src/engine/path.hpp",
     "src/engine/quiver.cpp",
     "src/engine/quiver.hpp",
+    "src/engine/streamplot.cpp",
+    "src/engine/streamplot.hpp",
     "src/engine/renderer.hpp",
     "src/engine/text.cpp",
     "src/engine/text.hpp",

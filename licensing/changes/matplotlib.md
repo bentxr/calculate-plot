@@ -338,6 +338,10 @@ it comes from in its first lines. The changes, as a whole:
   QuiverKey (_init, _text_shift, draw) and Barbs (set_UVC, _find_tails, _make_barbs, with patches.py's CirclePolygon
   vertices and _CollectionWithSizes' sizes), and axes/_axes.py's Axes.quiver, Axes.quiverkey and Axes.barbs, translated to C++ with NumPy's operations
   in their order (NumPy's complex multiplication and absolute value from src/support/npy_complex.cpp).
+- **Streamlines** (src/engine/streamplot.cpp, src/engine/engine.cpp streamplot): streamplot.py's streamplot, Grid,
+  StreamMask, DomainMap, _get_integrator, _integrate_rk12, _euler_step, interpgrid and _gen_starting_points,
+  translated to C++ with the exceptions as return values; the arrows as FancyArrowPatch objects in data coordinates
+  (patches.py's FancyArrowPatch.get_path back through its transform, src/engine/arrows.cpp).
 - **Meshes** (src/engine/collections.cpp QuadMesh and PolyQuadMesh, src/engine/engine.cpp pcolormesh, pcolor,
   pcolorfast; src/engine/image.cpp PcolorImage): collections.py's _MeshData, PolyQuadMesh and QuadMesh (_convert_mesh_to_triangles for Gouraud shading, draw), backend_bases.py's RendererBase.draw_quad_mesh
   (the SVG renderer's path collection of the cells), axes/_axes.py's pcolormesh, pcolor, pcolorfast,

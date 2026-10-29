@@ -90,6 +90,7 @@ add_library(calculate-plot STATIC
     src/engine/contour_labels.cpp
     src/engine/contour_set.cpp
     src/engine/quiver.cpp
+    src/engine/streamplot.cpp
     src/contour/contour.cpp
     src/contour/mpl2014.cpp
     src/engine/trace_renderer.cpp

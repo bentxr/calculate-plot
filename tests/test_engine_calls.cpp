@@ -2156,6 +2156,35 @@ INSTANTIATE_TEST_SUITE_P(
         Refusal{R"({"on": "axs[0]", "call": "barbs", "args": [[1]]})",
                 "axs[0].barbs: barbs() takes from 2 to 5 positional arguments but 1 were given"}));
 
+// streamplot raises what matplotlib raises, and refuses what is not ported
+class StreamplotRefusals : public testing::TestWithParam<Refusal> {};
+
+TEST_P(StreamplotRefusals, NameTheCallAndTheReason) {
+    EXPECT_EQ(draw(kSubplots + GetParam().call).error, GetParam().error);
+}
+
+#define UV33 R"({"$array": {"dtype": "float64", "data": [[1, 1, 1], [1, 1, 1], [1, 1, 1]]}})"
+INSTANTIATE_TEST_SUITE_P(
+    Engine, StreamplotRefusals,
+    testing::Values(
+        Refusal{R"({"on": "axs[0]", "call": "streamplot", "args": [[0, 2, 1], [0, 1, 2], )" UV33 ", " UV33 "]}",
+                "axs[0].streamplot: 'x' must be strictly increasing"},
+        Refusal{R"({"on": "axs[0]", "call": "streamplot", "args": [[0, 1, 3], [0, 1, 2], )" UV33 ", " UV33 "]}",
+                "axs[0].streamplot: 'x' values must be equally spaced"},
+        Refusal{R"({"on": "axs[0]", "call": "streamplot", "args": [[0, 1, 2], [0, 1, 2], {"$array": {"dtype": "float64", "data": [[1, 1, 1], [1, 1, 1]]}}, )" UV33 "]}",
+                "axs[0].streamplot: 'u' and 'v' must match the shape of the (x, y) grid"},
+        Refusal{R"({"on": "axs[0]", "call": "streamplot", "args": [[0, 1, 2], [0, 1, 2], [[1, 1, 1], [1, 1, 1], [1, 1, 1]], [[1, 1, 1], [1, 1, 1], [1, 1, 1]]]})",
+                "axs[0].streamplot: 'list' object has no attribute 'shape'"},
+        Refusal{R"({"on": "axs[0]", "call": "streamplot", "args": [[0, 1, 2], [0, 1, 2], )" UV33 ", " UV33 R"(], "kwargs": {"integration_direction": "up"}})",
+                "axs[0].streamplot: 'up' is not a valid value for integration_direction. Supported values are 'both', 'forward', 'backward'"},
+        Refusal{R"({"on": "axs[0]", "call": "streamplot", "args": [[0, 1, 2], [0, 1, 2], )" UV33 ", " UV33 R"(], "kwargs": {"integration_max_step_scale": 0}})",
+                "axs[0].streamplot: The value of integration_max_step_scale must be > 0, got 0"},
+        Refusal{R"({"on": "axs[0]", "call": "streamplot", "args": [[0, 1, 2], [0, 1, 2], )" UV33 ", " UV33 R"(], "kwargs": {"num_arrows": -1}})",
+                "axs[0].streamplot: The value of num_arrows must be >= 0, got num_arrows=-1"},
+        Refusal{R"({"on": "axs[0]", "call": "streamplot", "args": [[0, 1, 2], [0, 1, 2], )" UV33 ", " UV33 R"(], "kwargs": {"start_points": [[10, 2]]}})",
+                "axs[0].streamplot: Starting point (10.0, 2.0) outside of data boundaries"}));
+#undef UV33
+
 // contour lines never look at hatches, whatever they are
 TEST(ContourCalls, LinesIgnoreHatches) {
     EXPECT_EQ(draw(kSubplots + R"({"on": "axs[0]", "call": "contour", "args": [[[0, 1], [2, 3]]], "kwargs": {"hatches": null}})").error, "");

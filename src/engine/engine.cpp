@@ -10,6 +10,7 @@
 #include "support/log10.hpp"
 #include "engine/contour_set.hpp"
 #include "engine/quiver.hpp"
+#include "engine/streamplot.hpp"
 #include "engine/figure.hpp"
 #include "engine/image.hpp"
 #include "engine/inset.hpp"
@@ -201,7 +202,7 @@ public:
             {"hlines", "hlines"}, {"vlines", "vlines"}, {"grid", "grid"}, {"legend", "legend"}, {"text", "text"},
             {"title", "set_title"}, {"xlabel", "set_xlabel"}, {"ylabel", "set_ylabel"}, {"xlim", "set_xlim"},
             {"ylim", "set_ylim"}, {"xscale", "set_xscale"}, {"yscale", "set_yscale"}, {"bar", "bar"}, {"barh", "barh"},
-            {"hist", "hist"}, {"fill", "fill"}, {"step", "step"}, {"stairs", "stairs"}, {"stem", "stem"}, {"boxplot", "boxplot"}, {"violinplot", "violinplot"}, {"pie", "pie"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}, {"imshow", "imshow"}, {"matshow", "matshow"}, {"spy", "spy"}, {"pcolormesh", "pcolormesh"}, {"pcolor", "pcolor"}, {"contour", "contour"}, {"contourf", "contourf"}, {"clabel", "clabel"}, {"hexbin", "hexbin"}, {"quiver", "quiver"}, {"quiverkey", "quiverkey"}, {"barbs", "barbs"}};
+            {"hist", "hist"}, {"fill", "fill"}, {"step", "step"}, {"stairs", "stairs"}, {"stem", "stem"}, {"boxplot", "boxplot"}, {"violinplot", "violinplot"}, {"pie", "pie"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}, {"imshow", "imshow"}, {"matshow", "matshow"}, {"spy", "spy"}, {"pcolormesh", "pcolormesh"}, {"pcolor", "pcolor"}, {"contour", "contour"}, {"contourf", "contourf"}, {"clabel", "clabel"}, {"hexbin", "hexbin"}, {"quiver", "quiver"}, {"quiverkey", "quiverkey"}, {"barbs", "barbs"}, {"streamplot", "streamplot"}};
         return ofAxes;
     }
 
@@ -1659,6 +1660,7 @@ private:
         if (call.method == "quiver") return quiver(ax, call, error) && noteMappable(ax, call);
         if (call.method == "quiverkey") return quiverkey(ax, call, error);
         if (call.method == "barbs") return barbs(ax, call, error) && noteMappable(ax, call);
+        if (call.method == "streamplot") return streamplot(ax, call, error);
         if (call.method == "clabel") {
             const Json* cs = argument(call, 0, "CS");
             if (call.args.size() > 2) return *error = where + ": clabel() takes from 2 to 3 positional arguments but " + std::to_string(call.args.size() + 1) + " were given", false;
@@ -5840,6 +5842,250 @@ private:
         if (both) b->setFacecolor(ColorArg::of(*both)), b->setEdgecolor(ColorArg::of(*both));  // (set_color, after)
         if (!linewidthGiven) b->setLinewidths({1.0});  // (kwargs['linewidth'] = 1, applied last)
         ax.addCollection(std::move(b), true);
+        return true;
+    }
+
+    // Axes.streamplot(x, y, u, v, density=1, linewidth=None, color=None, cmap=None, norm=None, arrowsize=1,
+    // arrowstyle='-|>', minlength=0.1, transform=None, zorder=None, start_points=None, maxlength=4.0,
+    // integration_direction='both', broken_streamlines=True, *, integration_max_step_scale=1.0,
+    // integration_max_error_scale=1.0, num_arrows=1): a LineCollection of the streamlines and their arrows
+    bool streamplot(Axes& ax, const model::Call& call, std::string* error) {
+        const std::string where = call.on + ".streamplot";
+        static const char* const names[] = {"x", "y", "u", "v", "density", "linewidth", "color", "cmap", "norm", "arrowsize", "arrowstyle",
+                                            "minlength", "transform", "zorder", "start_points", "maxlength", "integration_direction",
+                                            "broken_streamlines"};
+        if (call.args.size() > std::size(names)) return *error = where + ": too many positional arguments", false;
+        if (!call.as.empty()) return *error = where + ": naming the streamplot's result is not supported yet", false;
+        model::Call c = call;
+        c.args.clear();
+        for (std::size_t i = 0; i < call.args.size(); ++i) c.kwargs.insert(c.kwargs.begin() + long(i), {names[i], call.args[i]});
+        static const std::set<std::string> known = {"x", "y", "u", "v", "density", "linewidth", "color", "cmap", "norm", "arrowsize",
+                                                    "arrowstyle", "minlength", "transform", "zorder", "start_points", "maxlength",
+                                                    "integration_direction", "broken_streamlines", "integration_max_step_scale",
+                                                    "integration_max_error_scale", "num_arrows"};
+        for (const auto& kw : c.kwargs)
+            if (!known.count(kw.first)) return *error = where + ": streamplot() got an unexpected keyword argument '" + kw.first + "'", false;
+        const auto get = [&](const char* name) -> const Json* {
+            const Json* v = keyword(c, name);
+            return v && !v->isNull() ? v : nullptr;
+        };
+        for (const char* required : {"x", "y", "u", "v"})
+            if (!get(required)) return *error = where + ": streamplot() missing a required argument: '" + required + "'", false;
+        const auto isArray = [](const Json& v) { return v.isObject() && v.members().size() == 1 && v.members()[0].first == "$array"; };
+        // Grid(x, y): 1-D, or 2-D with equal rows (x) and columns (y)
+        const auto axisOf = [&](const Json& value, bool isX, std::vector<double>* out) {
+            std::vector<double> flat;
+            std::size_t rows = 0, cols = 0;
+            if (!raveled(value, &flat, &rows, &cols)) return *error = where + ": x and y must be arrays of numbers", false;
+            const bool twoD = sequence(isArray(value) ? *value.members()[0].second.find("data") : value) &&
+                              sequence((*sequence(isArray(value) ? *value.members()[0].second.find("data") : value))[0]);
+            if (!twoD) return *out = flat, true;
+            const std::size_t n = isX ? cols : rows;
+            out->clear();
+            for (std::size_t k = 0; k < n; ++k) out->push_back(isX ? flat[k] : flat[k * cols]);
+            for (std::size_t r = 0; r < rows; ++r)
+                for (std::size_t k = 0; k < cols; ++k) {
+                    const double first = isX ? flat[k] : flat[r * cols];
+                    const double v = flat[r * cols + k];
+                    if (!(std::fabs(v - first) <= 1e-8 + 1e-5 * std::fabs(first)))  // np.allclose(x_row, x)
+                        return *error = where + (isX ? ": The rows of 'x' must be equal" : ": The columns of 'y' must be equal"), false;
+                }
+            return true;
+        };
+        std::vector<double> xs, ys;
+        if (!axisOf(*get("x"), true, &xs) || !axisOf(*get("y"), false, &ys)) return false;
+        StreamGrid grid;
+        if (!streamGrid(xs, ys, &grid, error)) return *error = where + ": " + *error, false;
+        StreamOptions o;
+        double v = 0;
+        if (const Json* d = get("density")) {
+            std::vector<double> pair;
+            if (readNumber(*d, &v)) o.densityX = o.densityY = v;
+            else if (numbers(*d, &pair) && pair.size() == 2) o.densityX = pair[0], o.densityY = pair[1];
+            else return *error = where + ": 'density' must be a scalar or be of length 2", false;
+        }
+        double stepScale = 1.0, errorScale = 1.0, arrowsize = 1, numArrows = 1;
+        const auto number = [&](const char* name, double* out) {
+            const Json* j = get(name);
+            if (!j) return true;
+            if (!readNumber(*j, out)) return *error = where + ": " + name + " must be a number", false;
+            return true;
+        };
+        if (!number("integration_max_step_scale", &stepScale) || !number("integration_max_error_scale", &errorScale) ||
+            !number("num_arrows", &numArrows) || !number("arrowsize", &arrowsize) || !number("minlength", &o.minlength) ||
+            !number("maxlength", &o.maxlength))
+            return false;
+        if (o.densityX * 30 < 0 || o.densityY * 30 < 0) return *error = where + ": 'density' must be positive", false;
+        if (stepScale <= 0.0) return *error = where + ": The value of integration_max_step_scale must be > 0, got " + repr(*get("integration_max_step_scale")), false;
+        if (errorScale <= 0.0) return *error = where + ": The value of integration_max_error_scale must be > 0, got " + repr(*get("integration_max_error_scale")), false;
+        if (numArrows < 0) return *error = where + ": The value of num_arrows must be >= 0, got num_arrows=" + repr(*get("num_arrows")), false;
+        if (numArrows != std::floor(numArrows)) return *error = where + ": num_arrows must be an integer", false;
+        o.maxStepScale = stepScale, o.maxErrorScale = errorScale;
+        double zorder = 2;  // Line2D.zorder
+        if (!number("zorder", &zorder)) return false;
+        if (get("transform")) return *error = where + ": transform is not supported yet", false;
+        // the colour (the lines' next one), or an array of values mapped through the colormap
+        const Json* colorJson = get("color");
+        const bool multicolor = colorJson && isArray(*colorJson);
+        colors::Spec color;
+        if (!colorJson) color = ax.nextLineColor();
+        else if (!multicolor && !this->color(*colorJson, &color)) return *error = where + ": color must be a colour or an array of values ({\"$array\": ...})", false;
+        const Json* lwJson = get("linewidth");
+        const bool varyingWidth = lwJson && isArray(*lwJson);
+        double linewidth = rc_.number("lines.linewidth");
+        if (lwJson && !varyingWidth && !readNumber(*lwJson, &linewidth)) return *error = where + ": linewidth must be a number or an array of widths ({\"$array\": ...})", false;
+        std::string arrowstyle = "-|>";
+        if (const Json* a = get("arrowstyle")) {
+            if (!a->isString()) return *error = where + ": arrowstyle must be a string", false;
+            arrowstyle = a->asString();
+        }
+        if (const Json* d = get("integration_direction")) {
+            if (!d->isString() || (d->asString() != "both" && d->asString() != "forward" && d->asString() != "backward"))
+                return *error = where + ": " + repr(*d) + " is not a valid value for integration_direction. Supported values are 'both', 'forward', 'backward'", false;
+            o.direction = d->asString();
+        }
+        if (const Json* b = get("broken_streamlines")) {
+            if (!b->isBool()) return *error = where + ": broken_streamlines must be True or False", false;
+            o.broken = b->asBool();
+        }
+        // the arrays of the grid's shape (np.ndarray: lists have no shape)
+        const std::size_t cells = std::size_t(grid.nx) * std::size_t(grid.ny);
+        const auto gridArray_ = [&](const Json& value, const std::string& message, std::vector<double>* out) {
+            if (!isArray(value)) return *error = where + ": 'list' object has no attribute 'shape'", false;
+            ImageArray a;
+            if (!readArray(value, &a, error)) return *error = where + ": " + *error, false;
+            if (a.channels != 0 || a.rows != grid.ny || a.cols != grid.nx) return *error = where + ": " + message, false;
+            out->resize(cells);
+            for (std::size_t i = 0; i < cells; ++i)
+                (*out)[i] = a.masked(i) || !std::isfinite(a.data[i]) ? std::numeric_limits<double>::quiet_NaN() : a.data[i];  // masked_invalid
+            return true;
+        };
+        std::vector<double> colorValues, widths, u, v2;
+        if (multicolor && !gridArray_(*colorJson, "If 'color' is given, it must match the shape of the (x, y) grid", &colorValues)) return false;
+        if (varyingWidth && !gridArray_(*lwJson, "If 'linewidth' is given, it must match the shape of the (x, y) grid", &widths)) return false;
+        const char* uvShape = "'u' and 'v' must match the shape of the (x, y) grid";
+        if (!isArray(*get("u")) || !isArray(*get("v"))) return *error = where + ": 'list' object has no attribute 'shape'", false;
+        if (!gridArray_(*get("u"), uvShape, &u) || !gridArray_(*get("v"), uvShape, &v2)) return false;
+        if (const Json* sp = get("start_points")) {
+            const Json* seq = sequence(*sp);
+            std::vector<std::array<double, 2>> points;
+            for (std::size_t i = 0; seq && i < seq->size(); ++i) {
+                std::vector<double> pt;
+                if (!numbers((*seq)[i], &pt) || pt.size() != 2) return *error = where + ": start_points must be a list of (x, y) points", false;
+                points.push_back({pt[0], pt[1]});
+            }
+            if (!seq) return *error = where + ": start_points must be a list of (x, y) points", false;
+            o.startPoints = points;
+        }
+        std::vector<std::vector<std::array<double, 2>>> trajectories;
+        if (!streamTrajectories(grid, u, v2, o, &trajectories, error)) return *error = where + ": " + *error, false;
+        // the multicolour lines' norm (Normalize of the values' extremes) and colormap
+        std::shared_ptr<colors::Norm> norm;
+        colors::Colormap cmap;
+        bool normObject = false;
+        if (multicolor) {
+            if (!colorizer(&cmap, &norm, get("cmap"), get("norm"), nullptr, false, where, &normObject, error)) return false;
+            if (!get("norm")) {
+                double lo = std::numeric_limits<double>::infinity(), hi = -lo;
+                for (double cv : colorValues)
+                    if (!std::isnan(cv)) lo = std::min(lo, cv), hi = std::max(hi, cv);
+                colors::NormSpec spec;
+                spec.vmin = lo, spec.vmax = hi;
+                norm = std::make_shared<colors::Norm>();
+                if (!colors::Norm::make(spec, norm.get(), error)) return *error = where + ": " + *error, false;
+            }
+        }
+        // interpgrid of an array along a trajectory (vectorised: masked where a corner is)
+        const auto along = [&](const std::vector<double>& a, const std::vector<std::array<double, 2>>& t) {
+            std::vector<double> out;
+            for (const auto& p : t) {
+                const int x = int(p[0]), y = int(p[1]);
+                const int xn = std::min(std::max(x + 1, 0), grid.nx - 1), yn = std::min(std::max(y + 1, 0), grid.ny - 1);
+                const auto at = [&](int r, int col) { return a[std::size_t(r) * std::size_t(grid.nx) + std::size_t(col)]; };
+                const double xt = p[0] - x, yt = p[1] - y;
+                const double a0 = at(y, x) * (1 - xt) + at(y, xn) * xt;
+                const double a1 = at(yn, x) * (1 - xt) + at(yn, xn) * xt;
+                out.push_back(a0 * (1 - yt) + a1 * yt);
+            }
+            return out;
+        };
+        std::vector<std::vector<std::array<double, 2>>> streamlines;
+        std::vector<double> segmentWidths;
+        colors::MaskedArray segmentValues;
+        std::vector<std::unique_ptr<FancyArrowPatch>> arrows;
+        const double xData2grid = 1. / grid.dx, yData2grid = 1. / grid.dy;
+        for (const auto& t : trajectories) {
+            std::vector<double> tx, ty;
+            for (const auto& p : t) tx.push_back(p[0] / xData2grid + grid.xOrigin), ty.push_back(p[1] / yData2grid + grid.yOrigin);
+            if (varyingWidth || multicolor) {
+                for (std::size_t i = 0; i + 1 < tx.size(); ++i) streamlines.push_back({{tx[i], ty[i]}, {tx[i + 1], ty[i + 1]}});
+            } else {
+                std::vector<std::array<double, 2>> points;
+                for (std::size_t i = 0; i < tx.size(); ++i) points.push_back({tx[i], ty[i]});
+                streamlines.push_back(points);
+            }
+            // the distance along the streamline
+            std::vector<double> dist;
+            double total = 0;
+            for (std::size_t i = 0; i + 1 < tx.size(); ++i) dist.push_back(total += std::hypot(tx[i + 1] - tx[i], ty[i + 1] - ty[i]));
+            std::vector<double> lineWidths, lineValues;
+            if (varyingWidth) {
+                lineWidths = along(widths, t);
+                lineWidths.pop_back();
+                segmentWidths.insert(segmentWidths.end(), lineWidths.begin(), lineWidths.end());
+            }
+            if (multicolor) {
+                lineValues = along(colorValues, t);
+                lineValues.pop_back();
+                for (double cv : lineValues) segmentValues.data.push_back(cv), segmentValues.mask.push_back(std::isnan(cv));
+            }
+            // the arrows along it, at fractions of its length
+            for (long k = 1; k <= long(numArrows); ++k) {
+                if (dist.empty()) return *error = where + ": index -1 is out of bounds for axis 0 with size 0", false;
+                const double target = dist.back() * (double(k) / double(long(numArrows) + 1));
+                const std::size_t idx = std::size_t(std::lower_bound(dist.begin(), dist.end(), target) - dist.begin());
+                const std::vector<double> hx(tx.begin() + long(idx), tx.begin() + long(std::min(idx + 2, tx.size())));
+                const std::vector<double> hy(ty.begin() + long(idx), ty.begin() + long(std::min(idx + 2, ty.size())));
+                auto arrow = std::make_unique<FancyArrowPatch>(rc_, bezier::Point{tx[idx], ty[idx]}, bezier::Point{support::npMean(hx), support::npMean(hy)});
+                if (!ArrowStyle::make(arrowstyle, {}, &arrow->arrowStyle, error)) return *error = where + ": " + *error, false;
+                arrow->mutationScale = 10 * arrowsize;
+                colors::Spec arrowColor = color;
+                if (multicolor) {
+                    // cmap(norm(value)): the norm autoscaled by the value when it has no limits yet (it is the
+                    // lines' norm too). A masked value is a scalar there, which process_value takes as an unmasked
+                    // NaN (the colormap's bad colour, but 0 when vmin == vmax).
+                    colors::MaskedArray one;
+                    one.data = {lineValues[idx]};
+                    std::vector<colors::Rgba> rgba;
+                    if (!colors::mapColors(one, *norm, cmap, std::nullopt, &rgba, error)) return *error = where + ": " + *error, false;
+                    arrowColor = colors::Spec(std::vector<double>(rgba[0].begin(), rgba[0].end()));
+                }
+                arrow->setFacecolor(arrowColor);  // (color: face and edge)
+                arrow->setEdgecolor(arrowColor);
+                arrow->setLinewidth(varyingWidth ? lineWidths[idx] : linewidth);
+                arrow->zorder = zorder;
+                arrow->transform = ax.transData;
+                arrow->transformSet = true;
+                arrows.push_back(std::move(arrow));
+            }
+        }
+        auto lc = std::make_unique<LineCollection>(rc_, streamlines);
+        lc->transform = ax.transData;
+        lc->transformSet = true;
+        if (!multicolor) lc->setEdgecolor(ColorArg::of(color));
+        lc->setLinewidths(varyingWidth ? segmentWidths : std::vector<double>{linewidth});
+        lc->zorder = zorder;
+        lc->stickyX = {grid.xOrigin, grid.xOrigin + grid.width};
+        lc->stickyY = {grid.yOrigin, grid.yOrigin + grid.height};
+        if (multicolor) {
+            lc->array = segmentValues;
+            lc->cmap = cmap;
+            lc->norm = norm;
+        }
+        ax.addCollection(std::move(lc), true);
+        for (auto& arrow : arrows) ax.addPatch(std::move(arrow));
+        ax.requestAutoscaleView(true, true);  // autoscale_view(), at once
+        ax.unstaleViewLim();
         return true;
     }
 

@@ -838,8 +838,19 @@ Path FancyArrowPatch::path() const {
         support::noteRaised(error);
         return Path::make({}, {}, rc_);
     }
-    // get_path: the display path (compound when a list) back through the transform (the identity here)
-    return list ? compoundPath(paths, rc_) : paths[0];
+    // get_path: the display path (compound when a list) back through the transform (annotations': the identity)
+    Path display = list ? compoundPath(paths, rc_) : paths[0];
+    const auto t = fullTransform();
+    if (t->isIdentity() || !display.vertices) return display;
+    const auto inverse = t->inverted();
+    std::vector<double> v = *display.vertices;
+    for (std::size_t i = 0; i + 1 < v.size(); i += 2) {
+        const auto q = inverse->transform(v[i], v[i + 1]);
+        v[i] = q[0], v[i + 1] = q[1];
+    }
+    Path back = display;
+    back.vertices = std::make_shared<std::vector<double>>(std::move(v));
+    return back;
 }
 
 void FancyArrowPatch::draw(Renderer& renderer) {
