@@ -2286,6 +2286,54 @@ INSTANTIATE_TEST_SUITE_P(
         Refusal{R"({"on": "axs[0]", "call": "tricontour", "args": [[0, 1, 0, 1], [0, 0, 1, 1], [1, 2, 3, 4]], "kwargs": {"corner_mask": true}})",
                 "axs[0].tricontour: TriContourSet.set() got an unexpected keyword argument 'corner_mask'"}));
 
+// subplot_mosaic: matplotlib's errors (the layouts shown as NumPy shows object arrays)
+class MosaicRefusals : public testing::TestWithParam<Refusal> {};
+
+TEST_P(MosaicRefusals, NameTheCallAndTheReason) {
+    EXPECT_EQ(draw(GetParam().call).error, GetParam().error);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    Engine, MosaicRefusals,
+    testing::Values(
+        Refusal{R"({"call": "subplot_mosaic", "args": ["AB;BA"], "as": ["fig", "axd"]})",
+                "plt.subplot_mosaic: While trying to layout\narray([['A', 'B'],\n       ['B', 'A']], dtype=object)\n"
+                "we found that the label 'B' specifies a non-rectangular or non-contiguous area."},
+        Refusal{R"({"call": "subplot_mosaic", "args": [[[1, 2], [2, 1]]], "as": ["fig", "axd"]})",
+                "plt.subplot_mosaic: While trying to layout\narray([[1, 2],\n       [2, 1]], dtype=object)\n"
+                "we found that the label 2 specifies a non-rectangular or non-contiguous area."},
+        Refusal{R"({"call": "subplot_mosaic", "args": [[["A", "B"], ["C"]]], "as": ["fig", "axd"]})",
+                "plt.subplot_mosaic: All of the rows must be the same length, however the first row (['A', 'B']) has length 2 and row 1 "
+                "(['C']) has length 1."},
+        Refusal{R"({"call": "subplot_mosaic", "args": [["AB", "CD"]], "as": ["fig", "axd"]})", "plt.subplot_mosaic: List mosaic specification must be 2D"},
+        Refusal{R"({"call": "subplot_mosaic", "args": [[["A"], 3]], "as": ["fig", "axd"]})", "plt.subplot_mosaic: object of type 'int' has no len()"},
+        Refusal{R"({"call": "subplot_mosaic", "args": [5], "as": ["fig", "axd"]})", "plt.subplot_mosaic: cannot unpack non-iterable int object"},
+        Refusal{R"({"call": "subplot_mosaic", "args": [[["A", [["B", "A"]]]]], "as": ["fig", "axd"]})",
+                "plt.subplot_mosaic: There are duplicate keys {'A'} between the outer layout\narray([['A', list([['B', 'A']])]], dtype=object)\n"
+                "and the nested layout\n[['B' 'A']]"},
+        Refusal{R"({"call": "subplot_mosaic", "args": [[[[["B", "C"]], "B"]]], "as": ["fig", "axd"]})",
+                "plt.subplot_mosaic: There are duplicate keys B in the layout\narray([[list([['B', 'C']]), 'B']], dtype=object)"},
+        Refusal{R"({"call": "subplot_mosaic", "args": ["AB"], "kwargs": {"per_subplot_kw": {"$dict": {"Z": {"$dict": {}}}}}, "as": ["fig", "axd"]})",
+                "plt.subplot_mosaic: The keys {'Z'} are in *per_subplot_kw* but not in the mosaic."},
+        Refusal{R"({"call": "subplot_mosaic", "args": ["AB"], "kwargs": {"per_subplot_kw": {"$dict": {"AB": {"$dict": {}}, "A": {"$dict": {}}}}}, "as": ["fig", "axd"]})",
+                "plt.subplot_mosaic: The key 'A' appears multiple times."},
+        Refusal{R"({"call": "subplot_mosaic", "args": ["AB"], "kwargs": {"sharex": "yes"}, "as": ["fig", "axd"]})",
+                "plt.subplot_mosaic: 'sharex' must be an instance of bool, not a str"},
+        Refusal{R"({"call": "subplot_mosaic", "args": ["AB"], "kwargs": {"sharey": null}, "as": ["fig", "axd"]})",
+                "plt.subplot_mosaic: 'sharey' must be an instance of bool, not a None"},
+        Refusal{R"({"call": "subplot_mosaic", "args": ["AB"], "kwargs": {"width_ratios": [1], "gridspec_kw": {"$dict": {"width_ratios": [1, 2]}}}, "as": ["fig", "axd"]})",
+                "plt.subplot_mosaic: 'width_ratios' must not be defined both as parameter and as key in 'gridspec_kw'"},
+        Refusal{R"({"call": "subplot_mosaic", "args": ["AB"], "kwargs": {"height_ratios": [1, 2]}, "as": ["fig", "axd"]})",
+                "plt.subplot_mosaic: Expected the given number of height ratios to match the number of rows of the grid"},
+        Refusal{R"({"call": "subplot_mosaic", "args": ["AB"], "kwargs": {"gridspec_kw": {"$dict": {"foo": 1}}}, "as": ["fig", "axd"]})",
+                "plt.subplot_mosaic: GridSpec.__init__() got an unexpected keyword argument 'foo'"},
+        Refusal{R"({"call": "subplot_mosaic", "args": ["AB"], "kwargs": {"gridspec_kw": {"$dict": {"left": 0.9, "right": 0.2}}}, "as": ["fig", "axd"]})",
+                "plt.subplot_mosaic: left cannot be >= right"},
+        Refusal{R"({"call": "figure", "as": ["fig"]}, {"on": "fig", "call": "subplot_mosaic", "args": ["AB"], "kwargs": {"figsize": [2, 2]}, "as": ["axd"]})",
+                "fig.subplot_mosaic: FigureBase.subplot_mosaic() got an unexpected keyword argument 'figsize'"},
+        Refusal{R"({"call": "subplot_mosaic", "args": [[[1.5]]], "as": ["fig", "axd"]})",
+                "plt.subplot_mosaic: labels other than strings and integers are not supported yet"}));
+
 // axis(...): matplotlib's errors
 class AxisOptionRefusals : public testing::TestWithParam<Refusal> {};
 

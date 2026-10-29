@@ -342,6 +342,9 @@ public:
     void clearStale(bool x) { (x ? staleX_ : staleY_) = false; }
     // Axes.sharex / sharey: this Axes joins `other`'s group, uses its tickers and takes its limits.
     void share(bool x, Axes& other);
+    // sharex(other) / sharey(other) of an Axes already made: share, then other's limits (emit=False) and
+    // autoscaling (the scale is taken as it is: both are the linear one where this is used)
+    void shareAfter(bool x, Axes& other);
     // twinx() (`x`: the twin shares x) / twiny(): an Axes in the same cells sharing that axis, its other one on
     // the right (top), with no patch of its own; false and why when this Axes has no subplot spec
     Axes* twin(bool x, std::string* error);

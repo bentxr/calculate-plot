@@ -46,6 +46,27 @@ TEST(NumpyStr, FloatArraysAreNumpys) {
     EXPECT_EQ(checked, 166);
 }
 
+// repr() and str() of 2-D object arrays (subplot_mosaic's layouts in its errors), as NumPy writes them
+TEST(NumpyStr, ObjectArraysAreNumpys) {
+    std::ifstream in(fs::path(CALCULATE_PLOT_SOURCE_DIR) / "tests/oracle/object_arrays.json", std::ios::binary);
+    std::ostringstream text;
+    text << in.rdbuf();
+    const auto o = calculate_plot::support::parseJson(text.str(), nullptr);
+    ASSERT_TRUE(o.has_value());
+    int checked = 0;
+    for (const Json& c : o->find("cases")->items()) {
+        std::vector<std::vector<std::string>> words;
+        for (const Json& r : c.find("words")->items()) {
+            words.emplace_back();
+            for (const Json& w : r.items()) words.back().push_back(w.asString());
+        }
+        EXPECT_EQ(calculate_plot::support::numpyObjectArray(words, true), c.find("repr")->asString()) << "case " << checked;
+        EXPECT_EQ(calculate_plot::support::numpyObjectArray(words, false), c.find("str")->asString()) << "case " << checked;
+        ++checked;
+    }
+    EXPECT_EQ(checked, 13);
+}
+
 TEST(TransformStr, TreesAreMatplotlibs) {
     const Json& want = *oracle().find("transforms");
     auto dpi = affine();

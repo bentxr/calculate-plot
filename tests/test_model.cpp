@@ -107,6 +107,25 @@ TEST(FigureModel, ACallMayBeOnAnAttributeOfAnObject) {
     }
 }
 
+// A dict of Axes (subplot_mosaic's) is indexed by a string key in quotes, as Python writes it
+TEST(FigureModel, AnObjectMayBeIndexedByAStringKey) {
+    const auto f = parsed(R"({"version":1,"calls":[
+        {"call":"subplot_mosaic","args":["AB"],"as":["fig","axd"]},
+        {"on":"axd['A']","call":"grid"},
+        {"on":"axd[\"B\"].xaxis","call":"set_major_formatter","args":[{"$new":"NullFormatter"}]},
+        {"call":"sca","args":[{"$ref":"axd['B']"}]}]})");
+    ASSERT_EQ(f.calls.size(), 4u);
+    const std::string py = m::exportPython(f, "x");
+    EXPECT_NE(py.find("axd['A'].grid()\n"), std::string::npos) << py;
+    EXPECT_NE(py.find("axd[\"B\"].xaxis.set_major_formatter(plt.NullFormatter())\n"), std::string::npos) << py;
+    EXPECT_NE(py.find("plt.sca(axd['B'])\n"), std::string::npos) << py;
+    for (const char* on : {"axd['A\"]", "axd['A", "axd[A]", "axd['A'B']", "axd['\\\\']", "axd['A']['B']", "axd['']x"}) {
+        const std::string json = std::string(R"({"version":1,"calls":[{"call":"subplot_mosaic","args":["AB"],"as":["fig","axd"]},{"on":")") +
+                                 on + R"(","call":"grid"}]})";
+        EXPECT_FALSE(m::parseFigure(json, nullptr).has_value()) << on;
+    }
+}
+
 TEST(FigureModel, ANewObjectIsAPyplotClassWithoutArguments) {
     for (const char* bad : {R"({"$new":"os.system"})", R"({"$new":"__import__"})", R"({"$new":3})",
                             R"({"$new":"NullFormatter","x":1})", R"({"$new":""})"}) {

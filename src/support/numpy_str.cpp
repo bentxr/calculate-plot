@@ -141,4 +141,51 @@ std::string numpyStr(const std::vector<std::vector<double>>& rows) {
     return out + "]";
 }
 
+namespace {
+
+// _extendLine (legacy False): a word too long for the line goes on the next one, unless the line holds no more
+// than its prefix
+void extendLine(std::string& s, std::string& line, const std::string& word, std::size_t width, const std::string& nextLinePrefix) {
+    bool wrap = line.size() + word.size() > width;
+    if (line.size() <= nextLinePrefix.size()) wrap = false;
+    if (wrap) {
+        std::size_t end = line.find_last_not_of(" \t\n\r\f\v");
+        s += (end == std::string::npos ? std::string() : line.substr(0, end + 1)) + "\n";
+        line = nextLinePrefix;
+    }
+    line += word;
+}
+
+}  // namespace
+
+std::string numpyObjectArray(const std::vector<std::vector<std::string>>& words, bool asRepr) {
+    const std::string prefix = asRepr ? "array(" : "", separator = asRepr ? ", " : " ";
+    // array2string: the line width less the suffix (")" for repr), past "[" and the prefix
+    const std::size_t lineWidth = 75 - (asRepr ? 1 : 0);
+    const std::string nextLinePrefix = " " + std::string(prefix.size(), ' ');
+    const std::string rstripped = asRepr ? "," : "";  // separator.rstrip()
+    // _formatArray's recurser: the outer axis, then each row (curr_width less "]" at each level)
+    const std::string rowIndent = nextLinePrefix + " ";
+    const std::size_t rowWidth = lineWidth - 1;
+    const std::size_t elemWidth = rowWidth - std::max<std::size_t>(rstripped.size(), 1);
+    std::string outer;
+    for (std::size_t r = 0; r < words.size(); ++r) {
+        std::string s, line = rowIndent;
+        for (std::size_t k = 0; k < words[r].size(); ++k) {
+            extendLine(s, line, words[r][k], elemWidth, rowIndent);
+            if (k + 1 < words[r].size()) line += separator;
+        }
+        s += line;
+        const std::string row = "[" + s.substr(rowIndent.size()) + "]";
+        outer += nextLinePrefix + row + (r + 1 < words.size() ? rstripped + "\n" : "");
+    }
+    std::string text = prefix + "[" + outer.substr(nextLinePrefix.size()) + "]";
+    if (!asRepr) return text;
+    // array_repr: the dtype after the last line, or on a new one when it would pass the line width
+    text += ",";
+    const std::string extra = "dtype=object)";
+    const std::size_t lastLine = text.size() - (text.rfind('\n') == std::string::npos ? 0 : text.rfind('\n') + 1);
+    return text + (lastLine + extra.size() + 1 > 75 ? "\n" + std::string(prefix.size(), ' ') : " ") + extra;
+}
+
 }  // namespace calculate_plot::support

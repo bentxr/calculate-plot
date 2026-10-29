@@ -1912,6 +1912,13 @@ void Axes::share(bool x, Axes& other) {
     // needs set_xlim(*other.get_xlim(), emit=False, auto=other.get_autoscalex_on()) and the scale here.
 }
 
+void Axes::shareAfter(bool x, Axes& other) {
+    share(x, other);
+    Axis& theirs = x ? *other.xaxis : *other.yaxis;
+    const auto lim = theirs.viewInterval();  // other.get_xlim()
+    (x ? *xaxis : *yaxis).setLim(lim[0], lim[1], theirs.autoscaleOn, false);
+}
+
 Axes* Axes::twin(bool x, std::string* error) {
     if (!subplotSpec) return *error = "a twin of an Axes without a subplot spec is not supported yet", nullptr;
     // _make_twin_axes: add_subplot(ss, sharex=self) (or sharey)

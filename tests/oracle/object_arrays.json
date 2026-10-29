@@ -1,0 +1,167 @@
+{
+ "cases": [
+  {
+   "words": [
+    [
+     "1",
+     "22"
+    ],
+    [
+     "333",
+     "1"
+    ]
+   ],
+   "repr": "array([[1, 22],\n       [333, 1]], dtype=object)",
+   "str": "[[1 22]\n [333 1]]"
+  },
+  {
+   "words": [
+    [
+     "'A'",
+     "'BB'"
+    ],
+    [
+     "'CCC'",
+     "'A'"
+    ]
+   ],
+   "repr": "array([['A', 'BB'],\n       ['CCC', 'A']], dtype=object)",
+   "str": "[['A' 'BB']\n ['CCC' 'A']]"
+  },
+  {
+   "words": [
+    [
+     "'A'",
+     "list([['B', 'C']])"
+    ],
+    [
+     "'D'",
+     "'D'"
+    ]
+   ],
+   "repr": "array([['A', list([['B', 'C']])],\n       ['D', 'D']], dtype=object)",
+   "str": "[['A' list([['B', 'C']])]\n ['D' 'D']]"
+  },
+  {
+   "words": [
+    [
+     "'A'",
+     "'B'",
+     "'C'"
+    ]
+   ],
+   "repr": "array([['A', 'B', 'C']], dtype=object)",
+   "str": "[['A' 'B' 'C']]"
+  },
+  {
+   "words": [
+    [
+     "'A'"
+    ],
+    [
+     "'B'"
+    ]
+   ],
+   "repr": "array([['A'],\n       ['B']], dtype=object)",
+   "str": "[['A']\n ['B']]"
+  },
+  {
+   "words": [
+    [
+     "'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'",
+     "'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'",
+     "'cccccccccccccccccccccccccccccc'"
+    ]
+   ],
+   "repr": "array([['aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',\n        'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',\n        'cccccccccccccccccccccccccccccc']], dtype=object)",
+   "str": "[['aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'\n  'cccccccccccccccccccccccccccccc']]"
+  },
+  {
+   "words": [
+    [
+     "'xxxxxxxxxxxxxxxxxxxx'",
+     "'xxxxxxxxxxxxxxxxxxxx'",
+     "'xxxxxxxxxxxxxxxxxxxx'",
+     "'xxxxxxxxxxxxxxxxxxxx'",
+     "'xxxxxxxxxxxxxxxxxxxx'"
+    ],
+    [
+     "'yyy'",
+     "'yyy'",
+     "'yyy'",
+     "'yyy'",
+     "'yyy'"
+    ]
+   ],
+   "repr": "array([['xxxxxxxxxxxxxxxxxxxx', 'xxxxxxxxxxxxxxxxxxxx',\n        'xxxxxxxxxxxxxxxxxxxx', 'xxxxxxxxxxxxxxxxxxxx',\n        'xxxxxxxxxxxxxxxxxxxx'],\n       ['yyy', 'yyy', 'yyy', 'yyy', 'yyy']], dtype=object)",
+   "str": "[['xxxxxxxxxxxxxxxxxxxx' 'xxxxxxxxxxxxxxxxxxxx' 'xxxxxxxxxxxxxxxxxxxx'\n  'xxxxxxxxxxxxxxxxxxxx' 'xxxxxxxxxxxxxxxxxxxx']\n ['yyy' 'yyy' 'yyy' 'yyy' 'yyy']]"
+  },
+  {
+   "words": [
+    [
+     "'qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq'"
+    ]
+   ],
+   "repr": "array([['qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq']],\n      dtype=object)",
+   "str": "[['qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq']]"
+  },
+  {
+   "words": [
+    [
+     "'qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq'",
+     "'r'"
+    ]
+   ],
+   "repr": "array([['qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq',\n        'r']], dtype=object)",
+   "str": "[['qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq' 'r']]"
+  },
+  {
+   "words": [
+    [
+     "'qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq'",
+     "'r'"
+    ]
+   ],
+   "repr": "array([['qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq', 'r']],\n      dtype=object)",
+   "str": "[['qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq' 'r']]"
+  },
+  {
+   "words": [
+    [
+     "'kkkkkkkkkkkkkkkkkkkkkkkkk'",
+     "'lllllllllllllllllllllllll'"
+    ],
+    [
+     "'m'",
+     "'n'"
+    ]
+   ],
+   "repr": "array([['kkkkkkkkkkkkkkkkkkkkkkkkk', 'lllllllllllllllllllllllll'],\n       ['m', 'n']], dtype=object)",
+   "str": "[['kkkkkkkkkkkkkkkkkkkkkkkkk' 'lllllllllllllllllllllllll']\n ['m' 'n']]"
+  },
+  {
+   "words": [
+    [
+     "'sssssssssssssssssssssssssssssssss'",
+     "'ttttttttttttttttttttttttttttttttt'"
+    ]
+   ],
+   "repr": "array([['sssssssssssssssssssssssssssssssss',\n        'ttttttttttttttttttttttttttttttttt']], dtype=object)",
+   "str": "[['sssssssssssssssssssssssssssssssss' 'ttttttttttttttttttttttttttttttttt']]"
+  },
+  {
+   "words": [
+    [
+     "'uuuuuuuuuuuuuuuuuuuuuuuuuuuuuu'",
+     "'vvvvvvvvvvvvvvvvvvvvvvvvvvvvvv'"
+    ],
+    [
+     "'wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww'",
+     "'z'"
+    ]
+   ],
+   "repr": "array([['uuuuuuuuuuuuuuuuuuuuuuuuuuuuuu',\n        'vvvvvvvvvvvvvvvvvvvvvvvvvvvvvv'],\n       ['wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww', 'z']],\n      dtype=object)",
+   "str": "[['uuuuuuuuuuuuuuuuuuuuuuuuuuuuuu' 'vvvvvvvvvvvvvvvvvvvvvvvvvvvvvv']\n ['wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww' 'z']]"
+  }
+ ]
+}

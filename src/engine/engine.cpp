@@ -30,8 +30,10 @@
 #include "support/raised.hpp"
 #include "svg/svg_renderer.h"
 #include "support/pyparse.hpp"
+#include "support/numpy_str.hpp"
 
 #include <cctype>
+#include <climits>
 #include <cmath>
 #include <cstring>
 #include <functional>
@@ -121,6 +123,7 @@ public:
             return *error = (call.on.empty() ? std::string("plt") : call.on) + "." + call.method + ": dates are not supported yet", false;
         if (call.on.empty() && call.method == "figure") return figure(call, error);
         if (call.on.empty() && call.method == "subplots") return subplots(call, error);
+        if (call.on.empty() && call.method == "subplot_mosaic") return subplotMosaic(call, true, error);
         if (call.on.empty()) {
             if (call.method == "gcf") {  // the current figure, made if there is none
                 gcf();
@@ -936,6 +939,404 @@ private:
         return true;
     }
 
+    // Figure.subplot_mosaic's layout: the cells of a level (labels, the empty sentinel, or nested mosaics as given)
+    using MosaicGrid = std::vector<std::vector<Json>>;
+
+    // a label: a string or an integer (others are not taken yet)
+    static bool mosaicLabel(const Json& v) { return v.isString() || (v.isNumber() && v.isInteger() && !v.isBool()); }
+    static bool sameLabel(const Json& a, const Json& b) {
+        if (a.isString() && b.isString()) return a.asString() == b.asString();
+        if (a.isNull() && b.isNull()) return true;
+        return a.isNumber() && b.isNumber() && a.isInteger() && b.isInteger() && !a.isBool() && !b.isBool() &&
+               a.asNumber() == b.asNumber();
+    }
+    // inspect.cleandoc's result, then split into lines: a multi-line string mosaic (tabs are not taken)
+    static std::vector<std::string> mosaicLines(const std::string& text) {
+        std::vector<std::string> lines;
+        std::size_t start = 0;
+        for (;;) {
+            const auto nl = text.find('\n', start);
+            lines.push_back(text.substr(start, nl == std::string::npos ? std::string::npos : nl - start));
+            if (nl == std::string::npos) break;
+            start = nl + 1;
+        }
+        std::size_t margin = std::string::npos;  // the least indentation of the lines after the first that hold text
+        for (std::size_t i = 1; i < lines.size(); ++i) {
+            const auto content = lines[i].find_first_not_of(' ');
+            if (content != std::string::npos) margin = std::min(margin, content);
+        }
+        const auto first = lines[0].find_first_not_of(' ');
+        lines[0] = first == std::string::npos ? "" : lines[0].substr(first);
+        if (margin != std::string::npos)
+            for (std::size_t i = 1; i < lines.size(); ++i) lines[i] = lines[i].size() > margin ? lines[i].substr(margin) : "";
+        while (!lines.empty() && lines.back().empty()) lines.pop_back();
+        while (!lines.empty() && lines.front().empty()) lines.erase(lines.begin());
+        return lines;  // (strip('\n') then leaves them as they are)
+    }
+    // _make_array: a 2-D list, every row as long as the first
+    bool mosaicArray(const Json& inp, MosaicGrid* out, const std::string& where, std::string* error) {
+        // (Python's errors: r0, *rest = inp; len() of a row)
+        const auto typeName = [](const Json& v) {
+            return std::string(v.isNull() ? "NoneType" : v.isBool() ? "bool" : v.isNumber() ? (v.isInteger() ? "int" : "float") : "dict");
+        };
+        const Json* rows = sequence(inp);
+        if (!rows) return *error = where + ": cannot unpack non-iterable " + typeName(inp) + " object", false;
+        if (rows->size() == 0) return *error = where + ": not enough values to unpack (expected at least 1, got 0)", false;
+        const Json& r0 = (*rows)[0];
+        if (r0.isString()) return *error = where + ": List mosaic specification must be 2D", false;
+        const Json* first = sequence(r0);
+        const auto noLen = [&](const Json& v) { return *error = where + ": object of type '" + typeName(v) + "' has no len()", false; };
+        if (!first && rows->size() == 1) return noLen(r0);
+        for (std::size_t j = 1; j < rows->size(); ++j) {
+            const Json& r = (*rows)[j];
+            if (r.isString()) return *error = where + ": List mosaic specification must be 2D", false;
+            if (!first) return noLen(r0);
+            const Json* row = sequence(r);
+            if (!row) return noLen(r);
+            if (row->size() != first->size())
+                return *error = where + ": All of the rows must be the same length, however the first row (" + repr(r0) + ") has length " +
+                                std::to_string(first->size()) + " and row " + std::to_string(j) + " (" + repr(r) + ") has length " +
+                                std::to_string(row->size()) + ".",
+                       false;
+        }
+        if (first->size() == 0) return *error = where + ": Number of columns must be a positive integer, not 0", false;
+        out->clear();
+        for (const Json& r : rows->items()) out->push_back(sequence(r)->items());
+        return true;
+    }
+    // repr (or str) of the mosaic as NumPy shows the object array
+    static std::string mosaicText(const MosaicGrid& g, bool asRepr) {
+        std::vector<std::vector<std::string>> words;
+        for (const auto& row : g) {
+            words.emplace_back();
+            for (const Json& v : row) words.back().push_back(sequence(v) ? "list(" + repr(v) + ")" : repr(v));
+        }
+        return support::numpyObjectArray(words, asRepr);
+    }
+    struct MosaicLevel {
+        std::vector<Json> ids;  // _OrderedSet: in the order of their last appearance
+        std::vector<std::pair<std::array<int, 2>, MosaicGrid>> nested;
+    };
+    bool mosaicIdentify(const MosaicGrid& g, const Json& sentinel, MosaicLevel* level, const std::string& where, std::string* error) {
+        for (std::size_t j = 0; j < g.size(); ++j)
+            for (std::size_t k = 0; k < g[j].size(); ++k) {
+                const Json& v = g[j][k];
+                if (sameLabel(v, sentinel)) continue;
+                if (sequence(v)) {
+                    MosaicGrid inner;
+                    if (!mosaicArray(v, &inner, where, error)) return false;
+                    level->nested.push_back({{int(j), int(k)}, inner});
+                } else {
+                    if (!mosaicLabel(v)) return *error = where + ": labels other than strings and integers are not supported yet", false;
+                    auto& ids = level->ids;
+                    ids.erase(std::remove_if(ids.begin(), ids.end(), [&](const Json& id) { return sameLabel(id, v); }), ids.end());
+                    ids.push_back(v);
+                }
+            }
+        return true;
+    }
+    // the keywords of each add_subplot: the projection (a label keyword changes nothing drawn)
+    bool mosaicSubplotKw(const Json* kw, const Json** projection, const Json** polar, const std::string& where, const std::string& what,
+                         std::string* error) {
+        if (!kw || kw->isNull()) return true;
+        if (!(kw->isObject() && kw->members().size() == 1 && kw->members()[0].first == "$dict"))
+            return *error = where + ": " + what + " must be a dict", false;
+        for (const auto& [key, item] : kw->members()[0].second.members()) {
+            if (key == "projection") *projection = &item;
+            else if (key == "polar") *polar = &item;
+            else if (key != "label") return *error = where + ": " + what + " " + key + " is not supported yet", false;
+        }
+        return true;
+    }
+    struct MosaicOptions {
+        Json sentinel = Json::string(".");
+        const Json* subplotKw = nullptr;
+        std::vector<std::pair<Json, const Json*>> perSubplotKw;  // _norm_per_subplot_kw
+    };
+    bool mosaicLayout(Figure& fig, const GridSpec& gs, const MosaicGrid& g, const MosaicOptions& o,
+                      std::vector<std::pair<Json, Axes*>>* output, const std::string& where, std::string* error) {
+        MosaicLevel level;
+        if (!mosaicIdentify(g, o.sentinel, &level, where, error)) return false;
+        struct Entry {
+            const Json* name = nullptr;
+            std::array<int, 4> slice{};  // rows r0:r1, columns c0:c1
+            const MosaicGrid* nested = nullptr;
+        };
+        std::map<std::array<int, 2>, Entry> thisLevel;
+        for (const Json& name : level.ids) {
+            int r0 = INT_MAX, r1 = -1, c0 = INT_MAX, c1 = -1;
+            for (std::size_t j = 0; j < g.size(); ++j)
+                for (std::size_t k = 0; k < g[j].size(); ++k)
+                    if (!sequence(g[j][k]) && sameLabel(g[j][k], name))
+                        r0 = std::min(r0, int(j)), r1 = std::max(r1, int(j) + 1), c0 = std::min(c0, int(k)), c1 = std::max(c1, int(k) + 1);
+            for (int j = r0; j < r1; ++j)
+                for (int k = c0; k < c1; ++k) {
+                    const Json& v = g[std::size_t(j)][std::size_t(k)];
+                    if (sequence(v) || !sameLabel(v, name))
+                        return *error = where + ": While trying to layout\n" + mosaicText(g, true) + "\nwe found that the label " + repr(name) +
+                                        " specifies a non-rectangular or non-contiguous area.",
+                               false;
+                }
+            Entry e;
+            e.name = &name;
+            e.slice = {r0, r1, c0, c1};
+            thisLevel[{r0, c0}] = e;
+        }
+        for (const auto& [at, inner] : level.nested) {
+            Entry e;
+            e.nested = &inner;
+            thisLevel[at] = e;
+        }
+        std::vector<std::pair<Json, Axes*>> made;
+        const auto has = [&](const Json& name) {
+            return std::any_of(made.begin(), made.end(), [&](const auto& m) { return sameLabel(m.first, name); });
+        };
+        for (const auto& [at, e] : thisLevel) {
+            if (e.name) {
+                if (has(*e.name)) {
+                    const std::string shown = e.name->isString() ? e.name->asString() : repr(*e.name);
+                    return *error = where + ": There are duplicate keys " + shown + " in the layout\n" + mosaicText(g, true), false;
+                }
+                // add_subplot(gs[slc], label=str(name), **subplot_kw, **per_subplot_kw.get(name, {}))
+                const Json *projection = nullptr, *polar = nullptr;
+                if (!mosaicSubplotKw(o.subplotKw, &projection, &polar, where, "subplot_kw", error)) return false;
+                for (const auto& [key, kw] : o.perSubplotKw)
+                    if (sameLabel(key, *e.name)) {
+                        const Json *p = nullptr, *q = nullptr;
+                        if (!mosaicSubplotKw(kw, &p, &q, where, "per_subplot_kw", error)) return false;
+                        if (p) projection = p;
+                        if (q) polar = q;
+                    }
+                bool isPolar = false;
+                if (!projectionOf(projection, polar, where, &isPolar, error)) return false;
+                Axes* ax = fig.addSubplot(gs.span(e.slice[0], e.slice[1], e.slice[2], e.slice[3]), isPolar);
+                current_ = ax;
+                made.emplace_back(*e.name, ax);
+            } else {
+                // gs[j, k].subgridspec(rows, cols)
+                fig.gridspecs.push_back(std::make_unique<GridSpec>(int(e.nested->size()), int((*e.nested)[0].size())));
+                GridSpec& sub = *fig.gridspecs.back();
+                sub.parent = gs.cell(at[0], at[1]);
+                std::vector<std::pair<Json, Axes*>> inner;
+                if (!mosaicLayout(fig, sub, *e.nested, o, &inner, where, error)) return false;
+                std::vector<std::string> overlap;
+                for (const auto& m : inner)
+                    if (has(m.first)) overlap.push_back(repr(m.first));
+                if (!overlap.empty()) {
+                    std::string set = "{";
+                    for (std::size_t i = 0; i < overlap.size(); ++i) set += (i ? ", " : "") + overlap[i];
+                    return *error = where + ": There are duplicate keys " + set + "} between the outer layout\n" + mosaicText(g, true) +
+                                    "\nand the nested layout\n" + mosaicText(*e.nested, false),
+                           false;
+                }
+                made.insert(made.end(), inner.begin(), inner.end());
+            }
+        }
+        *output = made;
+        return true;
+    }
+
+    // Figure.subplot_mosaic(mosaic, *, sharex=False, sharey=False, width_ratios=None, height_ratios=None,
+    // empty_sentinel='.', subplot_kw=None, per_subplot_kw=None, gridspec_kw=None), and pyplot's, which makes the
+    // figure first (**fig_kw) and returns (fig, dict): the Axes are named name[key] for each key of the dict
+    bool subplotMosaic(const model::Call& call, bool pyplot, std::string* error) {
+        const std::string where = (pyplot ? std::string("plt") : call.on) + ".subplot_mosaic";
+        static const char* const own[] = {"mosaic", "sharex", "sharey", "width_ratios", "height_ratios", "empty_sentinel",
+                                          "subplot_kw", "per_subplot_kw", "gridspec_kw"};
+        if (call.args.size() > 1) return *error = where + ": too many positional arguments", false;
+        const Json* mosaicJson = argument(call, 0, "mosaic");
+        if (!mosaicJson) return *error = where + ": missing 1 required positional argument: 'mosaic'", false;
+        std::map<std::string, const Json*> kw;
+        for (const auto& [name, value] : call.kwargs)
+            if (std::find(std::begin(own), std::end(own), name) != std::end(own)) kw[name] = &value;
+        const auto get = [&](const char* name) -> const Json* {
+            const auto it = kw.find(name);
+            return it == kw.end() || it->second->isNull() ? nullptr : it->second;
+        };
+        if (pyplot) {
+            if (call.as.size() != 2) return *error = where + " returns (fig, dict): name both", false;
+            FigureOptions options;
+            layoutKeywords_ = LayoutKeywords();
+            for (const auto& [name, value] : call.kwargs)
+                if (std::find(std::begin(own), std::end(own), name) == std::end(own) && !figureKeyword(name, value, options, where, error))
+                    return false;
+            figure_ = std::make_unique<Figure>(rc_, options);
+            if (!figure_->subplotpars.valid(error)) return *error = where + ": " + *error, false;
+            if (!figureLayout(where, error)) return false;
+            axes_.clear();
+            figureNames_.clear();
+            mappables_.clear();
+            currentImages_.clear();
+            axesArrays_.clear();
+            current_ = nullptr;
+        } else {
+            if (call.as.size() != 1) return *error = where + " returns a dict of Axes: name it", false;
+            for (const auto& kwv : call.kwargs)
+                if (!kw.count(kwv.first))
+                    return *error = where + ": FigureBase.subplot_mosaic() got an unexpected keyword argument '" + kwv.first + "'", false;
+        }
+        Figure& fig = *figure_;
+        // gridspec_kw, with width_ratios and height_ratios given apart
+        GridSpec spec(1, 1);
+        std::map<std::string, const Json*> gridKw;
+        if (const Json* g = get("gridspec_kw")) {
+            if (!(g->isObject() && g->members().size() == 1 && g->members()[0].first == "$dict"))
+                return *error = where + ": gridspec_kw must be a dict", false;
+            for (const auto& [key, item] : g->members()[0].second.members()) gridKw[key] = &item;
+        }
+        for (const char* name : {"height_ratios", "width_ratios"})
+            if (const Json* r = get(name)) {
+                if (gridKw.count(name))
+                    return *error = where + ": '" + name + "' must not be defined both as parameter and as key in 'gridspec_kw'", false;
+                gridKw[name] = r;
+            }
+        // a string: rows split at ';' (or lines, cleaned as inspect.cleandoc cleans them), each a list of characters;
+        // the keys of per_subplot_kw then name each character
+        Json mosaicValue = *mosaicJson;
+        const bool text = mosaicJson->isString();
+        if (text) {
+            const std::string& s = mosaicJson->asString();
+            if (s.find('\t') != std::string::npos) return *error = where + ": tabs in a mosaic string are not supported yet", false;
+            std::vector<std::string> lines;
+            if (s.find('\n') == std::string::npos) {
+                std::size_t start = 0;
+                for (;;) {
+                    const auto semi = s.find(';', start);
+                    lines.push_back(s.substr(start, semi == std::string::npos ? std::string::npos : semi - start));
+                    if (semi == std::string::npos) break;
+                    start = semi + 1;
+                }
+            } else {
+                lines = mosaicLines(s);
+                if (lines.empty()) lines.push_back("");
+            }
+            std::vector<Json> rows;
+            for (const std::string& line : lines) {
+                std::vector<Json> chars;
+                for (std::size_t i = 0; i < line.size();) {  // list(line): one item per character (code point)
+                    std::size_t n = 1;
+                    const unsigned char c = (unsigned char)line[i];
+                    if (c >= 0xF0) n = 4;
+                    else if (c >= 0xE0) n = 3;
+                    else if (c >= 0xC0) n = 2;
+                    chars.push_back(Json::string(line.substr(i, n)));
+                    i += n;
+                }
+                rows.push_back(Json::array(chars));
+            }
+            mosaicValue = Json::array(rows);
+        }
+        MosaicOptions o;
+        if (const Json* p = get("per_subplot_kw")) {
+            if (!(p->isObject() && p->members().size() == 1 && p->members()[0].first == "$dict"))
+                return *error = where + ": per_subplot_kw must be a dict", false;
+            // _norm_per_subplot_kw: a string mosaic's keys are tuples of their characters
+            for (const auto& [key, item] : p->members()[0].second.members()) {
+                std::vector<Json> keys;
+                if (text) {
+                    Json k = Json::string(key);
+                    for (std::size_t i = 0; i < key.size();) {
+                        std::size_t n = 1;
+                        const unsigned char c = (unsigned char)key[i];
+                        if (c >= 0xF0) n = 4;
+                        else if (c >= 0xE0) n = 3;
+                        else if (c >= 0xC0) n = 2;
+                        keys.push_back(Json::string(key.substr(i, n)));
+                        i += n;
+                    }
+                } else {
+                    keys.push_back(Json::string(key));
+                }
+                for (const Json& k : keys) {
+                    for (const auto& seen : o.perSubplotKw)
+                        if (sameLabel(seen.first, k)) return *error = where + ": The key " + repr(k) + " appears multiple times.", false;
+                    o.perSubplotKw.emplace_back(k, &item);
+                }
+            }
+        }
+        bool share[2] = {false, false};
+        for (int k = 0; k < 2; ++k) {
+            const char* name = k ? "sharey" : "sharex";
+            const auto it = kw.find(name);
+            if (it == kw.end()) continue;
+            const Json& v = *it->second;
+            if (!v.isBool()) {
+                const std::string type = v.isNull() ? "None" : v.isString() ? "str" : v.isNumber() ? (v.isInteger() ? "int" : "float") : v.isArray() ? "list" : "dict";
+                return *error = where + ": '" + name + "' must be an instance of bool, not a " + type, false;
+            }
+            share[k] = v.asBool();
+        }
+        if (const auto it = kw.find("empty_sentinel"); it != kw.end()) o.sentinel = *it->second;
+        o.subplotKw = get("subplot_kw");
+        MosaicGrid g;
+        if (!mosaicArray(mosaicValue, &g, where, error)) return false;
+        // add_gridspec(rows, cols, **gridspec_kw)
+        fig.gridspecs.push_back(std::make_unique<GridSpec>(int(g.size()), int(g[0].size())));
+        GridSpec& gs = *fig.gridspecs.back();
+        for (const auto& [key, item] : gridKw) {
+            if (key == "width_ratios" || key == "height_ratios") {
+                if (item->isNull()) continue;
+                const bool width = key == "width_ratios";
+                const Json* seq = sequence(*item);
+                const int n = width ? gs.ncols : gs.nrows;
+                if (!seq || int(seq->size()) != n)
+                    return *error = where + ": Expected the given number of " + (width ? "width" : "height") + " ratios to match the number of " +
+                                    (width ? "columns" : "rows") + " of the grid",
+                           false;
+                auto& values = width ? gs.widthRatios : gs.heightRatios;
+                auto& ints = width ? gs.widthRatiosInt : gs.heightRatiosInt;
+                for (const Json& r : seq->items()) {
+                    double v = 0;
+                    if (!readNumber(r, &v) || !std::isfinite(v) || !(v > 0))
+                        return *error = where + ": " + (width ? "width" : "height") + " ratios must be positive numbers", false;
+                    values.push_back(v);
+                    ints.push_back(r.isNumber() && r.isInteger());
+                }
+                continue;
+            }
+            std::optional<double>* slot = key == "left" ? &gs.left : key == "bottom" ? &gs.bottom : key == "right" ? &gs.right
+                                        : key == "top" ? &gs.top : key == "wspace" ? &gs.wspace : key == "hspace" ? &gs.hspace : nullptr;
+            if (!slot) return *error = where + ": GridSpec.__init__() got an unexpected keyword argument '" + key + "'", false;
+            if (item->isNull()) continue;
+            double v = 0;
+            if (!readNumber(*item, &v)) return *error = where + ": gridspec_kw " + key + " must be a number", false;
+            *slot = v;
+        }
+        {  // GridSpec.get_subplot_params: the figure's parameters updated with the grid's (as the drawing checks them)
+            SubplotParams p = fig.subplotpars;
+            if (!p.update(gs.left, gs.bottom, gs.right, gs.top, gs.wspace, gs.hspace, error)) return *error = where + ": " + *error, false;
+        }
+        std::vector<std::pair<Json, Axes*>> made;
+        if (!mosaicLayout(fig, gs, g, o, &made, where, error)) return false;
+        Axes* ax0 = made.front().second;
+        for (const auto& m : made) {
+            Axes* ax = m.second;
+            for (int k = 0; k < 2; ++k) {
+                if (!share[k]) continue;
+                if (ax != ax0) ax->shareAfter(k == 0, *ax0);
+                if (!ax->polar) ax->labelOuter(k == 0);  // (skip_non_rectangular_axes)
+            }
+        }
+        std::vector<std::string> extra;
+        for (const auto& entry : o.perSubplotKw) {
+            const Json& key = entry.first;
+            if (std::none_of(made.begin(), made.end(), [&](const auto& m) { return sameLabel(m.first, key); })) extra.push_back(repr(key));
+        }
+        if (!extra.empty()) {
+            std::string set = "{";
+            for (std::size_t i = 0; i < extra.size(); ++i) set += (i ? ", " : "") + extra[i];
+            return *error = where + ": The keys " + set + "} are in *per_subplot_kw* but not in the mosaic.", false;
+        }
+        // the names: the dict indexed by each key, as Python writes it (a string also in double quotes)
+        const std::string& n = call.as.back();
+        if (pyplot) figureNames_.insert(call.as[0]);
+        for (const auto& [key, ax] : made) {
+            axes_[n + "[" + repr(key) + "]"] = ax;
+            if (key.isString() && key.asString().find_first_of("'\"\\") == std::string::npos) axes_[n + "[\"" + key.asString() + "\"]"] = ax;
+        }
+        return true;
+    }
+
     // plt.gcf(): the figure, made with the defaults when there is none
     Figure& gcf() {
         if (!figure_) {
@@ -1149,6 +1550,7 @@ private:
             return nameResult(call, current_, error);
         }
         if (call.method == "gca") return noArguments(call, error) && nameResult(call, &gca(), error);
+        if (call.method == "subplot_mosaic") return subplotMosaic(call, false, error);
         if (call.method == "add_axes") return addAxes(call, call.args.empty() ? nullptr : &call.args[0], error);
         if (call.method == "text") return figureText(call, error);
         if (call.method == "figimage") return figimage(call, error);

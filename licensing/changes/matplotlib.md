@@ -300,7 +300,9 @@ it comes from in its first lines. The changes, as a whole:
   anchored) at the start of draw and get_tightbbox; the original and the active position kept apart. Later
   apply_aspect's adjustable 'datalim' branch (set_xbound / set_ybound of the limits grown to the aspect),
   set_adjustable, Axes.axis (option strings, limits), margins, set_xmargin / set_ymargin, locator_params with
-  MaxNLocator.set_params and FixedLocator.set_params.
+  MaxNLocator.set_params and FixedLocator.set_params. figure.py's subplot_mosaic (_make_array,
+  _identify_keys_and_nested, _do_layout), _normalize_grid_string and _norm_per_subplot_kw, and _base.py's sharex /
+  sharey of Axes already made (src/engine/engine.cpp subplotMosaic, src/engine/axes.cpp shareAfter).
   Ticks: Axis.set_ticks (FixedLocator, set_view_interval without ignore on the shared axes) and set_ticklabels
   (NullFormatter, or a FuncFormatter of a dict of labels); set_frame_on.
   Pies: Path.arc, patches.Wedge, Shadow's zorder, Axes.pie and Axes.pie_label; the data limits of curved

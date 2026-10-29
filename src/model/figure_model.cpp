@@ -24,18 +24,28 @@ bool isIdentifier(const std::string& s) {
     return s.rfind("__", 0) != 0;  // no dunder names: nothing but plain plotting calls
 }
 
-// "ax", "axs[1]", "axs[0, 1]", "ax.xaxis", "axs[1].yaxis": a name, optionally indexed by integers, then
-// optionally attributes of it.
+// "ax", "axs[1]", "axs[0, 1]", "axd['A']", "ax.xaxis", "axs[1].yaxis": a name, optionally indexed by integers or
+// by a string key in quotes (no quotes or backslashes in it), then optionally attributes of it.
 bool isObjectReference(const std::string& s, std::string& name) {
     const auto end = s.find_first_of("[.");
     name = s.substr(0, end);
     if (!isIdentifier(name)) return false;
     std::size_t at = end;
     if (at != std::string::npos && s[at] == '[') {
-        const auto close = s.find(']', at);
-        if (close == std::string::npos) return false;
-        for (char c : s.substr(at + 1, close - at - 1))
-            if (!(std::isdigit(static_cast<unsigned char>(c)) || c == ',' || c == ' ' || c == '-')) return false;
+        std::size_t close = std::string::npos;
+        if (at + 1 < s.size() && (s[at + 1] == '\'' || s[at + 1] == '"')) {
+            const char quote = s[at + 1];
+            const auto last = s.find(quote, at + 2);
+            if (last == std::string::npos || last + 1 >= s.size() || s[last + 1] != ']') return false;
+            for (char c : s.substr(at + 2, last - at - 2))
+                if (c == '\'' || c == '"' || c == '\\' || c == '\n') return false;
+            close = last + 1;
+        } else {
+            close = s.find(']', at);
+            if (close == std::string::npos) return false;
+            for (char c : s.substr(at + 1, close - at - 1))
+                if (!(std::isdigit(static_cast<unsigned char>(c)) || c == ',' || c == ' ' || c == '-')) return false;
+        }
         at = close + 1 == s.size() ? std::string::npos : close + 1;
     }
     while (at != std::string::npos) {
