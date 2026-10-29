@@ -568,16 +568,23 @@ void Line2D::recache() {
     // A long line with sorted x on a linear x axis, clipped, in data coordinates and with markers on
     // every point, is drawn in the slice of points the view shows (_subslice; the condition is taken
     // here, when the path is made).
-    subslice_ = axes && x_.size() > 1000 && isSortedAndHasNonNan(x_) && axes->xaxis->scale() == "linear" && !markevery &&
+    subslice_ = axes && !axes->polar && x_.size() > 1000 && isSortedAndHasNonNan(x_) && axes->xaxis->scale() == "linear" && !markevery &&
                 clipOn && transforms::equal(*transform, *axes->transData);
     if (subslice_) {
         std::vector<double> x(n);
         for (std::size_t i = 0; i < n; ++i) x[i] = xy_[2 * i];
         xFilled_ = filledByIndex(x);
     }
+    const int steps = path_.interpolationSteps;  // (the last path's, or 1)
     path_ = Path::make(vertices(0, n, true), {}, rc_);
+    path_.interpolationSteps = steps;
     linePath_ = path_;
     invalid_ = false;
+}
+
+void Line2D::setInterpolationSteps(int steps) {
+    if (invalid_) recache();  // get_path()
+    path_.interpolationSteps = linePath_.interpolationSteps = steps;
 }
 
 std::vector<double> Line2D::vertices(std::size_t start, std::size_t stop, bool withDrawstyle) const {

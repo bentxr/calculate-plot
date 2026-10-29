@@ -71,6 +71,9 @@ public:
     void setDashPattern(double offset, std::optional<std::vector<double>> onoff);
     void setData(std::vector<double> x, std::vector<double> y);
     void setXdata(std::vector<double> x);
+    // get_path()._interpolation_steps = steps (kept when the path is made again); a polar Axes draws such a line
+    // along its circles
+    void setInterpolationSteps(int steps);
     void setYdata(std::vector<double> y);
     const Path& path();  // the data path (recached if the data changed)
     const std::string& linestyle() const { return linestyle_; }

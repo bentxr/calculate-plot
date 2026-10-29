@@ -11,6 +11,7 @@
 #include "engine/collections.hpp"
 #include "engine/gridspec.hpp"
 #include "engine/lines.hpp"
+#include "engine/polar.hpp"
 #include "engine/text.hpp"
 
 #include <array>
@@ -26,18 +27,23 @@ namespace calculate_plot::engine {
 class Axes;
 class Figure;
 
-// A line along one side of the Axes (linear spines only).
+// A line along one side of the Axes (Spine.linear_spine), or an arc (Spine.arc_spine: a polar Axes' outer and
+// inner circles). `name` is its key in Axes.spines, `type` its spine_type.
 class Spine : public Patch {
 public:
-    Spine(const rc::Params& rc, Axes& axes, std::string type);
+    Spine(const rc::Params& rc, Axes& axes, std::string type, std::string name = {});
+    // Spine.arc_spine(axes, type, center, radius, theta1, theta2), drawn in transAxes until set otherwise
+    Spine(const rc::Params& rc, Axes& axes, std::string name, std::string type, std::array<double, 2> center, double radius,
+          double theta1, double theta2);
     Path path() const override { return path_; }
+    transforms::TransformPtr patchTransform() const override;  // an arc's: scaled to its size, moved to its centre
     void draw(Renderer& renderer) override;
     // Spine.get_spine_transform, the position ('outward', 0) unless set
     transforms::TransformPtr spineTransform();
     // Spine.get_window_extent: the line's box, grown by the part of its axis' ticks outside or inside.
     transforms::Bbox windowExtent();
 
-    const std::string type;
+    const std::string name, type;
     class Axis* axis = nullptr;  // register_axis
 
 private:
@@ -45,6 +51,9 @@ private:
     Axes& axes_;
     Path path_;
     bool positionSet_ = false;
+    bool arc_ = false;  // _patch_type 'arc'
+    std::array<double, 2> center_{};
+    double width_ = 0, height_ = 0;
 };
 
 // The visibility switches of a group of ticks (Axis._major_tick_kw).
@@ -91,6 +100,10 @@ public:
     Line2D tick1line, tick2line, gridline;
     Text label1, label2;
     bool isMajor;  // in Axis.majorTicks (or minorTicks)
+    // a theta tick's label padding (ThetaTick's _text1_translate, _text2_translate), after the labels' transforms
+    std::shared_ptr<transforms::ScaledTranslation> text1Translate, text2Translate;
+    double basePad() const { return basePad_; }
+    double padPoints() const { return pad(); }  // _pad
 
 private:
     double pad() const;  // the label pad: base pad plus the part of the tick outside the Axes
@@ -136,6 +149,7 @@ public:
     Axis& tickerAxis() const;
     void setLabelText(const std::string& text, const std::string& loc);  // set_xlabel / set_ylabel
     std::vector<Tick*> updateTicks();  // Axis._update_ticks: the ticks to draw, labelled
+    void resetTicks();                 // reset_ticks: the ticks are made again when next needed
     static std::vector<double> fixedLocatorValues(const std::vector<double>& locs, std::optional<int> nbins);
     std::vector<double> indexLocatorValues(const std::array<double, 2>& baseOffset) const;
     // The major formatter's format_data_short(value): the pointer's coordinate as the toolbar shows it; nothing
@@ -178,6 +192,7 @@ public:
     // The major locator's nonsingular and view_limits
     std::pair<double, double> locatorNonsingular(double v0, double v1);
     std::pair<double, double> locatorViewLimits(double v0, double v1);
+    std::pair<double, double> baseViewLimits(double v0, double v1);  // the scale's own locator's (a radial axis' base)
 
     Text label, offsetText;
     axes::MaxNLocator locator = axes::MaxNLocator::autoLocator();
@@ -247,10 +262,11 @@ struct SharedAxes {
 
 class Axes : public Artist {
 public:
-    Axes(const rc::Params& rc, Figure& figure, const SubplotSpec& spec);  // a subplot: its cells' position
+    // a subplot: its cells' position; `polar`: a PolarAxes (projection='polar')
+    Axes(const rc::Params& rc, Figure& figure, const SubplotSpec& spec, bool polar = false);
     // Axes(fig, rect): at a position of its own (Figure.add_axes), with no subplot spec when `spec` is unset
     Axes(const rc::Params& rc, Figure& figure, std::shared_ptr<transforms::Bbox> position,
-         const std::optional<SubplotSpec>& spec);
+         const std::optional<SubplotSpec>& spec, bool polar = false);
     void draw(Renderer& renderer) override;
 
     Figure& figure;
@@ -260,9 +276,14 @@ public:
     std::shared_ptr<transforms::Bbox> viewLim, dataLim;
     std::shared_ptr<transforms::TransformWrapper> transScale;
     transforms::TransformPtr transAxes, transLimits, transData, xaxisTransform, yaxisTransform;
-    std::unique_ptr<Rectangle> patch;
-    std::unique_ptr<Spine> spines[4];  // left, right, bottom, top
-    Spine& spine(const std::string& type);
+    std::unique_ptr<Patch> patch;      // a Rectangle (a polar Axes': a Wedge)
+    std::unique_ptr<Spine> spines[4];  // left, right, bottom, top (polar: polar, start, end, inner)
+    std::unique_ptr<PolarAxesState> polar;  // a PolarAxes' own state; none for a rectilinear Axes
+    // get_xaxis_transform(which) / get_yaxis_transform(which): 'tick1', 'tick2' or 'grid'
+    transforms::TransformPtr axisTransform(bool x, const std::string& which);
+    // set_clip_path(self.patch) of a child: a Rectangle clips by its box, another patch by its path
+    void clipToPatch(Artist& artist) const;
+    Spine& spine(const std::string& name);  // spines[name] (the first spine when there is none of that name)
     std::unique_ptr<Axis> xaxis, yaxis;
     std::unique_ptr<Text> title, leftTitle, rightTitle;
     double xmargin, ymargin;

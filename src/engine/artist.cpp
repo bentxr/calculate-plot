@@ -47,6 +47,7 @@ void Artist::setGcClip(GC& gc) const {
             gc.cliprect = std::array<double, 4>{p[0], p[1], p[2], p[3]};
         }
         gc.clippath = clipPath;
+        if (clipPath && clipPath->patch) gc.clippath = ClipPath{clipPath->patch->path(), clipPath->patch->fullTransform()};
     } else {
         gc.cliprect.reset();
         gc.clippath.reset();
@@ -404,6 +405,14 @@ Wedge::Wedge(const rc::Params& rc, double x, double y, double radius, double t1,
     std::vector<unsigned char> codes;
     pathData(cx, cy, r, theta1, theta2, width, &v, &codes);
     path_ = Path::make(std::move(v), std::move(codes), rc);
+}
+
+void Wedge::set(double x, double y, double radius, double t1, double t2, std::optional<double> w) {
+    cx = x, cy = y, r = radius, theta1 = t1, theta2 = t2, width = w;
+    std::vector<double> v;
+    std::vector<unsigned char> codes;
+    pathData(cx, cy, r, theta1, theta2, width, &v, &codes);
+    path_ = Path::make(std::move(v), std::move(codes), rc_);
 }
 
 void Wedge::pathData(double cx, double cy, double r, double theta1, double theta2, std::optional<double> width,

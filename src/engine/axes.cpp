@@ -67,7 +67,8 @@ bool isFiniteBox(const transforms::Bbox& b) {
 
 // --- Spine ---------------------------------------------------------------------------------------
 
-Spine::Spine(const rc::Params& rc, Axes& axes, std::string spineType) : Patch(rc), type(std::move(spineType)), axes_(axes) {
+Spine::Spine(const rc::Params& rc, Axes& axes, std::string spineType, std::string spineName)
+    : Patch(rc), name(spineName.empty() ? spineType : spineName), type(spineType), axes_(axes) {
     // linear_spine's placeholder paths; _adjust_location sets the ends at draw time.
     if (type == "left") path_ = Path::make({0.0, 0.999, 0.0, 0.999}, {}, rc);
     else if (type == "right") path_ = Path::make({1.0, 0.999, 1.0, 0.999}, {}, rc);
@@ -80,6 +81,30 @@ Spine::Spine(const rc::Params& rc, Axes& axes, std::string spineType) : Patch(rc
     zorder = 2.5;
     transform = axes.transData;
     visible = rc.boolean("axes.spines." + type);
+}
+
+Spine::Spine(const rc::Params& rc, Axes& axes, std::string spineName, std::string spineType, std::array<double, 2> center,
+             double radius, double theta1, double theta2)
+    : Patch(rc), name(std::move(spineName)), type(std::move(spineType)), axes_(axes) {
+    setFacecolor("none");
+    setEdgecolor(rc.text("axes.edgecolor"));
+    setLinewidth(rc.number("axes.linewidth"));
+    capstyle = "projecting";
+    zorder = 2.5;
+    // set_patch_arc
+    arc_ = true;
+    center_ = center;
+    width_ = height_ = radius * 2;
+    path_ = Path::arc(theta1, theta2, rc);
+    transform = axes.transAxes;
+}
+
+transforms::TransformPtr Spine::patchTransform() const {
+    if (!arc_) return Patch::patchTransform();
+    // _recompute_transform: Affine2D().scale(width * 0.5, height * 0.5).translate(*center)
+    auto t = std::make_shared<transforms::Affine2D>();
+    t->scale(width_ * 0.5, height_ * 0.5).translate(center_[0], center_[1]);
+    return t;
 }
 
 transforms::TransformPtr Spine::spineTransform() {
@@ -96,6 +121,20 @@ transforms::TransformPtr Spine::spineTransform() {
 void Spine::adjustLocation() {
     axes_.unstaleViewLim();  // _get_bounds_or_viewLim reads axes.viewLim
     const auto v = axes_.viewLim->points();
+    if (arc_) {  // (a top or bottom arc: a polar Axes')
+        const double direction = axes_.polar ? axes_.polar->thetaDirection() : 1.0;
+        const double offset = axes_.polar ? axes_.polar->thetaOffset() : 0.0;
+        double low = v[0] * direction + offset, high = v[2] * direction + offset;
+        if (low > high) std::swap(low, high);
+        path_ = Path::arc(low * (180.0 / M_PI), high * (180.0 / M_PI), rc_);  // np.rad2deg
+        if (type == "bottom") {
+            const double rmin = axis ? axis->scaleForward(v[1]) : v[1], rmax = axis ? axis->scaleForward(v[3]) : v[3];
+            double rorigin = rmin;
+            if (axes_.polar) rorigin = axis ? axis->scaleForward(axes_.polar->rorigin()) : axes_.polar->rorigin();
+            width_ = height_ = (rmin - rorigin) / (rmax - rorigin);
+        }
+        return;
+    }
     std::vector<double> vertices = *path_.vertices;
     if (type == "left" || type == "right") {
         vertices[1] = v[1];
@@ -111,10 +150,22 @@ transforms::Bbox Spine::windowExtent() {
     adjustLocation();
     // Patch.get_window_extent: the path's extents through the transform
     const auto t = transforms::compose(patchTransform(), transform);
-    const std::vector<double>& v = *path_.vertices;
+    std::vector<double> v = *path_.vertices;
+    if (arc_) {
+        // Path.get_extents(transform) of curves: the ends and extrema of each Bezier segment of the transformed path
+        Path moved = path_;
+        for (std::size_t i = 0; i + 1 < v.size(); i += 2) {
+            const auto q = t->transform(v[i], v[i + 1]);
+            v[i] = q[0], v[i + 1] = q[1];
+        }
+        moved.vertices = std::make_shared<std::vector<double>>(v);
+        v.clear();
+        for (const auto& q : bezierEnds(moved)) v.push_back(q[0]), v.push_back(q[1]);
+    }
+    const auto through = [&](double x, double y) { return arc_ ? std::array<double, 2>{x, y} : t->transform(x, y); };
     double x0 = 0, y0 = 0, x1 = 0, y1 = 0;
     for (std::size_t i = 0; i + 1 < v.size(); i += 2) {
-        const auto q = t->transform(v[i], v[i + 1]);
+        const auto q = through(v[i], v[i + 1]);
         if (i == 0 || q[0] < x0) x0 = q[0];
         if (i == 0 || q[0] > x1) x1 = q[0];
         if (i == 0 || q[1] < y0) y0 = q[1];
@@ -211,13 +262,14 @@ Tick::Tick(const rc::Params& rc, Axes& axes, bool isX, bool major, const TickSwi
     tick2line.visible = sw.tick2On;
     gridline.color = gridColor;
     gridline.alpha = gridAlpha;
-    // Axis.set_clip_path(axes.patch) reaches the grid lines (copied to every tick): a clip box
-    gridline.clipBox = std::make_shared<transforms::TransformedBbox>(
-        std::make_shared<transforms::Bbox>(std::array<double, 4>{0, 0, 1, 1}), axes.patch->fullTransform());
+    // Axis.set_clip_path(axes.patch) reaches the grid lines (copied to every tick): a clip box (a polar Axes' wedge
+    // clips by its path)
+    axes.clipToPatch(gridline);
     gridline.visible = sw.gridOn;
     gridline.setLinestyle(gridLinestyle, &error);
     gridline.setLinewidth(gridLinewidth);
     gridline.setMarker("", &error);
+    gridline.setInterpolationSteps(180);  // GRIDLINE_INTERPOLATION_STEPS
     const auto labelRgba = *colors::toRgba(labelcolor, std::nullopt, rc, nullptr);
     for (Text* tickLabel : {&label1, &label2}) {
         tickLabel->font.size = labelsize;
@@ -229,26 +281,35 @@ Tick::Tick(const rc::Params& rc, Axes& axes, bool isX, bool major, const TickSwi
     }
     label1.visible = sw.label1On;
     label2.visible = sw.label2On;
+    // ThetaTick: the labels' padding, a translation in inches after their transforms; ThetaTick and RadialTick
+    // anchor their labels before rotating them
+    if (axes.polar) {
+        if (isX) {
+            text1Translate = std::make_shared<transforms::ScaledTranslation>(0, 0, axes.figure.dpiScaleTrans);
+            text2Translate = std::make_shared<transforms::ScaledTranslation>(0, 0, axes.figure.dpiScaleTrans);
+        }
+        label1.rotationMode = label2.rotationMode = "anchor";
+    }
     applyTickdir(sw.tickdir);
     updatePosition(0);
 
     // XTick / YTick
     if (isX) {
         tick1line.setData({0}, {0});
-        tick1line.transform = axes.spine("bottom").spineTransform();
+        tick1line.transform = axes.axisTransform(true, "tick1");
         tick2line.setData({0}, {1});
-        tick2line.transform = axes.spine("top").spineTransform();
+        tick2line.transform = axes.axisTransform(true, "tick2");
         gridline.setData({0, 0}, {0, 1});
-        gridline.transform = axes.xaxisTransform;
+        gridline.transform = axes.axisTransform(true, "grid");
         label1.x = 0, label1.y = 0;
         label2.x = 0, label2.y = 1;
     } else {
         tick1line.setData({0}, {0});
-        tick1line.transform = axes.spine("left").spineTransform();
+        tick1line.transform = axes.axisTransform(false, "tick1");
         tick2line.setData({1}, {0});
-        tick2line.transform = axes.spine("right").spineTransform();
+        tick2line.transform = axes.axisTransform(false, "tick2");
         gridline.setData({0, 1}, {0, 0});
-        gridline.transform = axes.yaxisTransform;
+        gridline.transform = axes.axisTransform(false, "grid");
         label1.x = 0, label1.y = 0;
         label2.x = 1, label2.y = 0;
     }
@@ -275,6 +336,10 @@ void Tick::applyTickdir(const std::optional<std::string>& tickdir) {
 void Tick::placeLabels() {
     label1.transform = (isX_ ? axes_.xaxisTextTransform(1, pad()) : axes_.yaxisTextTransform(1, pad())).transform;
     label2.transform = (isX_ ? axes_.xaxisTextTransform(2, pad()) : axes_.yaxisTextTransform(2, pad())).transform;
+    if (text1Translate) {  // ThetaTick: label.get_transform() + _text1_translate
+        label1.transform = transforms::compose(label1.transform, text1Translate);
+        label2.transform = transforms::compose(label2.transform, text2Translate);
+    }
 }
 
 void Tick::applyParams(const TickParams& p) {
@@ -364,6 +429,7 @@ void Tick::updatePosition(double loc) {
         label2.y = loc;
     }
     loc_ = loc;
+    if (axes_.polar) updatePolarTick(axes_, *this, isX_, loc);
 }
 
 void Tick::applySwitches(const TickSwitches& sw) {
@@ -376,6 +442,8 @@ void Tick::applySwitches(const TickSwitches& sw) {
 
 void Tick::draw(Renderer& renderer) {
     if (!visible) return;
+    // (ThetaTick and RadialTick turn their marks with the angle: not ported)
+    if (axes_.polar && (tick1line.visible || tick2line.visible)) renderer.unsupported("tick marks of polar axes are not supported yet");
     const std::string name = isX_ ? "xtick" : "ytick";
     renderer.openGroup(name, gid);
     gridline.draw(renderer);
@@ -653,10 +721,24 @@ std::pair<double, double> Axis::locatorNonsingular(double v0, double v1) {
         logLocator.minpos = sharedMinpos();  // LogLocator.nonsingular: the least over the shared axes
         return logLocator.nonsingular(v0, v1);
     }
+    // RadialLocator.nonsingular: the initial view of a scale that takes zero is (0, 1)
+    if (axes_.polar && !isX_ && radialZeroInBounds(*this) && v0 == -std::numeric_limits<double>::infinity() &&
+        v1 == std::numeric_limits<double>::infinity())
+        return {0.0, 1.0};
     return axes::nonsingular(v0, v1, 0.05);  // Locator.nonsingular
 }
 
 std::pair<double, double> Axis::locatorViewLimits(double v0, double v1) {
+    if (axes_.polar && !isX_) {
+        // RadialLocator.view_limits: its base's, from zero where the scale takes zero
+        auto [lo, hi] = baseViewLimits(v0, v1);
+        if (radialZeroInBounds(*this) && hi > lo) lo = std::min(0.0, lo);
+        return axes::nonsingular(lo, hi);
+    }
+    return baseViewLimits(v0, v1);
+}
+
+std::pair<double, double> Axis::baseViewLimits(double v0, double v1) {
     if (tickerAxis().dateTickers && !tickerAxis().fixedLocs) return axes::nonsingular(v0, v1);  // Locator.view_limits
     if (logScale() && !tickerAxis().fixedLocs) {
         logLocator.minpos = sharedMinpos();
@@ -832,30 +914,31 @@ std::pair<std::vector<transforms::Bbox>, std::vector<transforms::Bbox>> Axis::ti
 }
 
 void Axis::updateLabelPosition(Renderer& renderer) {
-    // _get_tick_boxes_siblings: this Axes alone (no aligned labels yet)
+    // _get_tick_boxes_siblings: this Axes alone (no aligned labels yet); with the spine on the label's side, or the
+    // Axes' box where there is none (a polar Axes: spines.get(side, axes))
     const auto [bboxes, bboxes2] = ticklabelBboxes(updateTicks(), renderer);
     const double dpi = axes_.figure.dpi;
     if (isX_) {
         if (labelPosition == "bottom") {
             std::vector<transforms::Bbox> all = bboxes;
-            all.push_back(axes_.spine("bottom").windowExtent());
+            all.push_back(axes_.polar ? transforms::Bbox(axes_.bbox->points()) : axes_.spine("bottom").windowExtent());
             const auto b = unionOf(all).points();
             label.y = b[1] - labelpad * dpi / 72;
         } else {
             std::vector<transforms::Bbox> all = bboxes2;
-            all.push_back(axes_.spine("top").windowExtent());
+            all.push_back(axes_.polar ? transforms::Bbox(axes_.bbox->points()) : axes_.spine("top").windowExtent());
             const auto b = unionOf(all).points();
             label.y = b[3] + labelpad * dpi / 72;
         }
     } else {
         if (labelPosition == "left") {
             std::vector<transforms::Bbox> all = bboxes;
-            all.push_back(axes_.spine("left").windowExtent());
+            all.push_back(axes_.polar ? transforms::Bbox(axes_.bbox->points()) : axes_.spine("left").windowExtent());
             const auto b = unionOf(all).points();
             label.x = b[0] - labelpad * dpi / 72;
         } else {
             std::vector<transforms::Bbox> all = bboxes2;
-            all.push_back(axes_.spine("right").windowExtent());
+            all.push_back(axes_.polar ? transforms::Bbox(axes_.bbox->points()) : axes_.spine("right").windowExtent());
             const auto b = unionOf(all).points();
             label.x = b[2] + labelpad * dpi / 72;
         }
@@ -1057,10 +1140,13 @@ std::vector<Tick*> Axis::updateTicks() {
             owner.logitLocator.tickSpace = owner.tickSpace();
             owner.logitLocator.minpos = owner.minpos();
             locs = owner.logitLocator.tickValues(ownerView[0], ownerView[1]);
+        } else if (axes_.polar && isX_) {  // ThetaLocator
+            thetaTicks(owner, &locs, nullptr);
         } else {
             locator.tickSpace = owner.tickSpace();
             locs = locator.tickValues(ownerView[0], ownerView[1]);
         }
+        if (axes_.polar && !isX_) locs = radialTicks(axes_, locs);  // RadialLocator, whatever its base
         std::vector<std::string> labels;
         if (owner.nullMajorFormatter) {
             labels.assign(locs.size(), "");
@@ -1095,6 +1181,8 @@ std::vector<Tick*> Axis::updateTicks() {
         } else if (scale_ == "logit") {  // format_ticks: set_locs of the locations, then each
             owner.logitFormatter.setLocs(locs);
             for (double v : locs) labels.push_back(owner.logitFormatter(v));
+        } else if (axes_.polar && isX_) {  // ThetaFormatter
+            thetaTicks(owner, &locs, &labels);
         } else {
             formatter.setViewInterval(ownerView[0], ownerView[1]);
             formatter.setLocs(locs);
@@ -1211,6 +1299,11 @@ std::vector<Tick*> Axis::updateTicks() {
     return toDraw;
 }
 
+void Axis::resetTicks() {
+    majorTicks_.clear();
+    minorTicks_.clear();
+}
+
 void Axis::draw(Renderer& renderer) {
     if (!visible) return;
     renderer.openGroup("matplotlib.axis", gid);
@@ -1260,10 +1353,13 @@ std::optional<transforms::Bbox> Axis::tightbbox(Renderer& renderer, bool forLayo
 
 // --- Axes ----------------------------------------------------------------------------------------
 
-Axes::Axes(const rc::Params& rc, Figure& fig, const SubplotSpec& spec) : Axes(rc, fig, spec.position(fig.subplotpars), spec) {}
+Axes::Axes(const rc::Params& rc, Figure& fig, const SubplotSpec& spec, bool isPolar)
+    : Axes(rc, fig, spec.position(fig.subplotpars), spec, isPolar) {}
 
-Axes::Axes(const rc::Params& rc, Figure& fig, std::shared_ptr<transforms::Bbox> pos, const std::optional<SubplotSpec>& spec)
+Axes::Axes(const rc::Params& rc, Figure& fig, std::shared_ptr<transforms::Bbox> pos, const std::optional<SubplotSpec>& spec,
+           bool isPolar)
     : Artist(rc), figure(fig), xmargin(rc.number("axes.xmargin")), ymargin(rc.number("axes.ymargin")) {
+    if (isPolar) polar = std::make_unique<PolarAxesState>();
     subplotSpec = spec;
     position = std::move(pos);
     originalPosition = std::make_shared<transforms::Bbox>(position->points());
@@ -1274,12 +1370,25 @@ Axes::Axes(const rc::Params& rc, Figure& fig, std::shared_ptr<transforms::Bbox> 
         -std::numeric_limits<double>::infinity(), -std::numeric_limits<double>::infinity()});  // Bbox.null()
     viewLim = std::make_shared<transforms::Bbox>(std::array<double, 4>{0, 0, 1, 1});
     setLimAndTransforms();
-    const char* sides[4] = {"left", "right", "bottom", "top"};
-    for (int i = 0; i < 4; ++i) spines[i] = std::make_unique<Spine>(rc, *this, sides[i]);
+    if (polar) {  // PolarAxes._gen_axes_spines
+        spines[0] = std::make_unique<Spine>(rc, *this, "polar", "top", std::array<double, 2>{0.5, 0.5}, 0.5, 0, 360);
+        spines[1] = std::make_unique<Spine>(rc, *this, "left", "start");
+        spines[2] = std::make_unique<Spine>(rc, *this, "right", "end");
+        spines[3] = std::make_unique<Spine>(rc, *this, "inner", "bottom", std::array<double, 2>{0.5, 0.5}, 0.0, 0, 360);
+        spine("polar").transform = spine("inner").transform = transforms::compose(polar->transWedge, transAxes);
+        spine("start").transform = spine("end").transform = polar->yaxisTransform;
+    } else {
+        const char* sides[4] = {"left", "right", "bottom", "top"};
+        for (int i = 0; i < 4; ++i) spines[i] = std::make_unique<Spine>(rc, *this, sides[i]);
+    }
     xaxis = std::make_unique<Axis>(rc, *this, true);
-    spine("bottom").axis = spine("top").axis = xaxis.get();
     yaxis = std::make_unique<Axis>(rc, *this, false);
-    spine("left").axis = spine("right").axis = yaxis.get();
+    if (polar) {  // _init_axis: the outer and inner circles belong to the radial axis
+        spine("polar").axis = spine("inner").axis = yaxis.get();
+    } else {
+        spine("bottom").axis = spine("top").axis = xaxis.get();
+        spine("left").axis = spine("right").axis = yaxis.get();
+    }
     shared_[0] = std::make_shared<SharedAxes>(SharedAxes{{this}, xaxis.get()});
     shared_[1] = std::make_shared<SharedAxes>(SharedAxes{{this}, yaxis.get()});
 
@@ -1303,7 +1412,10 @@ Axes::Axes(const rc::Params& rc, Figure& fig, std::shared_ptr<transforms::Bbox> 
         *titles[i] = std::move(t);
     }
     setTitleOffsetTrans(rc.number("axes.titlepad"));
-    patch = std::make_unique<Rectangle>(rc, 0.0, 0.0, 1.0, 1.0);
+    if (polar)
+        patch = std::make_unique<Wedge>(rc, 0.5, 0.5, 0.5, 0.0, 360.0);  // PolarAxes._gen_axes_patch
+    else
+        patch = std::make_unique<Rectangle>(rc, 0.0, 0.0, 1.0, 1.0);
     patch->setFacecolor(rc.text("axes.facecolor"));
     patch->setEdgecolor("none");
     patch->setLinewidth(0.0);
@@ -1324,6 +1436,7 @@ Axes::Axes(const rc::Params& rc, Figure& fig, std::shared_ptr<transforms::Bbox> 
             s.label1On = rc.boolean("ytick.labelleft") && rc.boolean("ytick.major.left");
             s.label2On = rc.boolean("ytick.labelright") && rc.boolean("ytick.major.right");
         }
+        if (polar) s.tick1On = s.tick2On = false;  // ThetaAxis / RadialAxis.clear: set_ticks_position('none')
         // grid(False), then grid(rcParams["axes.grid"], which=rcParams["axes.grid.which"], axis=rcParams["axes.grid.axis"])
         const std::string gridAxis = rc.text("axes.grid.axis");
         s.gridOn = rc.boolean("axes.grid") && (rc.text("axes.grid.which") == "both" || rc.text("axes.grid.which") == "major") &&
@@ -1345,6 +1458,7 @@ Axes::Axes(const rc::Params& rc, Figure& fig, std::shared_ptr<transforms::Bbox> 
             s.label1On = rc.boolean("ytick.labelleft") && rc.boolean("ytick.minor.left");
             s.label2On = rc.boolean("ytick.labelright") && rc.boolean("ytick.minor.right");
         }
+        if (polar) s.tick1On = s.tick2On = false;
         // (grid(False) is for the major grid only: the minor one of an axis that rcParams["axes.grid.axis"]
         // leaves out stays as Axis.clear set it, on)
         s.gridOn = rc.boolean("axes.grid") && (rc.text("axes.grid.which") == "both" || rc.text("axes.grid.which") == "minor");
@@ -1356,7 +1470,9 @@ Axes::Axes(const rc::Params& rc, Figure& fig, std::shared_ptr<transforms::Bbox> 
     // set_tick_params goes over the ticks of each axis, which makes the first one of each list
     // (_LazyTickList), and making a tick sets the position of the two spines it sits on: from here on
     // the spines have their own transforms, also where no tick is ever drawn.
-    for (const char* side : {"bottom", "top", "left", "right"}) spine(side).spineTransform();
+    if (!polar)
+        for (const char* side : {"bottom", "top", "left", "right"}) spine(side).spineTransform();
+    if (polar) clearPolar(*this);
 }
 
 void Axes::setTitleOffsetTrans(double points) {
@@ -1479,9 +1595,7 @@ void Axes::updateFromPath(const std::vector<double>& v, bool updatex, bool updat
 Line2D& Axes::addLine(std::unique_ptr<Line2D> line, bool keepTransform) {
     line->axes = this;
     if (!keepTransform) line->transform = transData;  // _set_artist_props
-    // set_clip_path(self.patch): a Rectangle clips by its box
-    line->clipBox = std::make_shared<transforms::TransformedBbox>(
-        std::make_shared<transforms::Bbox>(std::array<double, 4>{0, 0, 1, 1}), patch->fullTransform());
+    clipToPatch(*line);  // set_clip_path(self.patch)
     // _update_line_limits
     const Path& path = line->path();
     if (path.size()) {
@@ -1517,8 +1631,7 @@ Line2D& Axes::addLine(std::unique_ptr<Line2D> line, bool keepTransform) {
 Text& Axes::addText(std::unique_ptr<Text> t) {
     // Axes.text: the patch clips it (a Rectangle clips by its box) when clipping is on, which it is
     // not unless asked for; _set_artist_props: the figure and transData
-    t->clipBox = std::make_shared<transforms::TransformedBbox>(
-        std::make_shared<transforms::Bbox>(std::array<double, 4>{0, 0, 1, 1}), patch->fullTransform());
+    clipToPatch(*t);
     t->figure = &figure;
     t->transform = transData;
     children.push_back(std::move(t));
@@ -1536,8 +1649,7 @@ bool Axes::containsPoint(double x, double y) const {
 
 Patch& Axes::addPatch(std::unique_ptr<Patch> p) {
     if (!p->transformSet) p->transform = transData;  // _set_artist_props
-    p->clipBox = std::make_shared<transforms::TransformedBbox>(
-        std::make_shared<transforms::Bbox>(std::array<double, 4>{0, 0, 1, 1}), patch->fullTransform());
+    clipToPatch(*p);
     // _update_patch_limits: the ends of the path's segments (iter_bezier) through patch_trf - transData;
     // a Rectangle of no width and no height counts for nothing
     const auto* rect = dynamic_cast<const Rectangle*>(p.get());
@@ -1563,16 +1675,14 @@ Patch& Axes::addPatch(std::unique_ptr<Patch> p) {
 
 Patch& Axes::addArtist(std::unique_ptr<Patch> p) {
     if (!p->transformSet) p->transform = transData;  // _set_artist_props
-    p->clipBox = std::make_shared<transforms::TransformedBbox>(
-        std::make_shared<transforms::Bbox>(std::array<double, 4>{0, 0, 1, 1}), patch->fullTransform());
+    clipToPatch(*p);
     children.push_back(std::move(p));
     return static_cast<Patch&>(*children.back());
 }
 
 Artist& Axes::addOtherArtist(std::unique_ptr<Artist> a) {
     if (!a->transformSet) a->transform = transData;  // _set_artist_props
-    a->clipBox = std::make_shared<transforms::TransformedBbox>(
-        std::make_shared<transforms::Bbox>(std::array<double, 4>{0, 0, 1, 1}), patch->fullTransform());
+    clipToPatch(*a);
     children.push_back(std::move(a));
     return *children.back();
 }
@@ -1633,9 +1743,7 @@ Collection& Axes::addCollection(std::unique_ptr<Collection> c, bool autolim) {
     if (c->label.empty()) c->label = "_child" + std::to_string(children.size());
     c->figure = &figure;
     if (!c->transformSet) c->transform = transData;  // _set_artist_props
-    if (!c->clipPath)  // set_clip_path(self.patch) unless clipped already
-        c->clipBox = std::make_shared<transforms::TransformedBbox>(
-            std::make_shared<transforms::Bbox>(std::array<double, 4>{0, 0, 1, 1}), patch->fullTransform());
+    if (!c->clipPath) clipToPatch(*c);  // set_clip_path(self.patch) unless clipped already
     if (!autolim) {
         Collection& ref = *c;
         children.push_back(std::move(c));
@@ -1665,8 +1773,7 @@ Collection& Axes::addLinesCollection(std::unique_ptr<Collection> c) {
     if (c->label.empty()) c->label = "_child" + std::to_string(children.size());
     c->figure = &figure;
     if (!c->transformSet) c->transform = transData;
-    c->clipBox = std::make_shared<transforms::TransformedBbox>(
-        std::make_shared<transforms::Bbox>(std::array<double, 4>{0, 0, 1, 1}), patch->fullTransform());
+    clipToPatch(*c);
     Collection& ref = *c;
     children.push_back(std::move(c));
     if (!ref.paths.empty()) {
@@ -1701,9 +1808,11 @@ void Axes::autoscaleView(bool scalex, bool scaley) {
         // positive ones on a log scale)
         std::vector<double> stickies;
         if (margin != 0)
-            for (const Axes* ax : siblings)
+            for (const Axes* ax : siblings) {
                 for (const auto& c : ax->children)
                     for (double v : isX ? c->stickyX : c->stickyY) stickies.push_back(v);
+                if (!isX && ax->polar) stickies.push_back(0);  // RadialAxis.sticky_edges.y
+            }
         // (np.sort and np.searchsorted: NaN after every number)
         const auto nanLast = [](double a, double b) { return !std::isnan(a) && (std::isnan(b) || a < b); };
         std::sort(stickies.begin(), stickies.end(), nanLast);
@@ -1880,13 +1989,14 @@ void Axes::setScale(bool x, const std::string& name, const AxisScaleOptions& opt
     if (oldDefault != newDefault) autoscaleView(x, !x);
 }
 
-Spine& Axes::spine(const std::string& type) {
+Spine& Axes::spine(const std::string& name) {
     for (auto& s : spines)
-        if (s->type == type) return *s;
+        if (s->name == name) return *s;
     return *spines[0];
 }
 
 void Axes::setLimAndTransforms() {
+    if (polar) return setPolarLimAndTransforms(*this);
     transAxes = std::make_shared<transforms::BboxTransformTo>(bbox);
     transScale = std::make_shared<transforms::TransformWrapper>(std::make_shared<transforms::IdentityTransform>());
     transLimits = std::make_shared<transforms::BboxTransformFrom>(
@@ -1896,7 +2006,26 @@ void Axes::setLimAndTransforms() {
     yaxisTransform = transforms::blend(transAxes, transData);
 }
 
+transforms::TransformPtr Axes::axisTransform(bool x, const std::string& which) {
+    if (polar) {
+        if (x) return polar->xaxisTransform;
+        return which == "grid" ? polar->yaxisTransform : polar->yaxisTextTransform;
+    }
+    if (which == "grid") return x ? xaxisTransform : yaxisTransform;
+    return spine(x ? (which == "tick1" ? "bottom" : "top") : (which == "tick1" ? "left" : "right")).spineTransform();
+}
+
+void Axes::clipToPatch(Artist& artist) const {
+    if (dynamic_cast<const Rectangle*>(patch.get())) {
+        artist.clipBox = std::make_shared<transforms::TransformedBbox>(
+            std::make_shared<transforms::Bbox>(std::array<double, 4>{0, 0, 1, 1}), patch->fullTransform());
+        return;
+    }
+    artist.clipPath = ClipPath{patch->path(), patch->fullTransform(), patch.get()};  // TransformedPatchPath(patch)
+}
+
 Axes::TextTransform Axes::xaxisTextTransform(int which, double padPoints) {
+    if (polar) return {polar->xaxisTextTransform, "center", "center"};
     const std::string align = rc_.text("xtick.alignment");
     const double dy = which == 1 ? -1 * padPoints / 72 : padPoints / 72;
     auto offset = std::make_shared<transforms::ScaledTranslation>(0, dy, figure.dpiScaleTrans);
@@ -1905,6 +2034,16 @@ Axes::TextTransform Axes::xaxisTextTransform(int which, double padPoints) {
 }
 
 Axes::TextTransform Axes::yaxisTextTransform(int which, double padPoints) {
+    if (polar) {
+        // get_yaxis_text1_transform / get_yaxis_text2_transform
+        const auto v = polar->realViewLim->points();
+        if (which == 1 && isFullCircleRad(v[0], v[2])) return {polar->yaxisTextTransform, "bottom", "left"};
+        const bool first = which == 1;
+        const bool fromMin = (polar->thetaDirection() > 0) == first;
+        const std::string halign = first == (polar->thetaDirection() > 0) ? "left" : "right";
+        return {transforms::compose(polar->yaxisTextTransform, polarThetaShift(*this, padPoints, fromMin ? "min" : "max")),
+                "center", halign};
+    }
     const std::string align = rc_.text("ytick.alignment");
     const double dx = which == 1 ? -1 * padPoints / 72 : padPoints / 72;
     auto offset = std::make_shared<transforms::ScaledTranslation>(dx, 0, figure.dpiScaleTrans);
@@ -2059,7 +2198,7 @@ void Axes::applyAspect() {
         };
         const auto tx = bound(*xaxis), ty = bound(*yaxis);
         const double xsize = std::max(std::fabs(tx[1] - tx[0]), 1e-30), ysize = std::max(std::fabs(ty[1] - ty[0]), 1e-30);
-        boxAspectValue = *aspect * (ysize / xsize);
+        boxAspectValue = *aspect * (polar ? 1.0 : ysize / xsize);  // (PolarAxes.get_data_ratio: 1)
     }
     // Bbox.shrunk_to_aspect(box_aspect, pb, fig_aspect), then anchored(anchor, pb)
     const double w = original[2] - original[0], h = original[3] - original[1];
@@ -2168,6 +2307,7 @@ void Axes::draw(Renderer& renderer) {
         setSecondaryLims();
         setSecondaryScale();
     }
+    if (polar) beforePolarDraw(*this);  // PolarAxes.draw, then Axes.draw
     unstaleViewLim();
     renderer.openGroup("axes", gid);
     applyAspect();

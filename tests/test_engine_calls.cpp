@@ -2190,3 +2190,30 @@ TEST(ContourCalls, LinesIgnoreHatches) {
     EXPECT_EQ(draw(kSubplots + R"({"on": "axs[0]", "call": "contour", "args": [[[0, 1], [2, 3]]], "kwargs": {"hatches": null}})").error, "");
     EXPECT_EQ(draw(kSubplots + R"({"on": "axs[0]", "call": "contour", "args": [[[0, 1], [2, 3]]], "kwargs": {"hatches": 5}})").error, "");
 }
+
+class PolarRefusals : public testing::TestWithParam<Refusal> {};
+
+TEST_P(PolarRefusals, NameTheCallAndTheReason) {
+    EXPECT_EQ(draw(GetParam().call).error, GetParam().error);
+}
+
+#define FIG R"({"call": "figure", "as": "fig"}, )"
+#define POLAR R"({"call": "subplots", "kwargs": {"subplot_kw": {"$dict": {"projection": "polar"}}}, "as": ["fig", "ax"]}, )"
+INSTANTIATE_TEST_SUITE_P(
+    Engine, PolarRefusals,
+    testing::Values(
+        Refusal{FIG R"({"on": "fig", "call": "add_subplot", "kwargs": {"projection": "cubic"}})",
+                "fig.add_subplot: Unknown projection 'cubic'"},
+        Refusal{FIG R"({"on": "fig", "call": "add_subplot", "kwargs": {"projection": "rectilinear", "polar": true}})",
+                "fig.add_subplot: polar=True, yet projection='rectilinear'. Only one of these arguments should be supplied."},
+        Refusal{FIG R"({"on": "fig", "call": "add_axes", "args": [[0.1, 0.1, 0.8, 0.8]], "kwargs": {"projection": "mollweide"}})",
+                "fig.add_axes: the projection 'mollweide' is not supported yet"},
+        Refusal{R"({"call": "subplots", "kwargs": {"subplot_kw": {"$dict": {"projection": "3d"}}}})",
+                "plt.subplots: the projection '3d' is not supported yet"},
+        Refusal{R"({"call": "subplots", "kwargs": {"subplot_kw": {"$dict": {"facecolor": "red"}}}})",
+                "plt.subplots: subplot_kw facecolor is not supported yet"},
+        Refusal{R"({"call": "subplot", "args": [111], "kwargs": {"polar": "yes"}})", "plt.subplot: polar must be True or False"},
+        Refusal{POLAR R"({"on": "ax", "call": "set_xscale", "args": ["log"]})",
+                "ax.set_xscale: The xscale cannot be set on a polar plot"}));
+#undef FIG
+#undef POLAR

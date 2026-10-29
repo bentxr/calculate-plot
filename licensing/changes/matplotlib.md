@@ -348,6 +348,11 @@ it comes from in its first lines. The changes, as a whole:
   width), translated to C++; the axis a transform asks for its radial origin is given as the Axes' lockable origin
   box (transforms.py's LockableBbox, src/transforms/transforms.hpp). CompositeGenericTransform's and
   TransformWrapper's transform_path_non_affine (src/engine/path.cpp) are followed for transforms with a polar part.
+  PolarAxes (_set_lim_and_transforms, clear, draw, the axis and text transforms, get_data_ratio), _ThetaShift,
+  ThetaLocator, ThetaFormatter, RadialLocator, ThetaTick's and RadialTick's update_position and the theta and radial
+  axes' clear and _set_scale are translated into the library's one Axes class, which takes a polar state
+  (src/engine/polar.cpp, src/engine/axes.cpp); spines.py's arc spines (set_patch_arc, _adjust_location of arcs) join
+  its Spine; the polar clip path is the live Wedge patch (TransformedPatchPath).
 - **Meshes** (src/engine/collections.cpp QuadMesh and PolyQuadMesh, src/engine/engine.cpp pcolormesh, pcolor,
   pcolorfast; src/engine/image.cpp PcolorImage): collections.py's _MeshData, PolyQuadMesh and QuadMesh (_convert_mesh_to_triangles for Gouraud shading, draw), backend_bases.py's RendererBase.draw_quad_mesh
   (the SVG renderer's path collection of the cells), axes/_axes.py's pcolormesh, pcolor, pcolorfast,

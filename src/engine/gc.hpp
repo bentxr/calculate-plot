@@ -15,10 +15,14 @@ namespace calculate_plot::rc { class Params; }
 
 namespace calculate_plot::engine {
 
-// A clip path as TransformedPath.get_transformed_path_and_affine() gives it.
+class Patch;
+
+// A clip path as TransformedPath.get_transformed_path_and_affine() gives it. With `patch` (a
+// TransformedPatchPath), the path and its transform are the patch's when it is drawn.
 struct ClipPath {
     Path path;
     transforms::TransformPtr affine;
+    const Patch* patch = nullptr;
 };
 
 // GraphicsContextBase: the drawing state each draw call carries.

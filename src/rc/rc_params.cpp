@@ -174,7 +174,7 @@ const std::vector<std::string>& Params::inertKeys() {
         "keymap.home", "keymap.pan", "keymap.quit", "keymap.quit_all", "keymap.save", "keymap.xscale",
         "keymap.yscale", "keymap.zoom", "macosx.window_mode", "pdf.compression",
         "pdf.fonttype", "pdf.inheritcolor", "pdf.use14corefonts", "pgf.preamble", "pgf.rcfonts", "pgf.texsystem",
-        "polaraxes.grid", "ps.distiller.res", "ps.fonttype", "ps.papersize", "ps.useafm", "ps.usedistiller",
+        "ps.distiller.res", "ps.fonttype", "ps.papersize", "ps.useafm", "ps.usedistiller",
         "savefig.directory", "savefig.format", "savefig.orientation", "text.latex.engine", "text.latex.preamble",
         "tk.window_focus", "toolbar", "webagg.address", "webagg.open_in_browser", "webagg.port",
         "webagg.port_retries"};

@@ -74,14 +74,15 @@ public:
     // Figure.subplots(nrows, ncols, sharex=, sharey=): the axes in row-major order. The sharing is
     // "none", "all", "row" or "col".
     std::vector<Axes*> subplots(int nrows, int ncols, const std::string& sharex = "none",
-                                const std::string& sharey = "none", const GridSpec* ratios = nullptr);
+                                const std::string& sharey = "none", const GridSpec* ratios = nullptr, bool polar = false);
     // Figure.add_subplot(nrows, ncols, index): an Axes in cells num1 ... num2 (row-major, from 0) of a
     // grid of that shape: the one an Axes of the figure already uses (GridSpec._check_gridspec_exists),
     // or a new one.
-    Axes* addSubplot(int nrows, int ncols, int num1, int num2);
-    Axes* addSubplot(const SubplotSpec& spec);  // add_subplot(ss): another Axes in those cells
+    // (`polar`: projection='polar', a PolarAxes)
+    Axes* addSubplot(int nrows, int ncols, int num1, int num2, bool polar = false);
+    Axes* addSubplot(const SubplotSpec& spec, bool polar = false);  // add_subplot(ss): another Axes in those cells
     // Figure.add_axes((left, bottom, width, height)): an Axes at that position, in figure fractions
-    Axes* addAxes(double left, double bottom, double width, double height);
+    Axes* addAxes(double left, double bottom, double width, double height, bool polar = false);
     Axes* addAxesBox(const std::array<double, 4>& points);  // add_axes(Bbox): the box itself as the position
 };
 

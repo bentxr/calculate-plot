@@ -8,7 +8,12 @@
 #include "agg/path_text.h"
 
 #include "engine/artist.hpp"
+#include "engine/axes.hpp"
+#include "engine/figure.hpp"
+#include "rc/rc_params.hpp"
 #include "support/histogram.hpp"
+#include "support/log10.hpp"
+#include "support/pyformat.hpp"
 #include "support/pynum.hpp"
 
 #include <cmath>
@@ -188,6 +193,235 @@ std::array<double, 4> WedgeBbox::points() const {
     if (0 > deltaw) deltaw = 0;
     deltah /= 2, deltaw /= 2;
     return {out[0] - deltaw, out[1] - deltah, out[2] + deltaw, out[3] + deltah};
+}
+
+// --- PolarAxes -----------------------------------------------------------------------------------------------
+
+namespace {
+
+double deg2rad(double v) { return v * (M_PI / 180.0); }  // npy_deg2rad
+
+// Python's min(a, b) and max(a, b): the first unless the second is smaller (larger)
+double pyMin(double a, double b) { return b < a ? b : a; }
+double pyMax(double a, double b) { return b > a ? b : a; }
+
+// _ThetaShift(axes, pad, mode): a translation of `pad` points away from the start ('min') or the end ('max') of the
+// theta limits, or along the radial labels' angle ('rlabel')
+class ThetaShift : public transforms::Transform {
+public:
+    ThetaShift(const Axes& ax, double pad, std::string mode) : ax_(ax), pad_(pad), mode_(std::move(mode)) {}
+    transforms::Matrix matrix() const override {
+        const PolarAxesState& p = *ax_.polar;
+        double angle = 0;
+        if (mode_ == "rlabel") {
+            angle = deg2rad(p.rlabelPosition() * p.thetaDirection()) + p.thetaOffset() - M_PI / 2;
+        } else {
+            const auto v = p.realViewLim->points();
+            angle = mode_ == "min" ? std::min(v[0], v[2]) - M_PI / 2 : std::max(v[0], v[2]) + M_PI / 2;
+        }
+        const auto t = ax_.figure.dpiScaleTrans->transform(pad_ * std::cos(angle) / 72, pad_ * std::sin(angle) / 72);
+        return transforms::Matrix{1.0, 0.0, t[0], 0.0, 1.0, t[1]};
+    }
+
+private:
+    const Axes& ax_;
+    double pad_;
+    std::string mode_;
+};
+
+// RadialTick._determine_anchor in the 'default' rotation mode
+std::pair<std::string, std::string> determineAnchor(double angle, bool start) {
+    if (start) {
+        if (angle < -68.5) return {"center", "top"};
+        if (angle < -23.5) return {"left", "top"};
+        if (angle < 22.5) return {"left", "center"};
+        if (angle < 67.5) return {"left", "bottom"};
+        if (angle < 112.5) return {"center", "bottom"};
+        if (angle < 157.5) return {"right", "bottom"};
+        if (angle < 202.5) return {"right", "center"};
+        if (angle < 247.5) return {"right", "top"};
+        return {"center", "top"};
+    }
+    if (angle < -68.5) return {"center", "bottom"};
+    if (angle < -23.5) return {"right", "bottom"};
+    if (angle < 22.5) return {"right", "center"};
+    if (angle < 67.5) return {"right", "top"};
+    if (angle < 112.5) return {"center", "top"};
+    if (angle < 157.5) return {"left", "top"};
+    if (angle < 202.5) return {"left", "center"};
+    if (angle < 247.5) return {"left", "bottom"};
+    return {"center", "bottom"};
+}
+
+double pyMod(double a, double b) { return support::divmod(a, b).second; }
+
+}  // namespace
+
+transforms::TransformPtr polarThetaShift(const Axes& ax, double pad, const std::string& mode) {
+    return std::make_shared<ThetaShift>(ax, pad, mode);
+}
+
+double PolarAxesState::rsign() const {
+    const auto p = originViewLim->points();
+    return sign(p[3] - p[1]);
+}
+
+bool isFullCircleDeg(double thetamin, double thetamax) { return std::fabs(std::fabs(thetamax - thetamin) - 360.0) < 1e-12; }
+
+bool isFullCircleRad(double thetamin, double thetamax) { return std::fabs(std::fabs(thetamax - thetamin) - 2 * M_PI) < 1.74e-14; }
+
+void setPolarLimAndTransforms(Axes& ax) {
+    using namespace transforms;
+    PolarAxesState& p = *ax.polar;
+    const auto identity = std::make_shared<IdentityTransform>();
+    p.originViewLim = std::make_shared<LockableBbox>(ax.viewLim);
+    p.direction = std::make_shared<Affine2D>();
+    p.direction->scale(p.defaultThetaDirection, 1.0);
+    p.offset = std::make_shared<Affine2D>();
+    p.offset->translate(p.defaultThetaOffset, 0.0);
+    p.transShift = compose(p.direction, p.offset);
+    p.realViewLim = std::make_shared<TransformedBbox>(ax.viewLim, p.transShift);
+    ax.transScale = std::make_shared<TransformWrapper>(identity);
+    p.axesLim = std::make_shared<WedgeBbox>(std::array<double, 2>{0.5, 0.5}, p.realViewLim, p.originViewLim);
+    p.transWedge = std::make_shared<BboxTransformFrom>(p.axesLim);
+    ax.transAxes = std::make_shared<BboxTransformTo>(ax.bbox);
+    p.transProjection = std::make_shared<PolarTransform>(p.originViewLim, ax.transScale, true, ax.rc());
+    p.transProjectionAffine = std::make_shared<PolarAffine>(ax.transScale, p.originViewLim);
+    // transScale + transShift + transProjection + (transProjectionAffine + transWedge + transAxes)
+    ax.transData = compose(compose(compose(ax.transScale, p.transShift), p.transProjection),
+                           compose(compose(p.transProjectionAffine, p.transWedge), ax.transAxes));
+    // (a PolarAxes has no transLimits; this one is the rectilinear Axes' and draws nothing)
+    ax.transLimits = std::make_shared<BboxTransformFrom>(std::make_shared<TransformedBbox>(ax.viewLim, ax.transScale));
+    // the theta ticks: r from the radial limits' bottom (0) to their top (1); their labels flipped to the outside
+    p.xaxisTransform = compose(blend(identity, std::make_shared<BboxTransformTo>(ax.viewLim)), ax.transData);
+    auto flipr = std::make_shared<Affine2D>();
+    flipr->translate(0.0, -0.5).scale(1.0, -1.0).translate(0.0, 0.5);
+    p.xaxisTextTransform = compose(flipr, p.xaxisTransform);
+    // the radial ticks: theta from the theta limits' start (0) to their end (1); their labels at the rlabel angle
+    p.yaxisTransform = compose(blend(std::make_shared<BboxTransformTo>(ax.viewLim), identity), ax.transData);
+    p.rLabelPosition = std::make_shared<Affine2D>();
+    p.rLabelPosition->translate(p.defaultRlabelPosition, 0.0);
+    p.yaxisTextTransform = std::make_shared<TransformWrapper>(compose(p.rLabelPosition, ax.transData));
+    ax.xaxisTransform = p.xaxisTransform;
+    ax.yaxisTransform = p.yaxisTransform;
+}
+
+void clearPolar(Axes& ax) {
+    PolarAxesState& p = *ax.polar;
+    ax.title->y = 1.05;
+    ax.spine("start").visible = false;
+    ax.spine("end").visible = false;
+    // ThetaAxis._set_scale: ticks at degree multiples
+    ax.xaxis->locator.setSteps({1, 1.5, 3, 4.5, 9, 10});
+    ax.xaxis->setLim(0.0, 2 * M_PI, false);
+    const bool grid = ax.rc().boolean("polaraxes.grid");
+    ax.xaxis->grid(grid, "major", TickSwitches(), false);
+    ax.yaxis->grid(grid, "major", TickSwitches(), false);
+    ax.spine("inner").visible = false;
+    p.originViewLim->locked[1].reset();  // set_rorigin(None)
+    auto m = p.offset->matrix();
+    m.tx = p.defaultThetaOffset;  // set_theta_offset
+    p.offset->setMatrix(m);
+    m = p.direction->matrix();
+    m.sx = p.defaultThetaDirection;  // set_theta_direction
+    p.direction->setMatrix(m);
+    // PolarAxes.__init__: set_aspect('equal', adjustable='box', anchor='C')
+    ax.aspect = 1.0;
+    ax.anchor = {0.5, 0.5};
+}
+
+void beforePolarDraw(Axes& ax) {
+    PolarAxesState& p = *ax.polar;
+    ax.unstaleViewLim();
+    const auto rv = p.realViewLim->points();
+    double thetamin = rad2deg(rv[0]), thetamax = rad2deg(rv[2]);
+    if (thetamin > thetamax) std::swap(thetamin, thetamax);
+    const Axis& r = *ax.yaxis;
+    const double origin = r.scaleForward(p.rorigin()), rs = p.rsign();
+    const double rmin = (r.scaleForward(rv[1]) - origin) * rs, rmax = (r.scaleForward(rv[3]) - origin) * rs;
+    if (auto* wedge = dynamic_cast<Wedge*>(ax.patch.get())) {
+        const auto center = p.transWedge->transform(0.5, 0.5);
+        const double edge = p.transWedge->transform(1, 0)[0];
+        const double radius = edge - center[0];
+        const double width = pyMin(radius * (rmax - rmin) / rmax, radius);
+        wedge->set(center[0], center[1], radius, thetamin, thetamax, width);
+        ax.spine("inner").visible = radius - width != 0.0;
+    }
+    const bool visible = !isFullCircleDeg(thetamin, thetamax);
+    ax.spine("start").visible = visible;
+    ax.spine("end").visible = visible;
+    const transforms::TransformPtr labels = visible ? p.yaxisTransform : transforms::compose(p.rLabelPosition, ax.transData);
+    if (!transforms::equal(*p.yaxisTextTransform, *labels)) {
+        p.yaxisTextTransform->set(labels);
+        ax.yaxis->resetTicks();
+    }
+}
+
+void thetaTicks(Axis& axis, std::vector<double>* locs, std::vector<std::string>* labels) {
+    const auto view = axis.viewInterval();
+    if (!labels) {
+        // ThetaLocator: every 45 degrees of a full circle, else its base in degrees (_AxisWrapper)
+        const double lim0 = rad2deg(view[0]), lim1 = rad2deg(view[1]);
+        locs->clear();
+        if (isFullCircleDeg(lim0, lim1)) {
+            const double start = deg2rad(pyMin(lim0, lim1));
+            for (int k = 0; k < 8; ++k) locs->push_back(start + double(k) * 2 * M_PI / 8);
+        } else {
+            axis.locator.tickSpace = axis.tickSpace();
+            for (double v : axis.locator.tickValues(lim0, lim1)) locs->push_back(deg2rad(v));
+        }
+        return;
+    }
+    // ThetaFormatter: degrees, with as many decimals as the span needs, and the degree sign
+    const double d = rad2deg(std::fabs(view[1] - view[0]));
+    const int digits = static_cast<int>(pyMax(-std::trunc(support::log10(d) - 1.5), 0));
+    labels->clear();
+    for (double x : *locs) labels->push_back(support::percentF(rad2deg(x), digits) + "\u00b0");
+}
+
+std::vector<double> radialTicks(const Axes& ax, std::vector<double> locs) {
+    const auto v = ax.viewLim->points();
+    if (!isFullCircleRad(v[0], v[2])) return locs;
+    const double rorigin = ax.polar->rorigin() * ax.polar->rsign();
+    if (!(std::min(v[1], v[3]) <= rorigin)) return locs;  // get_rmin() <= rorigin
+    std::vector<double> out;
+    for (double t : locs)
+        if (t > rorigin) out.push_back(t);
+    return out;
+}
+
+bool radialZeroInBounds(const Axis& axis) { return !axis.logScale() && axis.scale() != "logit"; }
+
+void updatePolarTick(Axes& ax, Tick& tick, bool isX, double loc) {
+    const PolarAxesState& p = *ax.polar;
+    const double direction = p.thetaDirection(), offset = p.thetaOffset();
+    if (isX) {
+        // (the label keeps the rotation it was given: the rotation mode is 'default'); the padding
+        if (!tick.text1Translate) return;
+        const double pad = tick.padPoints() + 7;
+        const double angle = loc * direction + offset;
+        const double padx = pad * std::cos(angle) / 72, pady = pad * std::sin(angle) / 72;
+        tick.text1Translate->setTranslation(padx, pady);
+        tick.text2Translate->setTranslation(-padx, -pady);
+        return;
+    }
+    const auto v = ax.viewLim->points();
+    const double thetamin = rad2deg(std::min(v[0], v[2])), thetamax = rad2deg(std::max(v[0], v[2]));
+    const double offsetDeg = rad2deg(offset);
+    const bool full = isFullCircleDeg(thetamin, thetamax);
+    if (!full) {
+        const double angle = pyMod(thetamin * direction + offsetDeg, 360) - 90;
+        const auto [ha, va] = determineAnchor(angle, direction > 0);
+        tick.label1.horizontalAlignment = ha;
+        tick.label1.verticalAlignment = va;
+    } else {
+        tick.label2.visible = false;
+        tick.tick2line.visible = false;
+    }
+    const double angle = pyMod(thetamax * direction + offsetDeg, 360) - 90;
+    const auto [ha, va] = determineAnchor(angle, direction < 0);
+    tick.label2.horizontalAlignment = ha;
+    tick.label2.verticalAlignment = va;
 }
 
 }  // namespace calculate_plot::engine

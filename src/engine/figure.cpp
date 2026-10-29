@@ -52,7 +52,7 @@ Figure::Figure(const rc::Params& rc, const FigureOptions& o) : Artist(rc), subpl
 
 Figure::~Figure() = default;
 
-std::vector<Axes*> Figure::subplots(int nrows, int ncols, const std::string& sharex, const std::string& sharey, const GridSpec* ratios) {
+std::vector<Axes*> Figure::subplots(int nrows, int ncols, const std::string& sharex, const std::string& sharey, const GridSpec* ratios, bool polar) {
     gridspecs.push_back(std::make_unique<GridSpec>(nrows, ncols));
     if (ratios) {  // width_ratios / height_ratios
         gridspecs.back()->widthRatios = ratios->widthRatios, gridspecs.back()->widthRatiosInt = ratios->widthRatiosInt;
@@ -70,7 +70,7 @@ std::vector<Axes*> Figure::subplots(int nrows, int ncols, const std::string& sha
         for (int col = 0; col < ncols; ++col) {
             Axes* const withX = sharedWith(sharex, row, col);
             Axes* const withY = sharedWith(sharey, row, col);
-            axes.push_back(std::make_unique<Axes>(rc_, *this, gs.cell(row, col)));
+            axes.push_back(std::make_unique<Axes>(rc_, *this, gs.cell(row, col), polar));
             if (withX) axes.back()->share(true, *withX);
             if (withY) axes.back()->share(false, *withY);
             out.push_back(axes.back().get());
@@ -83,7 +83,7 @@ std::vector<Axes*> Figure::subplots(int nrows, int ncols, const std::string& sha
     return out;
 }
 
-Axes* Figure::addSubplot(int nrows, int ncols, int num1, int num2) {
+Axes* Figure::addSubplot(int nrows, int ncols, int num1, int num2, bool polar) {
     const GridSpec* gs = nullptr;
     for (const auto& a : axes)
         if (a->subplotSpec && a->subplotSpec->gridspec->nrows == nrows && a->subplotSpec->gridspec->ncols == ncols) {
@@ -94,17 +94,17 @@ Axes* Figure::addSubplot(int nrows, int ncols, int num1, int num2) {
         gridspecs.push_back(std::make_unique<GridSpec>(nrows, ncols));
         gs = gridspecs.back().get();
     }
-    axes.push_back(std::make_unique<Axes>(rc_, *this, SubplotSpec{gs, num1, num2}));
+    axes.push_back(std::make_unique<Axes>(rc_, *this, SubplotSpec{gs, num1, num2}, polar));
     return axes.back().get();
 }
 
-Axes* Figure::addSubplot(const SubplotSpec& spec) {
-    axes.push_back(std::make_unique<Axes>(rc_, *this, spec));
+Axes* Figure::addSubplot(const SubplotSpec& spec, bool polar) {
+    axes.push_back(std::make_unique<Axes>(rc_, *this, spec, polar));
     return axes.back().get();
 }
 
-Axes* Figure::addAxes(double left, double bottom, double width, double height) {
-    axes.push_back(std::make_unique<Axes>(rc_, *this, transforms::Bbox::fromBounds(left, bottom, width, height), std::nullopt));
+Axes* Figure::addAxes(double left, double bottom, double width, double height, bool polar) {
+    axes.push_back(std::make_unique<Axes>(rc_, *this, transforms::Bbox::fromBounds(left, bottom, width, height), std::nullopt, polar));
     return axes.back().get();
 }
 

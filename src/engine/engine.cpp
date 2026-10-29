@@ -797,6 +797,27 @@ private:
     }
 
     // plt.subplots(nrows=1, ncols=1, **fig_kw) -> fig, ax (one Axes; grids of Axes come later)
+    // Figure._process_projection_requirements(projection=, polar=): a PolarAxes or a rectilinear Axes; matplotlib's
+    // errors for an unknown projection or two that disagree
+    bool projectionOf(const Json* projection, const Json* polarFlag, const std::string& where, bool* isPolar, std::string* error) {
+        *isPolar = false;
+        if (polarFlag && !polarFlag->isNull()) {
+            if (!polarFlag->isBool()) return *error = where + ": polar must be True or False", false;
+            *isPolar = polarFlag->asBool();
+        }
+        const bool named = projection && !projection->isNull();
+        if (named && !projection->isString()) return *error = where + ": projection must be a name", false;
+        if (*isPolar && named && projection->asString() != "polar")
+            return *error = where + ": polar=True, yet projection=" + repr(*projection) + ". Only one of these arguments should be supplied.", false;
+        if (!named || *isPolar) return true;
+        const std::string name = projection->asString();
+        if (name == "polar") return *isPolar = true, true;
+        if (name == "rectilinear") return true;
+        if (name == "aitoff" || name == "hammer" || name == "lambert" || name == "mollweide" || name == "3d")
+            return *error = where + ": the projection '" + name + "' is not supported yet", false;
+        return *error = where + ": Unknown projection " + repr(*projection), false;
+    }
+
     bool subplots(const model::Call& call, std::string* error) {
         double grid[2] = {1, 1};
         for (std::size_t i = 0; i < call.args.size(); ++i)
@@ -805,7 +826,7 @@ private:
                 return false;
             }
         FigureOptions options;
-        bool squeeze = true;
+        bool squeeze = true, polarSubplots = false;
         std::string sharex = "none", sharey = "none";
         layoutKeywords_ = LayoutKeywords();
         GridSpec ratios(1, 1);  // (width_ratios and height_ratios: the grid's)
@@ -830,6 +851,18 @@ private:
                 (name == "sharex" ? sharex : sharey) = share;
             } else if (name == "width_ratios" || name == "height_ratios") {
                 if (!value.isNull()) ratioValues[name == "width_ratios" ? 0 : 1] = &value;
+            } else if (name == "subplot_kw") {
+                // the keywords each add_subplot takes: so far its projection
+                if (value.isNull()) continue;
+                if (!(value.isObject() && value.members().size() == 1 && value.members()[0].first == "$dict"))
+                    return *error = "plt.subplots: subplot_kw must be a dict", false;
+                const Json *projection = nullptr, *polarFlag = nullptr;
+                for (const auto& [key, item] : value.members()[0].second.members()) {
+                    if (key == "projection") projection = &item;
+                    else if (key == "polar") polarFlag = &item;
+                    else return *error = "plt.subplots: subplot_kw " + key + " is not supported yet", false;
+                }
+                if (!projectionOf(projection, polarFlag, "plt.subplots", &polarSubplots, error)) return false;
             } else if (!figureKeyword(name, value, options, "plt.subplots", error)) {
                 return false;
             }
@@ -858,7 +891,7 @@ private:
         figure_ = std::make_unique<Figure>(rc_, options);
         if (!figure_->subplotpars.valid(error)) return *error = "plt.subplots: " + *error, false;
         if (!figureLayout("plt.subplots", error)) return false;
-        const std::vector<Axes*> made = figure_->subplots(nrows, ncols, sharex, sharey, &ratios);
+        const std::vector<Axes*> made = figure_->subplots(nrows, ncols, sharex, sharey, &ratios, polarSubplots);
         axes_.clear();
         figureNames_.clear();
         mappables_.clear();
@@ -1033,8 +1066,14 @@ private:
     // Figure.add_axes(rect): (left, bottom, width, height), finite, not negative in size; the new Axes is current
     bool addAxes(const model::Call& call, const Json* rect, std::string* error) {
         const std::string where = (call.on.empty() ? "plt" : call.on) + "." + call.method + ": ";
-        if (call.method == "add_axes" && (call.args.size() != 1 || !call.kwargs.empty()))
-            return *error = where + "a rect (left, bottom, width, height) and no keywords are supported so far", false;
+        bool isPolar = false;
+        if (call.method == "add_axes") {
+            if (call.args.size() != 1) return *error = where + "a rect (left, bottom, width, height) is supported so far", false;
+            for (const auto& [name, value] : call.kwargs)
+                if (name != "projection" && name != "polar") return *error = where + "the keyword " + name + " is not supported yet", false;
+            if (!projectionOf(keyword(call, "projection"), keyword(call, "polar"), where.substr(0, where.size() - 2), &isPolar, error))
+                return false;
+        }
         const Json* seq = rect ? sequence(*rect) : nullptr;
         double r[4];
         if (!seq || seq->size() != 4) return *error = where + "rect must be (left, bottom, width, height)", false;
@@ -1043,13 +1082,15 @@ private:
         for (double v : r)
             if (!std::isfinite(v)) return *error = where + "all entries in rect must be finite not " + repr(*rect), false;
         if (r[2] < 0 || r[3] < 0) return *error = where + "Width and height specified must be non-negative", false;
-        current_ = gcf().addAxes(r[0], r[1], r[2], r[3]);
+        current_ = gcf().addAxes(r[0], r[1], r[2], r[3], isPolar);
         return nameResult(call, current_, error);
     }
 
     // plt.subplot(*args): the figure's Axes of that grid and cells, else a new one; either is current
     bool subplot(const model::Call& call, std::string* error) {
-        if (!call.kwargs.empty()) return *error = "plt.subplot: keyword arguments are not supported yet", false;
+        bool isPolar = false;
+        if (!keywords(call, {"projection", "polar"}, error)) return false;
+        if (!projectionOf(keyword(call, "projection"), keyword(call, "polar"), "plt.subplot", &isPolar, error)) return false;
         int spec[4];
         if (!subplotSpecOf(call, spec, error)) return false;
         Figure& f = gcf();
@@ -1064,22 +1105,25 @@ private:
                         first = b->subplotSpec->gridspec;
                         break;
                     }
-                if (a->subplotSpec->gridspec == first) {
+                // (with keywords, only an Axes of the projection they ask for: _projection_init)
+                if (a->subplotSpec->gridspec == first && (call.kwargs.empty() || bool(a->polar) == isPolar)) {
                     found = a.get();
                     break;
                 }
             }
-        current_ = found ? found : f.addSubplot(spec[0], spec[1], spec[2], spec[3]);
+        current_ = found ? found : f.addSubplot(spec[0], spec[1], spec[2], spec[3], isPolar);
         return nameResult(call, current_, error);
     }
 
     bool figureCall(const model::Call& call, std::string* error) {
         const std::string where = call.on + "." + call.method;
         if (call.method == "add_subplot") {
-            if (!call.kwargs.empty()) return *error = where + ": keyword arguments are not supported yet", false;
+            bool isPolar = false;
+            if (!keywords(call, {"projection", "polar"}, error)) return false;
+            if (!projectionOf(keyword(call, "projection"), keyword(call, "polar"), where, &isPolar, error)) return false;
             int spec[4];
             if (!subplotSpecOf(call, spec, error)) return false;
-            current_ = figure_->addSubplot(spec[0], spec[1], spec[2], spec[3]);
+            current_ = figure_->addSubplot(spec[0], spec[1], spec[2], spec[3], isPolar);
             return nameResult(call, current_, error);
         }
         if (call.method == "gca") return noArguments(call, error) && nameResult(call, &gca(), error);
@@ -1676,6 +1720,8 @@ private:
             const std::string name = nameJson->asString();
             if (name != "linear" && name != "log" && name != "symlog" && name != "logit" && name != "function" && name != "functionlog")
                 return *error = where + ": the " + name + " scale is not supported yet", false;
+            if (ax.polar && call.method == "set_xscale" && name != "linear")  // ThetaAxis._set_scale
+                return *error = where + ": The xscale cannot be set on a polar plot", false;
             AxisScaleOptions options;
             const bool function = name == "function" || name == "functionlog";
             bool functionsGiven = false;
@@ -2868,8 +2914,7 @@ private:
         // clip_on=True: clipped by the Axes' patch (a box); _add_text: the figure
         const Json* clipOn = keyword(call, "clip_on");
         if (clipOn && clipOn->isBool() && clipOn->asBool())
-            a->clipBox = std::make_shared<transforms::TransformedBbox>(
-                std::make_shared<transforms::Bbox>(std::array<double, 4>{0, 0, 1, 1}), ax.patch->fullTransform());
+            ax.clipToPatch(*a);
         a->figure = &ax.figure;
         ax.children.push_back(std::move(a));
         return true;
@@ -4698,8 +4743,7 @@ private:
         if (!im->setData(data, error)) return *error = where + ": " + *error, false;
         if (!imageAlpha(*im, keyword(call, "alpha"), where, error)) return false;
         // clipped to the Axes patch (a rectangle: its box)
-        im->clipBox = std::make_shared<transforms::TransformedBbox>(
-            std::make_shared<transforms::Bbox>(std::array<double, 4>{0, 0, 1, 1}), ax.patch->fullTransform());
+        ax.clipToPatch(*im);
         // _scale_norm: vmin / vmax set the norm's limits (not with a norm object), then autoscale_None
         if (vmin || vmax) {
             if (normObject)
@@ -6436,8 +6480,7 @@ private:
                 raw.dtype = im->data().dtype;
                 im->norm->autoscaleNone(colors::processValue(raw));
             }
-            im->clipBox = std::make_shared<transforms::TransformedBbox>(
-                std::make_shared<transforms::Bbox>(std::array<double, 4>{0, 0, 1, 1}), ax.patch->fullTransform());
+            ax.clipToPatch(*im);
             ret = &ax.addImage(std::move(im));
         }
         ret->stickyX = {xl, xr};

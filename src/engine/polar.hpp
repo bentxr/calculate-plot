@@ -8,10 +8,17 @@
 #include "transforms/transforms.hpp"
 
 #include <array>
+#include <memory>
+#include <string>
+#include <vector>
 
 namespace calculate_plot::rc { class Params; }
 
 namespace calculate_plot::engine {
+
+class Axes;
+class Axis;
+class Tick;
 
 // PolarTransform(axis, use_rmin, scale_transform): (theta, r) to x = r cos(theta), y = r sin(theta), after r is
 // moved by the radial origin and turned by its sign (what the axis gives: `origin` is the polar Axes'
@@ -82,5 +89,46 @@ private:
     std::array<double, 2> center_;
     transforms::BboxPtr viewLim_, originLim_;
 };
+
+// What a PolarAxes has beyond an Axes: the parts of its transforms that its setters change, and the transforms
+// its axes, ticks and spines use (_set_lim_and_transforms).
+struct PolarAxesState {
+    double defaultThetaOffset = 0, defaultThetaDirection = 1;
+    double defaultRlabelPosition = 22.5 * (M_PI / 180.0);  // np.deg2rad(rlabel_position)
+    std::shared_ptr<transforms::LockableBbox> originViewLim;  // _originViewLim
+    std::shared_ptr<transforms::Affine2D> direction, offset, rLabelPosition;  // _direction, _theta_offset, _r_label_position
+    transforms::TransformPtr transShift, transWedge, transProjection, transProjectionAffine;
+    std::shared_ptr<transforms::TransformedBbox> realViewLim;  // _realViewLim
+    std::shared_ptr<WedgeBbox> axesLim;
+    transforms::TransformPtr xaxisTransform, xaxisTextTransform, yaxisTransform;
+    std::shared_ptr<transforms::TransformWrapper> yaxisTextTransform;
+
+    double thetaOffset() const { return offset->matrix().tx; }        // get_theta_offset
+    double thetaDirection() const { return direction->matrix().sx; }  // get_theta_direction
+    double rorigin() const { return originViewLim->points()[1]; }     // get_rorigin
+    double rsign() const;                                             // get_rsign
+    double rlabelPosition() const { return rLabelPosition->matrix().tx * (180.0 / M_PI); }  // get_rlabel_position
+};
+
+// PolarAxes._set_lim_and_transforms: the Axes' transforms (transScale, transAxes, transData, the axes' transforms)
+// and its polar state.
+void setPolarLimAndTransforms(Axes& ax);
+// PolarAxes.clear's part after Axes.clear: the theta limits, the grid, the offset and direction
+void clearPolar(Axes& ax);
+// PolarAxes.draw before Axes.draw: the wedge patch, the start / end / inner spines and the radial labels' transform
+void beforePolarDraw(Axes& ax);
+// ThetaLocator and ThetaFormatter of the theta axis: the locations and their labels
+void thetaTicks(Axis& axis, std::vector<double>* locs, std::vector<std::string>* labels);
+// RadialLocator: of a full circle, the ticks beyond the origin
+std::vector<double> radialTicks(const Axes& ax, std::vector<double> locs);
+// _zero_in_bounds: zero is within the radial scale's range
+bool radialZeroInBounds(const Axis& axis);
+// ThetaTick.update_position / RadialTick.update_position after XTick's / YTick's
+void updatePolarTick(Axes& ax, Tick& tick, bool isX, double loc);
+// _ThetaShift(axes, pad, mode): 'min', 'max' or 'rlabel'
+transforms::TransformPtr polarThetaShift(const Axes& ax, double pad, const std::string& mode);
+// _is_full_circle_deg / _is_full_circle_rad
+bool isFullCircleDeg(double thetamin, double thetamax);
+bool isFullCircleRad(double thetamin, double thetamax);
 
 }  // namespace calculate_plot::engine

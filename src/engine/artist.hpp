@@ -235,6 +235,8 @@ public:
     // the vertices and codes of that path
     static void pathData(double cx, double cy, double r, double theta1, double theta2, std::optional<double> width,
                          std::vector<double>* vertices, std::vector<unsigned char>* codes);
+    // set_center, set_radius, set_theta1, set_theta2, set_width: the path made again (a new path)
+    void set(double cx, double cy, double r, double theta1, double theta2, std::optional<double> width);
     double cx, cy, r, theta1, theta2;
     std::optional<double> width;
 

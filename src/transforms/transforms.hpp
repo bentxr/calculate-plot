@@ -264,6 +264,8 @@ public:
     Affine2D& translate(double tx, double ty);
     Affine2D& rotate(double theta);
     Affine2D& rotateDeg(double degrees);
+    Affine2D& clear() { m_ = Matrix(); return *this; }  // the identity again
+    void setMatrix(const Matrix& m) { m_ = m; }          // get_matrix() written in place
     std::optional<std::string> str() const override;
 
 private:
@@ -367,6 +369,7 @@ public:
     ScaledTranslation(double xt, double yt, TransformPtr scaleTrans)
         : xt_(xt), yt_(yt), scaleTrans_(std::move(scaleTrans)) {}
     Matrix matrix() const override;
+    void setTranslation(double xt, double yt) { xt_ = xt, yt_ = yt; }  // _t = (xt, yt)
 
 private:
     double xt_, yt_;
