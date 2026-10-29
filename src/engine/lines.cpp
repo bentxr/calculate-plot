@@ -865,4 +865,55 @@ void Line2D::draw(Renderer& renderer) {
     renderer.closeGroup("line2d");
 }
 
+void AxLine::draw(Renderer& renderer) {
+    if (!axes) return Line2D::draw(renderer);
+    const Axes& ax = *axes;
+    // get_transform: the points through self._transform - transData + transScale
+    const transforms::TransformPtr own = transform;
+    const transforms::TransformPtr points =
+        transforms::compose(transforms::subtract(own, ax.transData), ax.transScale);
+    double x1 = 0, y1 = 0, slope = 0;
+    const auto p1 = points->transform(xy1_[0], xy1_[1]);
+    x1 = p1[0], y1 = p1[1];
+    if (xy2_) {
+        const auto p2 = points->transform((*xy2_)[0], (*xy2_)[1]);
+        const double dx = p2[0] - x1, dy = p2[1] - y1;
+        if (dx == 0) {
+            if (dy == 0) {
+                renderer.unsupported("Cannot draw a line through two identical points (x=(np.float64(" + support::pythonRepr(x1) +
+                                     "), np.float64(" + support::pythonRepr(p2[0]) + ")), y=(np.float64(" + support::pythonRepr(y1) +
+                                     "), np.float64(" + support::pythonRepr(p2[1]) + ")))");
+                return;
+            }
+            slope = std::numeric_limits<double>::infinity();
+        } else {
+            slope = dy / dx;
+        }
+    } else {
+        slope = *slope_;
+    }
+    const auto v = ax.viewLim->points();
+    const auto lo = ax.transScale->transform(v[0], v[1]), hi = ax.transScale->transform(v[2], v[3]);
+    std::array<double, 2> start{}, stop{};
+    if (slope == 0) {
+        start = {lo[0], y1}, stop = {hi[0], y1};
+    } else if (std::isinf(slope)) {
+        start = {x1, lo[1]}, stop = {x1, hi[1]};
+    } else {
+        // the intersections with the view's sides, sorted: the middle two
+        std::array<std::array<double, 2>, 4> c{{{lo[0], y1 + (lo[0] - x1) * slope},
+                                                {hi[0], y1 + (hi[0] - x1) * slope},
+                                                {x1 + (lo[1] - y1) / slope, lo[1]},
+                                                {x1 + (hi[1] - y1) / slope, hi[1]}}};
+        std::stable_sort(c.begin(), c.end(), [](const auto& a, const auto& b) { return a[0] < b[0] || (a[0] == b[0] && a[1] < b[1]); });
+        start = c[1], stop = c[2];
+    }
+    transform = transforms::compose(transforms::compose(std::make_shared<transforms::BboxTransformTo>(
+                                                            std::make_shared<transforms::Bbox>(std::array<double, 4>{start[0], start[1], stop[0], stop[1]})),
+                                                        ax.transLimits),
+                                    ax.transAxes);
+    Line2D::draw(renderer);
+    transform = own;
+}
+
 }  // namespace calculate_plot::engine

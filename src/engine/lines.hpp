@@ -133,4 +133,18 @@ private:
     std::pair<double, std::optional<std::vector<double>>> unscaledDashes_{0.0, std::nullopt}, dashes_{0.0, std::nullopt};
 };
 
+// lines.AxLine(xy1, xy2, slope): an infinite straight line through xy1 and xy2, or through xy1 with a slope (in
+// the scales' space), drawn from (0, 0) to (1, 1) of a box that get_transform makes from the view at each drawing.
+class AxLine : public Line2D {
+public:
+    AxLine(const rc::Params& rc, std::array<double, 2> xy1, std::optional<std::array<double, 2>> xy2, std::optional<double> slope)
+        : Line2D(rc, {0, 1}, {0, 1}), xy1_(xy1), xy2_(xy2), slope_(slope) {}
+    void draw(Renderer& renderer) override;
+
+private:
+    std::array<double, 2> xy1_;
+    std::optional<std::array<double, 2>> xy2_;
+    std::optional<double> slope_;
+};
+
 }  // namespace calculate_plot::engine

@@ -219,7 +219,7 @@ public:
             {"hlines", "hlines"}, {"vlines", "vlines"}, {"grid", "grid"}, {"legend", "legend"}, {"text", "text"},
             {"title", "set_title"}, {"xlabel", "set_xlabel"}, {"ylabel", "set_ylabel"}, {"xlim", "set_xlim"},
             {"ylim", "set_ylim"}, {"xscale", "set_xscale"}, {"yscale", "set_yscale"}, {"bar", "bar"}, {"barh", "barh"},
-            {"hist", "hist"}, {"fill", "fill"}, {"step", "step"}, {"stairs", "stairs"}, {"stem", "stem"}, {"boxplot", "boxplot"}, {"violinplot", "violinplot"}, {"pie", "pie"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}, {"imshow", "imshow"}, {"matshow", "matshow"}, {"spy", "spy"}, {"pcolormesh", "pcolormesh"}, {"pcolor", "pcolor"}, {"contour", "contour"}, {"contourf", "contourf"}, {"clabel", "clabel"}, {"hexbin", "hexbin"}, {"quiver", "quiver"}, {"quiverkey", "quiverkey"}, {"barbs", "barbs"}, {"streamplot", "streamplot"}, {"triplot", "triplot"}, {"tripcolor", "tripcolor"}, {"tricontour", "tricontour"}, {"tricontourf", "tricontourf"}, {"stackplot", "stackplot"}, {"broken_barh", "broken_barh"}};
+            {"hist", "hist"}, {"fill", "fill"}, {"step", "step"}, {"stairs", "stairs"}, {"stem", "stem"}, {"boxplot", "boxplot"}, {"violinplot", "violinplot"}, {"pie", "pie"}, {"annotate", "annotate"}, {"bar_label", "bar_label"}, {"loglog", "loglog"}, {"semilogx", "semilogx"}, {"semilogy", "semilogy"}, {"imshow", "imshow"}, {"matshow", "matshow"}, {"spy", "spy"}, {"pcolormesh", "pcolormesh"}, {"pcolor", "pcolor"}, {"contour", "contour"}, {"contourf", "contourf"}, {"clabel", "clabel"}, {"hexbin", "hexbin"}, {"quiver", "quiver"}, {"quiverkey", "quiverkey"}, {"barbs", "barbs"}, {"streamplot", "streamplot"}, {"triplot", "triplot"}, {"tripcolor", "tripcolor"}, {"tricontour", "tricontour"}, {"tricontourf", "tricontourf"}, {"stackplot", "stackplot"}, {"broken_barh", "broken_barh"}, {"axline", "axline"}};
         return ofAxes;
     }
 
@@ -1890,6 +1890,7 @@ private:
         if (call.method == "grid") return grid(ax, call, error);
         if (call.method == "tick_params") return tickParams(&ax, nullptr, call, error);
         if (call.method == "axhline" || call.method == "axvline") return axline(ax, call, error);
+        if (call.method == "axline") return infiniteLine(ax, call, error);
         if (call.method == "axhspan" || call.method == "axvspan") return axspan(ax, call, error);
         if (call.method == "bar" || call.method == "barh") return bar(ax, call, error);
         if (call.method == "fill") return fill(ax, call, error);
@@ -5086,6 +5087,57 @@ private:
             if (name == "color") col->setEdgecolor(ColorArg{ColorArg::Colors, list});
         }
         ax.addCollection(std::move(col), true);
+        return true;
+    }
+
+    // Axes.axline(xy1, xy2=None, *, slope=None, **kwargs): an AxLine in data coordinates, clipped to the Axes, the
+    // points it is given in the data limits
+    bool infiniteLine(Axes& ax, const model::Call& call, std::string* error) {
+        const std::string where = call.on + "." + call.method;
+        if (call.args.size() > 2) return *error = where + ": too many positional arguments", false;
+        const auto point = [&](const Json* j, std::array<double, 2>* out) {
+            std::vector<double> v;
+            if (!j || !numbers(*j, &v) || v.size() != 2) return false;
+            *out = {v[0], v[1]};
+            return true;
+        };
+        std::array<double, 2> xy1{};
+        std::optional<std::array<double, 2>> xy2;
+        std::optional<double> slope;
+        if (!point(argument(call, 0, "xy1"), &xy1)) return *error = where + ": xy1 must be a point (x, y)", false;
+        if (const Json* j = argument(call, 1, "xy2"); j && !j->isNull()) {
+            std::array<double, 2> p{};
+            if (!point(j, &p)) return *error = where + ": xy2 must be a point (x, y)", false;
+            xy2 = p;
+        }
+        if (const Json* j = keyword(call, "slope"); j && !j->isNull()) {
+            double v = 0;
+            if (!readNumber(*j, &v)) return *error = where + ": slope must be a number", false;
+            slope = v;
+        }
+        if (slope && (ax.xaxis->scale() != "linear" || ax.yaxis->scale() != "linear"))
+            return *error = where + ": 'slope' cannot be used with non-linear scales", false;
+        if (!xy2 == !slope) return *error = where + ": Exactly one of 'xy2' and 'slope' must be given", false;
+        if (ax.polar) return *error = where + ": axline on polar axes is not supported yet", false;
+        auto line = std::make_unique<AxLine>(rc_, xy1, xy2, slope);
+        for (const auto& [name, value] :
+             ownFirst(call, {"linewidth", "linestyle", "color", "markersize", "markeredgewidth", "markeredgecolor", "markerfacecolor",
+                             "antialiased"})) {
+            if (name == "xy1" || name == "xy2" || name == "slope") continue;
+            if (name == "transform") return *error = where + ": transform is not supported yet", false;
+            if (name == "c" && value->isNull()) return *error = where + ": bad color", false;
+            if (!lineProperty(*line, fullName(name, lineAliases()), *value, where, error)) return false;
+        }
+        // like add_line, without the line's own limits
+        line->axes = &ax;
+        line->transform = ax.transData;
+        ax.clipToPatch(*line);
+        if (line->label.empty()) line->label = "_child" + std::to_string(ax.children.size());
+        ax.children.push_back(std::move(line));
+        std::vector<std::array<double, 2>> points{xy1};
+        if (xy2) points.push_back(*xy2);
+        ax.updateDatalim(points);
+        ax.requestAutoscaleView(true, true);
         return true;
     }
 

@@ -2290,4 +2290,11 @@ INSTANTIATE_TEST_SUITE_P(
         Refusal{R"({"on": "axs[0]", "call": "broken_barh", "args": [[[1, 2]], [0, 1]], "kwargs": {"align": "middle"}})",
                 "axs[0].broken_barh: 'middle' is not a valid value for align; supported values are 'bottom', 'center', 'top'"},
         Refusal{R"({"on": "axs[0]", "call": "broken_barh", "args": [[[1, 2, 3]], [0, 1]]})",
-                "axs[0].broken_barh: each range in xrange must be a sequence with two elements (i.e. xrange must be an (N, 2) array)"}));
+                "axs[0].broken_barh: each range in xrange must be a sequence with two elements (i.e. xrange must be an (N, 2) array)"},
+        Refusal{R"({"on": "axs[0]", "call": "axline", "args": [[0, 0]]})", "axs[0].axline: Exactly one of 'xy2' and 'slope' must be given"},
+        Refusal{R"({"on": "axs[0]", "call": "axline", "args": [[0, 0], [1, 1]], "kwargs": {"slope": 2}})",
+                "axs[0].axline: Exactly one of 'xy2' and 'slope' must be given"},
+        Refusal{R"({"on": "axs[0]", "call": "set_yscale", "args": ["log"]}, {"on": "axs[0]", "call": "axline", "args": [[1, 1]], "kwargs": {"slope": 2}})",
+                "axs[0].axline: 'slope' cannot be used with non-linear scales"},
+        Refusal{R"({"on": "axs[0]", "call": "axline", "args": [[1, 2], [1, 2]]})",
+                "Cannot draw a line through two identical points (x=(np.float64(1.0), np.float64(1.0)), y=(np.float64(2.0), np.float64(2.0)))"}));
