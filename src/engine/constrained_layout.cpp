@@ -116,9 +116,10 @@ struct Span {
 
 class LayoutGrid {
 public:
-    // parent: none (the figure's grid in `rect`) or a LayoutGrid at (rows, cols), inside its margins
+    // parent: none (the figure's grid in `rect`) or a LayoutGrid at (rows, cols), inside its margins when
+    // `parentInner`, else over them
     LayoutGrid(kiwi::Solver* solver, LayoutGrid* parent, Span rows, Span cols, const std::array<double, 4>& rect, int nrows,
-               int ncols, std::vector<double> widthRatios, std::vector<double> heightRatios)
+               int ncols, std::vector<double> widthRatios, std::vector<double> heightRatios, bool parentInner = true)
         : solver_(solver), nrows_(nrows), ncols_(ncols), widthRatios_(std::move(widthRatios)), heightRatios_(std::move(heightRatios)) {
         if (widthRatios_.empty()) widthRatios_.assign(std::size_t(ncols), 1.0);
         if (heightRatios_.empty()) heightRatios_.assign(std::size_t(nrows), 1.0);
@@ -143,7 +144,7 @@ public:
         }
         resetMargins();
         hardConstraints();
-        parentConstraints(parent, rows, cols, rect);
+        parentConstraints(parent, rows, cols, rect, parentInner);
         gridConstraints();
     }
 
@@ -212,7 +213,7 @@ private:
         }
     }
 
-    void parentConstraints(LayoutGrid* parent, Span rows, Span cols, const std::array<double, 4>& rect) {
+    void parentConstraints(LayoutGrid* parent, Span rows, Span cols, const std::array<double, 4>& rect, bool inner) {
         if (!parent) {
             for (const kiwi::Constraint& c :
                  {constraint(var(lefts_[0]), rect[0], kiwi::OP_EQ, kiwi::strength::required),
@@ -222,19 +223,20 @@ private:
                 require(c);
             return;
         }
-        // (inside the parent's margins: parent_inner)
         const auto c0 = std::size_t(cols.start), c1 = std::size_t(cols.stop - 1), r0 = std::size_t(rows.start),
                    r1 = std::size_t(rows.stop - 1);
         Sym left = var(parent->lefts_[c0]), right = var(parent->rights_[c1]), top = var(parent->tops_[r0]),
             bottom = var(parent->bottoms_[r1]);
-        left = add(left, var(parent->margins_[Left][c0]));
-        left = add(left, var(parent->margins_[LeftCb][c0]));
-        right = sub(right, var(parent->margins_[Right][c1]));
-        right = sub(right, var(parent->margins_[RightCb][c1]));
-        top = sub(top, var(parent->margins_[Top][r0]));
-        top = sub(top, var(parent->margins_[TopCb][r0]));
-        bottom = add(bottom, var(parent->margins_[Bottom][r1]));
-        bottom = add(bottom, var(parent->margins_[BottomCb][r1]));
+        if (inner) {  // (inside the parent's margins: parent_inner)
+            left = add(left, var(parent->margins_[Left][c0]));
+            left = add(left, var(parent->margins_[LeftCb][c0]));
+            right = sub(right, var(parent->margins_[Right][c1]));
+            right = sub(right, var(parent->margins_[RightCb][c1]));
+            top = sub(top, var(parent->margins_[Top][r0]));
+            top = sub(top, var(parent->margins_[TopCb][r0]));
+            bottom = add(bottom, var(parent->margins_[Bottom][r1]));
+            bottom = add(bottom, var(parent->margins_[BottomCb][r1]));
+        }
         for (const kiwi::Constraint& c : {constraint(var(lefts_[0]), left, kiwi::OP_EQ, kiwi::strength::required),
                                           constraint(var(rights_.back()), right, kiwi::OP_EQ, kiwi::strength::required),
                                           constraint(var(tops_[0]), top, kiwi::OP_EQ, kiwi::strength::required),
@@ -302,13 +304,8 @@ public:
         // make_layoutgrids: the figure's grid, then one for each gridspec of the figure's Axes
         figureGrid_ = std::make_unique<LayoutGrid>(&solver_, nullptr, Span{0, 1}, Span{0, 1}, rect, 1, 1, std::vector<double>{},
                                                    std::vector<double>{});
-        for (auto& ax : figure_.axes) {
-            if (!ax->subplotSpec) continue;
-            const GridSpec* gs = ax->subplotSpec->gridspec;
-            if (grids_.count(gs)) continue;
-            grids_[gs] = std::make_unique<LayoutGrid>(&solver_, figureGrid_.get(), Span{0, 1}, Span{0, 1}, rect, gs->nrows, gs->ncols,
-                                                      gs->widthRatios, gs->heightRatios);
-        }
+        for (auto& ax : figure_.axes)
+            if (ax->subplotSpec) makeGrids(ax->subplotSpec->gridspec, rect);
         if (!kiwiError.empty()) return *error = kiwiError, false;
         if (grids_.empty()) return true;  // (a warning: there are no gridspecs with layoutgrids)
         for (int pass = 0; pass < 2; ++pass) {
@@ -338,6 +335,25 @@ public:
 
 private:
     LayoutGrid& gridOf(const Axes& ax) { return *grids_.at(ax.subplotSpec->gridspec); }
+
+    // make_layoutgrids_gs: a grid's LayoutGrid inside the figure's; a sub-grid's (GridSpecFromSubplotSpec) in a
+    // container over the cells of its parent grid, made first
+    void makeGrids(const GridSpec* gs, const std::array<double, 4>& rect) {
+        if (grids_.count(gs)) return;
+        if (!gs->parent) {
+            grids_[gs] = std::make_unique<LayoutGrid>(&solver_, figureGrid_.get(), Span{0, 1}, Span{0, 1}, rect, gs->nrows, gs->ncols,
+                                                      gs->widthRatios, gs->heightRatios);
+            return;
+        }
+        const SubplotSpec& spec = *gs->parent;
+        makeGrids(spec.gridspec, rect);
+        std::unique_ptr<LayoutGrid>& top = tops_[gs];
+        if (!top)
+            top = std::make_unique<LayoutGrid>(&solver_, grids_.at(spec.gridspec).get(), rowspan(spec), colspan(spec), rect, 1, 1,
+                                               std::vector<double>{}, std::vector<double>{}, false);
+        grids_[gs] = std::make_unique<LayoutGrid>(&solver_, top.get(), Span{0, 1}, Span{0, 1}, rect, gs->nrows, gs->ncols,
+                                                  gs->widthRatios, gs->heightRatios, false);
+    }
 
     // get_margin_from_padding(ax, w_pad=, h_pad=, hspace=, wspace=)
     std::map<Side, double> marginFromPadding(const Axes& ax, double wPad, double hPad, double hspace, double wspace) {
@@ -661,6 +677,7 @@ private:
     kiwi::Solver solver_;
     std::unique_ptr<LayoutGrid> figureGrid_;
     std::map<const GridSpec*, std::unique_ptr<LayoutGrid>> grids_;
+    std::map<const GridSpec*, std::unique_ptr<LayoutGrid>> tops_;  // the containers of sub-grids, (gs, 'top')
 };
 
 }  // namespace

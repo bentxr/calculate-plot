@@ -2309,6 +2309,67 @@ INSTANTIATE_TEST_SUITE_P(
         Refusal{R"({"on": "axs[0]", "call": "tricontour", "args": [[0, 1, 0, 1], [0, 0, 1, 1], [1, 2, 3, 4]], "kwargs": {"corner_mask": true}})",
                 "axs[0].tricontour: TriContourSet.set() got an unexpected keyword argument 'corner_mask'"}));
 
+// fig.add_gridspec, gs[...] and subgridspec: matplotlib's errors
+class GridSpecRefusals : public testing::TestWithParam<Refusal> {};
+
+TEST_P(GridSpecRefusals, NameTheCallAndTheReason) {
+    const std::string grid = R"({"call": "figure", "as": "fig"}, {"on": "fig", "call": "add_gridspec", "args": [2, 3], "as": "gs"},)";
+    EXPECT_EQ(draw(grid + GetParam().call).error, GetParam().error);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    Engine, GridSpecRefusals,
+    testing::Values(
+        Refusal{R"({"on": "fig", "call": "add_gridspec", "args": [0]})", "fig.add_gridspec: Number of rows must be a positive integer, not 0"},
+        Refusal{R"({"on": "fig", "call": "add_gridspec", "args": [1.5]})", "fig.add_gridspec: Number of rows must be a positive integer, not 1.5"},
+        Refusal{R"({"on": "fig", "call": "add_gridspec", "args": [2, 0]})", "fig.add_gridspec: Number of columns must be a positive integer, not 0"},
+        Refusal{R"({"on": "fig", "call": "add_gridspec", "args": [2, 2], "kwargs": {"foo": 1}})",
+                "fig.add_gridspec: GridSpec.__init__() got an unexpected keyword argument 'foo'"},
+        Refusal{R"({"on": "fig", "call": "add_gridspec", "args": [2, 2], "kwargs": {"width_ratios": [1]}})",
+                "fig.add_gridspec: Expected the given number of width ratios to match the number of columns of the grid"},
+        Refusal{R"({"on": "fig", "call": "add_gridspec", "args": [2, 2], "kwargs": {"height_ratios": [1, 2, 3]}})",
+                "fig.add_gridspec: Expected the given number of height ratios to match the number of rows of the grid"},
+        Refusal{R"({"on": "fig", "call": "add_gridspec", "args": [2, 2, 3]})",
+                "fig.add_gridspec: FigureBase.add_gridspec() takes from 1 to 3 positional arguments but 4 were given"},
+        Refusal{R"({"on": "fig", "call": "add_gridspec", "args": [2, 2], "kwargs": {"left": 0.9, "right": 0.1}, "as": "g2"},
+                   {"on": "fig", "call": "add_subplot", "args": [{"$ref": "g2[0]"}]})", "fig.add_subplot: left cannot be >= right"},
+        Refusal{R"({"on": "fig", "call": "add_subplot", "args": [{"$ref": "gs[6]"}]})",
+                "fig.add_subplot: index 6 is out of bounds for GridSpec with size 6"},
+        Refusal{R"({"on": "fig", "call": "add_subplot", "args": [{"$ref": "gs[-7]"}]})",
+                "fig.add_subplot: index -7 is out of bounds for GridSpec with size 6"},
+        Refusal{R"({"on": "fig", "call": "add_subplot", "args": [{"$ref": "gs[0, 3]"}]})",
+                "fig.add_subplot: index 3 is out of bounds for axis 1 with size 3"},
+        Refusal{R"({"on": "fig", "call": "add_subplot", "args": [{"$ref": "gs[-3, 0]"}]})",
+                "fig.add_subplot: index -3 is out of bounds for axis 0 with size 2"},
+        Refusal{R"({"on": "fig", "call": "add_subplot", "args": [{"$ref": "gs[1:1, 0]"}]})",
+                "fig.add_subplot: GridSpec slice would result in no space allocated for subplot"},
+        Refusal{R"({"on": "fig", "call": "add_subplot", "args": [{"$ref": "gs[::-1]"}]})",
+                "fig.add_subplot: GridSpec slice would result in no space allocated for subplot"},
+        Refusal{R"({"on": "fig", "call": "add_subplot", "args": [{"$ref": "gs[0, 5:]"}]})",
+                "fig.add_subplot: GridSpec slice would result in no space allocated for subplot"},
+        Refusal{R"({"on": "fig", "call": "add_subplot", "args": [{"$ref": "gs[0, 0, 0]"}]})", "fig.add_subplot: Unrecognized subplot spec"},
+        Refusal{R"({"on": "fig", "call": "add_subplot", "args": [{"$ref": "gs[0,]"}]})", "fig.add_subplot: Unrecognized subplot spec"},
+        Refusal{R"({"on": "fig", "call": "add_subplot", "args": [{"$ref": "gs[::0]"}]})", "fig.add_subplot: slice step cannot be zero"},
+        Refusal{R"({"on": "fig", "call": "add_subplot", "args": [{"$ref": "gs[01]"}]})",
+                "fig.add_subplot: the subscript [01] is not one of integers and slices that is supported yet"},
+        Refusal{R"({"on": "fig", "call": "add_subplot", "args": [{"$ref": "gs[1 2]"}]})",
+                "fig.add_subplot: the subscript [1 2] is not one of integers and slices that is supported yet"},
+        Refusal{R"({"call": "subplot", "args": [{"$ref": "gs[2, 0]"}]})", "plt.subplot: index 2 is out of bounds for axis 0 with size 2"},
+        Refusal{R"({"on": "gs[0]", "call": "subgridspec"})",
+                "gs[0].subgridspec: SubplotSpec.subgridspec() missing 2 required positional arguments: 'nrows' and 'ncols'"},
+        Refusal{R"({"on": "gs[0]", "call": "subgridspec", "args": [2]})",
+                "gs[0].subgridspec: SubplotSpec.subgridspec() missing 1 required positional argument: 'ncols'"},
+        Refusal{R"({"on": "gs[0]", "call": "subgridspec", "args": [2, 2], "kwargs": {"left": 0.1}})",
+                "gs[0].subgridspec: GridSpecFromSubplotSpec.__init__() got an unexpected keyword argument 'left'"},
+        Refusal{R"({"on": "gs[0]", "call": "subgridspec", "args": [0, 2]})", "gs[0].subgridspec: Number of rows must be a positive integer, not 0"},
+        Refusal{R"({"on": "gs[0]", "call": "subgridspec", "args": [2, 2, 0.1]})",
+                "gs[0].subgridspec: SubplotSpec.subgridspec() takes 3 positional arguments but 4 were given"},
+        Refusal{R"({"on": "gs[0]", "call": "subgridspec", "args": [2, 2], "kwargs": {"width_ratios": [1, 2, 3]}})",
+                "gs[0].subgridspec: Expected the given number of width ratios to match the number of columns of the grid"},
+        Refusal{R"({"on": "gs[9]", "call": "subgridspec", "args": [2, 2]})", "gs[9].subgridspec: index 9 is out of bounds for GridSpec with size 6"},
+        Refusal{R"({"on": "gs[0, 0]", "call": "get_position"})", "unsupported call: gs[0, 0].get_position"},
+        Refusal{R"({"on": "gs", "call": "subplots"})", "unsupported call: gs.subplots"}));
+
 // subplot_mosaic: matplotlib's errors (the layouts shown as NumPy shows object arrays)
 class MosaicRefusals : public testing::TestWithParam<Refusal> {};
 

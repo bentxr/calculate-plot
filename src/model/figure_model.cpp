@@ -24,8 +24,8 @@ bool isIdentifier(const std::string& s) {
     return s.rfind("__", 0) != 0;  // no dunder names: nothing but plain plotting calls
 }
 
-// "ax", "axs[1]", "axs[0, 1]", "axd['A']", "ax.xaxis", "axs[1].yaxis": a name, optionally indexed by integers or
-// by a string key in quotes (no quotes or backslashes in it), then optionally attributes of it.
+// "ax", "axs[1]", "axs[0, 1]", "gs[1:, :2]", "axd['A']", "ax.xaxis", "axs[1].yaxis": a name, optionally indexed by
+// integers and slices or by a string key in quotes (no quotes or backslashes in it), then optionally attributes of it.
 bool isObjectReference(const std::string& s, std::string& name) {
     const auto end = s.find_first_of("[.");
     name = s.substr(0, end);
@@ -44,7 +44,7 @@ bool isObjectReference(const std::string& s, std::string& name) {
             close = s.find(']', at);
             if (close == std::string::npos) return false;
             for (char c : s.substr(at + 1, close - at - 1))
-                if (!(std::isdigit(static_cast<unsigned char>(c)) || c == ',' || c == ' ' || c == '-')) return false;
+                if (!(std::isdigit(static_cast<unsigned char>(c)) || c == ',' || c == ' ' || c == '-' || c == ':')) return false;
         }
         at = close + 1 == s.size() ? std::string::npos : close + 1;
     }

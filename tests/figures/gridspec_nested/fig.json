@@ -1,0 +1,19 @@
+{"version": 1, "calls": [
+  {"call": "figure", "kwargs": {"figsize": {"$tuple": [7.0, 4.5]}, "layout": "constrained"}, "as": "fig"},
+  {"on": "fig", "call": "add_gridspec", "args": [1, 2], "kwargs": {"width_ratios": [1, 1.5]}, "as": "outer"},
+  {"on": "outer[0]", "call": "subgridspec", "args": [3, 1], "kwargs": {"hspace": 0}, "as": "left"},
+  {"on": "fig", "call": "add_subplot", "args": [{"$ref": "left[0:2]"}], "as": "a"},
+  {"on": "a", "call": "plot", "args": [[0, 1, 2], [3, 1, 2]]},
+  {"on": "a", "call": "set_ylabel", "args": ["two rows"]},
+  {"on": "fig", "call": "add_subplot", "args": [{"$ref": "left[2]"}], "as": "b"},
+  {"on": "b", "call": "set_xlabel", "args": ["the last row"]},
+  {"on": "outer[1]", "call": "subgridspec", "args": [2, 2], "kwargs": {"width_ratios": [1, 3], "wspace": 0.1}, "as": "right"},
+  {"on": "right[0, :]", "call": "subgridspec", "args": [1, 3], "as": "deep"},
+  {"on": "fig", "call": "add_subplot", "args": [{"$ref": "deep[0, 0]"}], "as": "d0"},
+  {"on": "d0", "call": "set_title", "args": ["deep"]},
+  {"on": "fig", "call": "add_subplot", "args": [{"$ref": "deep[0, 1:]"}]},
+  {"on": "fig", "call": "add_subplot", "args": [{"$ref": "right[1, 0]"}]},
+  {"on": "fig", "call": "add_subplot", "args": [{"$ref": "right[1, 1]"}], "as": "e"},
+  {"on": "e", "call": "set_ylabel", "args": ["e"]},
+  {"on": "fig", "call": "suptitle", "args": ["Grids inside grids"]}
+]}

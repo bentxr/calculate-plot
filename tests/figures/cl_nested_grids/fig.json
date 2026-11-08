@@ -1,0 +1,9 @@
+{"version": 1, "calls": [
+  {"call": "subplot_mosaic", "args": [[["A", [["B", [["C"], ["D"]]], ["E", "E"]]]]], "kwargs": {"layout": "constrained", "width_ratios": [2, 3], "figsize": {"$tuple": [7.0, 4.5]}}, "as": ["fig", "axd"]},
+  {"on": "axd['A']", "call": "set_ylabel", "args": ["a long label on the left"]},
+  {"on": "axd['B']", "call": "set_title", "args": ["B"]},
+  {"on": "axd['C']", "call": "plot", "args": [[0, 1000], [0, 1]]},
+  {"on": "axd['D']", "call": "set_xlabel", "args": ["D's label\non two lines"]},
+  {"on": "axd['E']", "call": "set_ylabel", "args": ["E"]},
+  {"on": "fig", "call": "suptitle", "args": ["Nested grids"]}
+]}

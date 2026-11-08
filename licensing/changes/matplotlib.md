@@ -308,6 +308,10 @@ it comes from in its first lines. The changes, as a whole:
   'best', the 'outside ...' locations; the anchor box read from the parent when it is drawn) and
   _constrained_layout.py's figure margins for legends outside the Axes (src/engine/legend.cpp,
   src/engine/constrained_layout.cpp).
+  Grids: figure.py's add_gridspec, gridspec.py's GridSpecBase.__getitem__ (integers and slices, with Python's
+  slice.indices), SubplotSpec.subgridspec and GridSpecFromSubplotSpec, add_subplot / pyplot.subplot of a
+  SubplotSpec, and _constrained_layout.py's make_layoutgrids_gs for grids inside grids (a container over the
+  parent's cells, outside their margins) (src/engine/engine.cpp, src/engine/constrained_layout.cpp).
   Ticks: Axis.set_ticks (FixedLocator, set_view_interval without ignore on the shared axes) and set_ticklabels
   (NullFormatter, or a FuncFormatter of a dict of labels); set_frame_on.
   Pies: Path.arc, patches.Wedge, Shadow's zorder, Axes.pie and Axes.pie_label; the data limits of curved

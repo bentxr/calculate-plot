@@ -1,0 +1,13 @@
+{"version": 1, "calls": [
+  {"call": "figure", "kwargs": {"figsize": {"$tuple": [6.0, 4.0]}}, "as": "fig"},
+  {"on": "fig", "call": "add_gridspec", "args": [2, 2], "as": "gs"},
+  {"on": "fig", "call": "add_subplot", "args": [{"$ref": "gs[:, 0]"}], "as": "a"},
+  {"on": "a", "call": "set_ylabel", "args": ["a label that is long"]},
+  {"on": "gs[0, 1]", "call": "subgridspec", "args": [1, 2], "as": "sub"},
+  {"on": "fig", "call": "add_subplot", "args": [{"$ref": "sub[0, 0]"}], "as": "b"},
+  {"on": "b", "call": "set_title", "args": ["b"]},
+  {"on": "fig", "call": "add_subplot", "args": [{"$ref": "sub[0, 1]"}]},
+  {"on": "fig", "call": "add_subplot", "args": [{"$ref": "gs[1, 1]"}], "as": "c"},
+  {"on": "c", "call": "set_xlabel", "args": ["c"]},
+  {"on": "fig", "call": "tight_layout"}
+]}

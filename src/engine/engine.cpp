@@ -208,6 +208,15 @@ public:
         const auto ax = axes_.find(call.on);
         if (ax != axes_.end()) return axesCall(*ax->second, call, error);
         if (figureNames_.count(call.on)) return figureCall(call, error);
+        {  // gs[...].subgridspec(...)
+            SubplotSpec spec{nullptr, 0, 0};
+            bool named = false;
+            std::string why;
+            if (subplotSpecNamed(call.on, &spec, call.on + "." + call.method, &why, &named) && call.method == "subgridspec") {
+                if (!why.empty()) return *error = why, false;
+                return subgridspec(spec, call, error);
+            }
+        }
         const auto dot = call.on.rfind('.');
         if (dot != std::string::npos) {  // ax.xaxis, ax.yaxis
             const auto owner = axes_.find(call.on.substr(0, dot));
@@ -816,6 +825,7 @@ private:
         if (!figureLayout("plt.figure", error)) return false;
         axes_.clear();
         figureNames_.clear();
+        gridspecs_.clear();
         current_ = nullptr;
         if (call.as.size() == 1) figureNames_.insert(call.as[0]);
         return true;
@@ -919,6 +929,7 @@ private:
         const std::vector<Axes*> made = figure_->subplots(nrows, ncols, sharex, sharey, &ratios, polarSubplots);
         axes_.clear();
         figureNames_.clear();
+        gridspecs_.clear();
         mappables_.clear();
         currentImages_.clear();
         current_ = made.back();  // (each add_subplot makes its Axes the current one)
@@ -1165,6 +1176,7 @@ private:
             if (!figureLayout(where, error)) return false;
             axes_.clear();
             figureNames_.clear();
+            gridspecs_.clear();
             mappables_.clear();
             currentImages_.clear();
             axesArrays_.clear();
@@ -1273,35 +1285,7 @@ private:
         // add_gridspec(rows, cols, **gridspec_kw)
         fig.gridspecs.push_back(std::make_unique<GridSpec>(int(g.size()), int(g[0].size())));
         GridSpec& gs = *fig.gridspecs.back();
-        for (const auto& [key, item] : gridKw) {
-            if (key == "width_ratios" || key == "height_ratios") {
-                if (item->isNull()) continue;
-                const bool width = key == "width_ratios";
-                const Json* seq = sequence(*item);
-                const int n = width ? gs.ncols : gs.nrows;
-                if (!seq || int(seq->size()) != n)
-                    return *error = where + ": Expected the given number of " + (width ? "width" : "height") + " ratios to match the number of " +
-                                    (width ? "columns" : "rows") + " of the grid",
-                           false;
-                auto& values = width ? gs.widthRatios : gs.heightRatios;
-                auto& ints = width ? gs.widthRatiosInt : gs.heightRatiosInt;
-                for (const Json& r : seq->items()) {
-                    double v = 0;
-                    if (!readNumber(r, &v) || !std::isfinite(v) || !(v > 0))
-                        return *error = where + ": " + (width ? "width" : "height") + " ratios must be positive numbers", false;
-                    values.push_back(v);
-                    ints.push_back(r.isNumber() && r.isInteger());
-                }
-                continue;
-            }
-            std::optional<double>* slot = key == "left" ? &gs.left : key == "bottom" ? &gs.bottom : key == "right" ? &gs.right
-                                        : key == "top" ? &gs.top : key == "wspace" ? &gs.wspace : key == "hspace" ? &gs.hspace : nullptr;
-            if (!slot) return *error = where + ": GridSpec.__init__() got an unexpected keyword argument '" + key + "'", false;
-            if (item->isNull()) continue;
-            double v = 0;
-            if (!readNumber(*item, &v)) return *error = where + ": gridspec_kw " + key + " must be a number", false;
-            *slot = v;
-        }
+        if (!gridKeywords(gs, {gridKw.begin(), gridKw.end()}, false, "gridspec_kw ", where, error)) return false;
         {  // GridSpec.get_subplot_params: the figure's parameters updated with the grid's (as the drawing checks them)
             SubplotParams p = fig.subplotpars;
             if (!p.update(gs.left, gs.bottom, gs.right, gs.top, gs.wspace, gs.hspace, error)) return *error = where + ": " + *error, false;
@@ -1343,6 +1327,7 @@ private:
             figure_ = std::make_unique<Figure>(rc_, FigureOptions{});
             axes_.clear();
             figureNames_.clear();
+            gridspecs_.clear();
             current_ = nullptr;
         }
         return *figure_;
@@ -1486,6 +1471,251 @@ private:
         return true;
     }
 
+    // GridSpec(nrows, ncols, **kw) and GridSpecFromSubplotSpec(nrows, ncols, ss, **kw) (`sub`): the margins (not
+    // of a sub-grid) and the spacing the grid overrides, and width_ratios / height_ratios, one positive number for
+    // each column / row; `numbers` goes before the name of a value that is not a number
+    bool gridKeywords(GridSpec& gs, const std::vector<std::pair<std::string, const Json*>>& kw, bool sub, const std::string& numbers,
+                      const std::string& where, std::string* error) {
+        for (const auto& [key, item] : kw) {
+            if (key == "width_ratios" || key == "height_ratios") {
+                if (item->isNull()) continue;
+                const bool width = key == "width_ratios";
+                const Json* seq = sequence(*item);
+                const int n = width ? gs.ncols : gs.nrows;
+                if (!seq || int(seq->size()) != n)
+                    return *error = where + ": Expected the given number of " + (width ? "width" : "height") + " ratios to match the number of " +
+                                    (width ? "columns" : "rows") + " of the grid",
+                           false;
+                auto& values = width ? gs.widthRatios : gs.heightRatios;
+                auto& ints = width ? gs.widthRatiosInt : gs.heightRatiosInt;
+                values.clear(), ints.clear();
+                for (const Json& r : seq->items()) {
+                    double v = 0;
+                    if (!readNumber(r, &v) || !std::isfinite(v) || !(v > 0))
+                        return *error = where + ": " + (width ? "width" : "height") + " ratios must be positive numbers", false;
+                    values.push_back(v);
+                    ints.push_back(r.isNumber() && r.isInteger());
+                }
+                continue;
+            }
+            if (!sub && key == "figure") continue;  // (add_gridspec pops it)
+            std::optional<double>* slot = key == "wspace" ? &gs.wspace : key == "hspace" ? &gs.hspace : nullptr;
+            if (!sub && !slot)
+                slot = key == "left" ? &gs.left : key == "bottom" ? &gs.bottom : key == "right" ? &gs.right : key == "top" ? &gs.top : nullptr;
+            if (!slot)
+                return *error = where + ": " + (sub ? "GridSpecFromSubplotSpec" : "GridSpec") + ".__init__() got an unexpected keyword argument '" +
+                                key + "'",
+                       false;
+            if (item->isNull()) continue;
+            double v = 0;
+            if (!readNumber(*item, &v)) return *error = where + ": " + numbers + key + " must be a number", false;
+            *slot = v;
+        }
+        return true;
+    }
+
+    // GridSpecBase.__init__'s rows and columns: positive integers
+    bool gridShape(const Json* rows, const Json* cols, int* nrows, int* ncols, const std::string& where, std::string* error) {
+        const Json one = Json::integer(1);
+        const Json* given[2] = {rows ? rows : &one, cols ? cols : &one};
+        for (int k = 0; k < 2; ++k) {
+            const Json& v = *given[k];
+            const char* what = k == 0 ? "rows" : "columns";
+            if (v.isBool()) return *error = where + ": a bool as the number of " + what + " is not supported yet", false;
+            if (!(v.isNumber() && v.isInteger()) || v.asNumber() <= 0)
+                return *error = where + ": Number of " + what + " must be a positive integer, not " + repr(v), false;
+            if (v.asNumber() > 1000) return *error = where + ": grids of more than 1000 rows or columns are not supported yet", false;
+            (k == 0 ? *nrows : *ncols) = int(v.asNumber());
+        }
+        return true;
+    }
+
+    // Figure.add_gridspec(nrows=1, ncols=1, **kwargs): GridSpec(nrows, ncols, figure=self, **kwargs), named by "as"
+    bool addGridspec(const model::Call& call, std::string* error) {
+        const std::string where = call.on + ".add_gridspec";
+        if (call.args.size() > 2)
+            return *error = where + ": FigureBase.add_gridspec() takes from 1 to 3 positional arguments but " + std::to_string(call.args.size() + 1) +
+                            " were given",
+                   false;
+        int nrows = 1, ncols = 1;
+        if (!gridShape(argument(call, 0, "nrows"), argument(call, 1, "ncols"), &nrows, &ncols, where, error)) return false;
+        auto gs = std::make_unique<GridSpec>(nrows, ncols);
+        std::vector<std::pair<std::string, const Json*>> kw;
+        for (const auto& [name, value] : call.kwargs)
+            if (name != "nrows" && name != "ncols") kw.emplace_back(name, &value);
+        if (!gridKeywords(*gs, kw, false, "", where, error)) return false;
+        figure_->gridspecs.push_back(std::move(gs));
+        return nameGrid(call, figure_->gridspecs.back().get(), where, error);
+    }
+
+    bool nameGrid(const model::Call& call, GridSpec* gs, const std::string& where, std::string* error) {
+        if (call.as.empty()) return true;
+        if (call.as.size() != 1) return *error = where + " returns one object: name it once", false;
+        gridspecs_[call.as[0]] = gs;
+        return true;
+    }
+
+    // SubplotSpec.subgridspec(nrows, ncols, **kwargs): GridSpecFromSubplotSpec(nrows, ncols, self, **kwargs)
+    bool subgridspec(const SubplotSpec& spec, const model::Call& call, std::string* error) {
+        const std::string where = call.on + ".subgridspec";
+        if (call.args.size() > 2)
+            return *error = where + ": SubplotSpec.subgridspec() takes 3 positional arguments but " + std::to_string(call.args.size() + 1) +
+                            " were given",
+                   false;
+        const Json* rows = argument(call, 0, "nrows");
+        const Json* cols = argument(call, 1, "ncols");
+        if (!rows && !cols) return *error = where + ": SubplotSpec.subgridspec() missing 2 required positional arguments: 'nrows' and 'ncols'", false;
+        if (!rows || !cols)
+            return *error = where + ": SubplotSpec.subgridspec() missing 1 required positional argument: '" + (rows ? "ncols" : "nrows") + "'", false;
+        int nrows = 1, ncols = 1;
+        if (!gridShape(rows, cols, &nrows, &ncols, where, error)) return false;
+        auto gs = std::make_unique<GridSpec>(nrows, ncols);
+        gs->parent = spec;
+        std::vector<std::pair<std::string, const Json*>> kw;
+        for (const auto& [name, value] : call.kwargs)
+            if (name != "nrows" && name != "ncols") kw.emplace_back(name, &value);
+        if (!gridKeywords(*gs, kw, true, "", where, error)) return false;
+        figure_->gridspecs.push_back(std::move(gs));
+        return nameGrid(call, figure_->gridspecs.back().get(), where, error);
+    }
+
+    // The cells a subscript of a named grid takes: "gs[0, :]", "gs[1:, -1]", "gs[3]" (GridSpecBase.__getitem__); false
+    // when `text` names no grid of the figure file. Errors in the subscript go to *error with `where`.
+    bool subplotSpecNamed(const std::string& text, SubplotSpec* out, const std::string& where, std::string* error, bool* named) {
+        *named = false;
+        const auto open = text.find('[');
+        if (open == std::string::npos || text.back() != ']') return false;
+        const auto it = gridspecs_.find(text.substr(0, open));
+        if (it == gridspecs_.end()) return false;
+        *named = true;
+        const GridSpec& gs = *it->second;
+        const std::string key = text.substr(open + 1, text.size() - open - 2);
+        const std::string syntax = where + ": the subscript [" + key + "] is not one of integers and slices that is supported yet";
+        // the items between commas (a trailing comma makes a tuple of those before it)
+        std::vector<std::string> items;
+        std::size_t start = 0;
+        for (;;) {
+            const auto comma = key.find(',', start);
+            items.push_back(key.substr(start, comma == std::string::npos ? std::string::npos : comma - start));
+            if (comma == std::string::npos) break;
+            start = comma + 1;
+        }
+        const auto blank = [](const std::string& t) { return t.find_first_not_of(' ') == std::string::npos; };
+        const bool tuple = items.size() > 1;
+        if (tuple && blank(items.back())) items.pop_back();
+        struct Part {
+            bool slice = false;
+            std::optional<long long> v[3];  // an index, or a slice's start, stop and step (None: not given)
+        };
+        std::vector<Part> parts;
+        // an integer as Python reads it: minus signs, then digits (a leading zero only in zero)
+        const auto integer = [](std::string t, long long* value) {
+            const auto trim = [](std::string& u) {
+                const auto a = u.find_first_not_of(' ');
+                u = a == std::string::npos ? "" : u.substr(a, u.find_last_not_of(' ') - a + 1);
+            };
+            trim(t);
+            bool negative = false;
+            while (!t.empty() && t[0] == '-') {
+                negative = !negative;
+                t = t.substr(1);
+                trim(t);
+            }
+            if (t.empty() || t.size() > 18 || t.find_first_not_of("0123456789") != std::string::npos) return false;
+            if (t.size() > 1 && t[0] == '0' && t.find_first_not_of('0') != std::string::npos) return false;
+            *value = std::strtoll(t.c_str(), nullptr, 10) * (negative ? -1 : 1);
+            return true;
+        };
+        for (const std::string& item : items) {
+            if (blank(item)) return *error = syntax, true;
+            Part p;
+            std::vector<std::string> fields;
+            std::size_t from = 0;
+            for (;;) {
+                const auto colon = item.find(':', from);
+                fields.push_back(item.substr(from, colon == std::string::npos ? std::string::npos : colon - from));
+                if (colon == std::string::npos) break;
+                from = colon + 1;
+            }
+            if (fields.size() > 3) return *error = syntax, true;
+            p.slice = fields.size() > 1;
+            for (std::size_t k = 0; k < fields.size(); ++k) {
+                if (p.slice && blank(fields[k])) continue;
+                long long v = 0;
+                if (!integer(fields[k], &v)) return *error = syntax, true;
+                p.v[k] = v;
+            }
+            parts.push_back(p);
+        }
+        // _normalize(key, size, axis): the first and last of the cells it takes
+        const auto normalize = [&](const Part& p, long long size, int axis, long long* first, long long* last) {
+            if (p.slice) {
+                // slice.indices(size)
+                const long long step = p.v[2] ? *p.v[2] : 1;
+                if (step == 0) return *error = where + ": slice step cannot be zero", false;
+                const auto adjust = [&](std::optional<long long> v, bool isStart) {
+                    if (!v) return isStart ? (step < 0 ? size - 1 : 0) : (step < 0 ? -1 : size);
+                    long long k = *v;
+                    if (k < 0) {
+                        k += size;
+                        if (k < 0) k = step < 0 ? -1 : 0;
+                    } else if (k >= size) {
+                        k = step < 0 ? size - 1 : size;
+                    }
+                    return k;
+                };
+                const long long a = adjust(p.v[0], true), b = adjust(p.v[1], false);
+                if (!(b > a)) return *error = where + ": GridSpec slice would result in no space allocated for subplot", false;
+                *first = a, *last = b - 1;
+                return true;
+            }
+            long long k = *p.v[0];
+            if (k < 0) k += size;
+            if (0 <= k && k < size) return *first = *last = k, true;
+            *error = where + ": index " + std::to_string(*p.v[0]) + " is out of bounds for " +
+                     (axis < 0 ? std::string("GridSpec") : "axis " + std::to_string(axis)) + " with size " + std::to_string(size);
+            return false;
+        };
+        long long r0 = 0, r1 = 0, c0 = 0, c1 = 0;
+        if (tuple) {
+            if (parts.size() != 2) return *error = where + ": Unrecognized subplot spec", true;
+            if (!normalize(parts[0], gs.nrows, 0, &r0, &r1) || !normalize(parts[1], gs.ncols, 1, &c0, &c1)) return true;
+            // np.ravel_multi_index
+            *out = SubplotSpec{&gs, int(r0 * gs.ncols + c0), int(r1 * gs.ncols + c1)};
+        } else {
+            long long a = 0, b = 0;
+            if (!normalize(parts[0], (long long)gs.nrows * gs.ncols, -1, &a, &b)) return true;
+            *out = SubplotSpec{&gs, int(a), int(b)};
+        }
+        return true;
+    }
+
+    // A SubplotSpec given as the one argument of add_subplot / subplot ({"$ref": "gs[0, :]"}): true when the call
+    // gives one; then *out is it, or empty and *error says why not
+    bool subplotSpecArgument(const model::Call& call, std::optional<SubplotSpec>* out, const std::string& where, std::string* error) {
+        if (call.args.size() != 1) return false;
+        const Json& v = call.args[0];
+        if (!(v.isObject() && v.members().size() == 1 && v.members()[0].first == "$ref" && v.members()[0].second.isString())) return false;
+        bool named = false;
+        SubplotSpec spec{nullptr, 0, 0};
+        std::string why;
+        if (!subplotSpecNamed(v.members()[0].second.asString(), &spec, where, &why, &named)) return false;
+        out->reset();
+        if (!why.empty()) return *error = why, true;
+        *out = spec;
+        return true;
+    }
+
+    // GridSpec.get_subplot_params as an Axes is placed in a grid: the figure's parameters updated with the topmost
+    // grid's (SubplotParams.update raises on them)
+    bool gridParamsValid(const GridSpec& grid, const std::string& where, std::string* error) {
+        const GridSpec* gs = &grid;
+        while (gs->parent) gs = gs->parent->gridspec;
+        SubplotParams p = figure_->subplotpars;
+        if (!p.update(gs->left, gs->bottom, gs->right, gs->top, gs->wspace, gs->hspace, error)) return *error = where + ": " + *error, false;
+        return true;
+    }
+
     // Figure.add_axes(rect): (left, bottom, width, height), finite, not negative in size; the new Axes is current
     bool addAxes(const model::Call& call, const Json* rect, std::string* error) {
         const std::string where = (call.on.empty() ? "plt" : call.on) + "." + call.method + ": ";
@@ -1514,6 +1744,22 @@ private:
         bool isPolar = false;
         if (!keywords(call, {"projection", "polar"}, error)) return false;
         if (!projectionOf(keyword(call, "projection"), keyword(call, "polar"), "plt.subplot", &isPolar, error)) return false;
+        std::optional<SubplotSpec> ss;
+        if (subplotSpecArgument(call, &ss, "plt.subplot", error)) {
+            // plt.subplot(gs[...]): the figure's Axes of those cells of that grid (SubplotSpec.__eq__), else a new one
+            if (!ss) return false;
+            Figure& f = gcf();
+            Axes* found = nullptr;
+            for (const auto& a : f.axes)
+                if (a->subplotSpec && a->subplotSpec->gridspec == ss->gridspec && a->subplotSpec->num1 == ss->num1 &&
+                    a->subplotSpec->num2 == ss->num2 && (call.kwargs.empty() || bool(a->polar) == isPolar)) {
+                    found = a.get();
+                    break;
+                }
+            if (!found && !gridParamsValid(*ss->gridspec, "plt.subplot", error)) return false;
+            current_ = found ? found : f.addSubplot(*ss, isPolar);
+            return nameResult(call, current_, error);
+        }
         int spec[4];
         if (!subplotSpecOf(call, spec, error)) return false;
         Figure& f = gcf();
@@ -1544,6 +1790,12 @@ private:
             bool isPolar = false;
             if (!keywords(call, {"projection", "polar"}, error)) return false;
             if (!projectionOf(keyword(call, "projection"), keyword(call, "polar"), where, &isPolar, error)) return false;
+            std::optional<SubplotSpec> ss;
+            if (subplotSpecArgument(call, &ss, where, error)) {  // add_subplot(gs[...])
+                if (!ss || !gridParamsValid(*ss->gridspec, where, error)) return false;
+                current_ = figure_->addSubplot(*ss, isPolar);
+                return nameResult(call, current_, error);
+            }
             int spec[4];
             if (!subplotSpecOf(call, spec, error)) return false;
             current_ = figure_->addSubplot(spec[0], spec[1], spec[2], spec[3], isPolar);
@@ -1551,6 +1803,7 @@ private:
         }
         if (call.method == "gca") return noArguments(call, error) && nameResult(call, &gca(), error);
         if (call.method == "subplot_mosaic") return subplotMosaic(call, false, error);
+        if (call.method == "add_gridspec") return addGridspec(call, error);
         if (call.method == "add_axes") return addAxes(call, call.args.empty() ? nullptr : &call.args[0], error);
         if (call.method == "text") return figureText(call, error);
         if (call.method == "figimage") return figimage(call, error);
@@ -10169,6 +10422,7 @@ private:
     // The containers bar calls returned, by name: their Axes and where in its containers they are
     std::map<std::string, std::pair<Axes*, std::size_t>> barContainers_;
     std::set<std::string> figureNames_;  // what the figure file calls the figure
+    std::map<std::string, GridSpec*> gridspecs_;  // the grids named by "as" (fig.add_gridspec, ss.subgridspec)
     Axes* current_ = nullptr;            // the figure's current Axes (gca), if any
 
 public:

@@ -126,6 +126,27 @@ TEST(FigureModel, AnObjectMayBeIndexedByAStringKey) {
     }
 }
 
+TEST(FigureModel, AGridMayBeIndexedBySlices) {
+    const auto f = parsed(R"({"version":1,"calls":[
+        {"call":"figure","as":"fig"},
+        {"on":"fig","call":"add_gridspec","args":[2, 3],"as":"gs"},
+        {"on":"fig","call":"add_subplot","args":[{"$ref":"gs[0, :]"}]},
+        {"on":"fig","call":"add_subplot","args":[{"$ref":"gs[1:, -1]"}]},
+        {"on":"gs[1, :2]","call":"subgridspec","args":[1, 2],"as":"inner"},
+        {"call":"subplot","args":[{"$ref":"inner[::2]"}]}]})");
+    ASSERT_EQ(f.calls.size(), 6u);
+    const std::string py = m::exportPython(f, "x");
+    EXPECT_NE(py.find("fig.add_subplot(gs[0, :])\n"), std::string::npos) << py;
+    EXPECT_NE(py.find("fig.add_subplot(gs[1:, -1])\n"), std::string::npos) << py;
+    EXPECT_NE(py.find("inner = gs[1, :2].subgridspec(1, 2)\n"), std::string::npos) << py;
+    EXPECT_NE(py.find("plt.subplot(inner[::2])\n"), std::string::npos) << py;
+    for (const char* on : {"gs[0, ;]", "gs[0:1", "gs[a:]", "gs[0, :].x[1]"}) {
+        const std::string json = std::string(R"({"version":1,"calls":[{"call":"figure","as":"fig"},{"on":"fig","call":"add_gridspec","as":"gs"},{"on":")") +
+                                 on + R"(","call":"subgridspec","args":[1, 1]}]})";
+        EXPECT_FALSE(m::parseFigure(json, nullptr).has_value()) << on;
+    }
+}
+
 TEST(FigureModel, ANewObjectIsAPyplotClassWithoutArguments) {
     for (const char* bad : {R"({"$new":"os.system"})", R"({"$new":"__import__"})", R"({"$new":3})",
                             R"({"$new":"NullFormatter","x":1})", R"({"$new":""})"}) {
