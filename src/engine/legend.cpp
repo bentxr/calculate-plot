@@ -720,7 +720,7 @@ Legend::Legend(const rc::Params& rc, Figure& figure, Axes* axes, const std::vect
         }
         if (problem.empty()) {
             loc_ = locCode(loc);
-            if (loc_ < 0) problem = "'" + loc + "' is not a valid value for loc.";  // (_api.getitem_checked, D12.10)
+            if (loc_ < 0) problem = "'" + loc + "' is not a valid value for loc.";  // (_api.getitem_checked)
         }
         if (problem.empty() && axes_ && !outsideLoc_.empty())
             problem = "'outside' option for loc='" + given + "' keyword argument only works for figure legends";

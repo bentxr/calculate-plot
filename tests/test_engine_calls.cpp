@@ -484,7 +484,7 @@ INSTANTIATE_TEST_SUITE_P(
                 "axs[0].legend: Invalid labelcolor"},
         Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"shadow": 2}})", "axs[0].legend: Legend shadow must be a dict or bool"},
         Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"shadow": "yes"}})", "axs[0].legend: Legend shadow must be a dict or bool"},
-        // locations (matplotlib's set_loc; a suggestion of close names is not given, D12.10)
+        // locations (matplotlib's set_loc; a suggestion of close names is not given)
         Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"loc": "nowhere"}})", "axs[0].legend: 'nowhere' is not a valid value for loc."},
         Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"loc": ""}})", "axs[0].legend: list index out of range"},
         Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"loc": "outside"}})", "axs[0].legend: list index out of range"},
