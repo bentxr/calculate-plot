@@ -116,4 +116,16 @@ std::string pythonStrip(const std::string& text) {
     return text.substr(a, b - a);
 }
 
+std::vector<std::string> pythonSplit(const std::string& text) {
+    std::vector<std::string> words;
+    std::size_t i = 0;
+    while (i < text.size()) {
+        for (std::size_t n; i < text.size() && (n = spaceAt(text, i)) != 0;) i += n;
+        const std::size_t start = i;
+        while (i < text.size() && spaceAt(text, i) == 0) ++i;
+        if (i > start) words.push_back(text.substr(start, i - start));
+    }
+    return words;
+}
+
 }  // namespace calculate_plot::support

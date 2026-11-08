@@ -182,7 +182,7 @@ public:
             const auto& ofAxes = pyplotOfAxes();
             static const std::map<std::string, std::string> ofFigure = {
                 {"suptitle", "suptitle"}, {"figtext", "text"}, {"subplots_adjust", "subplots_adjust"}, {"tight_layout", "tight_layout"},
-                {"figimage", "figimage"}, {"colorbar", "colorbar"}};
+                {"figimage", "figimage"}, {"colorbar", "colorbar"}, {"figlegend", "legend"}};
             const auto a = ofAxes.find(call.method);
             const auto f = ofFigure.find(call.method);
             if (a != ofAxes.end() || f != ofFigure.end()) {
@@ -1554,6 +1554,7 @@ private:
         if (call.method == "add_axes") return addAxes(call, call.args.empty() ? nullptr : &call.args[0], error);
         if (call.method == "text") return figureText(call, error);
         if (call.method == "figimage") return figimage(call, error);
+        if (call.method == "legend") return legend(nullptr, call, error);
         if (call.method == "colorbar") return colorbar(call, error);
         if (call.method == "suptitle") {
             // FigureBase._suplabels with suptitle's info: (0.5, 0.98), centred, top, figure.titlesize/titleweight
@@ -2514,7 +2515,7 @@ private:
         if (call.method == "scatter") return scatter(ax, call, error) && noteMappable(ax, call);
         if (call.method == "fill_between" || call.method == "fill_betweenx") return fillBetween(ax, call, error);
         if (call.method == "errorbar") return errorbar(ax, call, error);
-        if (call.method == "legend") return legend(ax, call, error);
+        if (call.method == "legend") return legend(&ax, call, error);
         if (call.method == "grid") return grid(ax, call, error);
         if (call.method == "tick_params") return tickParams(&ax, nullptr, call, error);
         if (call.method == "axhline" || call.method == "axvline") return axline(ax, call, error);
@@ -3840,8 +3841,9 @@ private:
         return true;
     }
 
-    // Axes.legend(**kwargs): the labelled lines, patches and collections, in the order they were added
-    bool legend(Axes& ax, const model::Call& call, std::string* error) {
+    // Axes.legend(**kwargs): the labelled lines, patches and collections, in the order they were added;
+    // Figure.legend(**kwargs) when `ax` is null: those of every Axes of the figure, in fig.axes order
+    bool legend(Axes* ax, const model::Call& call, std::string* error) {
         const std::string where = call.on + ".legend";
         if (!call.args.empty()) return *error = where + ": handles and labels as arguments are not supported yet", false;
         LegendOptions o;
@@ -3948,20 +3950,27 @@ private:
             }
         }
         std::vector<Artist*> handles;
+        std::vector<const ErrorbarContainer*> containers;
         std::vector<std::string> labels;
-        for (const auto& child : ax.children) {
-            const std::string& l = child->label;
-            if (l.empty() || l[0] == '_') continue;
-            handles.push_back(child.get());
-            labels.push_back(l);
-        }
-        // _get_legend_handles: the containers come after the children
-        std::vector<const ErrorbarContainer*> containers(handles.size(), nullptr);
-        for (const auto& c : ax.containers) {
-            if (c.label.empty() || c.label[0] == '_') continue;
-            handles.push_back(nullptr);
-            containers.push_back(&c);
-            labels.push_back(c.label);
+        std::vector<Axes*> axs;
+        if (ax) axs.push_back(ax);
+        else
+            for (const auto& a : figure_->axes) axs.push_back(a.get());
+        for (Axes* a : axs) {
+            for (const auto& child : a->children) {
+                const std::string& l = child->label;
+                if (l.empty() || l[0] == '_') continue;
+                handles.push_back(child.get());
+                containers.push_back(nullptr);
+                labels.push_back(l);
+            }
+            // _get_legend_handles: each Axes' containers come after its children
+            for (const auto& c : a->containers) {
+                if (c.label.empty() || c.label[0] == '_') continue;
+                handles.push_back(nullptr);
+                containers.push_back(&c);
+                labels.push_back(c.label);
+            }
         }
         // ncols is 1 with fewer than two entries, whatever was given; and ncol counts when ncols is 1.
         // np.array_split reads the count: int() of it, 1 or more; the columns past the entries are empty.
@@ -3980,9 +3989,10 @@ private:
         }
         o.ncols = int(std::min(columns, double(handles.size())));
         std::string problem;
-        auto made = std::make_unique<Legend>(rc_, ax, handles, containers, labels, o, &problem);
+        auto made = std::make_unique<Legend>(rc_, *figure_, ax, handles, containers, labels, o, &problem);
         if (!problem.empty()) return *error = where + ": " + problem, false;
-        ax.legend = std::move(made);
+        if (ax) ax->legend = std::move(made);
+        else figure_->legends.push_back(std::move(made));
         return true;
     }
 

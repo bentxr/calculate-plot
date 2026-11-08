@@ -1,0 +1,12 @@
+{"version": 1, "rc": {"legend.loc": "upper left", "savefig.bbox": "tight"}, "calls": [
+  {"call": "subplot", "args": [2, 1, 1]},
+  {"call": "plot", "args": [[0, 1, 2], [2, 0, 1]], "kwargs": {"label": "top"}},
+  {"call": "twinx"},
+  {"call": "plot", "args": [[0, 1, 2], [10, 30, 20]], "kwargs": {"label": "top, right axis", "color": "C1"}},
+  {"call": "subplot", "args": [2, 1, 2]},
+  {"call": "step", "args": [[0, 1, 2], [1, 2, 0]], "kwargs": {"label": "bottom"}},
+  {"call": "legend"},
+  {"call": "figlegend", "kwargs": {"loc": "center left", "shadow": true, "bbox_transform": null}},
+  {"call": "figlegend", "kwargs": {"loc": "upper right", "borderaxespad": 0}},
+  {"call": "figlegend", "kwargs": {"loc": true}}
+]}

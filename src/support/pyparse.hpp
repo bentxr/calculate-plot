@@ -2,6 +2,7 @@
 
 #include <optional>
 #include <string>
+#include <vector>
 
 namespace calculate_plot::support {
 
@@ -18,6 +19,9 @@ std::optional<long long> pythonInt(const std::string& text);
 // int() do not take as blanks) and those of
 // Unicode (U+0085, U+00A0, U+1680, U+2000 to U+200A, U+2028, U+2029, U+202F, U+205F, U+3000).
 std::string pythonStrip(const std::string& text);
+
+// text.split() of a Python str: its words, the runs between that white space (none when it is all blank).
+std::vector<std::string> pythonSplit(const std::string& text);
 
 // Whether every character is ASCII.
 bool isAscii(const std::string& text);

@@ -103,21 +103,29 @@ struct LegendOptions {
 
 class Legend : public Artist {
 public:
-    // Legend(axes, handles, labels, **options); `handles` are the Axes' children that get entries,
-    // or null where the entry is the errorbar container at the same place in `containers`.
-    Legend(const rc::Params& rc, Axes& parent, const std::vector<Artist*>& handles,
+    // Legend(parent, handles, labels, **options): the parent is `axes`, or the figure when `axes` is null
+    // (fig.legend). `handles` are the Axes' children that get entries, or null where the entry is the
+    // errorbar container at the same place in `containers`.
+    Legend(const rc::Params& rc, Figure& figure, Axes* axes, const std::vector<Artist*>& handles,
            const std::vector<const ErrorbarContainer*>& containers, const std::vector<std::string>& labels,
            const LegendOptions& options, std::string* error);
     void draw(Renderer& renderer) override;
     transforms::Bbox tightbbox(Renderer& renderer);  // get_tightbbox: the legend box's window extent
+    // _outside_loc: 'upper', 'lower', 'left', 'right' (or what else the 'outside ...' location named) of a
+    // figure legend placed outside the Axes by the constrained layout; empty for the others
+    const std::string& outsideLoc() const { return outsideLoc_; }
 
 private:
     std::array<double, 2> findOffset(double width, double height, double xdescent, double ydescent,
                                      Renderer& renderer);
     std::array<double, 2> anchoredBbox(int loc, const transforms::Bbox& bbox, Renderer& renderer);
     std::array<double, 2> findBestPosition(double width, double height, Renderer& renderer);
+    // get_bbox_to_anchor: the parent's box as it is when asked (a tight save gives the figure another)
+    const transforms::TransformedBbox& anchor() const;
 
-    Axes& parent_;
+    Figure& figure_;
+    Axes* axes_;  // null for a figure legend
+    std::string outsideLoc_;
     double fontsize_;  // points
     double borderpad_, labelspacing_, handlelength_, handleheight_, handletextpad_, borderaxespad_, columnspacing_;
     int loc_ = 0;

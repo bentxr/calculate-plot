@@ -1,6 +1,7 @@
 // Derived from Matplotlib 3.11.2: lib/matplotlib/legend.py (Legend), lib/matplotlib/offsetbox.py
 // (TextArea, DrawingArea, HPacker, VPacker and their helpers) and lib/matplotlib/legend_handler.py
-// (HandlerLine2D, HandlerPathCollection, HandlerPolyCollection, HandlerPatch, HandlerErrorbar).
+// (HandlerLine2D, HandlerPathCollection, HandlerPolyCollection, HandlerPatch, HandlerErrorbar), with
+// legends of Axes or of the figure.
 // Copyright (c) 2012- Matplotlib Development Team; All Rights Reserved
 // Licence: LICENSES/Matplotlib.txt. Changes: licensing/changes/matplotlib.md
 
@@ -10,6 +11,7 @@
 #include "engine/axes.hpp"
 #include "engine/figure.hpp"
 #include "rc/rc_params.hpp"
+#include "support/pyparse.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -341,10 +343,10 @@ std::optional<colors::Rgba> labelColorFrom(const HandleColors& handle, const std
 
 }  // namespace
 
-Legend::Legend(const rc::Params& rc, Axes& parent, const std::vector<Artist*>& handles,
+Legend::Legend(const rc::Params& rc, Figure& figure, Axes* axes, const std::vector<Artist*>& handles,
                const std::vector<const ErrorbarContainer*>& containers, const std::vector<std::string>& labels,
                const LegendOptions& o, std::string* error)
-    : Artist(rc), parent_(parent) {
+    : Artist(rc), figure_(figure), axes_(axes) {
     zorder = 5;
     // FontProperties(size=fontsize or rcParams["legend.fontsize"]).get_size_in_points()
     fontsize_ = o.fontsize ? text::atLeastOnePoint(*o.fontsize) : text::fontSizeOf(rc.value("legend.fontsize"), rc);
@@ -415,7 +417,7 @@ Legend::Legend(const rc::Params& rc, Axes& parent, const std::vector<Artist*>& h
     std::vector<HandleColors> handleColors;  // of the first artist of each entry (the legend handle)
     std::vector<Text*> texts;
     for (std::size_t i = 0; i < handles.size(); ++i) {
-        auto textbox = std::make_unique<TextArea>(rc, parent.figure, labels[i], true);
+        auto textbox = std::make_unique<TextArea>(rc, figure, labels[i], true);
         textbox->text.verticalAlignment = "baseline";
         textbox->text.horizontalAlignment = "left";
         textbox->text.font = prop;
@@ -503,7 +505,7 @@ Legend::Legend(const rc::Params& rc, Axes& parent, const std::vector<Artist*>& h
                     verts.push_back({{xmarker[k] - dx, ymarker[k] - dy}, {xmarker[k] + dx, ymarker[k] + dy}});
                 auto bar = std::make_unique<LineCollection>(rc, verts);
                 bar->updateFrom(*bars->barlinecols[0]);
-                bar->figure = &parent.figure;  // (_set_artist_props; a bar this short never asks for it)
+                bar->figure = &figure;  // (_set_artist_props; a bar this short never asks for it)
                 bar->clipBox.reset();
                 bar->clipPath.reset();
                 bar->transform = trans;
@@ -585,7 +587,7 @@ Legend::Legend(const rc::Params& rc, Axes& parent, const std::vector<Artist*>& h
             auto handle = std::make_unique<PathCollection>(rc, std::vector<Path>{pc->paths[0]}, sizes);
             for (std::size_t k = 0; k < xmarker.size(); ++k) handle->offsets.push_back({xmarker[k], h * scatterYOffsets[k]});
             handle->updateFrom(*pc);
-            handle->figure = &parent.figure;
+            handle->figure = &figure;
             handle->clipBox.reset();
             handle->clipPath.reset();
             handle->offsetTransform = trans;
@@ -668,7 +670,7 @@ Legend::Legend(const rc::Params& rc, Axes& parent, const std::vector<Artist*>& h
     }
     boxes_.push_back(std::make_unique<Packer>(false, 0, columnspacing_ * fontsize, "baseline", columns));
     OffsetBox* handleBox = boxes_.back().get();
-    auto title = std::make_unique<TextArea>(rc, parent.figure, "", false);
+    auto title = std::make_unique<TextArea>(rc, figure, "", false);
     titleBox_ = title.get();
     boxes_.push_back(std::move(title));
     auto legendBox = std::make_unique<Packer>(true, borderpad_ * fontsize, labelspacing_ * fontsize, "center",
@@ -677,15 +679,55 @@ Legend::Legend(const rc::Params& rc, Axes& parent, const std::vector<Artist*>& h
     boxes_.push_back(std::move(legendBox));
 
     // set_loc
+    std::string problem;  // (the first error set_loc raises)
     if (o.locCode) {
         loc_ = *o.locCode;
     } else if (o.locXY) {
         locXY_ = o.locXY;
     } else {
-        const std::string loc = o.loc ? *o.loc : rc.text("legend.loc");
-        loc_ = locCode(loc);
-        if (loc_ < 0) *error = "unknown legend location '" + loc + "'";
+        // rcParams["legend.loc"] when none is given: 'best' is for Axes, a figure's is 'upper right'
+        std::string loc = o.loc ? *o.loc : rc.text("legend.loc");
+        if (!o.loc && !axes_ && loc == "best") loc = "upper right";
+        const std::string given = loc;
+        // locations outside the Axes: 'outside upper right', 'outside right upper' (the side first, swapped)...
+        const std::vector<std::string> words = support::pythonSplit(loc);
+        const std::string indexError = "list index out of range";
+        if (words.empty()) {
+            problem = indexError;  // (loc.split()[0])
+        } else if (words[0] == "outside") {
+            // loc.split('outside ')[1]
+            const std::string mark = "outside ";
+            const std::size_t first = loc.find(mark);
+            if (first == std::string::npos) {
+                problem = indexError;
+            } else {
+                const std::size_t from = first + mark.size(), next = loc.find(mark, from);
+                loc = loc.substr(from, next == std::string::npos ? std::string::npos : next - from);
+                // _outside_loc: the first word once every 'center ' is taken out
+                std::string side = loc;
+                for (std::size_t k; (k = side.find("center ")) != std::string::npos;) side.erase(k, 7);
+                const std::vector<std::string> sideWords = support::pythonSplit(side);
+                if (sideWords.empty()) {
+                    problem = indexError;
+                } else {
+                    outsideLoc_ = sideWords[0];
+                    const std::vector<std::string> locs = support::pythonSplit(loc);
+                    // ('right upper' -> 'upper right': locs[::-1], then its first two)
+                    if (locs.size() > 1 && (locs[0] == "right" || locs[0] == "left"))
+                        loc = locs[locs.size() - 1] + " " + locs[locs.size() - 2];
+                }
+            }
+        }
+        if (problem.empty()) {
+            loc_ = locCode(loc);
+            if (loc_ < 0) problem = "'" + loc + "' is not a valid value for loc.";  // (_api.getitem_checked, D12.10)
+        }
+        if (problem.empty() && axes_ && !outsideLoc_.empty())
+            problem = "'outside' option for loc='" + given + "' keyword argument only works for figure legends";
     }
+    if (problem.empty() && !axes_ && !locXY_ && loc_ == 0)
+        problem = "Automatic legend placement (loc='best') not implemented for figure legend";
+    if (!problem.empty()) *error = problem;
     legendBox_->offsetFunction = [this](double w, double h, double xd, double yd, Renderer& r) {
         return findOffset(w, h, xd, yd, r);
     };
@@ -697,13 +739,15 @@ Legend::Legend(const rc::Params& rc, Axes& parent, const std::vector<Artist*>& h
     titleBox_->text.font = titleProp;
 }
 
+const transforms::TransformedBbox& Legend::anchor() const { return axes_ ? *axes_->bbox : *figure_.bbox; }
+
 std::array<double, 2> Legend::anchoredBbox(int loc, const transforms::Bbox& b, Renderer& renderer) {
     // offsetbox._get_anchored_bbox with pad = borderaxespad * points_to_pixels(fontsize)
     const double pad = borderaxespad_ * renderer.pointsToPixels(fontsize_);
     static const double coefs[11][2] = {{0, 0},   {1.0, 1.0}, {0, 1.0},   {0, 0},   {1.0, 0}, {1.0, 0.5},
                                         {0, 0.5}, {1.0, 0.5}, {0.5, 0},   {0.5, 1.0}, {0.5, 0.5}};
     // "NE", "NW", "SW", "SE", "E", "W", "E", "S", "N", "C"
-    const auto parent = parent_.bbox->points();
+    const auto parent = anchor().points();
     const Bbox container({parent[0] + pad, parent[1] + pad, parent[2] - pad, parent[3] - pad});  // padded(-pad)
     const auto [l, bb, w, h] = container.bounds();
     const auto [L, B, W, H] = b.bounds();
@@ -716,7 +760,7 @@ std::array<double, 2> Legend::findBestPosition(double width, double height, Rend
     std::vector<std::pair<std::vector<double>, std::vector<unsigned char>>> lines;
     std::vector<std::array<double, 2>> offsets;
     std::vector<std::array<double, 4>> bboxes;
-    for (const auto& child : parent_.children) {
+    for (const auto& child : axes_->children) {
         if (auto* line = dynamic_cast<Line2D*>(child.get())) {
             const Path p = line->path();
             std::vector<double> v = p.vertices ? *p.vertices : std::vector<double>{};
@@ -795,8 +839,8 @@ std::array<double, 2> Legend::findBestPosition(double width, double height, Rend
 std::array<double, 2> Legend::findOffset(double width, double height, double xdescent, double ydescent,
                                          Renderer& renderer) {
     std::array<double, 2> xy;
-    if (locXY_) {  // axes coordinates: the corner at those fractions of the anchor box (the Axes' box)
-        const auto [x0, y0, w, h] = parent_.bbox->bounds();
+    if (locXY_) {  // the corner at those fractions of the anchor box (the parent's box)
+        const auto [x0, y0, w, h] = anchor().bounds();
         xy = {x0 + w * (*locXY_)[0], y0 + h * (*locXY_)[1]};
     } else if (loc_ == 0) {
         xy = findBestPosition(width, height, renderer);

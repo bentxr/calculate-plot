@@ -1,0 +1,11 @@
+{"version": 1, "calls": [
+  {"call": "subplots", "args": [1, 2], "kwargs": {"layout": "constrained", "figsize": {"$tuple": [6.0, 4.0]}}, "as": ["fig", "axs"]},
+  {"on": "axs[0]", "call": "plot", "args": [[0, 1, 2], [0, 1, 4]], "kwargs": {"label": "growing"}},
+  {"on": "axs[1]", "call": "plot", "args": [[0, 1, 2], [4, 1, 0]], "kwargs": {"label": "shrinking"}},
+  {"on": "fig", "call": "suptitle", "args": ["Outside legends"]},
+  {"on": "fig", "call": "legend", "kwargs": {"loc": "outside right upper"}},
+  {"on": "fig", "call": "legend", "kwargs": {"loc": "outside lower center", "ncols": 2}},
+  {"on": "fig", "call": "legend", "kwargs": {"loc": "outside upper center", "ncols": 2}},
+  {"on": "fig", "call": "legend", "kwargs": {"loc": "outside left center", "title": "left"}},
+  {"on": "fig", "call": "legend", "kwargs": {"loc": "outside center", "fontsize": 6}}
+]}

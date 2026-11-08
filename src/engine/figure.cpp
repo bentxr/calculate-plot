@@ -10,6 +10,7 @@
 
 #include "engine/axes.hpp"
 #include "engine/image.hpp"
+#include "engine/legend.hpp"
 #include "engine/text.hpp"
 #include "render/replay.hpp"
 
@@ -120,6 +121,7 @@ void Figure::draw(Renderer& renderer) {
     for (auto& a : axes) artists.push_back(a.get());
     for (auto& t : texts) artists.push_back(t.get());
     for (auto& im : images) artists.push_back(im.get());
+    for (auto& l : legends) artists.push_back(l.get());
     std::stable_sort(artists.begin(), artists.end(), [](const Artist* a, const Artist* b) { return a->zorder < b->zorder; });
     // ... and each Axes, then its child Axes, placed (apply_aspect with its locator) before anything is drawn
     for (auto& ax : axes) {
@@ -162,10 +164,12 @@ std::array<double, 2> Figure::canvasSize() const {
 
 transforms::Bbox Figure::tightbbox(Renderer& renderer) {
     std::vector<transforms::Bbox> bb;
-    // The children that are not Axes, visible and in the layout: the texts (the patch is not in the
-    // layout). Artist.get_tightbbox is their window extent: nothing clips them.
+    // The children that are not Axes, visible and in the layout: the texts and the legends (the patch
+    // is not in the layout). get_tightbbox is a text's window extent (nothing clips it), a legend's box's.
     for (auto& t : texts)
         if (t->visible) bb.push_back(static_cast<Text&>(*t).windowExtent(renderer));
+    for (auto& l : legends)
+        if (l->visible) bb.push_back(static_cast<Legend&>(*l).tightbbox(renderer));
     for (auto& ax : axes)
         if (ax->visible)
             if (auto b = ax->tightbbox(renderer, false)) bb.push_back(*b);

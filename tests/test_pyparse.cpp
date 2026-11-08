@@ -1,4 +1,4 @@
-// float(text), int(text) and text.strip() as Python reads them, for 1439 strings (tests/oracle/pyparse.json, written
+// float(text), int(text), text.strip() and text.split() as Python reads them, for 1449 strings (tests/oracle/pyparse.json, written
 // by tools/oracle/make_pyparse_oracle.py). Strings of ASCII characters are read exactly as Python
 // reads them; the digits and blanks of other scripts, which Python also takes, are refused.
 #include "support/json.hpp"
@@ -12,6 +12,8 @@
 #include <fstream>
 #include <limits>
 #include <sstream>
+#include <string>
+#include <vector>
 
 namespace fs = std::filesystem;
 using calculate_plot::support::Json;
@@ -31,6 +33,9 @@ TEST(PythonParse, ReadsNumbersAsPythonDoes) {
         for (unsigned char ch : s) ascii = ascii && ch < 0x80;
         notAscii += !ascii;
         EXPECT_EQ(calculate_plot::support::pythonStrip(s), c.find("strip")->asString());
+        std::vector<std::string> words;
+        for (const Json& w : c.find("split")->items()) words.push_back(w.asString());
+        EXPECT_EQ(calculate_plot::support::pythonSplit(s), words);
         EXPECT_EQ(calculate_plot::support::isAscii(s), ascii);
         const auto f = pythonFloat(s);
         const auto i = pythonInt(s);
@@ -62,8 +67,8 @@ TEST(PythonParse, ReadsNumbersAsPythonDoes) {
             ++integers;
         }
     }
-    EXPECT_EQ(cases.size(), 1439u);
-    EXPECT_EQ(notAscii, 37);
+    EXPECT_EQ(cases.size(), 1449u);
+    EXPECT_EQ(notAscii, 40);
     EXPECT_EQ(floats, 477);
     EXPECT_EQ(integers, 352);
 }

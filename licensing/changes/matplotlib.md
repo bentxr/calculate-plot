@@ -127,7 +127,7 @@ it comes from in its first lines. The changes, as a whole:
   _get_aligned_offsets, legend_handler.py's HandlerLine2D, HandlerPathCollection and HandlerPolyCollection,
   patches.py's FancyBboxPatch with the round and square box styles, Line2D.update_from and markevery lists,
   Collection.update_from, and src/_path.h's path_intersects_rectangle (unfilled) and count_bboxes_overlapping_bbox
-  (in src/agg/path_queries.h), translated to C++. Shadows, other handlers and figure legends come later.
+  (in src/agg/path_queries.h), translated to C++. Shadows, other handlers and figure legends came later.
   Spans and grids: Axes.axhline/axvline, axhspan/axvspan, vlines/hlines and grid with Axis.grid's keywords on the
   ticks; Axes.add_patch with _update_patch_limits, the general _update_line_limits (lines in axes coordinates, via
   transform - transData), Bbox.update_from_path's per-direction updates, contains_branch_separately, and the
@@ -303,6 +303,11 @@ it comes from in its first lines. The changes, as a whole:
   MaxNLocator.set_params and FixedLocator.set_params. figure.py's subplot_mosaic (_make_array,
   _identify_keys_and_nested, _do_layout), _normalize_grid_string and _norm_per_subplot_kw, and _base.py's sharex /
   sharey of Axes already made (src/engine/engine.cpp subplotMosaic, src/engine/axes.cpp shareAfter).
+  Figure legends: figure.py's Figure.legend and pyplot.figlegend (the handles of every Axes of the figure in
+  fig.axes order, each Axes' containers after its children), Legend.set_loc for figures ('upper right' for an rc
+  'best', the 'outside ...' locations; the anchor box read from the parent when it is drawn) and
+  _constrained_layout.py's figure margins for legends outside the Axes (src/engine/legend.cpp,
+  src/engine/constrained_layout.cpp).
   Ticks: Axis.set_ticks (FixedLocator, set_view_interval without ignore on the shared axes) and set_ticklabels
   (NullFormatter, or a FuncFormatter of a dict of labels); set_frame_on.
   Pies: Path.arc, patches.Wedge, Shadow's zorder, Axes.pie and Axes.pie_label; the data limits of curved

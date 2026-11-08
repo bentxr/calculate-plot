@@ -483,7 +483,30 @@ INSTANTIATE_TEST_SUITE_P(
         Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"labelcolor": ["red", ["green"]]}})",
                 "axs[0].legend: Invalid labelcolor"},
         Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"shadow": 2}})", "axs[0].legend: Legend shadow must be a dict or bool"},
-        Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"shadow": "yes"}})", "axs[0].legend: Legend shadow must be a dict or bool"}));
+        Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"shadow": "yes"}})", "axs[0].legend: Legend shadow must be a dict or bool"},
+        // locations (matplotlib's set_loc; a suggestion of close names is not given, D12.10)
+        Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"loc": "nowhere"}})", "axs[0].legend: 'nowhere' is not a valid value for loc."},
+        Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"loc": ""}})", "axs[0].legend: list index out of range"},
+        Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"loc": "outside"}})", "axs[0].legend: list index out of range"},
+        Refusal{R"({"on": "axs[0]", "call": "legend", "kwargs": {"loc": "outside upper right"}})",
+                "axs[0].legend: 'outside' option for loc='outside upper right' keyword argument only works for figure legends"},
+        // figure legends: no 'best' place
+        Refusal{R"({"on": "fig", "call": "legend", "kwargs": {"loc": "best"}})",
+                "fig.legend: Automatic legend placement (loc='best') not implemented for figure legend"},
+        Refusal{R"({"on": "fig", "call": "legend", "kwargs": {"loc": 0}})",
+                "fig.legend: Automatic legend placement (loc='best') not implemented for figure legend"},
+        Refusal{R"({"on": "fig", "call": "legend", "kwargs": {"loc": false}})",
+                "fig.legend: Automatic legend placement (loc='best') not implemented for figure legend"},
+        Refusal{R"({"call": "figlegend", "kwargs": {"loc": "outside"}})", "plt.legend: list index out of range"},
+        Refusal{R"({"on": "fig", "call": "legend", "kwargs": {"loc": "outside xx"}})", "fig.legend: 'xx' is not a valid value for loc."},
+        Refusal{R"({"on": "fig", "call": "legend", "kwargs": {"loc": "outside  upper right"}})",
+                "fig.legend: ' upper right' is not a valid value for loc."},
+        Refusal{R"({"on": "fig", "call": "legend", "kwargs": {"loc": "outside center "}})", "fig.legend: list index out of range"},
+        Refusal{R"({"on": "fig", "call": "legend", "kwargs": {"loc": "Outside upper right"}})",
+                "fig.legend: 'Outside upper right' is not a valid value for loc."},
+        Refusal{R"({"on": "fig", "call": "legend", "kwargs": {"loc": 11}})", "fig.legend: loc must be string, coordinate tuple, or an integer 0-10"},
+        Refusal{R"({"on": "fig", "call": "legend", "args": [["a"]]})", "fig.legend: handles and labels as arguments are not supported yet"},
+        Refusal{R"({"on": "fig", "call": "legend", "kwargs": {"bbox_to_anchor": [0, 0]}})", "fig.legend: unsupported keyword bbox_to_anchor"}));
 
 // What matplotlib breaks on in a legend entry for vlines or hlines: lines with no colour (the entry
 // takes the first one), and white lines with labelcolor='linecolor' (their four equal numbers are

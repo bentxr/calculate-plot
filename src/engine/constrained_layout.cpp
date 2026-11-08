@@ -16,6 +16,7 @@ void kiwiRaise(const char* what);
 #include "engine/axes.hpp"
 #include "engine/figure.hpp"
 #include "engine/gridspec.hpp"
+#include "engine/legend.hpp"
 #include "engine/text.hpp"
 #include "support/histogram.hpp"
 
@@ -400,6 +401,20 @@ private:
                 }
             }
             gridOf(*ax).editOuterMarginMins(margin, rowspan(*ax->subplotSpec), colspan(*ax->subplotSpec));
+        }
+        // margins of the figure for its legends placed outside the Axes
+        for (auto& artist : figure_.legends) {
+            auto& leg = static_cast<Legend&>(*artist);
+            if (leg.outsideLoc().empty()) continue;
+            const auto box = leg.tightbbox(renderer_).points();
+            const auto inv = figure_.transFigure->inverted();
+            const auto p0 = inv->transform(box[0], box[1]), p1 = inv->transform(box[2], box[3]);  // transform_bbox
+            const double w = (p1[0] - p0[0]) + 2 * wPad, h = (p1[1] - p0[1]) + 2 * hPad;
+            const std::string& side = leg.outsideLoc();
+            if (side == "lower") figureGrid_->editMarginMin(Bottom, h);
+            else if (side == "upper") figureGrid_->editMarginMin(Top, h);
+            if (side == "right") figureGrid_->editMarginMin(Right, w);
+            else if (side == "left") figureGrid_->editMarginMin(Left, w);
         }
     }
 

@@ -1,0 +1,14 @@
+{"version": 1, "calls": [
+  {"call": "subplots", "args": [1, 2], "kwargs": {"figsize": {"$tuple": [7.0, 3.5]}}, "as": ["fig", "axs"]},
+  {"on": "axs[0]", "call": "plot", "args": [[0, 1, 2, 3], [0, 1, 4, 9]], "kwargs": {"label": "squares"}},
+  {"on": "axs[0]", "call": "errorbar", "args": [[0, 1, 2, 3], [1, 2, 3, 2]], "kwargs": {"yerr": 0.4, "label": "measured", "capsize": 3}},
+  {"on": "axs[0]", "call": "plot", "args": [[0, 3], [5, 5]], "kwargs": {"label": "_hidden"}},
+  {"on": "axs[0]", "call": "plot", "args": [[0, 3], [7, 2]], "kwargs": {"label": "falling", "linestyle": "--", "marker": "o"}},
+  {"on": "axs[1]", "call": "bar", "args": [[1, 2, 3], [3, 1, 2]], "kwargs": {"label": "bars", "color": "C2"}},
+  {"on": "axs[1]", "call": "scatter", "args": [[1, 2, 3], [2.5, 2, 0.5]], "kwargs": {"label": "points", "color": "C3"}},
+  {"on": "axs[1]", "call": "fill_between", "args": [[1, 2, 3], [0.2, 0.4, 0.3]], "kwargs": {"label": "band", "alpha": 0.4}},
+  {"on": "fig", "call": "legend"},
+  {"on": "fig", "call": "legend", "kwargs": {"loc": "lower center", "ncols": 3, "title": "All of them", "fontsize": "small"}},
+  {"on": "fig", "call": "legend", "kwargs": {"loc": [0.01, 0.6], "frameon": false, "fontsize": 7}},
+  {"on": "fig", "call": "legend", "kwargs": {"loc": 10, "fancybox": false, "facecolor": "lightyellow", "markerfirst": false}}
+]}
