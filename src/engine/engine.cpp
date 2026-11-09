@@ -31,6 +31,7 @@
 #include "svg/svg_renderer.h"
 #include "support/pyparse.hpp"
 #include "support/numpy_str.hpp"
+#include "text/text_render.h"
 
 #include <cctype>
 #include <climits>
@@ -3195,7 +3196,7 @@ private:
             for (const auto& [name, value] : props)
                 if (!value->isNull()) given.push_back(name);
             if (linestyle && !line->setLinestyle(*linestyle, error)) return false;
-            if (marker && !line->setMarker(*marker, error)) return false;
+            if (marker && !line->setMarker(*marker, error, &fonts())) return false;
             if (fmtColor) line->color = *fmtColor;
             for (const auto& [name, value] : ax.lineDefaults(given))
                 if (!lineProperty(*line, name, value, where, error)) return false;
@@ -3361,7 +3362,7 @@ private:
         }
 
         MarkerStyle style;
-        if (!style.set(marker, std::nullopt, rc_, error)) return false;
+        if (!style.set(marker, std::nullopt, rc_, error, &fonts())) return false;
         // marker.get_path().transformed(marker.get_transform())
         std::vector<double> v = style.path().vertices ? *style.path().vertices : std::vector<double>{};
         for (std::size_t i = 0; i + 1 < v.size(); i += 2) {
@@ -3669,7 +3670,7 @@ private:
         if (lowerFmt != "none") {
             auto line = std::make_unique<Line2D>(rc_, x, y);
             if (linestyle && !line->setLinestyle(*linestyle, error)) return false;
-            if (marker && !line->setMarker(*marker, error)) return false;
+            if (marker && !line->setMarker(*marker, error, &fonts())) return false;
             if (fmtColor) line->color = *fmtColor;
             for (const auto& [name, value] : defaults)
                 if (!lineProperty(*line, name, value, where, error)) return false;
@@ -3715,7 +3716,7 @@ private:
             line->color = baseColor;
             std::string e;
             line->setLinestyle("none", &e);
-            line->setMarker(m, &e);
+            line->setMarker(m, &e, &fonts());
             if (linewidth) line->setLinewidth(*linewidth);
             if (alpha) line->alpha = alpha;
             if (caps > 0) line->markersize = 2. * caps;
@@ -10509,7 +10510,7 @@ private:
         } else if (name == "marker") {
             std::string m;
             if (!markerFromJson(v, &m, error)) return *error = where + ": " + *error, false;
-            if (!line.setMarker(m, error)) return false;
+            if (!line.setMarker(m, error, &fonts())) return false;
         } else if (name == "markersize") {
             if (!readNumber(v, &n)) return *error = where + ": markersize must be a number", false;
             line.markersize = n;
@@ -10555,7 +10556,7 @@ private:
             line.setDrawstyle(s);
         } else if (name == "fillstyle") {
             if (!v.isString()) return *error = where + ": fillstyle must be a string", false;
-            if (!line.markerStyle.set(line.markerStyle.marker(), v.asString(), rc_, error)) return false;
+            if (!line.markerStyle.set(line.markerStyle.marker(), v.asString(), rc_, error, &fonts())) return false;
         } else {
             return *error = where + ": unsupported keyword " + name, false;
         }
@@ -10582,6 +10583,12 @@ private:
     std::set<std::string> figureNames_;  // what the figure file calls the figure
     std::map<std::string, Figure*> subfigures_;  // the subfigures named by "as" (fig.subfigures)
     Figure* target_ = nullptr;                   // the subfigure a figure call is on (subfigureCall)
+    std::unique_ptr<text::FontCache> fonts_;     // the fonts of the mathtext markers' TextPaths
+
+    text::FontCache& fonts() {
+        if (!fonts_) fonts_ = std::make_unique<text::FontCache>(options_.fontDirectory);
+        return *fonts_;
+    }
     std::map<std::string, GridSpec*> gridspecs_;  // the grids named by "as" (fig.add_gridspec, ss.subgridspec)
     Axes* current_ = nullptr;            // the figure's current Axes (gca), if any
 

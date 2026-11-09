@@ -6,6 +6,9 @@
 #include "support/pynum.hpp"
 #include "engine/lines.hpp"
 
+#include "engine/text.hpp"
+#include "engine/text_path.hpp"
+
 #include "engine/axes.hpp"
 #include "support/pyformat.hpp"
 #include "support/raised.hpp"
@@ -214,7 +217,7 @@ bool markerFromJson(const support::Json& value, std::string* marker, std::string
 }
 
 bool MarkerStyle::set(const std::string& marker, const std::optional<std::string>& fillstyle, const rc::Params& rc,
-                      std::string* error) {
+                      std::string* error, text::FontCache* fonts) {
     fillstyle_ = fillstyle ? *fillstyle : rc.text("markers.fillstyle");
     marker_ = marker;
     // _recache
@@ -434,6 +437,19 @@ bool MarkerStyle::set(const std::string& marker, const std::optional<std::string
             altT = transforms::Affine2D(t.matrix());
             altT.rotateDeg(180);
         }
+    } else if (isMathText(marker)) {  // _set_mathtext_path: the TextPath, centred and scaled to 1 at its larger side
+        if (!fonts) return *error = "the mathtext marker '" + marker + "' is not supported here yet", false;
+        if (rc.boolean("text.usetex")) return *error = "usetex markers are not supported yet", false;
+        Path text;
+        if (!mathtextPath(*fonts, marker, rc, &text, error)) return false;
+        if (text.size() > 0) {
+            const auto b = pathExtents(text);
+            const double width = b[2] - b[0], height = b[3] - b[1];
+            const double maxDim = std::max(width, height);
+            t.translate(-b[0] + 0.5 * -width, -b[1] + 0.5 * -height);
+            t.scale(1.0 / maxDim);
+            path_ = text;
+        }
     } else {
         *error = "marker '" + marker + "' is not supported yet";
         return false;
@@ -463,8 +479,8 @@ Line2D::Line2D(const rc::Params& rc, std::vector<double> xdata, std::vector<doub
     setData(std::move(xdata), std::move(ydata));
 }
 
-bool Line2D::setMarker(const std::string& marker, std::string* error) {
-    return markerStyle.set(marker, std::nullopt, rc_, error);
+bool Line2D::setMarker(const std::string& marker, std::string* error, text::FontCache* fonts) {
+    return markerStyle.set(marker, std::nullopt, rc_, error, fonts);
 }
 
 bool Line2D::setLinestyle(const std::string& ls, std::string* error) {

@@ -11,6 +11,10 @@
 #include <string>
 #include <vector>
 
+namespace calculate_plot::text {
+class FontCache;
+}
+
 namespace calculate_plot::engine {
 
 class Axes;
@@ -30,9 +34,10 @@ const Path& unitPolygon20Path();
 // MarkerStyle: a marker's path, its transform (unit size), and how it is stroked and filled.
 class MarkerStyle {
 public:
-    // false (with *error) for markers not supported yet.
+    // false (with *error) for markers not supported yet. A mathtext marker ($...$) is made from `fonts` (its
+    // TextPath); without them it is refused.
     bool set(const std::string& marker, const std::optional<std::string>& fillstyle, const rc::Params& rc,
-             std::string* error);
+             std::string* error, text::FontCache* fonts = nullptr);
     bool isNone() const { return marker_ == "none" || marker_ == "None" || marker_ == " " || marker_.empty(); }
     const std::string& marker() const { return marker_; }
     const Path& path() const { return path_; }
@@ -68,7 +73,7 @@ public:
     // Line2D(xdata, ydata) with the rcParams' defaults (lines.*).
     Line2D(const rc::Params& rc, std::vector<double> xdata, std::vector<double> ydata);
 
-    bool setMarker(const std::string& marker, std::string* error);
+    bool setMarker(const std::string& marker, std::string* error, text::FontCache* fonts = nullptr);
     bool setLinestyle(const std::string& style, std::string* error);
     void setLinewidth(double w);
     // set_linestyle((offset, on-off sequence)): the line then counts as a dashed one ('--'), also

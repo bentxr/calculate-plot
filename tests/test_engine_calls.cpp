@@ -728,6 +728,10 @@ TEST(RcCalls, SettingsThatBreakWhenUsed) {
     both(R"({"lines.marker": "both"})", R"(, {"on": "ax", "call": "plot", "args": [[0, 1], [0, 1]]})",
          "rc lines.marker: marker 'both' is not supported yet");
     both(R"({"lines.marker": "s", "markers.fillstyle": "none"})", R"(, {"on": "ax", "call": "plot", "args": [[0, 1], [0, 1]]})", "");
+    both(R"({"lines.marker": "$x$"})", "", "rc lines.marker: the mathtext marker '$x$' is not supported here yet");
+    both("{}", R"(, {"on": "ax", "call": "plot", "args": [[0, 1], [0, 1]], "kwargs": {"marker": "$x$"}})", "");
+    both("{}", R"(, {"on": "ax", "call": "plot", "args": [[0, 1], [0, 1]], "kwargs": {"marker": "$x^^2$"}})",
+         "Expected a placeable after the script");
     both(R"({"lines.marker": "", "markers.fillstyle": "left"})", R"(, {"on": "ax", "call": "plot", "args": [[0, 1], [0, 1]]})", "");
     // the colours of the grid: a colour with its alpha is not read yet
     both(R"({"grid.major.color": {"$tuple": ["C1", 0.5]}})", "", "rc grid.major.color: this value of grid.major.color is not supported yet");

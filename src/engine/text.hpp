@@ -22,6 +22,9 @@ class Figure;
 // through; Unsupported: a form not ported.
 support::Formatted autoFormatStr(const std::string& fmt, double value, bool isInt);
 
+// cbook.is_math_text(s): an even, non-zero number of unescaped dollar signs
+bool isMathText(const std::string& s);
+
 class Text : public Artist {
 public:
     // Text(x, y, text) with the rcParams' defaults (text.color, the font, text.antialiased, ...).

@@ -81,6 +81,7 @@ add_library(calculate-plot STATIC
     src/engine/lines.cpp
     src/engine/path.cpp
     src/engine/text.cpp
+    src/engine/text_path.cpp
     src/engine/annotation.cpp
     src/engine/violin.cpp
     src/engine/bezier.cpp

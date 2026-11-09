@@ -606,6 +606,8 @@
     "src/engine/renderer.hpp",
     "src/engine/text.cpp",
     "src/engine/text.hpp",
+    "src/engine/text_path.cpp",
+    "src/engine/text_path.hpp",
     "src/engine/tight_layout.cpp",
     "src/engine/tight_layout.hpp",
     "src/engine/violin.cpp",

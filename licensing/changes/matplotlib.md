@@ -326,6 +326,10 @@ it comes from in its first lines. The changes, as a whole:
   of labels that are not strings; its keywords through _internal_update on the ticks there are, and
   _copy_tick_props with Text.update_from for the labels of ticks made later); get_minorticklocs' removal of minor
   locations at major ones through the scale's transform; set_frame_on.
+  Mathtext markers: textpath.py's TextToPath.get_text_path and get_glyphs_mathtext (the glyphs' unhinted outlines
+  at FONT_SCALE, scaled and moved, then the layout's rectangles) and TextPath for mathtext strings, markers.py's
+  _set_mathtext_path and path.py's Path.get_extents (src/engine/text_path.cpp, src/engine/lines.cpp); the fonts
+  come from a FontCache the figure file's run opens.
   Pies: Path.arc, patches.Wedge, Shadow's zorder, Axes.pie and Axes.pie_label; the data limits of curved
   paths (bezier.BezierSegment: polynomial coefficients, axis-aligned extrema by _real_roots_in_01 and
   _quadratic_roots_in_01, evaluation as NumPy's matrix product makes it).

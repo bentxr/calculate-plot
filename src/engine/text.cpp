@@ -41,6 +41,15 @@ std::vector<std::string> splitLines(const std::string& s) {
     }
 }
 
+
+std::string replaceAll(std::string s, const std::string& from, const std::string& to) {
+    for (std::size_t at = s.find(from); at != std::string::npos; at = s.find(from, at + to.size()))
+        s.replace(at, from.size(), to);
+    return s;
+}
+
+}  // namespace
+
 // cbook.is_math_text: an even, non-zero number of unescaped dollar signs.
 bool isMathText(const std::string& s) {
     long dollars = 0, escaped = 0;
@@ -51,14 +60,6 @@ bool isMathText(const std::string& s) {
     const long count = dollars - escaped;
     return count > 0 && count % 2 == 0;
 }
-
-std::string replaceAll(std::string s, const std::string& from, const std::string& to) {
-    for (std::size_t at = s.find(from); at != std::string::npos; at = s.find(from, at + to.size()))
-        s.replace(at, from.size(), to);
-    return s;
-}
-
-}  // namespace
 
 Text::Text(const rc::Params& rc, double x0, double y0, std::string s)
     : Artist(rc),

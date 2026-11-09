@@ -1,0 +1,9 @@
+{"version": 1, "calls": [
+  {"call": "subplots", "args": [1, 2], "kwargs": {"figsize": {"$tuple": [7.0, 3.0]}}, "as": ["fig", "axs"]},
+  {"on": "axs[0]", "call": "plot", "args": [[0, 1, 2, 3], [1, 3, 2, 4]], "kwargs": {"marker": "$\\alpha$", "markersize": 14, "label": "alpha"}},
+  {"on": "axs[0]", "call": "plot", "args": [[0, 1, 2, 3], [2, 1, 3, 2]], "kwargs": {"marker": "$x^2$", "markersize": 12, "markerfacecolor": "C3", "markeredgecolor": "k", "markeredgewidth": 0.5, "linestyle": "none", "label": "squared"}},
+  {"on": "axs[0]", "call": "plot", "args": [[0.5, 1.5, 2.5], [3.5, 0.5, 1]], "kwargs": {"marker": "$\\frac{1}{2}$", "markersize": 16, "linestyle": ":", "label": "half"}},
+  {"on": "axs[0]", "call": "legend"},
+  {"on": "axs[1]", "call": "scatter", "args": [[0, 1, 2, 3], [0, 1, 4, 9]], "kwargs": {"marker": "$\\clubsuit$", "s": [50, 100, 200, 400], "c": [1, 2, 3, 4]}},
+  {"on": "axs[1]", "call": "plot", "args": [[0, 3], [9, 0]], "kwargs": {"marker": "$1$", "markersize": 10}}
+]}
