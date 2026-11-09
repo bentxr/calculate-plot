@@ -321,8 +321,11 @@ it comes from in its first lines. The changes, as a whole:
   'panellb' grid for each in its parent grid's cells, each grid under the figure it was made in, and the recursions
   of make_layout_margins, make_margin_suptitles, match_submerged_margins, check_no_collapsed_axes,
   reposition_axes with _redo_transform_rel_fig(bbox) and reset_margins) (src/engine/constrained_layout.cpp).
-  Ticks: Axis.set_ticks (FixedLocator, set_view_interval without ignore on the shared axes) and set_ticklabels
-  (NullFormatter, or a FuncFormatter of a dict of labels); set_frame_on.
+  Ticks: Axis.set_ticks (FixedLocator, set_view_interval without ignore on the shared axes; minor=True as the
+  minor locator) and set_ticklabels (NullFormatter, or a FuncFormatter of a dict of labels, major or minor; str()
+  of labels that are not strings; its keywords through _internal_update on the ticks there are, and
+  _copy_tick_props with Text.update_from for the labels of ticks made later); get_minorticklocs' removal of minor
+  locations at major ones through the scale's transform; set_frame_on.
   Pies: Path.arc, patches.Wedge, Shadow's zorder, Axes.pie and Axes.pie_label; the data limits of curved
   paths (bezier.BezierSegment: polynomial coefficients, axis-aligned extrema by _real_roots_in_01 and
   _quadratic_roots_in_01, evaluation as NumPy's matrix product makes it).

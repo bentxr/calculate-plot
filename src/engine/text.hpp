@@ -49,6 +49,9 @@ public:
     // get_window_extent (an Annotation first places itself, hence not const)
     virtual transforms::Bbox windowExtent(Renderer& renderer);
     void draw(Renderer& renderer) override;
+    // Text.update_from(other) (with Artist.update_from): the style of `other` (colour, alignments, font, rotation,
+    // line spacing, antialiasing, visibility, alpha, clipping); not its text or position
+    void updateFrom(const Text& other);
 
     double x, y;
     std::string text;

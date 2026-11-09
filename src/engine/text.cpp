@@ -78,6 +78,22 @@ void Text::setRotation(double degrees) { rotation_ = support::divmod(degrees, 36
 
 void Text::setRotation(const std::string& name) { rotation_ = name == "vertical" ? 90.0 : 0.0; }
 
+void Text::updateFrom(const Text& o) {
+    visible = o.visible;
+    alpha = o.alpha;
+    clipBox = o.clipBox;
+    clipOn = o.clipOn;
+    clipPath = o.clipPath;
+    color = o.color;
+    multialignment = o.multialignment;
+    verticalAlignment = o.verticalAlignment;
+    horizontalAlignment = o.horizontalAlignment;
+    font = o.font;
+    rotation_ = o.rotation_;
+    linespacing = o.linespacing;
+    antialiased = o.antialiased;
+}
+
 void Text::setColor(const std::string& c) { color = *colors::toRgba(c, std::nullopt, rc_, nullptr); }
 
 Text::Layout Text::layout(Renderer& renderer) const {

@@ -2350,27 +2350,44 @@ private:
             std::optional<std::vector<std::string>> labels;
             if (const Json* l = argument(call, 1, "labels"); l && !l->isNull()) {
                 const Json* seq = sequence(*l);
-                if (!seq) return *error = where + ": labels must be a list of strings", false;
+                if (!seq) return *error = where + ": labels must be a list", false;
                 labels = std::vector<std::string>{};
-                for (const Json& s : seq->items()) {
-                    if (!s.isString()) return *error = where + ": labels must be strings (others are not supported yet)", false;
-                    labels->push_back(s.asString());
+                // each label is drawn as Text.set_text makes it: str() of it, '' for None
+                for (const Json& v : seq->items()) {
+                    const bool scalar = v.isString() || v.isNull() || v.isBool() || v.isNumber() ||
+                                        (v.isObject() && v.members().size() == 1 && v.members()[0].first == "$float");
+                    if (!scalar) return *error = where + ": labels must be strings, numbers, True, False or None (others are not supported yet)", false;
+                    labels->push_back(v.isString() ? v.asString() : v.isNull() ? std::string() : repr(v));
                 }
             }
+            bool minor = false;
+            std::vector<std::pair<std::string, const Json*>> labelKeywords;
             for (const auto& [name, value] : call.kwargs) {
                 if (name == "ticks" || name == "labels") continue;
                 if (name == "minor") {
-                    if (!value.isBool() || value.asBool()) return *error = where + ": minor ticks are not supported yet", false;
+                    if (!value.isBool()) return *error = where + ": minor must be True or False", false;
+                    minor = value.asBool();
                     continue;
                 }
                 if (!labels)
                     return *error = where + ": Incorrect use of keyword argument '" + name +
                                     "'. Keyword arguments other than 'minor' modify the text labels and can only be used if 'labels' are passed as well.",
                            false;
-                return *error = where + ": keywords for the tick labels are not supported yet", false;
+                labelKeywords.emplace_back(name, &value);
             }
             Axis& axis = call.method == "set_xticks" ? *ax.xaxis : *ax.yaxis;
-            if (!axis.setTicks(ticks, labels, error)) return *error = where + ": " + *error, false;
+            if (minor && (axis.scale() == "symlog" || axis.scale() == "logit"))
+                return *error = where + ": minor ticks set on a " + axis.scale() + " scale are not supported yet", false;
+            if (!axis.setTicks(ticks, labels, error, minor)) return *error = where + ": " + *error, false;
+            // set_ticklabels(labels, minor=, **kwargs): the keywords go to both labels of each tick there is for the
+            // locations (_internal_update)
+            if (labels && !labelKeywords.empty()) {
+                std::string why;
+                const bool ok = axis.updateTickLabels(minor, ticks.size(), [&](Text& t) {
+                    return textProperties(t, labelKeywords, TextKeywords::Internal, where, &why);
+                });
+                if (!ok) return *error = why, false;
+            }
             return true;
         }
         if (call.method == "axis") {

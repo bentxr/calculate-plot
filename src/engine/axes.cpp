@@ -510,7 +510,8 @@ void Axis::widenViewInterval(double vmin, double vmax) {
     else setViewInterval(most({vmin, vmax, old[0]}), least({vmin, vmax, old[1]}));
 }
 
-bool Axis::setTicks(const std::vector<double>& ticks, const std::optional<std::vector<std::string>>& labels, std::string* error) {
+bool Axis::setTicks(const std::vector<double>& ticks, const std::optional<std::vector<std::string>>& labels, std::string* error,
+                    bool minor) {
     Axis& owner = tickerAxis();
     if (!ticks.empty()) {
         double lo = ticks[0], hi = ticks[0];  // min(ticks), max(ticks)
@@ -519,6 +520,25 @@ bool Axis::setTicks(const std::vector<double>& ticks, const std::optional<std::v
             if (v > hi) hi = v;
         }
         for (Axes* sibling : axes_.shared(isX_).members) (isX_ ? *sibling->xaxis : *sibling->yaxis).widenViewInterval(lo, hi);
+    }
+    if (minor) {  // set_minor_locator(FixedLocator(ticks)): in place of the scale's minor locator, for every sharing Axes
+        for (Axes* sibling : axes_.shared(isX_).members) (isX_ ? *sibling->xaxis : *sibling->yaxis).minorLocator.reset();
+        owner.fixedMinorLocs = ticks;
+        owner.nullMinorLocator = false;
+        if (!labels) return true;
+        if (labels->empty()) {  // NullFormatter
+            owner.nullMinorFormatter = true;
+            owner.minorDictLabels.reset();
+            return true;
+        }
+        if (labels->size() != ticks.size())
+            return *error = "The number of FixedLocator locations (" + std::to_string(ticks.size()) +
+                            "), usually from a call to set_ticks, does not match the number of labels (" + std::to_string(labels->size()) + ").",
+                   false;
+        owner.nullMinorFormatter = false;
+        owner.minorDictLabels = std::vector<std::pair<double, std::string>>{};
+        for (std::size_t i = 0; i < ticks.size(); ++i) owner.minorDictLabels->emplace_back(ticks[i], (*labels)[i]);
+        return true;
     }
     owner.fixedLocs = ticks;
     if (!labels) return true;
@@ -862,8 +882,13 @@ void Axis::setMinorTickSwitches(const TickSwitches& sw) {
 }
 
 std::vector<Tick*> Axis::minorTicks(std::size_t count) {
-    while (minorTicks_.size() < count)
+    while (minorTicks_.size() < count) {
         minorTicks_.push_back(std::make_unique<Tick>(rc_, axes_, isX_, false, minorTickKw_));
+        if (minorLabelsUpdated_) {  // _copy_tick_props(self.minorTicks[0], tick): the labels
+            minorTicks_.back()->label1.updateFrom(minorTicks_[0]->label1);
+            minorTicks_.back()->label2.updateFrom(minorTicks_[0]->label2);
+        }
+    }
     std::vector<Tick*> out;
     for (std::size_t i = 0; i < count; ++i) out.push_back(minorTicks_[i].get());
     return out;
@@ -977,8 +1002,13 @@ void Axis::setTickSwitches(const TickSwitches& sw) {
 }
 
 std::vector<Tick*> Axis::majorTicks(std::size_t count) {
-    while (majorTicks_.size() < count)
+    while (majorTicks_.size() < count) {
         majorTicks_.push_back(std::make_unique<Tick>(rc_, axes_, isX_, true, majorTickKw_));
+        if (majorLabelsUpdated_) {  // _copy_tick_props(self.majorTicks[0], tick): the labels
+            majorTicks_.back()->label1.updateFrom(majorTicks_[0]->label1);
+            majorTicks_.back()->label2.updateFrom(majorTicks_[0]->label2);
+        }
+    }
     std::vector<Tick*> out;
     for (std::size_t i = 0; i < count; ++i) out.push_back(majorTicks_[i].get());
     return out;
@@ -1124,6 +1154,7 @@ std::vector<Tick*> Axis::updateTicks() {
         return kw.tick1On || kw.tick2On || kw.label1On || kw.label2On || kw.gridOn;
     };
     std::vector<Tick*> ticks;
+    std::optional<std::vector<double>> majorTickLocs;  // get_majorticklocs(), when the major ticks are made
     if (groupVisible(majorTickKw_)) {
         // the major locator's locations, then its formatter's labels
         std::vector<double> locs;
@@ -1151,6 +1182,7 @@ std::vector<Tick*> Axis::updateTicks() {
             locs = locator.tickValues(ownerView[0], ownerView[1]);
         }
         if (axes_.polar && !isX_) locs = radialTicks(axes_, locs);  // RadialLocator, whatever its base
+        majorTickLocs = locs;
         std::vector<std::string> labels;
         if (owner.nullMajorFormatter) {
             labels.assign(locs.size(), "");
@@ -1201,7 +1233,7 @@ std::vector<Tick*> Axis::updateTicks() {
     }
     // The minor locator: LogLocator(subs='auto') on log scales, NullLocator otherwise (or when set: a colorbar's)
     const bool minorShown = groupVisible(minorTickKw_) && !owner.nullMinorLocator;
-    if (minorShown && logScale()) {
+    if (minorShown && logScale() && !owner.fixedMinorLocs) {
         logMinorLocator.tickSpace = owner.tickSpace();
         logMinorLocator.minpos = owner.minpos();
         logLocator.tickSpace = owner.tickSpace();
@@ -1220,7 +1252,7 @@ std::vector<Tick*> Axis::updateTicks() {
     }
     // SymmetricalLogLocator(subs) on a symlog scale, its labels empty (NullFormatter); the minor ticks within
     // 1e-5 of the view (through the scale's transform) of a major one go
-    if (minorShown && scale_ == "symlog") {
+    if (minorShown && scale_ == "symlog" && !owner.fixedMinorLocs) {
         const auto majorLocs = owner.fixedLocs ? *owner.fixedLocs : owner.symlogLocator.tickValues(ownerView[0], ownerView[1]);
         double lo = scaleForward(view[0]), hi = scaleForward(view[1]);
         if (lo > hi) std::swap(lo, hi);
@@ -1239,7 +1271,7 @@ std::vector<Tick*> Axis::updateTicks() {
         }
     }
     // LogitLocator(minor=True) on a logit scale, labelled by LogitFormatter(minor=True)
-    if (minorShown && scale_ == "logit") {
+    if (minorShown && scale_ == "logit" && !owner.fixedMinorLocs) {
         owner.logitLocator.tickSpace = owner.logitMinorLocator.tickSpace = owner.tickSpace();
         owner.logitLocator.minpos = owner.logitMinorLocator.minpos = owner.minpos();
         const auto majorLocs = owner.fixedLocs ? *owner.fixedLocs : owner.logitLocator.tickValues(ownerView[0], ownerView[1]);
@@ -1282,14 +1314,26 @@ std::vector<Tick*> Axis::updateTicks() {
             ticks.push_back(minor[i]);
         }
     }
-    // a FixedLocator as the minor locator: its locations but those of the major ticks
+    // a FixedLocator as the minor locator: its locations but those of the major ticks (through the scale's
+    // transform); labelled by set_ticks' labels (tickd.get(x, '')), else by the scale's minor formatter
     if (minorShown && owner.fixedMinorLocs) {
-        const std::vector<double> majorLocs = owner.fixedLocs ? fixedLocatorValues(*owner.fixedLocs, owner.fixedNbins) : std::vector<double>{};
-        const auto locs = axes::withoutMajorTicks(*owner.fixedMinorLocs, majorLocs, view[0], view[1]);
+        const std::vector<double> major =
+            majorTickLocs ? *majorTickLocs : owner.fixedLocs ? fixedLocatorValues(*owner.fixedLocs, owner.fixedNbins) : std::vector<double>{};
+        const auto locs = logScale() ? axes::withoutMajorTicks(*owner.fixedMinorLocs, major, view[0], view[1], scaleOptions_.base)
+                                     : axes::withoutMajorTicks(*owner.fixedMinorLocs, major, view[0], view[1]);
+        if (logScale()) logMinorFormatter.setLocs(ownerView[0], ownerView[1]);
         const std::vector<Tick*> minor = minorTicks(locs.size());
         for (std::size_t i = 0; i < locs.size(); ++i) {
             minor[i]->updatePosition(locs[i]);
-            minor[i]->label1.text = minor[i]->label2.text = "";
+            std::string text;
+            if (owner.nullMinorFormatter) {
+            } else if (owner.minorDictLabels) {
+                for (const auto& [at, given] : *owner.minorDictLabels)
+                    if (at == locs[i]) text = given;
+            } else if (logScale()) {
+                text = logMinorFormatter(locs[i]);
+            }
+            minor[i]->label1.text = minor[i]->label2.text = text;
             ticks.push_back(minor[i]);
         }
     }
@@ -1306,6 +1350,7 @@ std::vector<Tick*> Axis::updateTicks() {
 void Axis::resetTicks() {
     majorTicks_.clear();
     minorTicks_.clear();
+    majorLabelsUpdated_ = minorLabelsUpdated_ = false;
 }
 
 void Axis::draw(Renderer& renderer) {

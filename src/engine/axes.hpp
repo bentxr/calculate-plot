@@ -221,7 +221,8 @@ public:
     // replace them when the scale is set.
     std::optional<std::vector<double>> fixedLocs;
     std::optional<int> fixedNbins;  // FixedLocator(locs, nbins): every step-th location (the step whose smallest is least)
-    std::optional<std::vector<double>> fixedMinorLocs;  // FixedLocator as the minor locator (a colorbar's)
+    std::optional<std::vector<double>> fixedMinorLocs;  // FixedLocator as the minor locator (a colorbar's, set_ticks')
+    std::optional<std::vector<std::pair<double, std::string>>> minorDictLabels;  // set_ticks(labels=, minor=True)
     bool nullMinorLocator = false;  // NullLocator as the minor locator, whatever the scale (a colorbar's)
     std::optional<std::array<double, 2>> indexLocator;  // IndexLocator(base, offset): from the data interval
     std::optional<std::vector<std::string>> fixedLabels;
@@ -230,7 +231,19 @@ public:
     // Axis.set_ticks(ticks, labels=None): a FixedLocator (the view widened to the ticks, on every axis
     // sharing this one), and with labels their formatter (none: NullFormatter); false and why if the
     // labels do not match the ticks
-    bool setTicks(const std::vector<double>& ticks, const std::optional<std::vector<std::string>>& labels, std::string* error);
+    // Axis.set_ticks(ticks, labels, minor=): the FixedLocator (major or minor), and with labels the formatter of a
+    // dict of them (NullFormatter for none)
+    bool setTicks(const std::vector<double>& ticks, const std::optional<std::vector<std::string>>& labels, std::string* error,
+                  bool minor = false);
+    // set_ticklabels' **kwargs: `update` applied to both labels of the first `count` major (minor) ticks, made if need
+    // be; the ticks made later copy their labels from the first one (_copy_tick_props)
+    template <typename Update>
+    bool updateTickLabels(bool minor, std::size_t count, Update update) {
+        for (Tick* t : minor ? minorTicks(count) : majorTicks(count))
+            if (!update(t->label1) || !update(t->label2)) return false;
+        (minor ? minorLabelsUpdated_ : majorLabelsUpdated_) = count > 0;
+        return true;
+    }
     // set_view_interval(vmin, vmax) without ignore: the view only grows, keeping its direction
     void widenViewInterval(double vmin, double vmax);
     double labelpad;
@@ -251,6 +264,7 @@ private:
     std::string tickPosition_ = "bottom";  // XAxis._tick_position: where the offset text goes
     TickSwitches majorTickKw_, minorTickKw_;
     std::vector<std::unique_ptr<Tick>> majorTicks_, minorTicks_;
+    bool majorLabelsUpdated_ = false, minorLabelsUpdated_ = false;  // (see updateTickLabels)
 };
 
 // The Axes sharing one direction's view limits (Axes._shared_axes[name].get_siblings), in the order

@@ -1724,8 +1724,16 @@ TEST(TickCalls, ArgumentsAreReadAsMatplotlibReadsThem) {
     EXPECT_EQ(error(R"({"on": "axs[0]", "call": "set_yticks", "args": [[1, 2]], "kwargs": {"fontsize": 8}})"),
               "axs[0].set_yticks: Incorrect use of keyword argument 'fontsize'. Keyword arguments other than 'minor' modify the text "
               "labels and can only be used if 'labels' are passed as well.");
-    EXPECT_EQ(error(R"({"on": "axs[0]", "call": "set_yticks", "args": [[1, 2]], "kwargs": {"minor": true}})"),
-              "axs[0].set_yticks: minor ticks are not supported yet");
+    EXPECT_EQ(error(R"({"on": "axs[0]", "call": "set_yticks", "args": [[1, 2]], "kwargs": {"minor": true}})"), "");
+    EXPECT_EQ(error(R"({"on": "axs[0]", "call": "set_yticks", "args": [[1, 2], ["a"]], "kwargs": {"minor": true}})"),
+              "axs[0].set_yticks: The number of FixedLocator locations (2), usually from a call to set_ticks, does not match the "
+              "number of labels (1).");
+    EXPECT_EQ(error(R"({"on": "axs[0]", "call": "set_yticks", "args": [[1, 2], ["a", "b"]], "kwargs": {"foo": 1}})"), "axs[0].set_yticks: unsupported keyword foo");
+    EXPECT_EQ(error(R"({"on": "axs[0]", "call": "set_yticks", "args": [[1, 2], ["a", "b"]], "kwargs": {"ha": "middle"}})"), "axs[0].set_yticks: ha is not an alignment: middle");
+    EXPECT_EQ(error(R"({"on": "axs[0]", "call": "set_yticks", "args": [[1, 2], [["a"], "b"]]})"),
+              "axs[0].set_yticks: labels must be strings, numbers, True, False or None (others are not supported yet)");
+    EXPECT_EQ(error(R"({"on": "axs[0]", "call": "set_yscale", "args": ["symlog"]}, {"on": "axs[0]", "call": "set_yticks", "args": [[1, 2]], "kwargs": {"minor": true}})"),
+              "axs[0].set_yticks: minor ticks set on a symlog scale are not supported yet");
     EXPECT_EQ(error(R"({"on": "axs[0]", "call": "set_frame_on", "args": [0]})"), "");
 }
 
