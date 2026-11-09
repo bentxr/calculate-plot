@@ -153,7 +153,7 @@ bool locallyModified(const GridSpec& gs) {
 
 bool subplotsAdjust(Figure& figure, const SubplotsAdjustment& a, std::string* error) {
     if (!figure.subplotpars.update(a.left, a.bottom, a.right, a.top, a.wspace, a.hspace, error)) return false;
-    for (auto& ax : figure.axes)
+    for (Axes* ax : figure.allAxes())  // (the subfigures' too)
         if (ax->subplotSpec) ax->setPosition(*ax->subplotSpec->position(figure.subplotpars));
     return true;
 }

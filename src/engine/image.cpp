@@ -334,7 +334,7 @@ std::optional<ImageBase::Made> AxesImage::makeImage(Renderer& renderer, double m
     const auto e = getExtent();
     const std::array<double, 4> in{e[0], e[2], e[1], e[3]};
     const auto out = transforms::TransformedBbox(std::make_shared<transforms::Bbox>(in), transform).points();
-    const auto clip = (clipOn ? (clipBox ? clipBox : transforms::BboxPtr(axes_.bbox)) : transforms::BboxPtr(axes_.figure.bbox))->points();
+    const auto clip = (clipOn ? (clipBox ? clipBox : transforms::BboxPtr(axes_.bbox)) : transforms::BboxPtr(axes_.figure.root().bbox))->points();
     return makeImageFrom(renderer, in, out, clip, magnification, unsampled, true);
 }
 

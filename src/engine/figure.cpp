@@ -1,4 +1,4 @@
-// Derived from Matplotlib 3.11.2: lib/matplotlib/figure.py (Figure), lib/matplotlib/backend_bases.py
+// Derived from Matplotlib 3.11.2: lib/matplotlib/figure.py (Figure, SubFigure), lib/matplotlib/backend_bases.py
 // (FigureCanvasBase.print_figure, get_width_height), lib/matplotlib/_tight_bbox.py (adjust_bbox) and
 // lib/matplotlib/backends/backend_agg.py (FigureCanvasAgg.draw).
 // Copyright (c) 2012- Matplotlib Development Team; All Rights Reserved
@@ -6,6 +6,7 @@
 
 #include "engine/figure.hpp"
 
+#include "support/histogram.hpp"
 #include "support/raised.hpp"
 
 #include "engine/axes.hpp"
@@ -51,7 +52,92 @@ Figure::Figure(const rc::Params& rc, const FigureOptions& o) : Artist(rc), subpl
     patch->antialiased = false;
 }
 
+Figure::Figure(Figure& p, const SubplotSpec& spec, const SubfigureOptions& o)
+    : Artist(p.rc()), parent(&p), subplotspec(spec), subplotpars(p.subplotpars) {
+    const colors::Spec facecolor = o.facecolor ? *o.facecolor : colors::Spec(std::string("none"));
+    const colors::Spec edgecolor = o.edgecolor ? *o.edgecolor : colors::Spec(rc_.text("figure.edgecolor"));
+    const bool frameon = o.frameon ? *o.frameon : rc_.boolean("figure.frameon");
+    dpi = p.dpi;
+    dpiScaleTrans = p.dpiScaleTrans;
+    unitRectangleSteps = p.unitRectangleSteps;
+    transFigure = p.transFigure;
+    bboxInches = p.bboxInches;  // (a subfigure has none: only its root's size is read through it)
+    bboxRelative = std::make_shared<transforms::Bbox>(std::array<double, 4>{0, 0, 0, 0});  // (Bbox.null(), set at once)
+    redoTransformRelFig();
+    bbox = std::make_shared<transforms::TransformedBbox>(bboxRelative, p.transSubfigure);
+    transSubfigure = std::make_shared<transforms::BboxTransformTo>(bbox);
+    patch = std::make_unique<Rectangle>(rc_, 0.0, 0.0, 1.0, 1.0);
+    patch->setEdgecolor(edgecolor);
+    patch->setFacecolor(facecolor);
+    patch->setLinewidth(o.linewidth);
+    patch->visible = frameon;
+    patch->transform = transSubfigure;
+    patch->antialiased = false;
+}
+
 Figure::~Figure() = default;
+
+void Figure::redoTransformRelFig() {
+    const GridSpec& gs = *subplotspec->gridspec;
+    // wr = np.asarray(gs.get_width_ratios()) (all 1 when not given); the sums are NumPy's
+    const auto ratios = [](const std::vector<double>& given, int n) { return given.empty() ? std::vector<double>(std::size_t(n), 1.0) : given; };
+    const std::vector<double> wr = ratios(gs.widthRatios, gs.ncols), hr = ratios(gs.heightRatios, gs.nrows);
+    const auto sum = [](const std::vector<double>& v, int from, int to) {
+        return support::npSum(std::vector<double>(v.begin() + from, v.begin() + to));
+    };
+    const int c0 = subplotspec->num1 % gs.ncols, c1 = subplotspec->num2 % gs.ncols + 1;  // colspan
+    const int r1 = subplotspec->num2 / gs.ncols + 1;  // rowspan.stop
+    const int r0 = subplotspec->num1 / gs.ncols;
+    const double wsum = sum(wr, 0, gs.ncols), hsum = sum(hr, 0, gs.nrows);
+    const double dx = sum(wr, c0, c1) / wsum;
+    const double dy = sum(hr, r0, r1) / hsum;
+    const double x0 = sum(wr, 0, c0) / wsum;
+    const double y0 = 1 - sum(hr, 0, r1) / hsum;
+    bboxRelative->setPoints({x0, y0, x0 + dx, y0 + dy});
+}
+
+std::vector<Figure*> Figure::subfigures(const GridSpec& grid, const SubfigureOptions& options) {
+    gridspecs.push_back(std::make_unique<GridSpec>(grid));
+    GridSpec& gs = *gridspecs.back();
+    gs.left = 0, gs.right = 1, gs.bottom = 0, gs.top = 1;
+    std::vector<Figure*> out;
+    for (int i = 0; i < gs.nrows; ++i)
+        for (int j = 0; j < gs.ncols; ++j) {  // add_subfigure(gs[i, j], **kwargs)
+            subfigs.push_back(std::make_unique<Figure>(*this, gs.cell(i, j), options));
+            out.push_back(subfigs.back().get());
+        }
+    if (!root().layoutEngine && (gs.wspace || gs.hspace)) {
+        // GridSpec's wspace and hspace are ignored when a subfigure is made: its box from the grid's positions
+        const GridSpec::Positions g = gs.gridPositions(root().subplotpars);
+        for (int i = 0; i < gs.nrows; ++i)
+            for (int j = 0; j < gs.ncols; ++j)
+                out[std::size_t(i * gs.ncols + j)]->bboxRelative->setPoints(
+                    transforms::Bbox::fromExtents(g.lefts[std::size_t(j)], g.bottoms[std::size_t(i)], g.rights[std::size_t(j)],
+                                                  g.tops[std::size_t(i)])
+                        ->points());
+    }
+    return out;
+}
+
+std::vector<Axes*> Figure::figureAxes() const {
+    if (!parent) return axstack;
+    std::vector<Axes*> out;
+    for (const auto& a : axes) out.push_back(a.get());
+    return out;
+}
+
+Axes* Figure::adopt(std::unique_ptr<Axes> ax) {
+    axes.push_back(std::move(ax));
+    root().axstack.push_back(axes.back().get());
+    return axes.back().get();
+}
+
+const GridSpec* Figure::existingGrid(int nrows, int ncols) const {
+    for (const Axes* a : figureAxes())
+        if (a->subplotSpec && a->subplotSpec->gridspec->nrows == nrows && a->subplotSpec->gridspec->ncols == ncols)
+            return a->subplotSpec->gridspec;
+    return nullptr;
+}
 
 std::vector<Axes*> Figure::subplots(int nrows, int ncols, const std::string& sharex, const std::string& sharey, const GridSpec* ratios, bool polar) {
     gridspecs.push_back(std::make_unique<GridSpec>(nrows, ncols));
@@ -71,10 +157,10 @@ std::vector<Axes*> Figure::subplots(int nrows, int ncols, const std::string& sha
         for (int col = 0; col < ncols; ++col) {
             Axes* const withX = sharedWith(sharex, row, col);
             Axes* const withY = sharedWith(sharey, row, col);
-            axes.push_back(std::make_unique<Axes>(rc_, *this, gs.cell(row, col), polar));
-            if (withX) axes.back()->share(true, *withX);
-            if (withY) axes.back()->share(false, *withY);
-            out.push_back(axes.back().get());
+            Axes* ax = adopt(std::make_unique<Axes>(rc_, *this, gs.cell(row, col), polar));
+            if (withX) ax->share(true, *withX);
+            if (withY) ax->share(false, *withY);
+            out.push_back(ax);
         }
     // turn off redundant tick labeling
     if (sharex == "col" || sharex == "all")
@@ -85,33 +171,24 @@ std::vector<Axes*> Figure::subplots(int nrows, int ncols, const std::string& sha
 }
 
 Axes* Figure::addSubplot(int nrows, int ncols, int num1, int num2, bool polar) {
-    const GridSpec* gs = nullptr;
-    for (const auto& a : axes)
-        if (a->subplotSpec && a->subplotSpec->gridspec->nrows == nrows && a->subplotSpec->gridspec->ncols == ncols) {
-            gs = a->subplotSpec->gridspec;
-            break;
-        }
+    const GridSpec* gs = existingGrid(nrows, ncols);
     if (!gs) {
         gridspecs.push_back(std::make_unique<GridSpec>(nrows, ncols));
         gs = gridspecs.back().get();
     }
-    axes.push_back(std::make_unique<Axes>(rc_, *this, SubplotSpec{gs, num1, num2}, polar));
-    return axes.back().get();
+    return adopt(std::make_unique<Axes>(rc_, *this, SubplotSpec{gs, num1, num2}, polar));
 }
 
 Axes* Figure::addSubplot(const SubplotSpec& spec, bool polar) {
-    axes.push_back(std::make_unique<Axes>(rc_, *this, spec, polar));
-    return axes.back().get();
+    return adopt(std::make_unique<Axes>(rc_, *this, spec, polar));
 }
 
 Axes* Figure::addAxes(double left, double bottom, double width, double height, bool polar) {
-    axes.push_back(std::make_unique<Axes>(rc_, *this, transforms::Bbox::fromBounds(left, bottom, width, height), std::nullopt, polar));
-    return axes.back().get();
+    return adopt(std::make_unique<Axes>(rc_, *this, transforms::Bbox::fromBounds(left, bottom, width, height), std::nullopt, polar));
 }
 
 Axes* Figure::addAxesBox(const std::array<double, 4>& points) {
-    axes.push_back(std::make_unique<Axes>(rc_, *this, std::make_shared<transforms::Bbox>(points), std::nullopt));
-    return axes.back().get();
+    return adopt(std::make_unique<Axes>(rc_, *this, std::make_shared<transforms::Bbox>(points), std::nullopt));
 }
 
 void Figure::draw(Renderer& renderer) {
@@ -122,17 +199,28 @@ void Figure::draw(Renderer& renderer) {
     for (auto& t : texts) artists.push_back(t.get());
     for (auto& im : images) artists.push_back(im.get());
     for (auto& l : legends) artists.push_back(l.get());
+    for (auto& f : subfigs) artists.push_back(f.get());
     std::stable_sort(artists.begin(), artists.end(), [](const Artist* a, const Artist* b) { return a->zorder < b->zorder; });
     // ... and each Axes, then its child Axes, placed (apply_aspect with its locator) before anything is drawn
     for (auto& ax : axes) {
         ax->applyAspect();
         for (auto& child : ax->childAxes) child->applyAspect();
     }
+    if (parent) {  // SubFigure.draw
+        renderer.openGroup("subfigure", gid);
+        patch->draw(renderer);
+        drawListCompositingImages(renderer, bbox, artists);
+        renderer.closeGroup("subfigure");
+        return;
+    }
     renderer.openGroup("figure", gid);
     // the layout engine places the Axes (a ValueError it raises is ignored there)
-    if (!axes.empty() && layoutEngine && !layoutOff) {
+    if (!axstack.empty() && layoutEngine && !layoutOff) {
         std::string error;
-        if (layoutEngine->kind == LayoutEngine::Kind::Constrained) {
+        if (!subfigs.empty() && layoutEngine->kind != LayoutEngine::Kind::Placeholder)
+            renderer.unsupported(std::string("the ") + (layoutEngine->kind == LayoutEngine::Kind::Tight ? "tight" : "constrained") +
+                                 " layout of subfigures is not supported yet");
+        else if (layoutEngine->kind == LayoutEngine::Kind::Constrained) {
             if (!executeConstrainedLayout(*this, renderer, layoutEngine->constrained, &error)) support::noteRaised(error);
         } else if (layoutEngine->kind == LayoutEngine::Kind::Tight) {
             // TightLayoutEngine.execute: get_tight_layout_figure, then subplots_adjust with what it gives
@@ -150,6 +238,15 @@ void Figure::setDpi(double value) {
     dpi = value;
     *dpiScaleTrans = transforms::Affine2D();
     dpiScaleTrans->scale(dpi);
+    // (a subfigure's dpi is its parent's)
+    std::vector<Figure*> pending;
+    for (auto& f : subfigs) pending.push_back(f.get());
+    while (!pending.empty()) {
+        Figure* f = pending.back();
+        pending.pop_back();
+        f->dpi = value;
+        for (auto& g : f->subfigs) pending.push_back(g.get());
+    }
 }
 
 void Figure::setSizeInches(double width, double height) {
@@ -170,12 +267,16 @@ transforms::Bbox Figure::tightbbox(Renderer& renderer) {
         if (t->visible) bb.push_back(static_cast<Text&>(*t).windowExtent(renderer));
     for (auto& l : legends)
         if (l->visible) bb.push_back(static_cast<Legend&>(*l).tightbbox(renderer));
-    for (auto& ax : axes)
+    // a subfigure's, in pixels
+    for (auto& f : subfigs)
+        if (f->visible) bb.push_back(f->tightbbox(renderer));
+    for (Axes* ax : figureAxes())
         if (ax->visible)
             if (auto b = ax->tightbbox(renderer, false)) bb.push_back(*b);
     std::vector<transforms::Bbox> sized;
     for (const auto& b : bb)
         if (std::isfinite(b.width()) && std::isfinite(b.height()) && (b.width() != 0 || b.height() != 0)) sized.push_back(b);
+    if (parent) return sized.empty() ? transforms::Bbox(bbox->points()) : transforms::unionOf(sized);
     if (sized.empty()) return transforms::Bbox(bboxInches->points());
     // TransformedBbox(Bbox.union(bb), dpi_scale_trans.inverted())
     const auto u = std::make_shared<transforms::Bbox>(transforms::unionOf(sized).points());
@@ -217,7 +318,21 @@ public:
         if (o.transparent) {
             // Figure.savefig(transparent=True): the Axes' patches lose their colours for the save, and
             // so does the figure's (facecolor and edgecolor default to 'none', before the rcParams)
-            for (auto& ax : figure.axes) {
+            // (and the subfigures' patches, and those of their Axes, face and edge)
+            std::vector<Figure*> pending;
+            for (auto& f : figure.subfigs) pending.push_back(f.get());
+            while (!pending.empty()) {
+                Figure* f = pending.back();
+                pending.pop_back();
+                subfigs_.push_back({f->patch.get(), f->patch->colorState()});
+                f->patch->setFacecolor(std::string("none")), f->patch->setEdgecolor(std::string("none"));
+                for (auto& ax : f->axes) {
+                    subfigs_.push_back({ax->patch.get(), ax->patch->colorState()});
+                    ax->patch->setFacecolor(std::string("none")), ax->patch->setEdgecolor(std::string("none"));
+                }
+                for (auto& g : f->subfigs) pending.push_back(g.get());
+            }
+            for (Axes* ax : figure.axstack) {
                 axes_.push_back(ax->patch->colorState());
                 ax->patch->setFacecolor(std::string("none"));  // (its edge has no colour as it is)
             }
@@ -228,7 +343,8 @@ public:
     }
     ~Saving() {
         figure_.patch->setColorState(patch_);
-        for (std::size_t i = 0; i < axes_.size(); ++i) figure_.axes[i]->patch->setColorState(axes_[i]);
+        for (std::size_t i = axes_.size(); i-- > 0;) figure_.axstack[i]->patch->setColorState(axes_[i]);
+        for (std::size_t i = subfigs_.size(); i-- > 0;) subfigs_[i].first->setColorState(subfigs_[i].second);
         figure_.setDpi(dpi_);
     }
     Saving(const Saving&) = delete;
@@ -239,6 +355,7 @@ private:
     double dpi_;
     Patch::Colors patch_;
     std::vector<Patch::Colors> axes_;
+    std::vector<std::pair<Patch*, Patch::Colors>> subfigs_;
 };
 
 // _tight_bbox.adjust_bbox: until it is put back, the figure is the part `inches` of itself (its box
@@ -250,7 +367,7 @@ public:
     AdjustedBbox(Figure& figure, const std::array<double, 4>& inches)
         : figure_(figure), bboxInches_(figure.bboxInches), bbox_(figure.bbox), boxout_(figure.transFigure->boxout()) {
         // every Axes keeps its active position: ax.apply_aspect = lambda pos=None: None
-        for (auto& ax : figure.axes) ax->aspectFrozen = true;
+        for (Axes* ax : figure.axstack) ax->aspectFrozen = true;
         auto tr = std::make_shared<transforms::Affine2D>();
         tr->scale(figure.dpi);
         figure.bboxInches = transforms::Bbox::fromBounds(0, 0, inches[2] - inches[0], inches[3] - inches[1]);
@@ -264,7 +381,7 @@ public:
         patch.width = figure.bbox->width() / w1, patch.height = figure.bbox->height() / h1;
     }
     ~AdjustedBbox() {  // restore_bbox
-        for (auto& ax : figure_.axes) ax->aspectFrozen = false;
+        for (Axes* ax : figure_.axstack) ax->aspectFrozen = false;
         figure_.bbox = bbox_;
         figure_.bboxInches = bboxInches_;
         figure_.transFigure->setBoxout(boxout_);

@@ -160,15 +160,14 @@ std::vector<Json> Params::colorCycle() const {
 
 const std::vector<std::string>& Params::inertKeys() {
     // Animations, 3D axes, box plots, image.lut (read once, when matplotlib is imported), the keys and windows of the interactive
-    // backends, PDF, PGF and PostScript output, and the like. And figure.frameon, which pyplot's figures
-    // never read (pyplot.figure has its own frameon=True).
+    // backends, PDF, PGF and PostScript output, and the like.
     static const std::vector<std::string> keys = {
         "animation.bitrate", "animation.codec", "animation.convert_args", "animation.convert_path",
         "animation.embed_limit", "animation.ffmpeg_args", "animation.ffmpeg_path", "animation.frame_format",
         "animation.html", "animation.writer", "axes.zmargin", "axes3d.automargin", "axes3d.depthshade",
         "axes3d.depthshade_minalpha", "axes3d.grid", "axes3d.mouserotationstyle", "axes3d.snap_rotation",
         "axes3d.trackballborder", "axes3d.trackballsize", "axes3d.xaxis.panecolor", "axes3d.yaxis.panecolor",
-        "axes3d.zaxis.panecolor", "backend_fallback", "docstring.hardcopy", "figure.frameon", "figure.labelsize", "figure.labelweight", "figure.max_open_warning", "figure.raise_window",
+        "axes3d.zaxis.panecolor", "backend_fallback", "docstring.hardcopy", "figure.labelsize", "figure.labelweight", "figure.max_open_warning", "figure.raise_window",
         "image.lut", "interactive", "keymap.back",
         "keymap.copy", "keymap.forward", "keymap.fullscreen", "keymap.grid", "keymap.grid_minor", "keymap.help",
         "keymap.home", "keymap.pan", "keymap.quit", "keymap.quit_all", "keymap.save", "keymap.xscale",

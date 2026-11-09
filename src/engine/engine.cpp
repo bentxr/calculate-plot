@@ -171,7 +171,7 @@ public:
                 // pyplot.polar(*args, **kwargs): plot on the current Axes when the figure has one (polar or not, as
                 // matplotlib still allows), else on axes(projection='polar')
                 Figure& f = gcf();
-                if (f.axes.empty()) current_ = f.addSubplot(1, 1, 0, 0, true);
+                if (f.allAxes().empty()) current_ = f.addSubplot(1, 1, 0, 0, true);
                 model::Call c = call;
                 c.on = "plt";
                 c.method = "plot";
@@ -208,6 +208,7 @@ public:
         const auto ax = axes_.find(call.on);
         if (ax != axes_.end()) return axesCall(*ax->second, call, error);
         if (figureNames_.count(call.on)) return figureCall(call, error);
+        if (const auto sf = subfigures_.find(call.on); sf != subfigures_.end()) return subfigureCall(*sf->second, call, error);
         {  // gs[...].subgridspec(...)
             SubplotSpec spec{nullptr, 0, 0};
             bool named = false;
@@ -825,6 +826,7 @@ private:
         if (!figureLayout("plt.figure", error)) return false;
         axes_.clear();
         figureNames_.clear();
+        subfigures_.clear();
         gridspecs_.clear();
         current_ = nullptr;
         if (call.as.size() == 1) figureNames_.insert(call.as[0]);
@@ -853,28 +855,38 @@ private:
         return *error = where + ": Unknown projection " + repr(*projection), false;
     }
 
-    bool subplots(const model::Call& call, std::string* error) {
+    // The arguments of plt.subplots and Figure.subplots (nrows=1, ncols=1, sharex=, sharey=, squeeze=, width_ratios=,
+    // height_ratios=, subplot_kw=); plt.subplots' others go to the figure (`options`), Figure.subplots has none
+    struct SubplotsArguments {
+        int nrows = 1, ncols = 1;
+        bool squeeze = true, polar = false;
+        std::string sharex = "none", sharey = "none";
+        GridSpec ratios{1, 1};  // (width_ratios and height_ratios: the grid's)
+    };
+    bool subplotsArguments(const model::Call& call, const std::string& where, FigureOptions* figureOptions, SubplotsArguments* out,
+                           std::string* error) {
         double grid[2] = {1, 1};
+        if (call.args.size() > 2) return *error = where + ": too many positional arguments", false;  // (positionalArguments says it first)
         for (std::size_t i = 0; i < call.args.size(); ++i)
             if (!readNumber(call.args[i], &grid[i]) || call.args[i].numberText().find_first_of(".eE") != std::string::npos) {
-                *error = "plt.subplots: nrows and ncols must be integers";
+                *error = where + ": nrows and ncols must be integers";
                 return false;
             }
-        FigureOptions options;
-        bool squeeze = true, polarSubplots = false;
-        std::string sharex = "none", sharey = "none";
-        layoutKeywords_ = LayoutKeywords();
-        GridSpec ratios(1, 1);  // (width_ratios and height_ratios: the grid's)
+        bool& squeeze = out->squeeze;
+        bool& polarSubplots = out->polar;
+        std::string& sharex = out->sharex;
+        std::string& sharey = out->sharey;
+        GridSpec& ratios = out->ratios;
         const Json* ratioValues[2] = {nullptr, nullptr};
         for (const auto& [name, value] : call.kwargs) {
             if (name == "nrows" || name == "ncols") {
                 // "Number of rows must be a positive integer": an int, not a float that is whole
                 if (!value.isNumber() || !value.isInteger() || !readNumber(value, &grid[name == "nrows" ? 0 : 1])) {
-                    *error = "plt.subplots: " + name + " must be an integer";
+                    *error = where + ": " + name + " must be an integer";
                     return false;
                 }
             } else if (name == "squeeze") {
-                if (!value.isBool()) return *error = "plt.subplots: squeeze must be True or False", false;
+                if (!value.isBool()) return *error = where + ": squeeze must be True or False", false;
                 squeeze = value.asBool();
             } else if (name == "sharex" || name == "sharey") {
                 // True and False mean 'all' and 'none'
@@ -882,7 +894,7 @@ private:
                 if (value.isBool()) share = value.asBool() ? "all" : "none";
                 else if (value.isString()) share = value.asString();
                 if (share != "all" && share != "row" && share != "col" && share != "none")
-                    return *error = "plt.subplots: " + name + " must be True, False, 'all', 'row', 'col' or 'none'", false;
+                    return *error = where + ": " + name + " must be True, False, 'all', 'row', 'col' or 'none'", false;
                 (name == "sharex" ? sharex : sharey) = share;
             } else if (name == "width_ratios" || name == "height_ratios") {
                 if (!value.isNull()) ratioValues[name == "width_ratios" ? 0 : 1] = &value;
@@ -890,27 +902,29 @@ private:
                 // the keywords each add_subplot takes: so far its projection
                 if (value.isNull()) continue;
                 if (!(value.isObject() && value.members().size() == 1 && value.members()[0].first == "$dict"))
-                    return *error = "plt.subplots: subplot_kw must be a dict", false;
+                    return *error = where + ": subplot_kw must be a dict", false;
                 const Json *projection = nullptr, *polarFlag = nullptr;
                 for (const auto& [key, item] : value.members()[0].second.members()) {
                     if (key == "projection") projection = &item;
                     else if (key == "polar") polarFlag = &item;
-                    else return *error = "plt.subplots: subplot_kw " + key + " is not supported yet", false;
+                    else return *error = where + ": subplot_kw " + key + " is not supported yet", false;
                 }
-                if (!projectionOf(projection, polarFlag, "plt.subplots", &polarSubplots, error)) return false;
-            } else if (!figureKeyword(name, value, options, "plt.subplots", error)) {
+                if (!projectionOf(projection, polarFlag, where, &polarSubplots, error)) return false;
+            } else if (!figureOptions) {
+                return *error = where + ": FigureBase.subplots() got an unexpected keyword argument '" + name + "'", false;
+            } else if (!figureKeyword(name, value, *figureOptions, where, error)) {
                 return false;
             }
         }
-        const int nrows = int(grid[0]), ncols = int(grid[1]);
-        if (nrows < 1 || ncols < 1) return *error = "plt.subplots: nrows and ncols must be positive", false;
+        const int nrows = out->nrows = int(grid[0]), ncols = out->ncols = int(grid[1]);
+        if (nrows < 1 || ncols < 1) return *error = where + ": nrows and ncols must be positive", false;
         // GridSpec.set_width_ratios / set_height_ratios: one positive number for each column (row)
         for (int k = 0; k < 2; ++k) {
             if (!ratioValues[k]) continue;
             const Json* seq = sequence(*ratioValues[k]);
             const int n = k == 0 ? ncols : nrows;
             if (!seq || int(seq->size()) != n)
-                return *error = std::string("plt.subplots: Expected the given number of ") + (k == 0 ? "width" : "height") +
+                return *error = std::string(where + ": Expected the given number of ") + (k == 0 ? "width" : "height") +
                                 " ratios to match the number of " + (k == 0 ? "columns" : "rows") + " of the grid",
                        false;
             auto& values = k == 0 ? ratios.widthRatios : ratios.heightRatios;
@@ -918,27 +932,16 @@ private:
             for (const Json& r : seq->items()) {
                 double v = 0;
                 if (!readNumber(r, &v) || !std::isfinite(v) || !(v > 0))
-                    return *error = std::string("plt.subplots: ") + (k == 0 ? "width" : "height") + " ratios must be positive numbers", false;
+                    return *error = std::string(where + ": ") + (k == 0 ? "width" : "height") + " ratios must be positive numbers", false;
                 values.push_back(v);
                 ints.push_back(r.isNumber() && r.isInteger());
             }
         }
-        figure_ = std::make_unique<Figure>(rc_, options);
-        if (!figure_->subplotpars.valid(error)) return *error = "plt.subplots: " + *error, false;
-        if (!figureLayout("plt.subplots", error)) return false;
-        const std::vector<Axes*> made = figure_->subplots(nrows, ncols, sharex, sharey, &ratios, polarSubplots);
-        axes_.clear();
-        figureNames_.clear();
-        gridspecs_.clear();
-        mappables_.clear();
-        currentImages_.clear();
-        current_ = made.back();  // (each add_subplot makes its Axes the current one)
-        if (call.as.empty()) return true;
-        if (call.as.size() != 2) return *error = "plt.subplots returns (fig, axs): name both", false;
-        figureNames_.insert(call.as[0]);
-        // the names the returned array answers to: squeezed to a single Axes or a 1-d array when it can be
-        const std::string& n = call.as[1];
-        axesArrays_.clear();
+        return true;
+    }
+
+    // The names of the array of Axes a subplots call returns: squeezed to a single Axes or a 1-d array when it can be
+    void nameAxesArray(const std::string& n, const std::vector<Axes*>& made, int nrows, int ncols, bool squeeze) {
         axesArrays_[n] = made;
         for (int r = 0; r < nrows; ++r)
             for (int c = 0; c < ncols; ++c) {
@@ -947,8 +950,130 @@ private:
                 else if (squeeze && (nrows == 1 || ncols == 1)) axes_[n + "[" + std::to_string(nrows == 1 ? c : r) + "]"] = ax;
                 else axes_[n + "[" + std::to_string(r) + ", " + std::to_string(c) + "]"] = ax;
             }
+    }
+
+    bool subplots(const model::Call& call, std::string* error) {
+        FigureOptions options;
+        layoutKeywords_ = LayoutKeywords();
+        SubplotsArguments k;
+        if (!subplotsArguments(call, "plt.subplots", &options, &k, error)) return false;
+        const int nrows = k.nrows, ncols = k.ncols;
+        figure_ = std::make_unique<Figure>(rc_, options);
+        if (!figure_->subplotpars.valid(error)) return *error = "plt.subplots: " + *error, false;
+        if (!figureLayout("plt.subplots", error)) return false;
+        const std::vector<Axes*> made = figure_->subplots(nrows, ncols, k.sharex, k.sharey, &k.ratios, k.polar);
+        axes_.clear();
+        figureNames_.clear();
+        subfigures_.clear();
+        gridspecs_.clear();
+        mappables_.clear();
+        currentImages_.clear();
+        current_ = made.back();  // (each add_subplot makes its Axes the current one)
+        if (call.as.empty()) return true;
+        if (call.as.size() != 2) return *error = "plt.subplots returns (fig, axs): name both", false;
+        figureNames_.insert(call.as[0]);
+        axesArrays_.clear();
+        nameAxesArray(call.as[1], made, nrows, ncols, k.squeeze);
         return true;
     }
+
+    // Figure.subplots(nrows=1, ncols=1, *, sharex=, sharey=, squeeze=, width_ratios=, height_ratios=, subplot_kw=): the
+    // array of Axes alone; the last one is current
+    bool figureSubplots(const model::Call& call, std::string* error) {
+        const std::string where = call.on + ".subplots";
+        SubplotsArguments k;
+        if (!subplotsArguments(call, where, nullptr, &k, error)) return false;
+        const std::vector<Axes*> made = fig().subplots(k.nrows, k.ncols, k.sharex, k.sharey, &k.ratios, k.polar);
+        current_ = made.back();
+        if (call.as.empty()) return true;
+        if (call.as.size() != 1) return *error = where + " returns one array of Axes: name it once", false;
+        nameAxesArray(call.as[0], made, k.nrows, k.ncols, k.squeeze);
+        return true;
+    }
+
+    // FigureBase.subfigures(nrows=1, ncols=1, squeeze=True, wspace=None, hspace=None, width_ratios=None,
+    // height_ratios=None, **kwargs): the subfigures, named as the array they make (squeezed to one or a 1-d array
+    // when it can be; a list of names unpacks a 1-d array); kwargs go to each SubFigure
+    bool subfigures(const model::Call& call, std::string* error) {
+        const std::string where = call.on + ".subfigures";
+        static const char* const positional[] = {"nrows", "ncols", "squeeze", "wspace", "hspace", "width_ratios", "height_ratios"};
+        if (call.args.size() > 7) return *error = where + ": too many positional arguments", false;
+        for (std::size_t i = 0; i < call.args.size(); ++i)
+            if (keyword(call, positional[i])) return *error = where + ": got multiple values for argument '" + positional[i] + "'", false;
+        int nrows = 1, ncols = 1;
+        if (!gridShape(argument(call, 0, "nrows"), argument(call, 1, "ncols"), &nrows, &ncols, where, error)) return false;
+        bool squeeze = true;
+        if (const Json* q = argument(call, 2, "squeeze")) {
+            if (!q->isBool()) return *error = where + ": squeeze must be True or False", false;
+            squeeze = q->asBool();
+        }
+        GridSpec gs(nrows, ncols);
+        std::vector<std::pair<std::string, const Json*>> grid;
+        for (std::size_t i = 3; i < 7; ++i)
+            if (const Json* v = argument(call, i, positional[i])) grid.emplace_back(positional[i], v);
+        if (!gridKeywords(gs, grid, false, "", where, error)) return false;
+        SubfigureOptions o;
+        for (const auto& [name, value] : call.kwargs) {
+            if (std::find(std::begin(positional), std::end(positional), name) != std::end(positional)) continue;
+            if (name == "facecolor" || name == "edgecolor") {
+                if (value.isNull()) continue;
+                colors::Spec spec;
+                if (!color(value, &spec)) return *error = where + ": bad " + name + " " + repr(value), false;
+                (name == "facecolor" ? o.facecolor : o.edgecolor) = spec;
+            } else if (name == "linewidth") {
+                double n = 0;
+                if (!readFinite(value, &n)) return *error = where + ": linewidth must be a finite number", false;
+                o.linewidth = n;
+            } else if (name == "frameon") {
+                if (value.isNull()) continue;
+                if (!value.isBool()) return *error = where + ": frameon must be True or False", false;
+                o.frameon = value.asBool();
+            } else {
+                return *error = where + ": the subfigure property " + name + " is not supported yet", false;
+            }
+        }
+        if (fig().root().layoutEngine && fig().root().layoutEngine->kind != LayoutEngine::Kind::Placeholder)
+            return *error = where + ": subfigures with the " +
+                            (fig().root().layoutEngine->kind == LayoutEngine::Kind::Tight ? std::string("tight") : std::string("constrained")) +
+                            " layout are not supported yet",
+                   false;
+        const std::vector<Figure*> made = fig().subfigures(gs, o);
+        if (call.as.empty()) return true;
+        const bool one = squeeze && nrows * ncols == 1, flat = squeeze && (nrows == 1 || ncols == 1);
+        if (call.as.size() > 1) {  // a, b = fig.subfigures(...): a 1-d array unpacked
+            if (one || !flat) return *error = where + ": only a 1-d array of subfigures can be unpacked into names", false;
+            if (call.as.size() != made.size())
+                return *error = where + ": " + (call.as.size() > made.size() ? "not enough values to unpack (expected " + std::to_string(call.as.size()) + ", got " + std::to_string(made.size()) + ")"
+                                                                          : "too many values to unpack (expected " + std::to_string(call.as.size()) + ")"),
+                       false;
+            for (std::size_t i = 0; i < made.size(); ++i) subfigures_[call.as[i]] = made[i];
+            return true;
+        }
+        const std::string& n = call.as[0];
+        for (int r = 0; r < nrows; ++r)
+            for (int c = 0; c < ncols; ++c) {
+                Figure* f = made[std::size_t(r * ncols + c)];
+                if (one) subfigures_[n] = f;
+                else if (flat) subfigures_[n + "[" + std::to_string(nrows == 1 ? c : r) + "]"] = f;
+                else subfigures_[n + "[" + std::to_string(r) + ", " + std::to_string(c) + "]"] = f;
+            }
+        return true;
+    }
+
+    // The calls on a subfigure (a SubFigure has a Figure's artist methods): those ported for it, on that figure
+    bool subfigureCall(Figure& subfigure, const model::Call& call, std::string* error) {
+        static const std::set<std::string> ported = {"add_subplot", "subplots", "add_axes", "add_gridspec", "subfigures", "suptitle",
+                                                     "text", "legend", "set_facecolor", "set_edgecolor"};
+        if (!ported.count(call.method)) return *error = "unsupported call on a subfigure: " + call.on + "." + call.method, false;
+        Figure* const was = target_;
+        target_ = &subfigure;
+        const bool ok = figureCall(call, error);
+        target_ = was;
+        return ok;
+    }
+
+    // The figure a figure call is on: the subfigure while subfigureCall runs, else the current figure
+    Figure& fig() { return target_ ? *target_ : gcf(); }
 
     // Figure.subplot_mosaic's layout: the cells of a level (labels, the empty sentinel, or nested mosaics as given)
     using MosaicGrid = std::vector<std::vector<Json>>;
@@ -1176,6 +1301,7 @@ private:
             if (!figureLayout(where, error)) return false;
             axes_.clear();
             figureNames_.clear();
+            subfigures_.clear();
             gridspecs_.clear();
             mappables_.clear();
             currentImages_.clear();
@@ -1327,6 +1453,7 @@ private:
             figure_ = std::make_unique<Figure>(rc_, FigureOptions{});
             axes_.clear();
             figureNames_.clear();
+            subfigures_.clear();
             gridspecs_.clear();
             current_ = nullptr;
         }
@@ -1544,8 +1671,8 @@ private:
         for (const auto& [name, value] : call.kwargs)
             if (name != "nrows" && name != "ncols") kw.emplace_back(name, &value);
         if (!gridKeywords(*gs, kw, false, "", where, error)) return false;
-        figure_->gridspecs.push_back(std::move(gs));
-        return nameGrid(call, figure_->gridspecs.back().get(), where, error);
+        fig().gridspecs.push_back(std::move(gs));
+        return nameGrid(call, fig().gridspecs.back().get(), where, error);
     }
 
     bool nameGrid(const model::Call& call, GridSpec* gs, const std::string& where, std::string* error) {
@@ -1735,7 +1862,7 @@ private:
         for (double v : r)
             if (!std::isfinite(v)) return *error = where + "all entries in rect must be finite not " + repr(*rect), false;
         if (r[2] < 0 || r[3] < 0) return *error = where + "Width and height specified must be non-negative", false;
-        current_ = gcf().addAxes(r[0], r[1], r[2], r[3], isPolar);
+        current_ = fig().addAxes(r[0], r[1], r[2], r[3], isPolar);
         return nameResult(call, current_, error);
     }
 
@@ -1750,10 +1877,10 @@ private:
             if (!ss) return false;
             Figure& f = gcf();
             Axes* found = nullptr;
-            for (const auto& a : f.axes)
+            for (Axes* a : f.allAxes())
                 if (a->subplotSpec && a->subplotSpec->gridspec == ss->gridspec && a->subplotSpec->num1 == ss->num1 &&
                     a->subplotSpec->num2 == ss->num2 && (call.kwargs.empty() || bool(a->polar) == isPolar)) {
-                    found = a.get();
+                    found = a;
                     break;
                 }
             if (!found && !gridParamsValid(*ss->gridspec, "plt.subplot", error)) return false;
@@ -1764,19 +1891,19 @@ private:
         if (!subplotSpecOf(call, spec, error)) return false;
         Figure& f = gcf();
         Axes* found = nullptr;
-        for (const auto& a : f.axes)
+        for (Axes* a : f.allAxes())
             if (a->subplotSpec && a->subplotSpec->gridspec->nrows == spec[0] && a->subplotSpec->gridspec->ncols == spec[1] &&
                 a->subplotSpec->num1 == spec[2] && a->subplotSpec->num2 == spec[3]) {
                 // (the same grid object: the first of that shape, which add_subplot would take too)
                 const GridSpec* first = nullptr;
-                for (const auto& b : f.axes)
+                for (Axes* b : f.allAxes())
                     if (b->subplotSpec && b->subplotSpec->gridspec->nrows == spec[0] && b->subplotSpec->gridspec->ncols == spec[1]) {
                         first = b->subplotSpec->gridspec;
                         break;
                     }
                 // (with keywords, only an Axes of the projection they ask for: _projection_init)
                 if (a->subplotSpec->gridspec == first && (call.kwargs.empty() || bool(a->polar) == isPolar)) {
-                    found = a.get();
+                    found = a;
                     break;
                 }
             }
@@ -1793,18 +1920,29 @@ private:
             std::optional<SubplotSpec> ss;
             if (subplotSpecArgument(call, &ss, where, error)) {  // add_subplot(gs[...])
                 if (!ss || !gridParamsValid(*ss->gridspec, where, error)) return false;
-                current_ = figure_->addSubplot(*ss, isPolar);
+                current_ = fig().addSubplot(*ss, isPolar);
                 return nameResult(call, current_, error);
             }
             int spec[4];
             if (!subplotSpecOf(call, spec, error)) return false;
-            current_ = figure_->addSubplot(spec[0], spec[1], spec[2], spec[3], isPolar);
+            current_ = fig().addSubplot(spec[0], spec[1], spec[2], spec[3], isPolar);
             return nameResult(call, current_, error);
         }
         if (call.method == "gca") return noArguments(call, error) && nameResult(call, &gca(), error);
         if (call.method == "subplot_mosaic") return subplotMosaic(call, false, error);
         if (call.method == "add_gridspec") return addGridspec(call, error);
         if (call.method == "add_axes") return addAxes(call, call.args.empty() ? nullptr : &call.args[0], error);
+        if (call.method == "subplots") return figureSubplots(call, error);
+        if (call.method == "subfigures") return subfigures(call, error);
+        if (call.method == "set_facecolor" || call.method == "set_edgecolor") {  // the patch's colour
+            const Json* c = argument(call, 0, "color");
+            colors::Spec spec;
+            if (call.args.size() + call.kwargs.size() != 1 || !c) return *error = where + ": give one colour", false;
+            if (!color(*c, &spec)) return *error = where + ": bad color " + repr(*c), false;
+            if (call.method == "set_facecolor") fig().patch->setFacecolor(spec);
+            else fig().patch->setEdgecolor(spec);
+            return true;
+        }
         if (call.method == "text") return figureText(call, error);
         if (call.method == "figimage") return figimage(call, error);
         if (call.method == "legend") return legend(nullptr, call, error);
@@ -1849,14 +1987,14 @@ private:
                                                                     {"fontweight", &weight}};
             for (const auto& [name, value] : defaults)
                 if (!has(name)) normal.emplace_back(name, value);
-            if (figure_->suptitle) return *error = where + ": setting the suptitle again is not supported yet", false;
+            if (fig().suptitle) return *error = where + ": setting the suptitle again is not supported yet", false;
             auto label = std::make_unique<Text>(rc_, x, y, t->asString());
             if (!textProperties(*label, normal, TextKeywords::Construct, where, error)) return false;
-            label->transform = figure_->transSubfigure;
-            label->figure = figure_.get();
-            figure_->suptitle = label.get();
-            figure_->suptitleAutopos = autopos;
-            figure_->texts.push_back(std::move(label));
+            label->transform = fig().transSubfigure;
+            label->figure = &fig().root();
+            fig().suptitle = label.get();
+            fig().suptitleAutopos = autopos;
+            fig().texts.push_back(std::move(label));
             return true;
         }
         if (call.method == "subplots_adjust") {
@@ -1864,7 +2002,7 @@ private:
             const char* names[6] = {"left", "bottom", "right", "top", "wspace", "hspace"};
             if (!keywords(call, {"left", "bottom", "right", "top", "wspace", "hspace"}, error)) return false;
             // a layout engine that does not take it (the constrained one): a warning, and nothing done
-            if (figure_->layoutEngine && !figure_->layoutEngine->adjustCompatible) return true;
+            if (fig().layoutEngine && !fig().layoutEngine->adjustCompatible) return true;
             std::optional<double> v[6];
             for (std::size_t i = 0; i < 6; ++i) {
                 const Json* a = argument(call, i, names[i]);
@@ -1875,7 +2013,7 @@ private:
                 if (!std::isfinite(n)) return *error = where + ": " + names[i] + " must be finite", false;
                 v[i] = n;
             }
-            if (!subplotsAdjust(*figure_, {v[0], v[1], v[2], v[3], v[4], v[5]}, error)) return *error = where + ": " + *error, false;
+            if (!subplotsAdjust(fig(), {v[0], v[1], v[2], v[3], v[4], v[5]}, error)) return *error = where + ": " + *error, false;
             return true;
         }
         if (call.method == "tight_layout") {
@@ -1903,9 +2041,10 @@ private:
                     if (!readFinite((*r)[i], &rect[i])) return *error = where + ": rect must be (left, bottom, right, top)", false;
                 o.rect = rect;
             }
-            if (!tightLayout(*figure_, o, options_.locale, options_.fontDirectory, error)) return *error = where + ": " + *error, false;
+            if (!fig().subfigs.empty()) return *error = where + ": the tight layout of subfigures is not supported yet", false;
+            if (!tightLayout(fig(), o, options_.locale, options_.fontDirectory, error)) return *error = where + ": " + *error, false;
             // (the TightLayoutEngine set for it, then set_layout_engine('none'): a placeholder taking subplots_adjust)
-            figure_->layoutEngine = LayoutEngine{LayoutEngine::Kind::Placeholder, {}, {}, true};
+            fig().layoutEngine = LayoutEngine{LayoutEngine::Kind::Placeholder, {}, {}, true};
             return true;
         }
         if (call.method == "set_layout_engine") {
@@ -4088,9 +4227,9 @@ private:
         if (!otherKeywords(call, {"x", "y", "s"}, &given, error)) return false;
         auto t = std::make_unique<Text>(rc_, x, y, values[2]->asString());
         if (!textProperties(*t, given, TextKeywords::Construct, where, error)) return false;
-        t->transform = figure_->transSubfigure;
-        t->figure = figure_.get();
-        figure_->texts.push_back(std::move(t));
+        t->transform = fig().transSubfigure;
+        t->figure = &fig().root();
+        fig().texts.push_back(std::move(t));
         return true;
     }
 
@@ -4207,8 +4346,7 @@ private:
         std::vector<std::string> labels;
         std::vector<Axes*> axs;
         if (ax) axs.push_back(ax);
-        else
-            for (const auto& a : figure_->axes) axs.push_back(a.get());
+        else axs = fig().figureAxes();  // (a subfigure's own Axes; the root's every Axes)
         for (Axes* a : axs) {
             for (const auto& child : a->children) {
                 const std::string& l = child->label;
@@ -4242,10 +4380,10 @@ private:
         }
         o.ncols = int(std::min(columns, double(handles.size())));
         std::string problem;
-        auto made = std::make_unique<Legend>(rc_, *figure_, ax, handles, containers, labels, o, &problem);
+        auto made = std::make_unique<Legend>(rc_, ax ? ax->figure : fig(), ax, handles, containers, labels, o, &problem);
         if (!problem.empty()) return *error = where + ": " + problem, false;
         if (ax) ax->legend = std::move(made);
-        else figure_->legends.push_back(std::move(made));
+        else fig().legends.push_back(std::move(made));
         return true;
     }
 
@@ -7062,8 +7200,8 @@ private:
             // gci: the current Axes' current image, else the latest of the other Axes
             const auto cur = currentImages_.find(&gca());
             if (cur != currentImages_.end()) m = cur->second;
-            for (auto it = fig.axes.rbegin(); !m && it != fig.axes.rend(); ++it) {
-                const auto c = currentImages_.find(it->get());
+            for (auto it = fig.allAxes().rbegin(); !m && it != fig.allAxes().rend(); ++it) {
+                const auto c = currentImages_.find(*it);
                 if (c != currentImages_.end()) m = c->second;
             }
             if (!m) return *error = where + ": No mappable was found to use for colorbar creation. First define a mappable such as an image (with imshow) or a contour set (with contourf).", false;
@@ -10422,6 +10560,8 @@ private:
     // The containers bar calls returned, by name: their Axes and where in its containers they are
     std::map<std::string, std::pair<Axes*, std::size_t>> barContainers_;
     std::set<std::string> figureNames_;  // what the figure file calls the figure
+    std::map<std::string, Figure*> subfigures_;  // the subfigures named by "as" (fig.subfigures)
+    Figure* target_ = nullptr;                   // the subfigure a figure call is on (subfigureCall)
     std::map<std::string, GridSpec*> gridspecs_;  // the grids named by "as" (fig.add_gridspec, ss.subgridspec)
     Axes* current_ = nullptr;            // the figure's current Axes (gca), if any
 
@@ -10493,7 +10633,7 @@ AggDrawing drawAgg(const model::Figure& model, const DrawOptions& options) {
 std::vector<std::string> axesNames(const model::Figure& model, const DrawOptions& options, std::string* error) {
     std::vector<std::string> names;
     *error = runFigure(model, options, [&](Figure& figure, const Executor& executor) {
-        for (const auto& ax : figure.axes) names.push_back(executor.nameOf(ax.get()));
+        for (Axes* ax : figure.allAxes()) names.push_back(executor.nameOf(ax));
         return std::string();
     });
     return names;

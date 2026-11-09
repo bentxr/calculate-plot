@@ -2370,6 +2370,51 @@ INSTANTIATE_TEST_SUITE_P(
         Refusal{R"({"on": "gs[0, 0]", "call": "get_position"})", "unsupported call: gs[0, 0].get_position"},
         Refusal{R"({"on": "gs", "call": "subplots"})", "unsupported call: gs.subplots"}));
 
+// fig.subfigures, fig.subplots and the calls on subfigures: matplotlib's errors, and what is not supported yet
+class SubfigureRefusals : public testing::TestWithParam<Refusal> {};
+
+TEST_P(SubfigureRefusals, NameTheCallAndTheReason) {
+    const std::string two = R"({"call": "figure", "as": "fig"}, {"on": "fig", "call": "subfigures", "args": [1, 2], "as": "sf"},)";
+    EXPECT_EQ(draw(two + GetParam().call).error, GetParam().error);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+    Engine, SubfigureRefusals,
+    testing::Values(
+        Refusal{R"({"on": "fig", "call": "subfigures", "args": [0]})", "fig.subfigures: Number of rows must be a positive integer, not 0"},
+        Refusal{R"({"on": "sf[0]", "call": "subfigures", "args": [1, 0]})", "sf[0].subfigures: Number of columns must be a positive integer, not 0"},
+        Refusal{R"({"on": "fig", "call": "subfigures", "args": [1, 2], "kwargs": {"width_ratios": [1]}})",
+                "fig.subfigures: Expected the given number of width ratios to match the number of columns of the grid"},
+        Refusal{R"({"on": "fig", "call": "subfigures", "args": [2, 1], "kwargs": {"height_ratios": [1, 2, 3]}})",
+                "fig.subfigures: Expected the given number of height ratios to match the number of rows of the grid"},
+        Refusal{R"({"on": "fig", "call": "subfigures", "args": [1, 2], "kwargs": {"squeeze": 1}})", "fig.subfigures: squeeze must be True or False"},
+        Refusal{R"({"on": "fig", "call": "subfigures", "args": [1, 2], "kwargs": {"foo": 1}})",
+                "fig.subfigures: the subfigure property foo is not supported yet"},
+        Refusal{R"({"on": "fig", "call": "subfigures", "args": [1, 2], "kwargs": {"facecolor": "nocolour"}})",
+                "fig.subfigures: bad facecolor 'nocolour'"},
+        Refusal{R"({"on": "fig", "call": "subfigures", "args": [1, 2], "kwargs": {"frameon": 1}})", "fig.subfigures: frameon must be True or False"},
+        Refusal{R"({"on": "fig", "call": "subfigures", "args": [1, 2], "kwargs": {"wspace": 0.1}, "as": ["a", "b", "c"]})",
+                "fig.subfigures: not enough values to unpack (expected 3, got 2)"},
+        Refusal{R"({"on": "fig", "call": "subfigures", "args": [1, 3], "as": ["a", "b"]})", "fig.subfigures: too many values to unpack (expected 2)"},
+        Refusal{R"({"on": "fig", "call": "subfigures", "args": [2, 2], "as": ["a", "b", "c", "d"]})",
+                "fig.subfigures: only a 1-d array of subfigures can be unpacked into names"},
+        Refusal{R"({"on": "sf[1]", "call": "subplots", "args": [1, 2], "kwargs": {"figsize": [3, 3]}})",
+                "sf[1].subplots: FigureBase.subplots() got an unexpected keyword argument 'figsize'"},
+        Refusal{R"({"on": "sf[1]", "call": "subplots", "args": [1, 2, 3]})",
+                "sf[1].subplots: too many positional arguments"},
+        Refusal{R"({"call": "subplots", "args": [1, 2, 3]})", "plt.subplots: too many positional arguments"},
+        Refusal{R"({"on": "sf[0]", "call": "subplots_adjust", "kwargs": {"left": 0.2}})", "unsupported call on a subfigure: sf[0].subplots_adjust"},
+        Refusal{R"({"on": "sf[0]", "call": "colorbar"})", "unsupported call on a subfigure: sf[0].colorbar"},
+        Refusal{R"({"on": "sf[2]", "call": "suptitle", "args": ["x"]})", "unsupported call: sf[2].suptitle"},
+        Refusal{R"({"on": "fig", "call": "set_layout_engine", "args": ["constrained"]}, {"on": "sf[0]", "call": "add_subplot"})",
+                "the constrained layout of subfigures is not supported yet"},
+        Refusal{R"({"on": "sf[0]", "call": "add_subplot"}, {"on": "fig", "call": "set_layout_engine", "args": ["tight"]})",
+                "the tight layout of subfigures is not supported yet"},
+        Refusal{R"({"on": "fig", "call": "set_layout_engine", "args": ["constrained"]}, {"on": "fig", "call": "subfigures", "args": [2]})",
+                "fig.subfigures: subfigures with the constrained layout are not supported yet"},
+        Refusal{R"({"on": "sf[0]", "call": "add_subplot"}, {"on": "fig", "call": "tight_layout"})",
+                "fig.tight_layout: the tight layout of subfigures is not supported yet"}));
+
 // subplot_mosaic: matplotlib's errors (the layouts shown as NumPy shows object arrays)
 class MosaicRefusals : public testing::TestWithParam<Refusal> {};
 

@@ -208,7 +208,7 @@ void Collection::draw(Renderer& renderer) {
             finite = true;
             x0 = std::min(x0, p[0]), x1 = std::max(x1, p[0]), y0 = std::min(y0, p[1]), y1 = std::max(y1, p[1]);
         }
-        const auto fb = figure->bbox->points();
+        const auto fb = figure->root().bbox->points();
         // A transform that is not finite (a size that is negative, nan or infinite): the extents of
         // straight lines are then nan, and no comparison holds; of a path with curves nothing is left
         // to take them from, and matplotlib breaks.

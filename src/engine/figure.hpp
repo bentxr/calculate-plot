@@ -1,4 +1,4 @@
-// Derived from Matplotlib 3.11.2: lib/matplotlib/figure.py (Figure), lib/matplotlib/backend_bases.py
+// Derived from Matplotlib 3.11.2: lib/matplotlib/figure.py (Figure, SubFigure), lib/matplotlib/backend_bases.py
 // (FigureCanvasBase.print_figure, get_width_height), lib/matplotlib/_tight_bbox.py (adjust_bbox) and
 // lib/matplotlib/backends/backend_agg.py (FigureCanvasAgg.draw).
 // Copyright (c) 2012- Matplotlib Development Team; All Rights Reserved
@@ -38,12 +38,42 @@ struct LayoutEngine {
     bool adjustCompatible = true;  // subplots_adjust is taken (not with the constrained layout)
 };
 
+// The options of a SubFigure (facecolor 'none', edgecolor rcParams figure.edgecolor, linewidth 0, frameon
+// rcParams figure.frameon when not given)
+struct SubfigureOptions {
+    std::optional<colors::Spec> facecolor, edgecolor;
+    double linewidth = 0.0;
+    std::optional<bool> frameon;
+};
+
 class Figure : public Artist {
 public:
     Figure(const rc::Params& rc, const FigureOptions& options);
+    // SubFigure(parent, subplotspec, ...): a figure in cells of a grid of its parent (a figure or a
+    // subfigure). It shares the root's dpi, transFigure and subplot parameters; its box is its share of the
+    // parent's (bbox_relative through the parent's transSubfigure).
+    Figure(Figure& parent, const SubplotSpec& spec, const SubfigureOptions& options);
     ~Figure() override;
     void draw(Renderer& renderer) override;
-    void setDpi(double value);  // Figure.dpi = value: the boxes in pixels follow
+    void setDpi(double value);  // Figure.dpi = value: the boxes in pixels follow (in the subfigures too)
+
+    Figure* parent = nullptr;  // a subfigure's parent; null for the root figure
+    Figure& root() { return parent ? parent->root() : *this; }
+    const Figure& root() const { return parent ? parent->root() : *this; }
+    // the root figure's fig.axes (its _axstack): every Axes of the figure and of its subfigures, in the order they
+    // were made. (A figure's own Axes are `axes`, its _localaxes.)
+    const std::vector<Axes*>& allAxes() const { return root().axstack; }
+    // fig.axes: the root's every Axes, a subfigure's own
+    std::vector<Axes*> figureAxes() const;
+    std::optional<SubplotSpec> subplotspec;  // a subfigure's cells in its parent's grid
+    std::shared_ptr<transforms::Bbox> bboxRelative;  // a subfigure's box in its parent's coordinates
+    std::vector<std::unique_ptr<Figure>> subfigs;
+    // FigureBase.subfigures(nrows, ncols, wspace=, hspace=, width_ratios=, height_ratios=, **kwargs): the
+    // subfigures in row-major order (their grid: `grid`'s shape, spacing and ratios, at left=0, right=1, bottom=0,
+    // top=1)
+    std::vector<Figure*> subfigures(const GridSpec& grid, const SubfigureOptions& options);
+    // SubFigure._redo_transform_rel_fig(bbox=None): its box from the ratios of the grid of its cells
+    void redoTransformRelFig();
     void setSizeInches(double width, double height);  // set_size_inches(forward=False): bbox_inches.p1 = (w, h)
 
     double dpi;
@@ -57,6 +87,7 @@ public:
     std::unique_ptr<Rectangle> patch;
     SubplotParams subplotpars;
     std::vector<std::unique_ptr<Axes>> axes;
+    std::vector<Axes*> axstack;  // (the root's: see allAxes)
     std::vector<std::unique_ptr<GridSpec>> gridspecs;  // kept alive for the axes' subplot specs
     std::vector<std::unique_ptr<Artist>> texts;         // figure texts (suptitle)
     std::vector<std::unique_ptr<Artist>> images;        // fig.figimage's FigureImages
@@ -87,6 +118,12 @@ public:
     // Figure.add_axes((left, bottom, width, height)): an Axes at that position, in figure fractions
     Axes* addAxes(double left, double bottom, double width, double height, bool polar = false);
     Axes* addAxesBox(const std::array<double, 4>& points);  // add_axes(Bbox): the box itself as the position
+
+private:
+    // _add_axes_internal: the Axes is the figure's (_localaxes) and the root's (_axstack)
+    Axes* adopt(std::unique_ptr<Axes> ax);
+    // add_subplot(nrows, ncols, index)'s grid: _check_gridspec_exists over fig.axes
+    const GridSpec* existingGrid(int nrows, int ncols) const;
 };
 
 // Figure.savefig as a PNG, into a trace: what FigureCanvasBase.print_figure sets for the save

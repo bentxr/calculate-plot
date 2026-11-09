@@ -1358,7 +1358,7 @@ std::optional<transforms::Bbox> Axis::tightbbox(Renderer& renderer, bool forLayo
 // --- Axes ----------------------------------------------------------------------------------------
 
 Axes::Axes(const rc::Params& rc, Figure& fig, const SubplotSpec& spec, bool isPolar)
-    : Axes(rc, fig, spec.position(fig.subplotpars), spec, isPolar) {}
+    : Axes(rc, fig, spec.position(fig.root().subplotpars), spec, isPolar) {}
 
 Axes::Axes(const rc::Params& rc, Figure& fig, std::shared_ptr<transforms::Bbox> pos, const std::optional<SubplotSpec>& spec,
            bool isPolar)
@@ -2084,7 +2084,7 @@ Axes::TextTransform Axes::yaxisTextTransform(int which, double padPoints) {
 
 void Axes::setSubplotspec(const SubplotSpec& spec) {
     subplotSpec = spec;
-    setPosition(*spec.position(figure.subplotpars));
+    setPosition(*spec.position(figure.root().subplotpars));
 }
 
 void Axes::setPosition(const transforms::BboxBase& pos) {
@@ -2214,9 +2214,11 @@ void Axes::applyAspect() {
         position->setPoints(original);
         return;
     }
-    // fig_aspect: of Bbox.unit() through transSubfigure
+    // fig_aspect: of Bbox.unit() through transSubfigure (BboxTransformTo the figure's box: its corners
+    // (0, 0), (0, 1) and (1, 0) as the affine matrix takes them)
     const auto f = figure.bbox->points();
-    const double figAspect = (f[3] - f[1]) / (f[2] - f[0]);
+    const double outw = f[2] - f[0], outh = f[3] - f[1];
+    const double figAspect = ((outh + f[1]) - f[1]) / ((outw + f[0]) - f[0]);
     // Bbox.shrunk_to_aspect(box_aspect, pb, fig_aspect), then anchored(anchor, pb)
     const auto shrunk = [&](double boxAspectValue, const std::array<double, 4>& pb) {
         const double w = pb[2] - pb[0], h = pb[3] - pb[1];

@@ -1,0 +1,14 @@
+{"version": 1, "rc": {"savefig.bbox": "tight"}, "calls": [
+  {"call": "figure", "kwargs": {"figsize": {"$tuple": [6.0, 5.0]}}, "as": "fig"},
+  {"on": "fig", "call": "subfigures", "args": [2, 1], "kwargs": {"height_ratios": [1, 2], "edgecolor": "k", "linewidth": 2, "facecolor": "lightyellow", "frameon": true}, "as": ["top", "bottom"]},
+  {"on": "top", "call": "subplots", "args": [1, 3], "kwargs": {"sharey": true}, "as": "taxs"},
+  {"on": "taxs[1]", "call": "bar", "args": [[1, 2, 3], [3, 1, 2]]},
+  {"on": "bottom", "call": "subfigures", "args": [1, 2], "kwargs": {"squeeze": false}, "as": "inner"},
+  {"on": "inner[0, 0]", "call": "add_subplot", "as": "a"},
+  {"on": "a", "call": "set_title", "args": ["a"]},
+  {"on": "a", "call": "set_ylabel", "args": ["far to the left"], "kwargs": {"labelpad": 40}},
+  {"on": "inner[0, 1]", "call": "set_facecolor", "args": ["lightblue"]},
+  {"on": "inner[0, 1]", "call": "subplots", "kwargs": {"subplot_kw": {"$dict": {"projection": "polar"}}}, "as": "b"},
+  {"on": "inner[0, 1]", "call": "suptitle", "args": ["nested"]},
+  {"call": "plot", "args": [[0, 1], [1, 0]]}
+]}

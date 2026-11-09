@@ -49,8 +49,8 @@ void formatDeltas(const std::string& key, double& dx, double& dy) {
 // forward_navigation_events 'auto')
 std::vector<Axes*> axesToTrigger(Figure& figure, double x, double y, bool zoom) {
     std::vector<Axes*> axes;
-    for (auto& ax : figure.axes)  // (can_zoom: a polar Axes has no zoom box)
-        if (ax->patch->containsPoint(x, y) && !(zoom && ax->polar)) axes.push_back(ax.get());
+    for (Axes* ax : figure.allAxes())  // (can_zoom: a polar Axes has no zoom box)
+        if (ax->patch->containsPoint(x, y) && !(zoom && ax->polar)) axes.push_back(ax);
     std::map<double, std::vector<Axes*>, std::greater<double>> groups;
     for (auto it = axes.rbegin(); it != axes.rend(); ++it) groups[(*it)->zorder].push_back(*it);
     std::vector<Axes*> out;
@@ -261,8 +261,8 @@ std::string pointerText(Figure& figure, double ratio, double x, double y) {
     // FigureCanvasBase.inaxes: of the visible Axes whose patch holds the point, the topmost (the last of the
     // highest zorder)
     Axes* inaxes = nullptr;
-    for (auto& ax : figure.axes)
-        if (ax->visible && ax->patch->containsPoint(e[0], e[1]) && (!inaxes || ax->zorder >= inaxes->zorder)) inaxes = ax.get();
+    for (Axes* ax : figure.allAxes())
+        if (ax->visible && ax->patch->containsPoint(e[0], e[1]) && (!inaxes || ax->zorder >= inaxes->zorder)) inaxes = ax;
     if (!inaxes) return std::string();
     const auto data = inaxes->transData->inverted()->transform(e[0], e[1]);
     if (inaxes->polar) {

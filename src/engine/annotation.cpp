@@ -60,7 +60,8 @@ transforms::TransformPtr Annotation::oneTransform(Renderer& renderer, const std:
     split(name, &bbox, &unit);
     std::array<double, 2> xy0{0, 0};
     std::array<double, 4> box{0, 0, 0, 0};
-    if (bbox == "figure" || bbox == "subfigure") box = axes_.figure.bbox->points();  // (figbbox; no subfigures)
+    if (bbox == "figure") box = axes_.figure.root().bbox->points();  // (figbbox)
+    else if (bbox == "subfigure") box = axes_.figure.bbox->points();
     else if (bbox == "axes") box = axes_.bbox->points();
     if (bbox == "offset") xy0 = positionXY(renderer);
     else xy0 = {box[0], box[1]};  // bbox0.p0

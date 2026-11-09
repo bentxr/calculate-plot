@@ -312,6 +312,12 @@ it comes from in its first lines. The changes, as a whole:
   slice.indices), SubplotSpec.subgridspec and GridSpecFromSubplotSpec, add_subplot / pyplot.subplot of a
   SubplotSpec, and _constrained_layout.py's make_layoutgrids_gs for grids inside grids (a container over the
   parent's cells, outside their margins) (src/engine/engine.cpp, src/engine/constrained_layout.cpp).
+  Subfigures: figure.py's SubFigure (its box from bbox_relative through the parent's transSubfigure,
+  _redo_transform_rel_fig from the grid's ratios with NumPy's sums, the patch, draw), FigureBase.subfigures (the
+  grid positions when wspace or hspace is given without a layout engine), add_subfigure and Figure.subplots, with
+  the root's _axstack (fig.axes) kept apart from each figure's _localaxes, savefig's transparent subfigures and
+  get_tightbbox of subfigures; Artist._fully_clipped_to_axes for children clipped by the Axes' patch as a path
+  (src/engine/figure.cpp, src/engine/engine.cpp, src/engine/axes.cpp).
   Ticks: Axis.set_ticks (FixedLocator, set_view_interval without ignore on the shared axes) and set_ticklabels
   (NullFormatter, or a FuncFormatter of a dict of labels); set_frame_on.
   Pies: Path.arc, patches.Wedge, Shadow's zorder, Axes.pie and Axes.pie_label; the data limits of curved
