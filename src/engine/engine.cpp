@@ -1032,11 +1032,8 @@ private:
                 return *error = where + ": the subfigure property " + name + " is not supported yet", false;
             }
         }
-        if (fig().root().layoutEngine && fig().root().layoutEngine->kind != LayoutEngine::Kind::Placeholder)
-            return *error = where + ": subfigures with the " +
-                            (fig().root().layoutEngine->kind == LayoutEngine::Kind::Tight ? std::string("tight") : std::string("constrained")) +
-                            " layout are not supported yet",
-                   false;
+        if (fig().root().layoutEngine && fig().root().layoutEngine->kind == LayoutEngine::Kind::Tight)
+            return *error = where + ": subfigures with the tight layout are not supported yet", false;
         const std::vector<Figure*> made = fig().subfigures(gs, o);
         if (call.as.empty()) return true;
         const bool one = squeeze && nrows * ncols == 1, flat = squeeze && (nrows == 1 || ncols == 1);
@@ -1411,6 +1408,7 @@ private:
         // add_gridspec(rows, cols, **gridspec_kw)
         fig.gridspecs.push_back(std::make_unique<GridSpec>(int(g.size()), int(g[0].size())));
         GridSpec& gs = *fig.gridspecs.back();
+        gs.figure = &fig;
         if (!gridKeywords(gs, {gridKw.begin(), gridKw.end()}, false, "gridspec_kw ", where, error)) return false;
         {  // GridSpec.get_subplot_params: the figure's parameters updated with the grid's (as the drawing checks them)
             SubplotParams p = fig.subplotpars;
@@ -1667,6 +1665,7 @@ private:
         int nrows = 1, ncols = 1;
         if (!gridShape(argument(call, 0, "nrows"), argument(call, 1, "ncols"), &nrows, &ncols, where, error)) return false;
         auto gs = std::make_unique<GridSpec>(nrows, ncols);
+        gs->figure = &fig();
         std::vector<std::pair<std::string, const Json*>> kw;
         for (const auto& [name, value] : call.kwargs)
             if (name != "nrows" && name != "ncols") kw.emplace_back(name, &value);
@@ -7305,6 +7304,10 @@ private:
                 return *error = where + ": got an unexpected keyword argument '" + name + "'", false;
             }
         }
+        // (the colorbar of Axes in a subfigure goes into that subfigure: not ported)
+        for (const Axes* a : parents)
+            if (a->figure.parent) return *error = where + ": colorbars of Axes in subfigures are not supported yet", false;
+        if (cax && cax->figure.parent) return *error = where + ": colorbars of Axes in subfigures are not supported yet", false;
         if (!makeColorbar(fig, *m, cax, parents, useGridspec, o, error)) return *error = where + ": " + *error, false;
         return true;
     }

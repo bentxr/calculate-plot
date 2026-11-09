@@ -317,7 +317,10 @@ it comes from in its first lines. The changes, as a whole:
   grid positions when wspace or hspace is given without a layout engine), add_subfigure and Figure.subplots, with
   the root's _axstack (fig.axes) kept apart from each figure's _localaxes, savefig's transparent subfigures and
   get_tightbbox of subfigures; Artist._fully_clipped_to_axes for children clipped by the Axes' patch as a path
-  (src/engine/figure.cpp, src/engine/engine.cpp, src/engine/axes.cpp).
+  (src/engine/figure.cpp, src/engine/engine.cpp, src/engine/axes.cpp); _constrained_layout.py with subfigures (a
+  'panellb' grid for each in its parent grid's cells, each grid under the figure it was made in, and the recursions
+  of make_layout_margins, make_margin_suptitles, match_submerged_margins, check_no_collapsed_axes,
+  reposition_axes with _redo_transform_rel_fig(bbox) and reset_margins) (src/engine/constrained_layout.cpp).
   Ticks: Axis.set_ticks (FixedLocator, set_view_interval without ignore on the shared axes) and set_ticklabels
   (NullFormatter, or a FuncFormatter of a dict of labels); set_frame_on.
   Pies: Path.arc, patches.Wedge, Shadow's zorder, Axes.pie and Axes.pie_label; the data limits of curved

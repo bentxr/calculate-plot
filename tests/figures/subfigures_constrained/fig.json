@@ -1,0 +1,21 @@
+{"version": 1, "calls": [
+  {"call": "figure", "kwargs": {"figsize": {"$tuple": [7.0, 4.5]}, "layout": "constrained"}, "as": "fig"},
+  {"on": "fig", "call": "subfigures", "args": [1, 2], "kwargs": {"width_ratios": [3, 2], "wspace": 0.07}, "as": "sfigs"},
+  {"on": "sfigs[0]", "call": "set_facecolor", "args": ["0.92"]},
+  {"on": "sfigs[0]", "call": "subplots", "args": [2, 2], "kwargs": {"sharey": "row"}, "as": "axl"},
+  {"on": "axl[0, 0]", "call": "plot", "args": [[0, 1, 2, 3], [10, 30, 20, 40]], "kwargs": {"label": "first"}},
+  {"on": "axl[0, 1]", "call": "plot", "args": [[0, 1, 2, 3], [40, 20, 30, 10]], "kwargs": {"label": "second", "color": "C1"}},
+  {"on": "axl[1, 0]", "call": "bar", "args": [[1, 2, 3], [3, 1, 2]]},
+  {"on": "axl[1, 0]", "call": "set_xlabel", "args": ["a long label below"]},
+  {"on": "axl[1, 1]", "call": "set_ylabel", "args": ["values"]},
+  {"on": "sfigs[0]", "call": "suptitle", "args": ["Left side"]},
+  {"on": "sfigs[0]", "call": "legend", "kwargs": {"loc": "outside lower center", "ncols": 2}},
+  {"on": "sfigs[1]", "call": "subfigures", "args": [2, 1], "kwargs": {"height_ratios": [1, 2]}, "as": ["rtop", "rbottom"]},
+  {"on": "rtop", "call": "subplots", "as": "ax1"},
+  {"on": "ax1", "call": "plot", "args": [[1, 2, 3], [3, 1, 2]]},
+  {"on": "ax1", "call": "set_title", "args": ["top right"]},
+  {"on": "rbottom", "call": "add_subplot", "kwargs": {"projection": "polar"}, "as": "p"},
+  {"on": "p", "call": "plot", "args": [[0, 1, 2], [1, 2, 1]]},
+  {"on": "rbottom", "call": "suptitle", "args": ["polar"], "kwargs": {"fontsize": "small"}},
+  {"on": "fig", "call": "suptitle", "args": ["Constrained subfigures"]}
+]}

@@ -99,6 +99,7 @@ void Figure::redoTransformRelFig() {
 std::vector<Figure*> Figure::subfigures(const GridSpec& grid, const SubfigureOptions& options) {
     gridspecs.push_back(std::make_unique<GridSpec>(grid));
     GridSpec& gs = *gridspecs.back();
+    gs.figure = this;
     gs.left = 0, gs.right = 1, gs.bottom = 0, gs.top = 1;
     std::vector<Figure*> out;
     for (int i = 0; i < gs.nrows; ++i)
@@ -141,6 +142,7 @@ const GridSpec* Figure::existingGrid(int nrows, int ncols) const {
 
 std::vector<Axes*> Figure::subplots(int nrows, int ncols, const std::string& sharex, const std::string& sharey, const GridSpec* ratios, bool polar) {
     gridspecs.push_back(std::make_unique<GridSpec>(nrows, ncols));
+    gridspecs.back()->figure = this;
     if (ratios) {  // width_ratios / height_ratios
         gridspecs.back()->widthRatios = ratios->widthRatios, gridspecs.back()->widthRatiosInt = ratios->widthRatiosInt;
         gridspecs.back()->heightRatios = ratios->heightRatios, gridspecs.back()->heightRatiosInt = ratios->heightRatiosInt;
@@ -174,6 +176,7 @@ Axes* Figure::addSubplot(int nrows, int ncols, int num1, int num2, bool polar) {
     const GridSpec* gs = existingGrid(nrows, ncols);
     if (!gs) {
         gridspecs.push_back(std::make_unique<GridSpec>(nrows, ncols));
+        gridspecs.back()->figure = this;
         gs = gridspecs.back().get();
     }
     return adopt(std::make_unique<Axes>(rc_, *this, SubplotSpec{gs, num1, num2}, polar));
@@ -217,9 +220,8 @@ void Figure::draw(Renderer& renderer) {
     // the layout engine places the Axes (a ValueError it raises is ignored there)
     if (!axstack.empty() && layoutEngine && !layoutOff) {
         std::string error;
-        if (!subfigs.empty() && layoutEngine->kind != LayoutEngine::Kind::Placeholder)
-            renderer.unsupported(std::string("the ") + (layoutEngine->kind == LayoutEngine::Kind::Tight ? "tight" : "constrained") +
-                                 " layout of subfigures is not supported yet");
+        if (!subfigs.empty() && layoutEngine->kind == LayoutEngine::Kind::Tight)
+            renderer.unsupported("the tight layout of subfigures is not supported yet");
         else if (layoutEngine->kind == LayoutEngine::Kind::Constrained) {
             if (!executeConstrainedLayout(*this, renderer, layoutEngine->constrained, &error)) support::noteRaised(error);
         } else if (layoutEngine->kind == LayoutEngine::Kind::Tight) {

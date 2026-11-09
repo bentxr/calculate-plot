@@ -27,6 +27,7 @@ struct SubplotParams {
 };
 
 class GridSpec;
+class Figure;
 
 // A cell or a block of cells of a grid: num1, num2 are its first and last cells (row-major).
 struct SubplotSpec {
@@ -56,6 +57,8 @@ public:
     // GridSpecFromSubplotSpec (subgridspec): the grid laid out within that cell or block of a parent grid; the
     // figure's spacing unless wspace / hspace are given
     std::optional<SubplotSpec> parent;
+    // GridSpec(figure=): the (sub)figure the grid lays out in (its layout grid's parent in the constrained layout)
+    const Figure* figure = nullptr;
     // Empty: all 1. Python sums them (sum()), whose result depends on which are ints.
     std::vector<double> widthRatios, heightRatios;
     std::vector<bool> widthRatiosInt, heightRatiosInt;

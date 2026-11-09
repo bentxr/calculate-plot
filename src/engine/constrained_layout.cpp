@@ -181,6 +181,8 @@ public:
         return {lefts_[c0].value() + m(Left, c0) + m(LeftCb, c0), bottoms_[r1].value() + m(Bottom, r1) + m(BottomCb, r1),
                 rights_[c1].value() - m(Right, c1) - m(RightCb, c1), tops_[r0].value() - m(Top, r0) - m(TopCb, r0)};
     }
+    // get_outer_bbox(rows=0, cols=0)
+    std::array<double, 4> outerBbox() const { return {lefts_[0].value(), bottoms_[0].value(), rights_[0].value(), tops_[0].value()}; }
     // get_bbox_for_cb(rows, cols): the cells less their colorbar margins only
     std::array<double, 4> bboxForCb(Span rows, Span cols) const {
         const auto c0 = std::size_t(cols.start), c1 = std::size_t(cols.stop - 1), r0 = std::size_t(rows.start),
@@ -293,6 +295,12 @@ std::array<double, 4> transformed(const std::array<double, 4>& p, const transfor
     return {ll[0], ll[1], lr[0], ul[1]};
 }
 
+// Transform.transform_bbox(bbox): its two corners through the transform
+std::array<double, 4> transformBbox(const std::array<double, 4>& p, const transforms::Transform& t) {
+    const auto p0 = t.transform(p[0], p[1]), p1 = t.transform(p[2], p[3]);
+    return {p0[0], p0[1], p1[0], p1[1]};
+}
+
 class Layout {
 public:
     Layout(Figure& figure, Renderer& renderer) : figure_(figure), renderer_(renderer) {}
@@ -302,24 +310,21 @@ public:
              std::string* error) {
         kiwiError.clear();
         // make_layoutgrids: the figure's grid, then one for each gridspec of the figure's Axes
-        figureGrid_ = std::make_unique<LayoutGrid>(&solver_, nullptr, Span{0, 1}, Span{0, 1}, rect, 1, 1, std::vector<double>{},
-                                                   std::vector<double>{});
-        for (auto& ax : figure_.axes)
-            if (ax->subplotSpec) makeGrids(ax->subplotSpec->gridspec, rect);
+        makeLayoutgrids(figure_, rect);
         if (!kiwiError.empty()) return *error = kiwiError, false;
         if (grids_.empty()) return true;  // (a warning: there are no gridspecs with layoutgrids)
         for (int pass = 0; pass < 2; ++pass) {
-            makeLayoutMargins(hPad, wPad, hspace, wspace);
-            makeMarginSuptitles(hPad);
-            matchSubmergedMargins();
+            makeLayoutMargins(figure_, hPad, wPad, hspace, wspace);
+            makeMarginSuptitles(figure_, hPad, wPad);
+            matchSubmergedMargins(figure_);
             solver_.updateVariables();
             if (!kiwiError.empty()) return *error = kiwiError, false;
-            if (checkNoCollapsedAxes()) {
-                repositionAxes();
+            if (checkNoCollapsedAxes(figure_)) {
+                repositionAxes(figure_);
                 if (compress) {
                     if (!compressFixedAspect()) return true;  // (a ValueError, which Figure.draw ignores)
                     solver_.updateVariables();
-                    if (checkNoCollapsedAxes()) repositionAxes(true);
+                    if (checkNoCollapsedAxes(figure_)) repositionAxes(figure_, true);
                     if (figure_.suptitle && figure_.suptitleAutopos) {
                         auto& t = static_cast<Text&>(*figure_.suptitle);
                         t.y = figureGrid_->innerBbox(Span{0, 1}, Span{0, 1})[3] + hPad;
@@ -327,7 +332,7 @@ public:
                     }
                 }
             }
-            resetMargins();
+            resetMargins(figure_);
             if (!kiwiError.empty()) return *error = kiwiError, false;
         }
         return true;
@@ -336,12 +341,32 @@ public:
 private:
     LayoutGrid& gridOf(const Axes& ax) { return *grids_.at(ax.subplotSpec->gridspec); }
 
-    // make_layoutgrids_gs: a grid's LayoutGrid inside the figure's; a sub-grid's (GridSpecFromSubplotSpec) in a
+    // make_layoutgrids: the root figure's grid in `rect`; a subfigure's ('panellb') in its cells of its parent's grid,
+    // inside their margins; then the subfigures', then the grids of the figure's own Axes
+    void makeLayoutgrids(Figure& fig, const std::array<double, 4>& rect) {
+        if (!fig.parent) {
+            figureGrid_ = std::make_unique<LayoutGrid>(&solver_, nullptr, Span{0, 1}, Span{0, 1}, rect, 1, 1, std::vector<double>{},
+                                                       std::vector<double>{});
+            figGrids_[&fig] = figureGrid_.get();
+        } else {
+            const SubplotSpec& ss = *fig.subplotspec;
+            makeGrids(ss.gridspec, rect);
+            panels_.push_back(std::make_unique<LayoutGrid>(&solver_, grids_.at(ss.gridspec).get(), rowspan(ss), colspan(ss), rect, 1, 1,
+                                                           std::vector<double>{}, std::vector<double>{}, true));
+            figGrids_[&fig] = panels_.back().get();
+        }
+        for (auto& sfig : fig.subfigs) makeLayoutgrids(*sfig, rect);
+        for (auto& ax : fig.axes)
+            if (ax->subplotSpec) makeGrids(ax->subplotSpec->gridspec, rect);
+    }
+
+    // make_layoutgrids_gs: a grid's LayoutGrid inside its figure's; a sub-grid's (GridSpecFromSubplotSpec) in a
     // container over the cells of its parent grid, made first
     void makeGrids(const GridSpec* gs, const std::array<double, 4>& rect) {
         if (grids_.count(gs)) return;
         if (!gs->parent) {
-            grids_[gs] = std::make_unique<LayoutGrid>(&solver_, figureGrid_.get(), Span{0, 1}, Span{0, 1}, rect, gs->nrows, gs->ncols,
+            LayoutGrid* parent = figGrids_.at(gs->figure ? gs->figure : &figure_);
+            grids_[gs] = std::make_unique<LayoutGrid>(&solver_, parent, Span{0, 1}, Span{0, 1}, rect, gs->nrows, gs->ncols,
                                                       gs->widthRatios, gs->heightRatios);
             return;
         }
@@ -356,8 +381,7 @@ private:
     }
 
     // get_margin_from_padding(ax, w_pad=, h_pad=, hspace=, wspace=)
-    std::map<Side, double> marginFromPadding(const Axes& ax, double wPad, double hPad, double hspace, double wspace) {
-        const SubplotSpec& ss = *ax.subplotSpec;
+    std::map<Side, double> marginFromPadding(const SubplotSpec& ss, double wPad, double hPad, double hspace, double wspace) {
         const GridSpec& gs = *ss.gridspec;
         double hs = gs.hspace ? *gs.hspace : hspace, ws = gs.wspace ? *gs.wspace : wspace;
         ws = ws / 2;
@@ -377,15 +401,17 @@ private:
         return margin;
     }
 
-    void makeLayoutMargins(double hPad, double wPad, double hspace, double wspace) {
-        for (auto& ax : figure_.axes) {
+    void makeLayoutMargins(Figure& fig, double hPad, double wPad, double hspace, double wspace) {
+        for (auto& sfig : fig.subfigs) {  // the child panels' margins first
+            const SubplotSpec& ss = *sfig->subplotspec;
+            makeLayoutMargins(*sfig, hPad, wPad, hspace, wspace);
+            const auto margins = marginFromPadding(ss, 0, 0, hspace, wspace);
+            grids_.at(ss.gridspec)->editOuterMarginMins(margins, rowspan(ss), colspan(ss));
+        }
+        for (auto& ax : fig.axes) {
             if (!ax->subplotSpec) continue;
-            auto margin = marginFromPadding(*ax, wPad, hPad, hspace, wspace);
-            // get_pos_and_bbox: the original position, and the tight box for the layout in figure coordinates
-            const auto pos = ax->originalPosition->points();
-            std::array<double, 4> bbox = pos;
-            if (const auto tight = ax->tightbbox(renderer_, true))
-                bbox = transformed(tight->points(), *figure_.transFigure->inverted());
+            auto margin = marginFromPadding(*ax->subplotSpec, wPad, hPad, hspace, wspace);
+            const auto [pos, bbox] = posAndBbox(*ax);
             margin[Left] += pos[0] - bbox[0];
             margin[Right] += bbox[2] - pos[2];
             margin[Bottom] += pos[1] - bbox[1];
@@ -419,7 +445,8 @@ private:
             gridOf(*ax).editOuterMarginMins(margin, rowspan(*ax->subplotSpec), colspan(*ax->subplotSpec));
         }
         // margins of the figure for its legends placed outside the Axes
-        for (auto& artist : figure_.legends) {
+        LayoutGrid& figGrid = *figGrids_.at(&fig);
+        for (auto& artist : fig.legends) {
             auto& leg = static_cast<Legend&>(*artist);
             if (leg.outsideLoc().empty()) continue;
             const auto box = leg.tightbbox(renderer_).points();
@@ -427,28 +454,35 @@ private:
             const auto p0 = inv->transform(box[0], box[1]), p1 = inv->transform(box[2], box[3]);  // transform_bbox
             const double w = (p1[0] - p0[0]) + 2 * wPad, h = (p1[1] - p0[1]) + 2 * hPad;
             const std::string& side = leg.outsideLoc();
-            if (side == "lower") figureGrid_->editMarginMin(Bottom, h);
-            else if (side == "upper") figureGrid_->editMarginMin(Top, h);
-            if (side == "right") figureGrid_->editMarginMin(Right, w);
-            else if (side == "left") figureGrid_->editMarginMin(Left, w);
+            if (side == "lower") figGrid.editMarginMin(Bottom, h);
+            else if (side == "upper") figGrid.editMarginMin(Top, h);
+            if (side == "right") figGrid.editMarginMin(Right, w);
+            else if (side == "left") figGrid.editMarginMin(Left, w);
         }
     }
 
-    void makeMarginSuptitles(double hPad) {
-        if (!figure_.suptitle || !figure_.suptitleAutopos) return;
-        auto& t = static_cast<Text&>(*figure_.suptitle);
-        t.y = 1 - hPad;  // (h_pad_local: the pad through transFigure - transSubfigure, the identity)
-        const auto box = t.windowExtent(renderer_).points();
-        const auto inv = figure_.transFigure->inverted();
-        const auto p0 = inv->transform(box[0], box[1]), p1 = inv->transform(box[2], box[3]);  // transform_bbox
-        figureGrid_->editMarginMin(Top, (p1[1] - p0[1]) + 2 * hPad);
+    void makeMarginSuptitles(Figure& fig, double hPad, double wPad) {
+        // the pads as distances in the (sub)figure's own coordinates
+        const auto padbox = transformBbox({0, 0, wPad, hPad}, *transforms::subtract(fig.transFigure, fig.transSubfigure));
+        const double hPadLocal = padbox[3] - padbox[1];
+        for (auto& sfig : fig.subfigs) makeMarginSuptitles(*sfig, hPad, wPad);
+        if (!fig.suptitle || !fig.suptitleAutopos) return;
+        auto& t = static_cast<Text&>(*fig.suptitle);
+        t.y = 1 - hPadLocal;
+        const auto box = transformBbox(t.windowExtent(renderer_).points(), *fig.transFigure->inverted());
+        figGrids_.at(&fig)->editMarginMin(Top, (box[3] - box[1]) + 2 * hPad);
     }
 
     // match_submerged_margins: Axes spanning several columns (rows) take the largest inner margins of them
-    void matchSubmergedMargins() {
-        std::vector<Axes*> axs;
-        for (auto& ax : figure_.axes)
-            if (ax->subplotSpec) axs.push_back(ax.get());
+    std::vector<Axes*> matchSubmergedMargins(Figure& fig) {
+        std::vector<Axes*> done;
+        for (auto& sfig : fig.subfigs) {
+            const auto d = matchSubmergedMargins(*sfig);
+            done.insert(done.end(), d.begin(), d.end());
+        }
+        std::vector<Axes*> axs;  // fig.get_axes() (the root's: every Axes) less those done in the subfigures
+        for (Axes* ax : fig.figureAxes())
+            if (ax->subplotSpec && std::find(done.begin(), done.end(), ax) == done.end()) axs.push_back(ax);
         const auto values = [](const LayoutGrid& lg, Side s, int from, int to) {  // margin_vals[s][from:to]
             std::vector<double> v;
             for (int i = from; i < to; ++i) v.push_back(lg.marginVal(s, i));
@@ -505,10 +539,13 @@ private:
                     lg1.editMarginMin(Bottom, maxsubb - bottomcb[std::size_t(k)], i);
             }
         }
+        return axs;
     }
 
-    bool checkNoCollapsedAxes() {
-        for (auto& ax : figure_.axes) {
+    bool checkNoCollapsedAxes(Figure& fig) {
+        for (auto& sfig : fig.subfigs)
+            if (!checkNoCollapsedAxes(*sfig)) return false;
+        for (Axes* ax : fig.figureAxes()) {
             if (!ax->subplotSpec) continue;
             const LayoutGrid& lg = gridOf(*ax);
             for (int i = 0; i < lg.nrows(); ++i)
@@ -520,12 +557,17 @@ private:
         return true;
     }
 
-    void repositionAxes(bool compress = false) {
-        for (auto& ax : figure_.axes) {
+    void repositionAxes(Figure& fig, bool compress = false) {
+        const auto figToSubfig = transforms::subtract(fig.transFigure, fig.transSubfigure);
+        for (auto& sfig : fig.subfigs) {
+            const auto b = transformed(figGrids_.at(sfig.get())->outerBbox(), *figToSubfig);
+            sfig->bboxRelative->setPoints(b);  // _redo_transform_rel_fig(bbox=...)
+            repositionAxes(*sfig, compress);
+        }
+        for (auto& ax : fig.axes) {
             if (!ax->subplotSpec) continue;
             const auto b = gridOf(*ax).innerBbox(rowspan(*ax->subplotSpec), colspan(*ax->subplotSpec));
-            const transforms::Bbox box(b);  // (through transFigure - transSubfigure, the identity)
-            ax->setPosition(box);
+            ax->setPosition(transforms::Bbox(transformBbox(b, *figToSubfig)));
             // the colorbars of which this Axes is the first parent, the last made first
             std::map<std::string, double> offset{{"left", 0}, {"right", 0}, {"bottom", 0}, {"top", 0}};
             for (auto it = ax->colorbars.rbegin(); it != ax->colorbars.rend(); ++it)
@@ -555,7 +597,9 @@ private:
 
     // get_pos_and_bbox: the original position, and the tight box for the layout, in figure coordinates
     std::pair<std::array<double, 4>, std::array<double, 4>> posAndBbox(Axes& ax) {
-        const auto pos = ax.originalPosition->points();
+        const Figure& fig = ax.figure;
+        const auto pos = fig.parent ? transformed(ax.originalPosition->points(), *transforms::subtract(fig.transSubfigure, fig.transFigure))
+                                    : ax.originalPosition->points();
         std::array<double, 4> bbox = pos;
         if (const auto tight = ax.tightbbox(renderer_, true)) bbox = transformed(tight->points(), *figure_.transFigure->inverted());
         return {pos, bbox};
@@ -635,7 +679,7 @@ private:
     bool compressFixedAspect() {
         const GridSpec* gs = nullptr;
         std::vector<double> extraw, extrah;
-        for (auto& ax : figure_.axes) {
+        for (Axes* ax : figure_.allAxes()) {
             if (!ax->subplotSpec) continue;
             ax->applyAspect();
             const SubplotSpec& sub = *ax->subplotSpec;
@@ -666,16 +710,19 @@ private:
         return true;
     }
 
-    void resetMargins() {
-        for (auto& ax : figure_.axes)
+    void resetMargins(Figure& fig) {
+        for (auto& sfig : fig.subfigs) resetMargins(*sfig);
+        for (Axes* ax : fig.figureAxes())
             if (ax->subplotSpec) gridOf(*ax).resetMargins();
-        figureGrid_->resetMargins();
+        figGrids_.at(&fig)->resetMargins();
     }
 
     Figure& figure_;
     Renderer& renderer_;
     kiwi::Solver solver_;
     std::unique_ptr<LayoutGrid> figureGrid_;
+    std::vector<std::unique_ptr<LayoutGrid>> panels_;     // the subfigures' grids ('panellb')
+    std::map<const Figure*, LayoutGrid*> figGrids_;       // each (sub)figure's grid
     std::map<const GridSpec*, std::unique_ptr<LayoutGrid>> grids_;
     std::map<const GridSpec*, std::unique_ptr<LayoutGrid>> tops_;  // the containers of sub-grids, (gs, 'top')
 };
