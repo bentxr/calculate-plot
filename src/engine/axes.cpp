@@ -2320,6 +2320,10 @@ std::optional<transforms::Bbox> Axes::tightbbox(Renderer& renderer, bool forLayo
         // clip box. That lies inside the clip box, which is the patch's window extent, added below:
         // the union is the same either way.
         if (c->clipOn && c->clipBox && !c->clipPath && patch->visible) continue;
+        // clipped by the Axes' patch as a path (TransformedPatchPath, a polar Axes' children), with no clip box or the
+        // Axes' box: fully clipped (_fully_clipped_to_axes)
+        if (c->clipOn && c->clipPath && c->clipPath->patch == patch.get() && (!c->clipBox || c->clipBox->points() == bbox->points()))
+            continue;
         // an inset indicator is clipped by the Axes' patch (add_artist): fully clipped
         if (dynamic_cast<const InsetIndicator*>(c.get())) continue;
         // (without a patch drawn: left out when the clip box is the Axes' box, _fully_clipped_to_axes)
