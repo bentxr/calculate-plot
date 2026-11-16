@@ -369,6 +369,56 @@ int capNumber(const std::string& c) { return c == "butt" ? 0 : c == "round" ? 1 
 std::string paintPath(bool fill, bool stroke) { return stroke ? (fill ? "B" : "S") : (fill ? "f" : "n"); }
 }  // namespace
 
+std::string PdfFile::hatchPattern(const std::optional<std::vector<double>>& edge,
+                                  const std::optional<std::vector<double>>& face, const std::string& hatch, double lw,
+                                  const svg::PathData& hatchPath) {
+    for (const auto& h : hatchPatterns_)
+        if (h.edge == edge && h.face == face && h.hatch == hatch && h.lw == lw) return h.name;
+    hatchPatterns_.push_back({edge, face, hatch, lw, hatchPath, reprName("H" + std::to_string(hatchPatterns_.size() + 1))});
+    return hatchPatterns_.back().name;
+}
+
+void PdfFile::writeHatches() {
+    Dict hatchDict;
+    const double sidelen = 72.0;
+    for (const auto& h : hatchPatterns_) {
+        const int ob = reserveObject();
+        hatchDict.emplace_back(h.name.substr(1), reprRef(ob));
+        const std::vector<std::string> procsets{reprName("PDF"), reprName("Text"), reprName("ImageB"),
+                                                reprName("ImageC"), reprName("ImageI")};
+        // (the origin moved to match Agg's, at the top left)
+        beginStream(ob, std::nullopt,
+                    {{"Type", reprName("Pattern")},
+                     {"PatternType", reprInt(1)},
+                     {"PaintType", reprInt(1)},
+                     {"TilingType", reprInt(1)},
+                     {"BBox", reprList({reprInt(0), reprInt(0), reprNumber(sidelen, &error), reprNumber(sidelen, &error)})},
+                     {"XStep", reprNumber(sidelen, &error)},
+                     {"YStep", reprNumber(sidelen, &error)},
+                     {"Resources", reprDict({{"Procsets", reprList(procsets)}})},
+                     {"Matrix", reprList({reprInt(1), reprInt(0), reprInt(0), reprInt(1), reprInt(0),
+                                          reprNumber(height * 72, &error)})}});
+        if (!h.edge || h.edge->size() < 3) {
+            if (error.empty()) error = "a hatch without its colour";
+            endStream();
+            continue;
+        }
+        const auto& s = *h.edge;
+        output({reprNumber(s[0], &error), reprNumber(s[1], &error), reprNumber(s[2], &error), "RG"});
+        if (h.face)
+            output({reprNumber((*h.face)[0], &error), reprNumber((*h.face)[1], &error), reprNumber((*h.face)[2], &error),
+                    "rg", reprInt(0), reprInt(0), reprNumber(sidelen, &error), reprNumber(sidelen, &error), "re", "f"});
+        output({reprNumber(s[0], &error), reprNumber(s[1], &error), reprNumber(s[2], &error), "rg"});
+        output({reprNumber(h.lw, &error), "w"});
+        svg::Affine scale;
+        scale.sx = sidelen, scale.sy = sidelen;
+        output({pathOperations(h.path, scale, std::nullopt, false, std::nullopt, &error)});
+        output({"B"});
+        endStream();
+    }
+    writeObject(hatchObject_, reprDict(hatchDict));
+}
+
 void PdfFile::writeMarkers() {
     for (const auto& m : markers_) {
         // the box of the control points, padded by 5 line widths (half a miter at the default limit 10)
@@ -418,7 +468,7 @@ void PdfFile::finalize() {
                                                         {"CA", reprNumber(a.stroke, &error)},
                                                         {"ca", reprNumber(a.fill, &error)}}));
     writeObject(extGStateObject_, reprDict(states));
-    writeObject(hatchObject_, reprDict({}));    // (no hatches yet)
+    writeHatches();
     writeObject(gouraudObject_, reprDict({}));  // (no Gouraud triangles yet)
     Dict xobjects;  // (no images yet)
     for (const auto& m : markers_) xobjects.emplace_back(m.name.substr(1), reprRef(m.ob));
@@ -587,10 +637,13 @@ std::vector<std::string> RendererPdf::delta(const GcState& other) {
             } else {
                 cmds.insert(cmds.end(), {reprName("DeviceRGB"), "cs"});
             }
-        } else if (error.empty()) {
-            error = "hatches are not supported in PDF yet";
+        } else {
+            const std::string name =
+                file_.hatchPattern(other.hatchColor, gc_.fillcolor, *other.hatch, other.hatchLinewidth, other.hatchPath);
+            cmds.insert(cmds.end(), {reprName("Pattern"), "cs", name, "scn"});
         }
         gc_.hatch = other.hatch, gc_.hatchColor = other.hatchColor, gc_.hatchLinewidth = other.hatchLinewidth;
+        gc_.hatchPath = other.hatchPath;
     }
     return cmds;
 }

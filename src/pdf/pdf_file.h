@@ -56,6 +56,10 @@ public:
     // which compares by identity: every call makes a new marker.)
     std::string markerObject(const svg::PathData& path, const svg::Affine& trans, bool fill, bool stroke, double lw,
                              const std::string& joinstyle, const std::string& capstyle);
+    // hatchPattern: the name of the tiling pattern of (hatch colour, fill colour, hatch, line width);
+    // `hatchPath` is Path.hatch(hatch), which writeHatches draws
+    std::string hatchPattern(const std::optional<std::vector<double>>& edge, const std::optional<std::vector<double>>& face,
+                             const std::string& hatch, double lw, const svg::PathData& hatchPath);
     std::string pathCollectionObject(const std::string& joinstyle, const std::string& capstyle,
                                      const svg::PathData& path, const svg::Affine& trans, double padding,
                                      bool filled, bool stroked);
@@ -70,6 +74,7 @@ private:
     void recordXref(int id);
     void writeXref();
     void writeTrailer();
+    void writeHatches();
     void writeMarkers();
     void writePathCollectionTemplates();
 
@@ -97,6 +102,14 @@ private:
         double lw;
     };
     std::vector<Marker> markers_;
+    struct HatchPattern {
+        std::optional<std::vector<double>> edge, face;
+        std::string hatch;
+        double lw;
+        svg::PathData path;
+        std::string name;
+    };
+    std::vector<HatchPattern> hatchPatterns_;
     struct PathTemplate {
         std::string name;
         svg::PathData path;
@@ -131,6 +144,7 @@ struct GcState {
     std::optional<std::string> hatch;
     std::optional<std::vector<double>> hatchColor;
     double hatchLinewidth = 1.0;
+    svg::PathData hatchPath;  // get_hatch_path() (not compared: it follows the hatch)
 };
 
 // What a drawing call's graphics context holds besides that state.

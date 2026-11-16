@@ -1,0 +1,14 @@
+{"version": 1, "rc": {"hatch.linewidth": 1.5}, "calls": [
+  {"call": "subplots", "args": [1, 2], "kwargs": {"figsize": {"$tuple": [6.0, 3.0]}}, "as": ["fig", "axs"]},
+  {"on": "axs[0]", "call": "fill", "args": [[0, 1, 1, 0], [0, 0, 1, 1]], "kwargs": {"facecolor": "C1", "edgecolor": "k", "hatch": "//"}},
+  {"on": "axs[0]", "call": "fill", "args": [[1.5, 2.5, 2.0], [0, 0, 1]], "kwargs": {"facecolor": "0.8", "edgecolor": "C0", "hatch": "x"}},
+  {"on": "axs[0]", "call": "fill", "args": [[0, 1, 1, 0], [1.5, 1.5, 2.5, 2.5]], "kwargs": {"fill": false, "edgecolor": "C2", "hatch": "o."}},
+  {"on": "axs[0]", "call": "fill", "args": [[1.5, 2.5, 2.5, 1.5], [1.5, 1.5, 2.5, 2.5]], "kwargs": {"facecolor": "C1", "edgecolor": "k", "hatch": "//"}},
+  {"on": "axs[0]", "call": "fill", "args": [[2.6, 2.9, 2.9, 2.6], [0, 0, 2.5, 2.5]], "kwargs": {"facecolor": "C3", "edgecolor": "C4", "hatch": "-|", "alpha": 0.5}},
+  {"on": "axs[0]", "call": "set_xlim", "args": [0, 3]},
+  {"on": "axs[0]", "call": "set_ylim", "args": [0, 3]},
+  {"on": "axs[0]", "call": "axis", "args": ["off"]},
+  {"on": "axs[1]", "call": "fill_between", "args": [[0, 1, 2, 3], [1, 2, 1, 2], [0, 0.5, 0, 0.5]], "kwargs": {"facecolor": "C5", "edgecolor": "C6", "hatch": "\\\\"}},
+  {"on": "axs[1]", "call": "fill_between", "args": [[0, 1, 2, 3], [3, 3.5, 3, 3.5], [2.2, 2.7, 2.2, 2.7]], "kwargs": {"facecolor": "none", "edgecolor": "C7", "hatch": "+"}},
+  {"on": "axs[1]", "call": "axis", "args": ["off"]}
+]}

@@ -85,6 +85,7 @@ pdf::DrawGc graphicsContext(Reader& in, const Json& g) {
     s.hatchColor = optionalNumbers(in, in.field(g, "hatch_color"));
     s.hatchLinewidth = in.number(in.field(g, "hatch_linewidth"));
     gc.hasHatchPath = !in.field(g, "hatch").isNull();
+    s.hatchPath = path(in, in.field(g, "hatch"));
     if (auto sk = optionalNumbers(in, in.field(g, "sketch"))) {
         if (sk->size() != 3) in.fail("sketch parameters need 3 numbers");
         else gc.sketch = std::array<double, 3>{(*sk)[0], (*sk)[1], (*sk)[2]};
