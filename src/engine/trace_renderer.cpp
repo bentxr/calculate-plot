@@ -758,4 +758,115 @@ std::string SvgTraceRenderer::trace() {
     return out.text();
 }
 
+// PdfTraceRenderer
+
+PdfTraceRenderer::PdfTraceRenderer(double widthInches, double heightInches, double imageDpi, const rc::Params& rc,
+                                   std::string locale, std::string fontDirectory, SvgMetadata metadata)
+    : TraceRenderer(widthInches * 72.0, heightInches * 72.0, 72.0, rc, std::move(locale), std::move(fontDirectory)),
+      imageDpi_(imageDpi),
+      metadata_(std::move(metadata)) {
+    events_.beginObject();
+    events_.key("op").value("begin");
+    events_.key("width").value(widthInches);
+    events_.key("height").value(heightInches);
+    events_.key("image_dpi").value(imageDpi_);
+    // the renderer's own graphics context starts as GraphicsContextBase's, its hatch line width from rcParams
+    events_.key("hatch_linewidth").value(rc.number("hatch.linewidth"));
+    events_.endObject();
+}
+
+int PdfTraceRenderer::objectId(const std::shared_ptr<const void>& object) {
+    const auto [it, added] = objectIds_.emplace(object.get(), int(objectIds_.size()));
+    if (added) numbered_.push_back(object);
+    return it->second;
+}
+
+void PdfTraceRenderer::writePdfGc(const GC& gc) {
+    // The Agg fields, then what RendererPdf also reads (record.py's pdf_gc).
+    events_.beginObject();
+    writeGcFields(gc);
+    events_.key("cliprect_id");
+    if (gc.cliprect && !gc.cliprectIdentity) unsupported("PDF: a clip box without the object it comes from");
+    if (gc.cliprect && gc.cliprectIdentity) events_.value(objectId(gc.cliprectIdentity));
+    else events_.null();
+    events_.key("clippath_id");
+    if (gc.clippath) events_.value(objectId(gc.clippath->identity));
+    else events_.null();
+    events_.key("hatch_string");
+    writeOptionalText(gc.hatch);
+    events_.key("url");
+    writeOptionalText(gc.url);
+    events_.endObject();
+}
+
+void PdfTraceRenderer::drawPath(const GC& gc, const Path& path, const transforms::Matrix& affine,
+                                const std::optional<std::vector<double>>& face) {
+    events_.beginObject();
+    events_.key("op").value("draw_path");
+    events_.key("gc");
+    writePdfGc(gc);
+    events_.key("path");
+    writePath(path);
+    events_.key("simplify").value(path.shouldSimplify);
+    events_.key("transform");
+    writeMatrix(affine);
+    events_.key("face");
+    if (face) writeColour(*face, gc.faceAlphaInt);
+    else events_.null();
+    events_.endObject();
+}
+
+void PdfTraceRenderer::drawMarkers(const GC&, const Path&, const transforms::Matrix&, const Path&,
+                                   const transforms::Matrix&, const std::optional<std::vector<double>>&) {
+    unsupported("PDF: markers are not supported yet");
+}
+
+void PdfTraceRenderer::drawPathCollection(const GC&, const PathCollectionArgs&) {
+    unsupported("PDF: path collections are not supported yet");
+}
+
+void PdfTraceRenderer::drawText(const GC&, double, double, const std::string&, const FontSpec&, double, bool,
+                                const TextOptions&) {
+    unsupported("PDF: text is not supported yet");
+}
+
+void PdfTraceRenderer::drawImage(const GC&, double, double, const RgbaImage&, const std::optional<transforms::Matrix>&) {
+    unsupported("PDF: images are not supported yet");
+}
+
+void PdfTraceRenderer::drawGouraudTriangles(const GC&, const std::vector<std::array<std::array<double, 2>, 3>>&,
+                                            const std::vector<std::array<std::array<double, 4>, 3>>&,
+                                            const transforms::Matrix&) {
+    unsupported("PDF: Gouraud triangles are not supported yet");
+}
+
+bool PdfTraceRenderer::optionImageNocomposite() const { return !rc_.boolean("image.composite_image"); }
+
+TextMetrics PdfTraceRenderer::textWidthHeightDescent(const std::string&, const FontSpec&, bool) {
+    unsupported("PDF: text is not supported yet");
+    return {};
+}
+
+std::string PdfTraceRenderer::trace() {
+    support::JsonWriter out;
+    out.beginObject();
+    out.key("version").value(1);
+    out.key("matplotlib").value("3.11.2");
+    out.key("locale").value(locale_);
+    out.key("metadata").beginObject();
+    for (const auto& [key, value] : metadata_) {
+        out.key(key);
+        if (value) out.value(*value);
+        else out.null();
+    }
+    out.endObject();
+    out.key("compression").value(static_cast<long long>(rc_.number("pdf.compression")));
+    out.key("fonttype").value(static_cast<long long>(rc_.number("pdf.fonttype")));
+    out.key("inheritcolor").value(rc_.boolean("pdf.inheritcolor"));
+    out.key("use14corefonts").value(rc_.boolean("pdf.use14corefonts"));
+    out.key("events").raw(events());
+    out.endObject();
+    return out.text();
+}
+
 }  // namespace calculate_plot::engine

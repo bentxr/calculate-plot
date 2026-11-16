@@ -39,7 +39,9 @@ it comes from in its first lines. The changes, as a whole:
   (delta, clip_cmd, push / pop, finalize), translated to C++; Python's "%.10f" replaced by locale-independent
   std::to_chars; streams deflated by the vendored zlib as zlib.compressobj does. The metadata never names Matplotlib
   as the creator or producer and never writes the current time: Creator, Producer and CreationDate must be given
-  (CreationDate as None).
+  (CreationDate as None). The engine's graphics contexts carry the identity of the clip box and clip path objects
+  matplotlib would hold (src/engine/gc.hpp), which GraphicsContextPdf.delta compares; FigureCanvasPdf.print_pdf is
+  src/engine/figure.cpp drawPdfTrace.
 - **Ticks** (src/axes/ticker): ticker.py's scale_range, _Edge_integer, MaxNLocator (AutoLocator) and
   ScalarFormatter (offset, order of magnitude, format, labels and offset text, with the default rcParams) and
   transforms.py's _nonsingular, translated to C++ with Python's and NumPy's numeric semantics (floor division,

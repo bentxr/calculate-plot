@@ -474,9 +474,7 @@ def pdf_gc(g):
     """The graphics context as RendererPdf.check_gc and GraphicsContextPdf.delta read it."""
     d = gc(g)
     d.update({"cliprect_id": pdf_object(g._cliprect), "clippath_id": pdf_object(g._clippath),
-              "rgb": None if g._rgb is None else exact_color(g._rgb),
-              "hatch_string": g.get_hatch(), "hatch_color": exact_color(g.get_hatch_color()),
-              "url": g.get_url()})
+              "hatch_string": g.get_hatch(), "url": g.get_url()})
     return d
 
 
@@ -554,6 +552,7 @@ def record_pdf(fig, metadata):
         # only the last renderer writes the file (a tight bounding box makes one more, to measure)
         del events[:]
         _pdf_objects.clear()
+        _identities.clear()  # (numbered per drawing, as record_svg numbers them)
         result = original_init(self, file, image_dpi, height, width)
         # (the renderer's own graphics state starts as GraphicsContextBase's, its hatch line width from rcParams)
         events.insert(0, {"op": "begin", "width": number(width), "height": number(height),

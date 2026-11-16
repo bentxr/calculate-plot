@@ -7,6 +7,7 @@
 #include "transforms/transforms.hpp"
 
 #include <array>
+#include <memory>
 #include <optional>
 #include <string>
 #include <vector>
@@ -23,6 +24,9 @@ struct ClipPath {
     Path path;
     transforms::TransformPtr affine;
     const Patch* patch = nullptr;
+    // The clip path object matplotlib keeps (a TransformedPath): shared by the copies of this clip
+    // path, new for each set_clip_path. The PDF backend compares clip paths by this identity.
+    std::shared_ptr<const int> identity = std::make_shared<const int>(0);
 };
 
 // GraphicsContextBase: the drawing state each draw call carries.
@@ -34,6 +38,7 @@ struct GC {
     bool antialiased = true;
     std::string capstyle = "butt";
     std::optional<std::array<double, 4>> cliprect;  // the box's corners x0, y0, x1, y1
+    std::shared_ptr<const void> cliprectIdentity;    // the Bbox object it comes from (PDF compares those)
     std::optional<ClipPath> clippath;
     double dashOffset = 0.0;
     std::optional<std::vector<double>> dashes;

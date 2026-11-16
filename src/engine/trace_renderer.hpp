@@ -135,4 +135,43 @@ private:
     std::string hashsalt_;
 };
 
+// The calls of matplotlib's RendererPdf, in record.py's record_pdf format: the figure on a canvas of
+// its size in points (72 dpi), its images at `imageDpi`. Paths so far: the other calls are refused.
+class PdfTraceRenderer : public TraceRenderer {
+public:
+    PdfTraceRenderer(double widthInches, double heightInches, double imageDpi, const rc::Params& rc,
+                     std::string locale, std::string fontDirectory, SvgMetadata metadata);
+
+    void drawPath(const GC& gc, const Path& path, const transforms::Matrix& affine,
+                  const std::optional<std::vector<double>>& face) override;
+    void drawMarkers(const GC& gc, const Path& markerPath, const transforms::Matrix& markerTrans, const Path& path,
+                     const transforms::Matrix& trans, const std::optional<std::vector<double>>& face) override;
+    void drawPathCollection(const GC& gc, const PathCollectionArgs& args) override;
+    void drawText(const GC& gc, double x, double y, const std::string& s, const FontSpec& font, double angle,
+                  bool ismath, const TextOptions& mtext) override;
+    void drawImage(const GC& gc, double x, double y, const RgbaImage& im,
+                   const std::optional<transforms::Matrix>& transform) override;
+    void drawGouraudTriangles(const GC& gc, const std::vector<std::array<std::array<double, 2>, 3>>& triangles,
+                              const std::vector<std::array<std::array<double, 4>, 3>>& colors,
+                              const transforms::Matrix& transform) override;
+    bool optionImageNocomposite() const override;  // not rcParams["image.composite_image"]
+    double imageMagnification() const override { return imageDpi_ / 72.0; }
+    double mixedModeDpi() const override { return imageDpi_; }
+    bool optionScaleImage() const override { return true; }
+    bool flipy() const override { return false; }
+    TextMetrics textWidthHeightDescent(const std::string& s, const FontSpec& font, bool ismath) override;
+    std::string trace() override;
+
+private:
+    void writePdfGc(const GC& gc);
+    int objectId(const std::shared_ptr<const void>& object);
+
+    double imageDpi_;
+    SvgMetadata metadata_;
+    // GraphicsContextPdf.delta compares the clip box and the clip path by object: numbered in order of
+    // first use, and kept alive so that no later object can take the address of one numbered before
+    std::map<const void*, int> objectIds_;
+    std::vector<std::shared_ptr<const void>> numbered_;
+};
+
 }  // namespace calculate_plot::engine

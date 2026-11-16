@@ -70,4 +70,16 @@ inline const char* const kSvgHashSalt = "calculate-plot";
 // Runs a figure file's calls and draws the figure as matplotlib's FigureCanvasSVG.print_svg would.
 SvgDrawing drawSvg(const model::Figure& figure, const DrawOptions& options);
 
+struct PdfDrawing {
+    std::string trace;  // the draw calls, in the trace format of record.py's record_pdf
+    std::string error;
+};
+
+// The PDF metadata calculate-plot writes: no date, so that the same figure gives the same bytes.
+inline const std::vector<std::pair<std::string, std::optional<std::string>>> kPdfMetadata = {
+    {"Creator", "calculate-plot"}, {"Producer", "calculate-plot"}, {"CreationDate", std::nullopt}};
+
+// Runs a figure file's calls and draws the figure as matplotlib's FigureCanvasPdf.print_pdf would.
+PdfDrawing drawPdf(const model::Figure& figure, const DrawOptions& options);
+
 }  // namespace calculate_plot::engine

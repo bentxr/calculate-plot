@@ -10799,4 +10799,14 @@ SvgDrawing drawSvg(const model::Figure& model, const DrawOptions& options) {
     return out;
 }
 
+PdfDrawing drawPdf(const model::Figure& model, const DrawOptions& options) {
+    PdfDrawing out;
+    out.error = runFigure(model, options, [&](Figure& figure) {
+        std::string error;
+        out.trace = drawPdfTrace(figure, options.locale, options.fontDirectory, kPdfMetadata, &error);
+        return error;
+    });
+    return out;
+}
+
 }  // namespace calculate_plot::engine

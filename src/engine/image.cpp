@@ -717,6 +717,7 @@ void drawListCompositingImages(Renderer& renderer, const transforms::BboxPtr& pa
                     GC gc = renderer.newGc();
                     const auto pb = parentBbox->points();
                     gc.cliprect = std::array<double, 4>{pb[0], pb[1], pb[2], pb[3]};
+                    gc.cliprectIdentity = parentBbox;
                     RgbaImage im;
                     im.width = w;
                     im.height = h;

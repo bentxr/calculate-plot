@@ -141,6 +141,9 @@ std::string drawScreenTrace(Figure& figure, double ratio, const std::string& loc
                             std::string* error, std::optional<std::array<double, 2>> size = std::nullopt);
 // Figure.savefig as an SVG, into a trace (render/svg_replay writes the SVG): print_figure as above,
 // then FigureCanvasSVG.print_svg: the figure is drawn at 72 dpi, its images at the dpi of the save.
+// FigureCanvasPdf.print_pdf: the trace of record.py's record_pdf (paths so far).
+std::string drawPdfTrace(Figure& figure, const std::string& locale, const std::string& fontDirectory,
+                         const SvgMetadata& metadata, std::string* error);
 std::string drawSvgTrace(Figure& figure, const std::string& locale, const std::string& fontDirectory,
                          const SvgMetadata& metadata,
                          const std::string& hashsalt, std::string* error);

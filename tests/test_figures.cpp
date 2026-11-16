@@ -6,6 +6,7 @@
 #include "png/png.hpp"
 #include "rc/rc_params.hpp"
 #include "render/replay.hpp"
+#include "render/pdf_replay.hpp"
 #include "render/svg_replay.hpp"
 #include "support/json.hpp"
 #include "trace_compare.hpp"
@@ -143,6 +144,66 @@ TEST_P(Figures, SvgBytesEqualMatplotlibs) {
     ASSERT_TRUE(result.error.empty()) << result.error;
     EXPECT_TRUE(result.svg == readFile(figures() / GetParam() / "ref.svg")) << result.svg;
 }
+
+// The PDF renderer's calls and the file's bytes, for the cases listed in tests/pdf_cases.txt (those
+// the PDF writer draws so far).
+std::vector<std::string> pdfCases() {
+    std::istringstream list(readFile(figures().parent_path() / "pdf_cases.txt"));
+    std::vector<std::string> names;
+    for (std::string name; list >> name;) names.push_back(name);
+    return names;
+}
+
+std::string drawnPdfTrace(const std::string& name) {
+    std::string error;
+    const auto figure = calculate_plot::model::parseFigure(readFile(figures() / name / "fig.json"), &error);
+    EXPECT_TRUE(figure.has_value()) << error;
+    if (!figure) return {};
+    const auto drawing = calculate_plot::engine::drawPdf(*figure, drawOptions());
+    EXPECT_TRUE(drawing.error.empty()) << drawing.error;
+    return drawing.trace;
+}
+
+class PdfFigures : public testing::TestWithParam<std::string> {};
+
+TEST_P(PdfFigures, PdfDrawCallsEqualMatplotlibs) {
+    const std::string mine = drawnPdfTrace(GetParam());
+    const auto got = calculate_plot::support::parseJson(mine, nullptr);
+    ASSERT_TRUE(got.has_value()) << mine;
+    const auto want = calculate_plot::support::parseJson(readFile(figures() / GetParam() / "pdf-trace.json"), nullptr);
+    ASSERT_TRUE(want.has_value());
+    EXPECT_EQ(firstDifference(*got, *want, "pdf-trace"), "");
+}
+
+TEST_P(PdfFigures, PdfBytesEqualMatplotlibs) {
+    const auto result = calculate_plot::render::replayPdfTrace(drawnPdfTrace(GetParam()),
+                                                               std::string(CALCULATE_PLOT_SOURCE_DIR) + "/fonts/ttf");
+    ASSERT_TRUE(result.error.empty()) << result.error;
+    EXPECT_TRUE(result.pdf == readFile(figures() / GetParam() / "ref.pdf"));
+}
+
+// What the PDF writer does not draw yet is refused by name, never drawn differently.
+TEST(PdfFigureRefusals, WhatIsNotWrittenYetIsNamed) {
+    const auto draw = [](const std::string& calls) {
+        std::string error;
+        const auto figure = calculate_plot::model::parseFigure(R"({"version": 1, "calls": [)" + calls + "]}", &error);
+        EXPECT_TRUE(figure.has_value()) << error;
+        return figure ? calculate_plot::engine::drawPdf(*figure, drawOptions()).error : error;
+    };
+    EXPECT_EQ(draw(R"({"call": "subplots", "as": ["fig", "ax"]})"), "PDF: text is not supported yet");
+    EXPECT_EQ(draw(R"({"call": "subplots", "as": ["fig", "ax"]}, {"on": "ax", "call": "axis", "args": ["off"]},
+                      {"on": "ax", "call": "plot", "args": [[1, 2]], "kwargs": {"marker": "o"}})"),
+              "PDF: markers are not supported yet");
+    EXPECT_EQ(draw(R"({"call": "subplots", "as": ["fig", "ax"]}, {"on": "ax", "call": "axis", "args": ["off"]},
+                      {"on": "ax", "call": "fill_between", "args": [[1, 2], [1, 2]]})"),
+              "PDF: path collections are not supported yet");
+    EXPECT_EQ(draw(R"({"call": "subplots", "as": ["fig", "ax"]}, {"on": "ax", "call": "axis", "args": ["off"]},
+                      {"on": "ax", "call": "imshow", "args": [[[1, 2], [3, 4]]]})"),
+              "PDF: images are not supported yet");
+}
+
+INSTANTIATE_TEST_SUITE_P(Engine, PdfFigures, testing::ValuesIn(pdfCases()),
+                         [](const testing::TestParamInfo<std::string>& param) { return param.param; });
 
 INSTANTIATE_TEST_SUITE_P(Engine, Figures, testing::ValuesIn(cases()),
                          [](const testing::TestParamInfo<std::string>& param) { return param.param; });

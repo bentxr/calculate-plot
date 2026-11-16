@@ -45,11 +45,16 @@ void Artist::setGcClip(GC& gc) const {
         if (clipBox) {
             const auto p = clipBox->points();
             gc.cliprect = std::array<double, 4>{p[0], p[1], p[2], p[3]};
+            gc.cliprectIdentity = clipBox;
         }
         gc.clippath = clipPath;
-        if (clipPath && clipPath->patch) gc.clippath = ClipPath{clipPath->patch->path(), clipPath->patch->fullTransform()};
+        if (clipPath && clipPath->patch) {
+            gc.clippath = ClipPath{clipPath->patch->path(), clipPath->patch->fullTransform()};
+            gc.clippath->identity = clipPath->identity;
+        }
     } else {
         gc.cliprect.reset();
+        gc.cliprectIdentity.reset();
         gc.clippath.reset();
     }
 }

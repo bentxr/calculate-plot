@@ -468,6 +468,42 @@ std::string drawScreenTrace(Figure& figure, double ratio, const std::string& loc
     return renderer.trace();
 }
 
+std::string drawPdfTrace(Figure& figure, const std::string& locale, const std::string& fontDirectory,
+                         const SvgMetadata& metadata, std::string* error) {
+    SaveOptions o;
+    if (!saveOptions(figure, &o, error)) return {};
+    const Saving saving(figure, o);
+    // print_pdf: the figure at 72 dpi (points), drawn on a page of its size in inches; its images at the
+    // dpi it had
+    const auto renderer = [&] {
+        const double dpi = figure.dpi;
+        figure.setDpi(72);
+        const auto inches = figure.bboxInches->points();
+        return PdfTraceRenderer(inches[2], inches[3], dpi, figure.rc(), locale, fontDirectory, metadata);
+    };
+    std::optional<AdjustedBbox> adjusted;
+    if (figure.layoutEngine || o.tight) {
+        // as print_svg: the layout is done with drawing disabled on the renderer print_pdf makes, at 72 dpi
+        // (FigureCanvasPdf.fixed_dpi)
+        PdfTraceRenderer layout = renderer();
+        figure.draw(layout);
+        if (!layout.error().empty()) return *error = layout.error(), std::string();
+        if (!support::raised().empty()) return *error = support::raised(), std::string();
+        if (o.tight) {
+            const auto inches = paddedTightBbox(figure, layout, o.pad);
+            if (!layout.error().empty()) return *error = layout.error(), std::string();
+            adjusted.emplace(figure, inches);
+        }
+        figure.setDpi(o.dpi);  // print_figure sets the dpi again before printing
+    }
+    const LayoutOff off(figure);  // (the layout is done)
+    PdfTraceRenderer final = renderer();
+    final.rasterize = [&final](Artist&) { final.unsupported("PDF: rasterized artists are not supported yet"); };
+    figure.draw(final);
+    *error = final.error();
+    return final.trace();
+}
+
 std::string drawSvgTrace(Figure& figure, const std::string& locale, const std::string& fontDirectory,
                          const SvgMetadata& metadata,
                          const std::string& hashsalt, std::string* error) {
