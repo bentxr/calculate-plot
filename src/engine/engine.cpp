@@ -55,6 +55,21 @@ const Json* sequence(const Json& v) {
     return nullptr;
 }
 
+// The Python type of a figure file's value that is not a string or a sequence, as type(v).__name__
+std::string pythonTypeName(const Json& v) {
+    if (v.isNull()) return "NoneType";
+    if (v.isBool()) return "bool";
+    if (v.isNumber()) return v.isInteger() ? "int" : "float";
+    if (v.isObject() && v.members().size() == 1) {
+        const std::string& key = v.members()[0].first;
+        if (key == "$dict") return "dict";
+        if (key == "$float") return "float";
+        if (key == "$datetime") return "datetime";
+        if (key == "$lambda" || key == "$func") return "function";
+    }
+    return "object";
+}
+
 // A date of a figure file: {"$datetime": "YYYY-MM-DDTHH:MM:SS[.ffffff]"}
 bool isDatetime(const Json& v) { return v.isObject() && v.members().size() == 1 && v.members()[0].first == "$datetime"; }
 
@@ -3950,12 +3965,70 @@ private:
                     return bad(name, "is not a math font family");
                 t.font.mathFontfamily = v.asString();
             } else if (property == "language") {
-                // Text.set_language: None is the rcParams' language
+                // Text.set_language: check_isinstance((Sequence, str, None)); None is the rcParams' language
+                const Json* list = sequence(v);
+                if (!v.isNull() && !v.isString() && !list)
+                    return *error = where + ": 'language' must be an instance of collections.abc.Sequence, str or None, not a " +
+                                    pythonTypeName(v), false;
                 const auto& d = rc_.value("text.language");
-                if (v.isNull()) return t.language = d.isString() ? std::optional<std::string>(d.asString()) : std::nullopt, true;
-                if (sequence(v)) return bad(name, "as a list of ranges is not supported yet");
-                if (!v.isString()) return bad(name, "must be a string or None");
-                t.language = v.asString();
+                if (v.isNull()) return t.language = d.isString() ? std::optional<text::Language>(text::Language{false, d.asString(), {}}) : std::nullopt, true;
+                if (v.isString()) return t.language = text::Language{false, v.asString(), {}}, true;
+                // a sequence of (str, int, int) tuples, checked one by one (the messages are matplotlib's,
+                // which are not f-strings)
+                const auto isInt = [](const Json& b) { return b.isBool() || (b.isNumber() && b.isInteger()); };
+                for (const Json& item : list->items()) {
+                    const bool tuple = item.isObject() && item.members().size() == 1 && item.members()[0].first == "$tuple";
+                    if (!tuple || sequence(item)->size() != 3)
+                        return *error = where + ": language must be list of tuple, not {language!r}", false;
+                    const auto& parts = sequence(item)->items();
+                    if (!parts[0].isString()) return *error = where + ": sub-language specification must be str, not {sublang!r}", false;
+                    if (!isInt(parts[1])) return *error = where + ": start location must be int, not {start!r}", false;
+                    if (!isInt(parts[2])) return *error = where + ": end location must be int, not {end!r}", false;
+                }
+                text::Language language;
+                language.isRanges = true;
+                for (const Json& item : list->items()) {
+                    const auto& parts = sequence(item)->items();
+                    // HarfBuzz shapes a range of no language in the language of the process locale
+                    if (parts[0].asString().c_str()[0] == '\0')
+                        return *error = where + ": a language range with an empty language is not supported yet", false;
+                    text::LanguageRange range;
+                    range.language = parts[0].asString();
+                    const auto bound = [&](const Json& b, int* value, bool* isBool) {
+                        *isBool = b.isBool();
+                        const double x = b.isBool() ? (b.asBool() ? 1.0 : 0.0) : b.asNumber();
+                        if (!(x >= double(std::numeric_limits<int>::min()) && x <= double(std::numeric_limits<int>::max()))) return false;
+                        *value = int(x);
+                        return true;
+                    };
+                    if (!bound(parts[1], &range.start, &range.startIsBool) || !bound(parts[2], &range.end, &range.endIsBool))
+                        return *error = where + ": a language range beyond the C int range is not supported", false;
+                    language.ranges.push_back(range);
+                }
+                t.language = language;
+            } else if (property == "fontfeatures") {
+                // Text.set_fontfeatures: check_isinstance((Sequence, None)), then tuple(features): a string is
+                // the sequence of its characters. The features are strings (FT2Font.layout takes no others).
+                if (v.isNull()) return t.features.reset(), true;
+                std::vector<std::string> features;
+                if (v.isString()) {
+                    const std::string& text = v.asString();
+                    for (std::size_t i = 0; i < text.size();) {
+                        std::size_t j = i + 1;
+                        while (j < text.size() && (static_cast<unsigned char>(text[j]) & 0xC0) == 0x80) ++j;
+                        features.push_back(text.substr(i, j - i));
+                        i = j;
+                    }
+                } else if (const Json* list = sequence(v)) {
+                    for (const Json& item : list->items()) {
+                        if (!item.isString()) return bad(name, "must be strings");
+                        features.push_back(item.asString());
+                    }
+                } else {
+                    return *error = where + ": 'features' must be an instance of collections.abc.Sequence or None, not a " +
+                                    pythonTypeName(v), false;
+                }
+                t.features = features;
             } else if ((property == "x" || property == "y") && !constructing) {
                 if (!readNumber(v, &n)) return bad(name, "must be a number");
                 (property == "x" ? t.x : t.y) = n;

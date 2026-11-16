@@ -41,6 +41,7 @@ protected:
     void writeNumbers(const std::vector<double>& values);
     void writeColour(const std::vector<double>& rgba, bool intAlpha);
     void writeOptionalText(const std::optional<std::string>& text);
+    void writeLanguage(const std::optional<text::Language>& language);  // as get_language() is recorded
     void writeArray(const std::vector<std::size_t>& shape, const std::vector<double>& data);  // record.py's array()
     void writeCollectionFields(const PathCollectionArgs& args);
     void writeImage(const RgbaImage& im);

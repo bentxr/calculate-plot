@@ -131,6 +131,25 @@ void TraceRenderer::writeOptionalText(const std::optional<std::string>& text) {
     else events_.null();
 }
 
+void TraceRenderer::writeLanguage(const std::optional<text::Language>& language) {
+    if (!language) {
+        events_.null();
+    } else if (!language->isRanges) {
+        events_.value(language->name);
+    } else {
+        events_.beginArray();
+        for (const auto& r : language->ranges) {
+            events_.beginArray().value(r.language);
+            if (r.startIsBool) events_.value(r.start != 0);
+            else events_.value(r.start);
+            if (r.endIsBool) events_.value(r.end != 0);
+            else events_.value(r.end);
+            events_.endArray();
+        }
+        events_.endArray();
+    }
+}
+
 void TraceRenderer::writeArray(const std::vector<std::size_t>& shape, const std::vector<double>& data) {
     events_.beginObject().key("shape").beginArray();
     for (std::size_t n : shape) events_.value(static_cast<long long>(n));
@@ -340,7 +359,7 @@ void AggTraceRenderer::drawText(const GC& gc, double x, double y, const std::str
         events_.null();
     }
     events_.key("language");
-    writeOptionalText(mtext.language);
+    writeLanguage(mtext.language);
     events_.key("antialiased").value(gc.antialiased);
     events_.key("hinting").value(hinting);
     events_.key("gc");
@@ -665,7 +684,7 @@ void SvgTraceRenderer::drawText(const GC& gc, double x, double y, const std::str
         events_.null();
     }
     events_.key("language");
-    writeOptionalText(mtext.language);
+    writeLanguage(mtext.language);
     events_.key("clip_transform");
     writeClipTransform(gc);
     if (ismath) {

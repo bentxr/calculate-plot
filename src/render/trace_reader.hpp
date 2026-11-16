@@ -4,9 +4,11 @@
 // before anything reaches a renderer.
 
 #include "support/json.hpp"
+#include "text/text_render.h"
 
 #include <cmath>
 #include <limits>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -59,6 +61,41 @@ public:
         const double v = number(j);
         if (!(v >= -9.0e15 && v <= 9.0e15) || v != std::floor(v)) fail("expected an integer");
         return error.empty() ? static_cast<long long>(v) : 0;
+    }
+
+    // A text's "language" (Text.get_language()): null, a name, or a list of [name, start, end] whose
+    // bounds are C ints (True and False among them, kept as such).
+    std::optional<text::Language> language(const Json& j) {
+        if (j.isNull()) return std::nullopt;
+        text::Language out;
+        if (j.isString()) {
+            out.name = j.asString();
+            return out;
+        }
+        out.isRanges = true;
+        if (!j.isArray()) {
+            fail("expected a language or a list of language ranges");
+            return out;
+        }
+        const auto bound = [&](const Json& b, int* value, bool* isBool) {
+            *isBool = b.isBool();
+            if (*isBool) return void(*value = b.asBool() ? 1 : 0);
+            const long long v = integer(b);
+            if (v < std::numeric_limits<int>::min() || v > std::numeric_limits<int>::max()) fail("expected a C int");
+            *value = error.empty() ? int(v) : 0;
+        };
+        for (const Json& r : j.items()) {
+            if (!r.isArray() || r.size() != 3) {
+                fail("expected [language, start, end]");
+                return out;
+            }
+            text::LanguageRange range;
+            range.language = text(r.items()[0]);
+            bound(r.items()[1], &range.start, &range.startIsBool);
+            bound(r.items()[2], &range.end, &range.endIsBool);
+            out.ranges.push_back(range);
+        }
+        return out;
     }
 
     // An array of numbers; `count` (when not 0) is the exact length required.

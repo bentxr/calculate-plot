@@ -6,6 +6,7 @@
 #include "engine/gc.hpp"
 #include "engine/path.hpp"
 #include "text/font_manager.hpp"
+#include "text/language.hpp"
 #include "transforms/transforms.hpp"
 
 #include <array>
@@ -32,7 +33,7 @@ struct FontSpec {
 // What draw_text takes from the Text artist when the text has one line (mtext).
 struct TextOptions {
     std::optional<std::vector<std::string>> features;
-    std::optional<std::string> language;
+    std::optional<text::Language> language;
 };
 
 // get_text_width_height_descent, in pixels.

@@ -70,7 +70,7 @@ Text::Text(const rc::Params& rc, double x0, double y0, std::string s)
       antialiased(rc.boolean("text.antialiased")),
       parseMath(rc.boolean("text.parse_math")) {
     // set_language(None)
-    if (const auto& l = rc.value("text.language"); l.isString()) language = l.asString();
+    if (const auto& l = rc.value("text.language"); l.isString()) language = text::Language{false, l.asString(), {}};
     zorder = 3;
     setColor(rc.text("text.color"));
 }

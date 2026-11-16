@@ -330,6 +330,12 @@ it comes from in its first lines. The changes, as a whole:
   at FONT_SCALE, scaled and moved, then the layout's rectangles) and TextPath for mathtext strings, markers.py's
   _set_mathtext_path and path.py's Path.get_extents (src/engine/text_path.cpp, src/engine/lines.cpp); the fonts
   come from a FontCache the figure file's run opens.
+  Font features and languages: text.py's Text.set_fontfeatures and Text.set_language (with its range checks and
+  their messages) and ft2font_wrapper.cpp's conversion of a language into the ranges FT2Font.layout takes
+  (src/text/language.hpp, src/text/text_render.cpp layoutLanguages, src/engine/engine.cpp); characters no range
+  covers, and a text without a language, are given the default language of the locale the figure was made in
+  instead of HarfBuzz's process-wide default, so the output never depends on the user's locale; a range with an
+  empty language is refused for that reason.
   Pies: Path.arc, patches.Wedge, Shadow's zorder, Axes.pie and Axes.pie_label; the data limits of curved
   paths (bezier.BezierSegment: polynomial coefficients, axis-aligned extrema by _real_roots_in_01 and
   _quadratic_roots_in_01, evaluation as NumPy's matrix product makes it).

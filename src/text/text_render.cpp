@@ -158,10 +158,23 @@ std::u32string codepoints(const std::string& utf8) {
     return out;
 }
 
+FT2Font::LanguageType layoutLanguages(const std::optional<Language>& language, std::size_t length,
+                                      const std::string& defaultLanguage) {
+    const int n = int(length);
+    if (!language || !language->isRanges) {
+        const bool given = language && language->name.c_str()[0] != '\0';
+        return std::vector<FT2Font::LanguageRange>{{given ? language->name : defaultLanguage, 0, n}};
+    }
+    // raqm starts every character at HarfBuzz's default language; the ranges are then set in order
+    std::vector<FT2Font::LanguageRange> ranges{{defaultLanguage, 0, n}};
+    for (const auto& r : language->ranges) ranges.emplace_back(r.language, r.start, r.end);
+    return ranges;
+}
+
 std::vector<Glyph> layoutText(FontCache& fonts, const std::vector<std::string>& names, const std::string& text,
                               double size, double dpi, FT_Int32 flags,
                               const std::optional<std::vector<std::string>>& features,
-                              const std::optional<std::string>& language, std::string& error,
+                              const std::optional<Language>& language, std::string& error,
                               const std::string& defaultLanguage) {
     // _prepare_font: the font, cleared and set to the size.
     FT2Font* font = fonts.get(names);
@@ -172,12 +185,7 @@ std::vector<Glyph> layoutText(FontCache& fonts, const std::vector<std::string>& 
     font->clear();
     font->set_size(size, dpi);
     const std::u32string cps = codepoints(text);
-    // Never HarfBuzz's process-wide default (the user's locale): always an explicit language. An
-    // empty one (to C: one that starts with a NUL) is none to HarfBuzz, which then takes its default.
-    const bool given = language && language->c_str()[0] != '\0';
-    const FT2Font::LanguageType languages =
-        std::vector<FT2Font::LanguageRange>{{given ? *language : defaultLanguage, 0, int(cps.size())}};
-    const auto items = font->layout_items(cps, flags, features, languages);
+    const auto items = font->layout_items(cps, flags, features, layoutLanguages(language, cps.size(), defaultLanguage));
     if (!font->error.empty()) {
         error = font->error;
         return {};

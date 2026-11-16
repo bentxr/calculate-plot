@@ -122,14 +122,44 @@ INSTANTIATE_TEST_SUITE_P(
                 "axs[0].text: fontdict is not supported yet"},
         Refusal{R"({"on": "axs[0]", "call": "text", "args": [1, 2, "t", "bold"], "kwargs": {}})",
                 "axs[0].text: fontdict is not supported yet"},
+        // Text.set_language's checks, worded as matplotlib 3.11.2 words them (four of them are not
+        // f-strings there: their braces are part of the message)
         Refusal{R"({"on": "axs[0]", "call": "text", "args": [1, 2, "t"], "kwargs": {"language": 5}})",
-                "axs[0].text: language must be a string or None"},
+                "axs[0].text: 'language' must be an instance of collections.abc.Sequence, str or None, not a int"},
         Refusal{R"({"on": "axs[0]", "call": "text", "args": [1, 2, "t"], "kwargs": {"language": true}})",
-                "axs[0].text: language must be a string or None"},
-        Refusal{R"({"on": "axs[0]", "call": "text", "args": [1, 2, "t"], "kwargs": {"language": [{"$tuple": ["en", 0, 1]}]}})",
-                "axs[0].text: language as a list of ranges is not supported yet"},
-        Refusal{R"({"on": "axs[0]", "call": "text", "args": [1, 2, "t"], "kwargs": {"language": {"$tuple": []}}})",
-                "axs[0].text: language as a list of ranges is not supported yet"},
+                "axs[0].text: 'language' must be an instance of collections.abc.Sequence, str or None, not a bool"},
+        Refusal{R"({"on": "axs[0]", "call": "text", "args": [1, 2, "t"], "kwargs": {"language": 1.5}})",
+                "axs[0].text: 'language' must be an instance of collections.abc.Sequence, str or None, not a float"},
+        Refusal{R"({"on": "axs[0]", "call": "text", "args": [1, 2, "t"], "kwargs": {"language": {"$dict": {}}}})",
+                "axs[0].text: 'language' must be an instance of collections.abc.Sequence, str or None, not a dict"},
+        Refusal{R"({"on": "axs[0]", "call": "text", "args": [1, 2, "t"], "kwargs": {"language": [["en", 0, 1]]}})",
+                "axs[0].text: language must be list of tuple, not {language!r}"},
+        Refusal{R"({"on": "axs[0]", "call": "text", "args": [1, 2, "t"], "kwargs": {"language": {"$tuple": ["en", 0, 1]}}})",
+                "axs[0].text: language must be list of tuple, not {language!r}"},
+        Refusal{R"({"on": "axs[0]", "call": "text", "args": [1, 2, "t"], "kwargs": {"language": [{"$tuple": ["en", 0]}]}})",
+                "axs[0].text: language must be list of tuple, not {language!r}"},
+        Refusal{R"({"on": "axs[0]", "call": "text", "args": [1, 2, "t"], "kwargs": {"language": [{"$tuple": [5, 0, 1]}]}})",
+                "axs[0].text: sub-language specification must be str, not {sublang!r}"},
+        Refusal{R"({"on": "axs[0]", "call": "text", "args": [1, 2, "t"], "kwargs": {"language": [{"$tuple": ["en", 0.5, 1]}]}})",
+                "axs[0].text: start location must be int, not {start!r}"},
+        Refusal{R"({"on": "axs[0]", "call": "text", "args": [1, 2, "t"], "kwargs": {"language": [{"$tuple": ["en", null, 1]}]}})",
+                "axs[0].text: start location must be int, not {start!r}"},
+        Refusal{R"({"on": "axs[0]", "call": "text", "args": [1, 2, "t"], "kwargs": {"language": [{"$tuple": ["en", 0, "1"]}]}})",
+                "axs[0].text: end location must be int, not {end!r}"},
+        // Not supported yet: HarfBuzz shapes a range with an empty language in the language of the
+        // process locale; and the layout takes C ints only (matplotlib raises TypeError when drawing)
+        Refusal{R"({"on": "axs[0]", "call": "text", "args": [1, 2, "t"], "kwargs": {"language": [{"$tuple": ["", 0, 1]}]}})",
+                "axs[0].text: a language range with an empty language is not supported yet"},
+        Refusal{R"({"on": "axs[0]", "call": "text", "args": [1, 2, "t"], "kwargs": {"language": [{"$tuple": ["en", 0, 2147483648]}]}})",
+                "axs[0].text: a language range beyond the C int range is not supported"},
+        // Text.set_fontfeatures: check_isinstance((Sequence, None)); the items are strings (matplotlib
+        // takes others and raises TypeError when drawing)
+        Refusal{R"({"on": "axs[0]", "call": "text", "args": [1, 2, "t"], "kwargs": {"fontfeatures": 5}})",
+                "axs[0].text: 'features' must be an instance of collections.abc.Sequence or None, not a int"},
+        Refusal{R"({"on": "axs[0]", "call": "text", "args": [1, 2, "t"], "kwargs": {"fontfeatures": {"$dict": {"a": 1}}}})",
+                "axs[0].text: 'features' must be an instance of collections.abc.Sequence or None, not a dict"},
+        Refusal{R"({"on": "axs[0]", "call": "text", "args": [1, 2, "t"], "kwargs": {"fontfeatures": ["liga", 5]}})",
+                "axs[0].text: fontfeatures must be strings"},
         Refusal{R"({"on": "axs[0]", "call": "text", "args": [1, 2, "t"], "kwargs": {"colour": "red"}})",
                 "axs[0].text: unsupported keyword colour"},
         Refusal{R"({"on": "axs[0]", "call": "text", "args": [1, 2, "t"], "kwargs": {"bbox": [1]}})",
@@ -400,6 +430,22 @@ TEST(TextKeywordCalls, NoneKeywordsAreTheDefaults) {
         {"on": "fig", "call": "suptitle", "args": ["t"], "kwargs": {"x": null, "y": null, "fontdict": null, "color": null}},
         {"on": "fig", "call": "text", "args": [0.5, 0.5, "t", null], "kwargs": {"color": null, "rotation": null}})");
     EXPECT_EQ(drawing.error, "");
+}
+
+// What the layout of a drawn text refuses stops the drawing with FT2Font's own words, as matplotlib
+// raises them when it draws: a feature HarfBuzz cannot read, a language range outside the text (one
+// that ends before it starts sets nothing). The measuring of a text uses neither.
+TEST(TextKeywordCalls, FeaturesAndLanguagesTheLayoutRefusesStopTheDrawing) {
+    EXPECT_EQ(draw(kSubplots + R"({"on": "axs[0]", "call": "text", "args": [0.5, 0.5, "abc"], "kwargs": {"fontfeatures": [""]}})").error,
+              "failed to set font feature ");
+    EXPECT_EQ(draw(kSubplots + R"({"on": "axs[0]", "call": "text", "args": [0.5, 0.5, "abc"], "kwargs": {"fontfeatures": ["@@"]}})").error, "");
+    EXPECT_EQ(draw(kSubplots + R"({"on": "axs[0]", "call": "text", "args": [0.5, 0.5, "abc"], "kwargs": {"language": [{"$tuple": ["sr", 0, 50]}]}})").error,
+              "failed to set language between 0 and 50 characters to 'sr' for layout");
+    EXPECT_EQ(draw(kSubplots + R"({"on": "axs[0]", "call": "text", "args": [0.5, 0.5, "abc"], "kwargs": {"language": [{"$tuple": ["sr", 3, 3]}]}})").error,
+              "failed to set language between 3 and 3 characters to 'sr' for layout");
+    EXPECT_EQ(draw(kSubplots + R"({"on": "axs[0]", "call": "text", "args": [0.5, 0.5, "abc"], "kwargs": {"language": [{"$tuple": ["sr", -1, 2]}]}})").error,
+              "failed to set language between -1 and 2 characters to 'sr' for layout");
+    EXPECT_EQ(draw(kSubplots + R"({"on": "axs[0]", "call": "text", "args": [0.5, 0.5, "abc"], "kwargs": {"language": [{"$tuple": ["sr", 2, 1]}]}})").error, "");
 }
 
 class SpanRefusals : public testing::TestWithParam<Refusal> {};

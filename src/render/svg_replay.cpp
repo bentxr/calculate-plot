@@ -282,7 +282,7 @@ SvgReplayResult replaySvgTrace(std::string_view traceJson, const std::string& fo
                 const auto names = strings(in, in.field(e, "fonts"));
                 std::optional<std::vector<std::string>> features;
                 if (!in.field(e, "features").isNull()) features = strings(in, in.field(e, "features"));
-                const auto language = optionalText(in, in.field(e, "language"));
+                const auto language = in.language(in.field(e, "language"));
                 if (in.error.empty()) r.drawTextAsPath(gc, x, y, s, names, size, angle, features, language);
             } else {
                 in.fail("TeX text is not supported");

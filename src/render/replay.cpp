@@ -303,8 +303,7 @@ std::string drawText(RendererAgg& r, const Json& e, Identities& ids, text::FontC
     if (!flags) in.fail("unknown text.hinting");
     std::optional<std::vector<std::string>> features;
     if (!in.field(e, "features").isNull()) features = strings(in, in.field(e, "features"));
-    std::optional<std::string> language;
-    if (!in.field(e, "language").isNull()) language = in.text(in.field(e, "language"));
+    const auto language = in.language(in.field(e, "language"));
     if (!in.error.empty()) return "text: " + in.error;
     std::string error;
     const auto glyphs = text::layoutText(fonts, names, s, size, r.dpi, *flags, features, language, error, locale);

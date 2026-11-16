@@ -88,9 +88,9 @@ TEST(Schema, WhatCannotBeToldIsCounted) {
     }
     std::printf("schema: %d taken, %d not supported yet, %d not told\n", taken, refused, unknown);
     EXPECT_EQ(taken + refused + unknown, 900);
-    EXPECT_EQ(taken, 661);
+    EXPECT_EQ(taken, 669);
     EXPECT_EQ(refused, 157);
-    EXPECT_EQ(unknown, 82) << unknowns;  // objects and dicts a figure file does not hold (data, fontdict, prop...)
+    EXPECT_EQ(unknown, 74) << unknowns;  // objects and dicts a figure file does not hold (data, fontdict, prop...)
 }
 
 // Each call says whether its data take dates ({"$datetime": ...}), as the engine answers a probe

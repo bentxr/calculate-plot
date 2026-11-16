@@ -628,6 +628,7 @@
     "src/svg/xml_writer.cpp",
     "src/svg/xml_writer.h",
     "src/text/font_manager.cpp",
+    "src/text/language.hpp",
     "src/text/font_manager.hpp",
     "src/text/ft2font.cpp",
     "src/text/ft2font.h",

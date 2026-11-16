@@ -5,6 +5,7 @@
 #pragma once
 
 #include "text/ft2font.h"
+#include "text/language.hpp"
 
 #include <functional>
 #include <map>
@@ -76,12 +77,20 @@ struct Box {
 // passes a language explicitly, so its output never depends on the user's locale.
 inline const char* const kReferenceLocale = "C.UTF-8";
 
+// The languages FT2Font.layout takes for a text of `length` characters (ft2font_wrapper's
+// conversion: a name covers the whole text). Never HarfBuzz's process-wide default (the user's
+// locale): characters that no range covers, and a text with no language or an empty one (to C: one
+// that starts with a NUL, which is none to HarfBuzz), get `defaultLanguage`, the interned language
+// HarfBuzz would default to in the locale the figure was made in.
+FT2Font::LanguageType layoutLanguages(const std::optional<Language>& language, std::size_t length,
+                                      const std::string& defaultLanguage);
+
 // RendererAgg.draw_text for plain text: lays `text` (UTF-8) out with the fonts and returns its glyphs.
 // `language` is the text's own (Text.set_language); without one, `defaultLanguage` is used.
 std::vector<Glyph> layoutText(FontCache& fonts, const std::vector<std::string>& names, const std::string& text,
                               double size, double dpi, FT_Int32 flags,
                               const std::optional<std::vector<std::string>>& features,
-                              const std::optional<std::string>& language, std::string& error,
+                              const std::optional<Language>& language, std::string& error,
                               const std::string& defaultLanguage = kReferenceLocale);
 
 // RendererAgg.get_text_width_height_descent for plain text, in pixels. matplotlib measures without

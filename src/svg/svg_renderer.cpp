@@ -769,7 +769,7 @@ std::string glyphRepr(FT2Font& font, unsigned index) {
 void RendererSVG::drawTextAsPath(const Gc& gc, double x, double y, const std::string& s,
                                  const std::vector<std::string>& fonts, double size, double angle,
                                  const std::optional<std::vector<std::string>>& features,
-                                 const std::optional<std::string>& language) {
+                                 const std::optional<text::Language>& language) {
     const Attributes clip = clipAttrs(gc);
     if (!clip.empty()) writer_.start("g", clip);
     if (gc.url) writer_.start("a", {{"xlink:href", *gc.url}, {"target", "_blank"}});
@@ -792,9 +792,8 @@ void RendererSVG::drawTextAsPath(const Gc& gc, double x, double y, const std::st
     }
     font->set_size(100.0, 72.0);
     const std::u32string cps = text::codepoints(s);
-    const FT2Font::LanguageType languages =
-        std::vector<FT2Font::LanguageRange>{{language.value_or(language_), 0, int(cps.size())}};
-    const auto items = font->layout_items(cps, FT_LOAD_NO_HINTING, features, languages);
+    const auto items =
+        font->layout_items(cps, FT_LOAD_NO_HINTING, features, text::layoutLanguages(language, cps.size(), language_));
     if (!font->error.empty()) error = font->error;
     std::vector<std::pair<std::string, PathData>> fresh;
     std::vector<std::tuple<std::string, double, double>> uses;

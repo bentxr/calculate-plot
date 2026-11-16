@@ -7,6 +7,7 @@
 
 #include "support/pyformat.hpp"
 #include "svg/xml_writer.h"
+#include "text/language.hpp"
 
 #include <array>
 #include <map>
@@ -112,7 +113,7 @@ public:
                    const std::optional<Affine>& transform);
     void drawTextAsPath(const Gc& gc, double x, double y, const std::string& s, const std::vector<std::string>& fonts,
                         double size, double angle, const std::optional<std::vector<std::string>>& features,
-                        const std::optional<std::string>& language);
+                        const std::optional<text::Language>& language);
     void drawMathtextAsPath(const Gc& gc, double x, double y, const std::string& s, double size, double angle,
                             const std::vector<Glyph>& glyphs, const std::vector<std::array<double, 4>>& rects);
     // Writes the clip paths and hatches and closes the document; returns the SVG text.

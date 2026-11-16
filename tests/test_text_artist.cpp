@@ -74,7 +74,7 @@ std::unique_ptr<Text> textFor(const Json& p, const calculate_plot::rc::Params& r
     if (weight.isNumber()) t->font.weight = int(weight.asInteger());
     else if (weight.isString()) t->font.weight = weight.asString();
     if (p.find("style")->isString()) t->font.style = p.find("style")->asString();
-    if (p.find("language")->isString()) t->language = p.find("language")->asString();
+    if (p.find("language")->isString()) t->language = calculate_plot::text::Language{false, p.find("language")->asString(), {}};
     return t;
 }
 

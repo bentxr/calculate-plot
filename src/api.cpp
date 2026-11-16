@@ -117,6 +117,7 @@ std::string sample(const Json& entry) {
         {"edgecolor", "\"C1\""},    {"facecolor", "\"C1\""},         {"title", "\"a\""},
         {"hatch_linewidth", "2.0"},   {"num", "1"},                      {"width_ratios", "[1]"},
         {"height_ratios", "[1]"},     {"language", "\"en\""},          {"left", "0.25"},
+        {"fontfeatures", "[\"-liga\"]"},
         {"right", "0.75"},            {"bottom", "0.25"},                {"top", "0.75"},
         {"bins", "4"},                {"range", "[0, 3]"},               {"weights", "[1, 2, 1]"},
         {"label", "\"a\""},          {"xytext", "[1, 1]"},              {"textcoords", "\"offset points\""},

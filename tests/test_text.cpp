@@ -74,7 +74,8 @@ TEST(TextLayout, AnEmptyLanguageIsTheDefaultOne) {
     text::FontCache fonts(kFonts);
     std::string error;
     auto shape = [&](const std::optional<std::string>& language) {
-        return text::layoutText(fonts, {"DejaVuSans.ttf"}, "fi", 12, 100, FT_LOAD_DEFAULT, std::nullopt, language, error,
+        const auto given = language ? std::optional<text::Language>(text::Language{false, *language, {}}) : std::nullopt;
+        return text::layoutText(fonts, {"DejaVuSans.ttf"}, "fi", 12, 100, FT_LOAD_DEFAULT, std::nullopt, given, error,
                                 "es");
     };
     EXPECT_EQ(shape(std::nullopt).size(), 2u);

@@ -7,6 +7,7 @@
 #include "engine/artist.hpp"
 #include "support/pyformat.hpp"
 #include "text/font_manager.hpp"
+#include "text/language.hpp"
 
 #include <memory>
 #include <optional>
@@ -67,8 +68,8 @@ public:
     std::string rotationMode = "default";
     bool antialiased;
     bool parseMath;
-    std::optional<std::vector<std::string>> features;
-    std::optional<std::string> language;
+    std::optional<std::vector<std::string>> features;  // Text.set_fontfeatures
+    std::optional<text::Language> language;            // Text.set_language
     const Figure* figure = nullptr;  // the root figure, whose dpi the layout uses
     // set_bbox: the box drawn behind the text (FancyBboxPatch), placed around its layout when drawn
     std::unique_ptr<FancyBboxPatch> bboxPatch;
