@@ -94,6 +94,51 @@ pdf::DrawGc graphicsContext(Reader& in, const Json& g) {
     return gc;
 }
 
+// An array recorded as {"shape", "data"}, as rows of `width` numbers.
+std::vector<std::vector<double>> rows(Reader& in, const Json& j, std::size_t width) {
+    const auto data = in.numbers(in.field(j, "data"));
+    std::vector<std::vector<double>> out;
+    if (data.size() % width) {
+        in.fail("an array does not have rows of " + std::to_string(width));
+        return out;
+    }
+    for (std::size_t i = 0; i < data.size(); i += width) out.emplace_back(data.begin() + long(i), data.begin() + long(i + width));
+    return out;
+}
+
+svg::RendererSVG::Collection collection(Reader& in, const Json& e) {
+    svg::RendererSVG::Collection c;
+    c.masterTransform = affine(in, in.field(e, "master_transform"));
+    const Json& paths = in.field(e, "paths");
+    if (!paths.isArray()) in.fail("expected a list of paths");
+    for (const Json& p : paths.items()) c.paths.push_back(path(in, p));
+    for (const auto& m : rows(in, in.field(e, "transforms"), 9)) {
+        svg::Affine a;
+        a.sx = m[0], a.shx = m[1], a.tx = m[2], a.shy = m[3], a.sy = m[4], a.ty = m[5];
+        c.transforms.push_back(a);
+    }
+    for (const auto& o : rows(in, in.field(e, "offsets"), 2)) c.offsets.push_back({o[0], o[1]});
+    c.offsetTransform = affine(in, in.field(e, "offset_transform"));
+    c.facecolors = rows(in, in.field(e, "facecolors"), 4);
+    c.edgecolors = rows(in, in.field(e, "edgecolors"), 4);
+    c.hatchcolors = rows(in, in.field(e, "hatchcolors"), 4);
+    c.linewidths = in.numbers(in.field(in.field(e, "linewidths"), "data"));
+    const Json& dashes = in.field(e, "dashes");
+    if (!dashes.isArray()) in.fail("expected a list of dashes");
+    for (const Json& d : dashes.items()) {
+        if (!d.isArray() || d.size() != 2) {
+            in.fail("dashes must be [offset, pattern]");
+            break;
+        }
+        c.linestyles.emplace_back(in.number(d[0]), optionalNumbers(in, d[1]));
+    }
+    for (double a : in.numbers(in.field(in.field(e, "antialiaseds"), "data"))) c.antialiaseds.push_back(a != 0);
+    const Json& urls = in.field(e, "urls");
+    if (!urls.isArray()) in.fail("expected a list of urls");
+    for (const Json& u : urls.items()) c.urls.push_back(u.isNull() ? std::nullopt : std::optional<std::string>(in.text(u)));
+    return c;
+}
+
 std::optional<std::vector<double>> face(Reader& in, const Json& j) {
     auto v = optionalNumbers(in, j);
     if (v && v->size() != 3 && v->size() != 4) in.fail("a colour must have 3 or 4 components");
@@ -175,6 +220,19 @@ PdfReplayResult replayPdfTrace(std::string_view traceJson, const std::string& fo
             const svg::Affine t = affine(in, in.field(e, "transform"));
             const auto f = face(in, in.field(e, "face"));
             if (in.error.empty()) r.drawPath(gc, p, t, f);
+        } else if (op == "draw_markers") {
+            pdf::DrawGc gc = graphicsContext(in, in.field(e, "gc"));
+            const auto mp = path(in, in.field(e, "marker_path"));
+            const auto mt = affine(in, in.field(e, "marker_transform"));
+            const auto p = path(in, in.field(e, "path"));
+            const auto t = affine(in, in.field(e, "transform"));
+            const auto f = face(in, in.field(e, "face"));
+            if (in.error.empty()) r.drawMarkers(gc, mp, mt, p, t, f);
+        } else if (op == "draw_path_collection") {
+            const pdf::DrawGc gc = graphicsContext(in, in.field(e, "gc"));
+            const auto c = collection(in, e);
+            for (const auto& f : c.facecolors) if (f.size() != 4) in.fail("a face colour needs 4 components");
+            if (in.error.empty()) r.drawPathCollection(gc, c);
         } else {
             in.fail(op + " is not supported in PDF yet");
         }

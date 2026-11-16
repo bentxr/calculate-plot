@@ -1,3 +1,4 @@
 pdf_blank
 pdf_figure_patch
 pdf_paths
+pdf_markers_collections

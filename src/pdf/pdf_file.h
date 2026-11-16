@@ -27,6 +27,13 @@ std::string reprList(const std::vector<std::string>& items);
 using Dict = std::vector<std::pair<std::string, std::string>>;  // keys as names (unescaped), values as reprs
 std::string reprDict(const Dict& items);
 
+// PdfFile.pathOperations: the path as PDF operators (convert_to_string, precision 6, postfix).
+std::string pathOperations(const svg::PathData& path, const svg::Affine& transform,
+                           std::optional<std::array<double, 4>> clip, bool simplify,
+                           const std::optional<std::array<double, 3>>& sketch, std::string* error);
+// Path.get_extents(transform): x0, y0, x1, y1 (inf, inf, -inf, -inf for a null box)
+std::array<double, 4> pathExtents(const svg::PathData& path, const svg::Affine& transform);
+
 // PdfFile: the objects of one file, written in matplotlib's order, with its streams.
 class PdfFile {
 public:
@@ -45,6 +52,13 @@ public:
     void beginStream(int id, std::optional<int> lengthObject, Dict extra = {});
     void endStream();
     std::string alphaState(double strokeAlpha, double fillAlpha);  // the name's repr
+    // markerObject: a marker XObject's name. (Its key holds the path operations as a new Verbatim,
+    // which compares by identity: every call makes a new marker.)
+    std::string markerObject(const svg::PathData& path, const svg::Affine& trans, bool fill, bool stroke, double lw,
+                             const std::string& joinstyle, const std::string& capstyle);
+    std::string pathCollectionObject(const std::string& joinstyle, const std::string& capstyle,
+                                     const svg::PathData& path, const svg::Affine& trans, double padding,
+                                     bool filled, bool stroked);
     void finalize();
 
     const std::string& bytes() const { return fh_; }
@@ -56,6 +70,8 @@ private:
     void recordXref(int id);
     void writeXref();
     void writeTrailer();
+    void writeMarkers();
+    void writePathCollectionTemplates();
 
     int compression_;
     Dict info_;
@@ -72,6 +88,25 @@ private:
         std::string name;
     };
     std::vector<AlphaState> alphaStates_;
+    struct Marker {
+        std::string pathops;
+        bool fill, stroke;
+        std::string joinstyle, capstyle, name;
+        int ob;
+        std::array<double, 4> bbox;
+        double lw;
+    };
+    std::vector<Marker> markers_;
+    struct PathTemplate {
+        std::string name;
+        svg::PathData path;
+        svg::Affine trans;
+        int ob;
+        std::string joinstyle, capstyle;
+        double padding;
+        bool filled, stroked;
+    };
+    std::vector<PathTemplate> paths_;
 };
 
 // The graphics state GraphicsContextPdf.delta compares: GraphicsContextBase's fields with
@@ -111,8 +146,13 @@ class RendererPdf {
 public:
     // (image_dpi is taken by draw_image, not written yet)
     RendererPdf(PdfFile& file, double imageDpi, double hatchLinewidth, bool inheritColor);
-    void drawPath(DrawGc gc, const svg::PathData& path, const svg::Affine& transform,
+    // (check_gc's set_foreground of a missing colour stays on the caller's context, as in matplotlib)
+    void drawPath(DrawGc& gc, const svg::PathData& path, const svg::Affine& transform,
                   const std::optional<std::vector<double>>& rgbFace);
+    void drawMarkers(DrawGc& gc, const svg::PathData& markerPath, const svg::Affine& markerTrans,
+                     const svg::PathData& path, const svg::Affine& trans,
+                     const std::optional<std::vector<double>>& rgbFace);
+    void drawPathCollection(const DrawGc& gc, const svg::RendererSVG::Collection& c);
     void finalize();
     std::string error;
 
@@ -125,6 +165,8 @@ private:
                                             std::optional<std::array<double, 4>> clip, bool simplify,
                                             const std::optional<std::array<double, 3>>& sketch);
     std::string paint() const;
+    std::vector<std::string> push();
+    std::vector<std::string> pop();
     std::string num(double x);
 
     PdfFile& file_;

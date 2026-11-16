@@ -816,13 +816,41 @@ void PdfTraceRenderer::drawPath(const GC& gc, const Path& path, const transforms
     events_.endObject();
 }
 
-void PdfTraceRenderer::drawMarkers(const GC&, const Path&, const transforms::Matrix&, const Path&,
-                                   const transforms::Matrix&, const std::optional<std::vector<double>>&) {
-    unsupported("PDF: markers are not supported yet");
+void PdfTraceRenderer::drawMarkers(const GC& gc, const Path& markerPath, const transforms::Matrix& markerTrans,
+                                   const Path& path, const transforms::Matrix& trans,
+                                   const std::optional<std::vector<double>>& face) {
+    events_.beginObject();
+    events_.key("op").value("draw_markers");
+    events_.key("gc");
+    writePdfGc(gc);
+    events_.key("marker_path");
+    writePath(markerPath);
+    events_.key("marker_transform");
+    writeMatrix(markerTrans);
+    events_.key("path");
+    writePath(path);
+    events_.key("transform");
+    writeMatrix(trans);
+    events_.key("face");
+    if (face) writeNumbers(*face);
+    else events_.null();
+    events_.endObject();
 }
 
-void PdfTraceRenderer::drawPathCollection(const GC&, const PathCollectionArgs&) {
-    unsupported("PDF: path collections are not supported yet");
+void PdfTraceRenderer::drawPathCollection(const GC& gc, const PathCollectionArgs& a) {
+    events_.beginObject();
+    events_.key("op").value("draw_path_collection");
+    events_.key("gc");
+    writePdfGc(gc);
+    writeCollectionFields(a);
+    events_.key("urls").beginArray();
+    for (const auto& u : a.urls) writeOptionalText(u);
+    events_.endArray();
+    std::vector<double> h;
+    for (const auto& x : a.hatchcolors) h.insert(h.end(), x.begin(), x.end());
+    events_.key("hatchcolors");
+    writeArray({a.hatchcolors.size(), 4}, h);
+    events_.endObject();
 }
 
 void PdfTraceRenderer::drawText(const GC&, double, double, const std::string&, const FontSpec&, double, bool,

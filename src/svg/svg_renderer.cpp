@@ -156,6 +156,9 @@ std::string pyColour(const std::optional<std::vector<double>>& c, bool numpy, bo
 
 }  // namespace
 
+Affine composeAffine(const Affine& a, const Affine& b) { return compose(a, b); }
+std::array<double, 2> applyAffine(const Affine& t, double x, double y) { return apply(t, x, y); }
+
 std::string pythonBytesRepr(const std::string& bytes) {
     const bool single = bytes.find('\'') != std::string::npos && bytes.find('"') == std::string::npos;
     const char q = single ? '"' : '\'';

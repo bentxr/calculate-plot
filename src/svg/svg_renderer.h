@@ -25,6 +25,11 @@ struct Affine {
     double sx = 1, shx = 0, tx = 0, shy = 0, sy = 1, ty = 0;
 };
 
+// a + b in matplotlib (a, then b): the matrix np.dot(b, a), with NumPy's arithmetic
+Affine composeAffine(const Affine& a, const Affine& b);
+// Transform.transform of an affine on a point, as matplotlib's C++ affine_transform does it
+std::array<double, 2> applyAffine(const Affine& t, double x, double y);
+
 struct PathData {
     std::shared_ptr<const std::vector<double>> vertices;  // x0, y0, x1, y1, ...
     std::shared_ptr<const std::vector<unsigned char>> codes;  // null: no codes
