@@ -34,6 +34,12 @@ it comes from in its first lines. The changes, as a whole:
   matplotlib hashes into element ids are reproduced. Embedded images are PNGs from calculate-plot's own
   encoder (matplotlib uses Pillow). The metadata never names Matplotlib as the creator and never writes the
   current time: a Date must be given (or None).
+- **PDF** (src/pdf): backend_pdf.py's pdfRepr, _fill, Name, Stream, PdfFile (objects, the page, the extended graphics
+  states, the info dictionary, the cross-reference table and trailer), RendererPdf.draw_path and GraphicsContextPdf
+  (delta, clip_cmd, push / pop, finalize), translated to C++; Python's "%.10f" replaced by locale-independent
+  std::to_chars; streams deflated by the vendored zlib as zlib.compressobj does. The metadata never names Matplotlib
+  as the creator or producer and never writes the current time: Creator, Producer and CreationDate must be given
+  (CreationDate as None).
 - **Ticks** (src/axes/ticker): ticker.py's scale_range, _Edge_integer, MaxNLocator (AutoLocator) and
   ScalarFormatter (offset, order of magnitude, format, labels and offset text, with the default rcParams) and
   transforms.py's _nonsingular, translated to C++ with Python's and NumPy's numeric semantics (floor division,

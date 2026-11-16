@@ -33,6 +33,10 @@ import replay  # noqa: E402
 
 FIGURES = HERE.parents[1] / "tests" / "figures"
 SVG_METADATA = {"Creator": "calculate-plot", "Date": None}
+# The PDF writer's fixed metadata (no date: the same figure gives the same bytes)
+PDF_METADATA = {"Creator": "calculate-plot", "Producer": "calculate-plot", "CreationDate": None}
+# The cases recorded as PDF too (pdf-trace.json, ref.pdf): those the PDF writer draws so far
+PDF_CASES = FIGURES.parent / "pdf_cases.txt"
 
 
 def run_script(path):
@@ -75,6 +79,12 @@ def main(cplot, names):
         svg_trace, svg = record.record_svg(fig, SVG_METADATA)
         (case / "svg-trace.json").write_text(json.dumps(svg_trace, separators=(",", ":")) + "\n")
         (case / "ref.svg").write_text(svg)
+        pdf_cases = PDF_CASES.read_text().split() if PDF_CASES.exists() else []
+        if case.name in pdf_cases:
+            fig = run_script(script)
+            pdf_trace, pdf = record.record_pdf(fig, PDF_METADATA)
+            (case / "pdf-trace.json").write_text(json.dumps(pdf_trace, separators=(",", ":")) + "\n")
+            (case / "ref.pdf").write_bytes(pdf)
         print(f"{case.name}: {len(trace['events'])} events, {rgba.shape[1]}x{rgba.shape[0]}")
 
 

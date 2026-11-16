@@ -1,0 +1,1 @@
+{"version": 1, "calls": [{"call": "figure", "kwargs": {"figsize": {"$tuple": [2.0, 1.0]}}, "as": "fig"}]}

@@ -457,3 +457,120 @@ def record_svg(fig, metadata):
              "image_inline": bool(rc["svg.image_inline"]), "fonttype": rc["svg.fonttype"],
              "events": events, "ids": ids}
     return trace, out.getvalue()
+
+
+_pdf_objects = {}
+
+
+def pdf_object(o):
+    """GraphicsContextPdf.delta compares the clip box and the clip path by identity (neither Bbox nor
+    TransformedPath defines __eq__): each object is numbered in order of first appearance. Every object
+    compared is alive (the renderer's own state keeps it), so a number reused through a reused id() is
+    never compared with the object that had it before."""
+    return None if o is None else _pdf_objects.setdefault(id(o), len(_pdf_objects))
+
+
+def pdf_gc(g):
+    """The graphics context as RendererPdf.check_gc and GraphicsContextPdf.delta read it."""
+    d = gc(g)
+    d.update({"cliprect_id": pdf_object(g._cliprect), "clippath_id": pdf_object(g._clippath),
+              "rgb": None if g._rgb is None else exact_color(g._rgb),
+              "hatch_string": g.get_hatch(), "hatch_color": exact_color(g.get_hatch_color()),
+              "url": g.get_url()})
+    return d
+
+
+def record_pdf(fig, metadata):
+    """Draws `fig` with matplotlib's PDF backend; returns (trace dict, PDF bytes).
+
+    The trace logs RendererPdf's drawing calls at the Python level (only the outermost call when one
+    drawing method uses another): replaying it through calculate-plot's PDF writer must write the same
+    bytes."""
+    import io
+    from matplotlib.backends.backend_pdf import RendererPdf
+
+    events = []
+    depth = [0]
+    originals = {}
+
+    def wrap(name, describe):
+        original = getattr(RendererPdf, name)
+        originals[name] = original
+
+        def method(self, *args, **kwargs):
+            if depth[0] == 0:
+                events.append(describe(self, *args, **kwargs))
+            depth[0] += 1
+            try:
+                return original(self, *args, **kwargs)
+            finally:
+                depth[0] -= 1
+        setattr(RendererPdf, name, method)
+
+    wrap("draw_path", lambda self, g, p, transform, rgbFace=None: {
+        "op": "draw_path", "gc": pdf_gc(g), "path": path(p), "simplify": bool(p.should_simplify),
+        "transform": matrix(transform), "face": face(rgbFace)})
+    wrap("draw_markers", lambda self, g, marker_path, marker_trans, p, trans, rgbFace=None: {
+        "op": "draw_markers", "gc": pdf_gc(g), "marker_path": path(marker_path),
+        "marker_transform": matrix(marker_trans), "path": path(p), "transform": matrix(trans),
+        "face": face(rgbFace)})
+
+    def collection(self, g, master_transform, paths, all_transforms, offsets, offset_trans,
+                   facecolors, edgecolors, linewidths, linestyles, antialiaseds, urls,
+                   offset_position, *, hatchcolors=None):
+        return {"op": "draw_path_collection", "gc": pdf_gc(g), "master_transform": matrix(master_transform),
+                "paths": [path(p) for p in paths],
+                "transforms": array(np.asarray(all_transforms, float).reshape(-1, 3, 3) if len(all_transforms) else np.empty((0, 3, 3))),
+                "offsets": array(np.asarray(offsets, float).reshape(-1, 2) if np.size(offsets) else np.empty((0, 2))),
+                "offset_transform": matrix(offset_trans),
+                "facecolors": array(np.asarray(facecolors, float).reshape(-1, 4) if np.size(facecolors) else np.empty((0, 4))),
+                "edgecolors": array(np.asarray(edgecolors, float).reshape(-1, 4) if np.size(edgecolors) else np.empty((0, 4))),
+                "linewidths": array(np.asarray(linewidths, float).reshape(-1)),
+                "dashes": [dashes(d) for d in linestyles],
+                "antialiaseds": array(np.asarray(antialiaseds, np.uint8).reshape(-1)),
+                "urls": [None if u is None else str(u) for u in urls],
+                "hatchcolors": array(np.asarray(hatchcolors, float).reshape(-1, 4) if hatchcolors is not None and np.size(hatchcolors) else np.empty((0, 4)))}
+    wrap("draw_path_collection", collection)
+    wrap("draw_gouraud_triangles", lambda self, g, points, colors, transform: {
+        "op": "draw_gouraud_triangles", "gc": pdf_gc(g), "points": array(points), "colors": array(colors),
+        "transform": matrix(transform)})
+    wrap("draw_image", lambda self, g, x, y, im, transform=None: {
+        "op": "draw_image", "gc": pdf_gc(g), "x": number(x), "y": number(y), "image": image(im),
+        "transform": matrix(transform)})
+
+    def text(self, g, x, y, s, prop, angle, ismath=False, mtext=None):
+        return {"op": "draw_text", "gc": pdf_gc(g), "x": number(x), "y": number(y), "s": s,
+                "fonts": font_paths(prop), "size": number(prop.get_size_in_points()),
+                "angle": number(angle), "ismath": ismath if isinstance(ismath, str) else bool(ismath),
+                "features": None if mtext is None or mtext.get_fontfeatures() is None
+                else list(mtext.get_fontfeatures()),
+                "language": None if mtext is None else mtext.get_language()}
+    wrap("draw_text", text)
+
+    original_init = RendererPdf.__init__
+    originals["__init__"] = original_init
+
+    def init(self, file, image_dpi, height, width):
+        # only the last renderer writes the file (a tight bounding box makes one more, to measure)
+        del events[:]
+        _pdf_objects.clear()
+        result = original_init(self, file, image_dpi, height, width)
+        # (the renderer's own graphics state starts as GraphicsContextBase's, its hatch line width from rcParams)
+        events.insert(0, {"op": "begin", "width": number(width), "height": number(height),
+                          "image_dpi": number(image_dpi), "hatch_linewidth": number(self.gc._hatch_linewidth)})
+        return result
+    RendererPdf.__init__ = init
+
+    out = io.BytesIO()
+    try:
+        fig.savefig(out, format="pdf", metadata=metadata)
+    finally:
+        for name, original in originals.items():
+            setattr(RendererPdf, name, original)
+    rc = matplotlib.rcParams
+    trace = {"version": TRACE_VERSION, "matplotlib": matplotlib.__version__,
+             "locale": __import__("locale").setlocale(__import__("locale").LC_CTYPE),
+             "metadata": metadata, "compression": rc["pdf.compression"], "fonttype": rc["pdf.fonttype"],
+             "inheritcolor": bool(rc["pdf.inheritcolor"]), "use14corefonts": bool(rc["pdf.use14corefonts"]),
+             "events": events}
+    return trace, out.getvalue()

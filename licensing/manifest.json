@@ -618,6 +618,8 @@
     "src/rc/rc_validate.hpp",
     "src/rc/styles.cpp",
     "src/rc/styles.hpp",
+    "src/pdf/pdf_file.cpp",
+    "src/pdf/pdf_file.h",
     "src/render/replay.cpp",
     "src/render/resample.cpp",
     "src/render/resample.hpp",
