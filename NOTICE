@@ -134,6 +134,14 @@ All rights reserved. Used under the BSD 3-Clause licence, which applies to all o
 (LICENSES/dateutil.txt; changes: licensing/changes/dateutil.md).
 
 
+Pillow 12.3.0
+-------------
+The PNG files written for images (embedded in SVG and PDF files, and saved as PNG) and the colour lists that
+decide the palettes of indexed images are made as Pillow makes them, translated from Pillow:
+Copyright (c) 1997-2011 by Secret Labs AB; Copyright (c) 1995-2011 by Fredrik Lundh and contributors;
+Copyright (c) 2010 by Jeffrey 'Alex' Clark and contributors. Used under the MIT-CMU licence
+(LICENSES/Pillow.txt; changes: licensing/changes/pillow.md).
+
 ContourPy 1.4.0
 ---------------
 Contour lines and filled contours are made by ContourPy's mpl2014 generator:

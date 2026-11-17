@@ -758,6 +758,38 @@
    "remarks": "relativedelta between two datetimes and the rrules matplotlib's date locators make, translated to C++ so that date ticks match matplotlib's (dateutil's LICENSE: the BSD licence applies to all of its code, even that also under Apache 2.0)."
   },
   {
+   "id": "pillow",
+   "name": "Pillow",
+   "version": "12.3.0",
+   "homepage": "https://python-pillow.github.io",
+   "use": "runtime",
+   "licence": "MIT-CMU",
+   "licenceFiles": [
+    {
+     "path": "LICENSES/Pillow.txt",
+     "upstream": "https://raw.githubusercontent.com/python-pillow/Pillow/12.3.0/LICENSE",
+     "sha256": "15181e7363dca9aed78b79bebebc7fde7f1814b8bd311ea3b87ae8ccadfc185b"
+    }
+   ],
+   "fetch": [],
+   "vendored": [],
+   "derived": [
+    "src/png/pillow_png.hpp",
+    "src/png/pillow_png.cpp"
+   ],
+   "header": [
+    "Copyright (c) 1997-2011 by Secret Labs AB",
+    "LICENSES/Pillow.txt"
+   ],
+   "notices": [
+    "Copyright (c) 1997-2011 by Secret Labs AB",
+    "Copyright (c) 1995-2011 by Fredrik Lundh and contributors",
+    "Copyright (c) 2010 by Jeffrey 'Alex' Clark and contributors"
+   ],
+   "changes": "licensing/changes/pillow.md",
+   "remarks": "What Pillow does with the images matplotlib saves through it (Image.getcolors' order; PNG files of L, RGB, RGBA and palette images), translated to C++ so that images embedded in SVG and PDF files and PNG files equal matplotlib's byte for byte."
+  },
+  {
    "id": "contourpy",
    "name": "ContourPy",
    "version": "1.4.0",

@@ -58,6 +58,7 @@ add_executable(calculate-plot-tests
     test_pynum.cpp
     test_replay.cpp
     test_pdf_replay.cpp
+    test_pillow_png.cpp
     licensing/compliance.cpp
     test_sha256.cpp
     test_svg.cpp
