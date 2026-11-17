@@ -3,3 +3,4 @@ pdf_figure_patch
 pdf_paths
 pdf_markers_collections
 pdf_hatches
+pdf_gouraud

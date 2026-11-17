@@ -38,7 +38,9 @@ it comes from in its first lines. The changes, as a whole:
   states, the info dictionary, the cross-reference table and trailer), RendererPdf.draw_path, draw_markers (markerObject /
   writeMarkers) and draw_path_collection (pathCollectionObject / writePathCollectionTemplates, with
   backend_bases.py's _iter_collection, _iter_collection_raw_paths, _iter_collection_uses_per_path and the
-  RendererBase fallbacks), hatches as tiling patterns (hatchPattern / writeHatches) and GraphicsContextPdf (delta,
+  RendererBase fallbacks), hatches as tiling patterns (hatchPattern / writeHatches), Gouraud
+  triangles as type 4 shadings (addGouraudTriangles / writeGouraudTriangles, draw_gouraud_triangles; a varying alpha,
+  which matplotlib writes as a soft mask, is refused for now) and GraphicsContextPdf (delta,
   clip_cmd, hatch_cmd, push / pop, finalize), translated to C++; Python's "%.10f" replaced by locale-independent
   std::to_chars; streams deflated by the vendored zlib as zlib.compressobj does. The metadata never names Matplotlib
   as the creator or producer and never writes the current time: Creator, Producer and CreationDate must be given

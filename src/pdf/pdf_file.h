@@ -60,6 +60,10 @@ public:
     // `hatchPath` is Path.hatch(hatch), which writeHatches draws
     std::string hatchPattern(const std::optional<std::vector<double>>& edge, const std::optional<std::vector<double>>& face,
                              const std::string& hatch, double lw, const svg::PathData& hatchPath);
+    // addGouraudTriangles: a type 4 shading of the triangles (points in the page's coordinates) with
+    // RGBA vertex colours (their alpha is not written); its name
+    std::string addGouraudTriangles(const std::vector<std::array<std::array<double, 2>, 3>>& points,
+                                    const std::vector<std::array<std::array<double, 4>, 3>>& colors);
     std::string pathCollectionObject(const std::string& joinstyle, const std::string& capstyle,
                                      const svg::PathData& path, const svg::Affine& trans, double padding,
                                      bool filled, bool stroked);
@@ -75,6 +79,7 @@ private:
     void writeXref();
     void writeTrailer();
     void writeHatches();
+    void writeGouraudTriangles();
     void writeMarkers();
     void writePathCollectionTemplates();
 
@@ -110,6 +115,13 @@ private:
         std::string name;
     };
     std::vector<HatchPattern> hatchPatterns_;
+    struct Gouraud {
+        std::string name;
+        int ob;
+        std::vector<std::array<std::array<double, 2>, 3>> points;
+        std::vector<std::array<std::array<double, 4>, 3>> colors;
+    };
+    std::vector<Gouraud> gouraudTriangles_;
     struct PathTemplate {
         std::string name;
         svg::PathData path;
@@ -167,6 +179,8 @@ public:
                      const svg::PathData& path, const svg::Affine& trans,
                      const std::optional<std::vector<double>>& rgbFace);
     void drawPathCollection(const DrawGc& gc, const svg::RendererSVG::Collection& c);
+    void drawGouraudTriangles(DrawGc& gc, const std::vector<std::array<std::array<double, 2>, 3>>& points,
+                              const std::vector<std::array<std::array<double, 4>, 3>>& colors, const svg::Affine& trans);
     void finalize();
     std::string error;
 

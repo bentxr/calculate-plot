@@ -862,10 +862,17 @@ void PdfTraceRenderer::drawImage(const GC&, double, double, const RgbaImage&, co
     unsupported("PDF: images are not supported yet");
 }
 
-void PdfTraceRenderer::drawGouraudTriangles(const GC&, const std::vector<std::array<std::array<double, 2>, 3>>&,
-                                            const std::vector<std::array<std::array<double, 4>, 3>>&,
-                                            const transforms::Matrix&) {
-    unsupported("PDF: Gouraud triangles are not supported yet");
+void PdfTraceRenderer::drawGouraudTriangles(const GC& gc, const std::vector<std::array<std::array<double, 2>, 3>>& triangles,
+                                            const std::vector<std::array<std::array<double, 4>, 3>>& colors,
+                                            const transforms::Matrix& transform) {
+    events_.beginObject();
+    events_.key("op").value("draw_gouraud_triangles");
+    events_.key("gc");
+    writePdfGc(gc);
+    writeTriangles(triangles, colors);
+    events_.key("transform");
+    writeMatrix(transform);
+    events_.endObject();
 }
 
 bool PdfTraceRenderer::optionImageNocomposite() const { return !rc_.boolean("image.composite_image"); }

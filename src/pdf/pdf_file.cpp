@@ -11,7 +11,10 @@
 
 #include <zlib.h>
 
+#include "support/histogram.hpp"  // npMin / npMax
+
 #include <cmath>
+#include <cstdint>
 #include <cstdio>
 
 namespace calculate_plot::pdf {
@@ -419,6 +422,57 @@ void PdfFile::writeHatches() {
     writeObject(hatchObject_, reprDict(hatchDict));
 }
 
+std::string PdfFile::addGouraudTriangles(const std::vector<std::array<std::array<double, 2>, 3>>& points,
+                                         const std::vector<std::array<std::array<double, 4>, 3>>& colors) {
+    Gouraud g{reprName("GT" + std::to_string(gouraudTriangles_.size())), reserveObject(), points, colors};
+    gouraudTriangles_.push_back(g);
+    return g.name;
+}
+
+void PdfFile::writeGouraudTriangles() {
+    Dict gouraudDict;
+    for (const auto& g : gouraudTriangles_) {
+        gouraudDict.emplace_back(g.name.substr(1), reprRef(g.ob));
+        const int colordim = 3;  // (RGBA colours: the alpha channel stripped)
+        // the points mapped onto 32-bit integers between their bounds, widened by 256
+        double pmin[2], pmax[2];
+        for (int k = 0; k < 2; ++k) {
+            std::vector<double> v;
+            for (const auto& tri : g.points)
+                for (const auto& p : tri) v.push_back(p[k]);
+            pmin[k] = support::npMin(v) - (1 << 8);
+            pmax[k] = support::npMax(v) + (1 << 8);
+        }
+        const double factor[2] = {double(0xffffffffu) / (pmax[0] - pmin[0]), double(0xffffffffu) / (pmax[1] - pmin[1])};
+        std::vector<std::string> decode{reprNumber(pmin[0], &error), reprNumber(pmax[0], &error),
+                                        reprNumber(pmin[1], &error), reprNumber(pmax[1], &error)};
+        for (int k = 0; k < colordim; ++k) decode.insert(decode.end(), {reprInt(0), reprInt(1)});
+        beginStream(g.ob, std::nullopt,
+                    {{"ShadingType", reprInt(4)},
+                     {"BitsPerCoordinate", reprInt(32)},
+                     {"BitsPerComponent", reprInt(8)},
+                     {"BitsPerFlag", reprInt(8)},
+                     {"ColorSpace", reprName("DeviceRGB")},
+                     {"AntiAlias", "false"},
+                     {"Decode", reprList(decode)}});
+        // a flag byte, x and y as big-endian u4, the colour as u1 (NumPy's casts: truncation)
+        std::string data;
+        for (std::size_t t = 0; t < g.points.size(); ++t)
+            for (int v = 0; v < 3; ++v) {
+                data.push_back('\0');
+                for (int k = 0; k < 2; ++k) {
+                    const auto u = static_cast<std::uint32_t>((g.points[t][v][k] - pmin[k]) * factor[k]);
+                    for (int shift = 24; shift >= 0; shift -= 8) data.push_back(static_cast<char>((u >> shift) & 0xff));
+                }
+                for (int k = 0; k < colordim; ++k)
+                    data.push_back(static_cast<char>(static_cast<unsigned char>(g.colors[t][v][k] * 255.0)));
+            }
+        write(data);
+        endStream();
+    }
+    writeObject(gouraudObject_, reprDict(gouraudDict));
+}
+
 void PdfFile::writeMarkers() {
     for (const auto& m : markers_) {
         // the box of the control points, padded by 5 line widths (half a miter at the default limit 10)
@@ -469,7 +523,7 @@ void PdfFile::finalize() {
                                                         {"ca", reprNumber(a.fill, &error)}}));
     writeObject(extGStateObject_, reprDict(states));
     writeHatches();
-    writeObject(gouraudObject_, reprDict({}));  // (no Gouraud triangles yet)
+    writeGouraudTriangles();
     Dict xobjects;  // (no images yet)
     for (const auto& m : markers_) xobjects.emplace_back(m.name.substr(1), reprRef(m.ob));
     for (const auto& t : paths_) xobjects.emplace_back(t.name.substr(1), reprRef(t.ob));
@@ -869,6 +923,40 @@ void RendererPdf::drawPathCollection(const DrawGc& gc, const svg::RendererSVG::C
         }
     }
     if (optimize) file_.output(pop());
+}
+
+void RendererPdf::drawGouraudTriangles(DrawGc& gc, const std::vector<std::array<std::array<double, 2>, 3>>& points,
+                                       const std::vector<std::array<std::array<double, 4>, 3>>& colors,
+                                       const svg::Affine& trans) {
+    if (points.empty()) return;
+    std::vector<std::array<std::array<double, 2>, 3>> tpoints = points;
+    for (auto& tri : tpoints)
+        for (auto& p : tri) {
+            const auto q = svg::applyAffine(trans, p[0], p[1]);
+            p = {q[0], q[1]};
+        }
+    // one alpha (np.allclose with every vertex's): through the graphics state; else a soft mask
+    const double alpha = colors[0][0][3];
+    bool single = true;
+    for (const auto& tri : colors)
+        for (const auto& c : tri)
+            single = single && std::fabs(alpha - c[3]) <= 1e-8 + 1e-5 * std::fabs(c[3]);
+    if (!single) {
+        if (error.empty()) error = "Gouraud shading with varying alpha is not supported in PDF yet";
+        return;
+    }
+    const std::string name = file_.addGouraudTriangles(tpoints, colors);
+    if (gc.rgbIsNone) {
+        if (error.empty()) error = "a Gouraud shading without a colour in its graphics context";
+        return;
+    }
+    // gc.set_alpha(alpha), then set_foreground(rgb, isRGBA=True) with the forced alpha
+    GcState& s = gc.state;
+    s.alpha = alpha;
+    s.forcedAlpha = true;
+    s.rgb = {s.rgb[0], s.rgb[1], s.rgb[2], alpha};
+    checkGc(gc, std::nullopt);
+    file_.output({name, "sh"});
 }
 
 void RendererPdf::finalize() {

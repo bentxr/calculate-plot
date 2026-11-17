@@ -229,6 +229,18 @@ PdfReplayResult replayPdfTrace(std::string_view traceJson, const std::string& fo
             const auto t = affine(in, in.field(e, "transform"));
             const auto f = face(in, in.field(e, "face"));
             if (in.error.empty()) r.drawMarkers(gc, mp, mt, p, t, f);
+        } else if (op == "draw_gouraud_triangles") {
+            pdf::DrawGc gc = graphicsContext(in, in.field(e, "gc"));
+            const auto points = rows(in, in.field(e, "points"), 6);
+            const auto colors = rows(in, in.field(e, "colors"), 12);
+            const auto t = affine(in, in.field(e, "transform"));
+            std::vector<std::array<std::array<double, 2>, 3>> tris;
+            std::vector<std::array<std::array<double, 4>, 3>> cols;
+            for (const auto& p : points) tris.push_back({{{p[0], p[1]}, {p[2], p[3]}, {p[4], p[5]}}});
+            for (const auto& c : colors)
+                cols.push_back({{{c[0], c[1], c[2], c[3]}, {c[4], c[5], c[6], c[7]}, {c[8], c[9], c[10], c[11]}}});
+            if (tris.size() != cols.size()) in.fail("points and colors differ in length");
+            if (in.error.empty()) r.drawGouraudTriangles(gc, tris, cols, t);
         } else if (op == "draw_path_collection") {
             const pdf::DrawGc gc = graphicsContext(in, in.field(e, "gc"));
             const auto c = collection(in, e);
