@@ -38,7 +38,9 @@ it comes from in its first lines. The changes, as a whole:
   states, the info dictionary, the cross-reference table and trailer), RendererPdf.draw_path, draw_markers (markerObject /
   writeMarkers) and draw_path_collection (pathCollectionObject / writePathCollectionTemplates, with
   backend_bases.py's _iter_collection, _iter_collection_raw_paths, _iter_collection_uses_per_path and the
-  RendererBase fallbacks), hatches as tiling patterns (hatchPattern / writeHatches), Gouraud
+  RendererBase fallbacks), hatches as tiling patterns (hatchPattern / writeHatches), images
+  (imageObject, writeImages, _unpack, _writeImg with Pillow's PNG data, indexed colours and soft masks;
+  draw_image), Gouraud
   triangles as type 4 shadings (addGouraudTriangles / writeGouraudTriangles, draw_gouraud_triangles; a varying alpha,
   which matplotlib writes as a soft mask, is refused for now) and GraphicsContextPdf (delta,
   clip_cmd, hatch_cmd, push / pop, finalize), translated to C++; Python's "%.10f" replaced by locale-independent

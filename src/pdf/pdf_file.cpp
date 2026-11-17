@@ -5,6 +5,7 @@
 #include "pdf/pdf_file.h"
 
 #include "agg/path_text.h"
+#include "png/pillow_png.hpp"
 #include "engine/path.hpp"
 #include "engine/text_path.hpp"
 #include "support/pyformat.hpp"
@@ -15,9 +16,12 @@
 
 #include <cmath>
 #include <cstdint>
+#include <map>
 #include <cstdio>
 
 namespace calculate_plot::pdf {
+
+std::string reprBytes(const std::string& bytes);
 
 namespace {
 
@@ -41,6 +45,8 @@ std::u32string codepoints(const std::string& s) {
     return out;
 }
 
+}  // namespace
+
 // pdfRepr of bytes: in parentheses, with backslashes, parentheses and line ends escaped (_str_escapes)
 std::string reprBytes(const std::string& bytes) {
     std::string out = "(";
@@ -56,8 +62,6 @@ std::string reprBytes(const std::string& bytes) {
     }
     return out + ")";
 }
-
-}  // namespace
 
 std::string reprNumber(double x, std::string* error) {
     if (!std::isfinite(x)) {
@@ -473,6 +477,124 @@ void PdfFile::writeGouraudTriangles() {
     writeObject(gouraudObject_, reprDict(gouraudDict));
 }
 
+std::string PdfFile::imageObject(int w, int h, std::vector<unsigned char> rgba) {
+    // (keyed by id(image) in matplotlib, and the file keeps each image: every draw_image call makes its own)
+    ImageEntry e{w, h, std::move(rgba), reprName("I" + std::to_string(images_.size() + 1)), reserveObject()};
+    images_.push_back(std::move(e));
+    return images_.back().name;
+}
+
+void PdfFile::writeImages() {
+    for (const auto& img : images_) {
+        // _unpack: the rows bottom first; RGB, and the alpha unless it is 255 everywhere
+        std::vector<unsigned char> rgb, alpha;
+        bool opaque = true;
+        for (int y = img.height - 1; y >= 0; --y)
+            for (int x = 0; x < img.width; ++x) {
+                const unsigned char* p = img.rgba.data() + (std::size_t(y) * img.width + x) * 4;
+                rgb.insert(rgb.end(), p, p + 3);
+                alpha.push_back(p[3]);
+                opaque = opaque && p[3] == 255;
+            }
+        std::optional<int> smask;
+        if (!opaque) {
+            smask = reserveObject();
+            writeImg(alpha, img.width, img.height, 1, *smask, std::nullopt);
+        }
+        writeImg(rgb, img.width, img.height, 3, img.ob, smask);
+    }
+}
+
+namespace {
+
+// _writePng: the IDAT data of the PNG file Pillow saves, its bit depth and its palette
+struct PngParts {
+    std::string data, palette;
+    int bitDepth = 8;
+};
+PngParts pngParts(const std::string& file) {
+    PngParts out;
+    for (std::size_t i = 8; i + 8 <= file.size();) {
+        std::uint32_t length = 0;
+        for (int k = 0; k < 4; ++k) length = (length << 8) | static_cast<unsigned char>(file[i + std::size_t(k)]);
+        const std::string type = file.substr(i + 4, 4);
+        const std::string data = file.substr(i + 8, length);
+        if (type == "IHDR") out.bitDepth = static_cast<unsigned char>(data[8]);
+        else if (type == "PLTE") out.palette = data;
+        else if (type == "IDAT") out.data += data;
+        else if (type == "IEND") break;
+        i += 12 + length;
+    }
+    return out;
+}
+
+}  // namespace
+
+void PdfFile::writeImg(const std::vector<unsigned char>& data, int width, int height, int channels, int id,
+                       std::optional<int> smask) {
+    Dict obj{{"Type", reprName("XObject")},
+             {"Subtype", reprName("Image")},
+             {"Width", reprInt(width)},
+             {"Height", reprInt(height)},
+             {"ColorSpace", reprName(channels == 1 ? "DeviceGray" : "DeviceRGB")},
+             {"BitsPerComponent", reprInt(8)}};
+    if (smask) obj.emplace_back("SMask", reprRef(*smask));
+    const auto set = [](Dict& d, const std::string& key, const std::string& value) {
+        for (auto& kv : d)
+            if (kv.first == key) return void(kv.second = value);
+        d.emplace_back(key, value);
+    };
+    std::optional<Dict> png;
+    std::string pngData;
+    if (compression_) {
+        png = Dict{{"Predictor", reprInt(10)}, {"Colors", reprInt(channels)}, {"Columns", reprInt(width)}};
+        // RGB with 256 colours or fewer becomes indexed (smaller): the palette in getcolors' order
+        const auto colors =
+            channels == 3 ? png::pillowGetColors(data.data(), width, height, 256) : std::nullopt;
+        if (channels == 3 && colors) {
+            const int numColors = int(colors->size());
+            std::string palette;
+            std::map<std::uint32_t, unsigned char> index;
+            for (std::size_t i = 0; i < colors->size(); ++i) {
+                const auto& c = (*colors)[i].rgb;
+                palette.append({char(c[0]), char(c[1]), char(c[2])});
+                index[std::uint32_t(c[0]) << 16 | std::uint32_t(c[1]) << 8 | c[2]] = static_cast<unsigned char>(i);
+            }
+            std::vector<unsigned char> rgb8;
+            for (std::size_t i = 0; i + 2 < data.size(); i += 3)
+                rgb8.push_back(index[std::uint32_t(data[i]) << 16 | std::uint32_t(data[i + 1]) << 8 | data[i + 2]]);
+            const PngParts parts = pngParts(png::pillowSavePngPalette(rgb8.data(), width, height, palette));
+            pngData = parts.data;
+            const std::string plte = parts.palette.substr(0, std::size_t(numColors) * 3);
+            set(obj, "ColorSpace", reprList({reprName("Indexed"), reprName("DeviceRGB"), reprInt(numColors - 1), reprBytes(plte)}));
+            set(obj, "BitsPerComponent", reprInt(parts.bitDepth));
+            set(*png, "Colors", reprInt(1));
+            set(*png, "BitsPerComponent", reprInt(parts.bitDepth));
+        } else {
+            pngData = pngParts(png::pillowSavePng(data.data(), width, height, channels)).data;
+        }
+    }
+    // Stream with png: FlateDecode and the predictor parameters, the data already deflated
+    if (png) {
+        obj.emplace_back("Filter", reprName("FlateDecode"));
+        obj.emplace_back("DecodeParms", reprDict(*png));
+    }
+    const int length = reserveObject();
+    recordXref(id);
+    fh_ += std::to_string(id) + " 0 obj\n" + reprDict([&] {
+        Dict d = obj;
+        d.emplace_back("Length", reprRef(length));
+        if (compression_) set(d, "Filter", reprName("FlateDecode"));
+        return d;
+    }()) + "\nstream\n";
+    const std::size_t pos = fh_.size();
+    if (png) fh_ += pngData;
+    else fh_.append(reinterpret_cast<const char*>(data.data()), data.size());
+    const std::size_t written = fh_.size() - pos;
+    fh_ += "\nendstream\nendobj\n";
+    writeObject(length, reprInt(static_cast<long long>(written)));
+}
+
 void PdfFile::writeMarkers() {
     for (const auto& m : markers_) {
         // the box of the control points, padded by 5 line widths (half a miter at the default limit 10)
@@ -524,10 +646,12 @@ void PdfFile::finalize() {
     writeObject(extGStateObject_, reprDict(states));
     writeHatches();
     writeGouraudTriangles();
-    Dict xobjects;  // (no images yet)
+    Dict xobjects;
+    for (const auto& img : images_) xobjects.emplace_back(img.name.substr(1), reprRef(img.ob));
     for (const auto& m : markers_) xobjects.emplace_back(m.name.substr(1), reprRef(m.ob));
     for (const auto& t : paths_) xobjects.emplace_back(t.name.substr(1), reprRef(t.ob));
     writeObject(xObjectObject_, reprDict(xobjects));
+    writeImages();
     writeMarkers();
     writePathCollectionTemplates();
     std::vector<std::string> kids;
@@ -567,8 +691,7 @@ void PdfFile::writeTrailer() {
 // RendererPdf and its GraphicsContextPdf
 
 RendererPdf::RendererPdf(PdfFile& file, double imageDpi, double hatchLinewidth, bool inheritColor)
-    : file_(file), inheritColor_(inheritColor) {
-    (void)imageDpi;
+    : file_(file), imageDpi_(imageDpi), inheritColor_(inheritColor) {
     gc_.hatchLinewidth = hatchLinewidth;
 }
 
@@ -923,6 +1046,32 @@ void RendererPdf::drawPathCollection(const DrawGc& gc, const svg::RendererSVG::C
         }
     }
     if (optimize) file_.output(pop());
+}
+
+void RendererPdf::drawImage(DrawGc& gc, double x, double y, int width, int height, std::vector<unsigned char> rgba,
+                            const std::optional<svg::Affine>& transform) {
+    if (width == 0 || height == 0) return;
+    if (gc.url && error.empty()) error = "links in PDF are not supported yet";
+    if (!transform) {
+        // (alpha has already been applied) gc.set_alpha(1.0): forced, and the colour's alpha with it
+        if (gc.rgbIsNone) {
+            if (error.empty()) error = "an image without a colour in its graphics context";
+            return;
+        }
+        gc.state.alpha = 1.0;
+        gc.state.forcedAlpha = true;
+        gc.state.rgb = {gc.state.rgb[0], gc.state.rgb[1], gc.state.rgb[2], 1.0};
+    }
+    checkGc(gc, std::nullopt);
+    const double w = 72.0 * width / imageDpi_, h = 72.0 * height / imageDpi_;
+    const std::string imob = file_.imageObject(width, height, std::move(rgba));
+    if (!transform) {
+        file_.output({"q", num(w), reprInt(0), reprInt(0), num(h), num(x), num(y), "cm", imob, "Do", "Q"});
+    } else {
+        const auto& t = *transform;  // to_values(): a, b, c, d, e, f
+        file_.output({"q", reprInt(1), reprInt(0), reprInt(0), reprInt(1), num(x), num(y), "cm", num(t.sx), num(t.shy),
+                      num(t.shx), num(t.sy), num(t.tx), num(t.ty), "cm", imob, "Do", "Q"});
+    }
 }
 
 void RendererPdf::drawGouraudTriangles(DrawGc& gc, const std::vector<std::array<std::array<double, 2>, 3>>& points,

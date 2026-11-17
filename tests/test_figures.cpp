@@ -191,9 +191,6 @@ TEST(PdfFigureRefusals, WhatIsNotWrittenYetIsNamed) {
         return figure ? calculate_plot::engine::drawPdf(*figure, drawOptions()).error : error;
     };
     EXPECT_EQ(draw(R"({"call": "subplots", "as": ["fig", "ax"]})"), "PDF: text is not supported yet");
-    EXPECT_EQ(draw(R"({"call": "subplots", "as": ["fig", "ax"]}, {"on": "ax", "call": "axis", "args": ["off"]},
-                      {"on": "ax", "call": "imshow", "args": [[[1, 2], [3, 4]]]})"),
-              "PDF: images are not supported yet");
 }
 
 INSTANTIATE_TEST_SUITE_P(Engine, PdfFigures, testing::ValuesIn(pdfCases()),

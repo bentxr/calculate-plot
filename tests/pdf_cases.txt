@@ -4,3 +4,4 @@ pdf_paths
 pdf_markers_collections
 pdf_hatches
 pdf_gouraud
+pdf_images

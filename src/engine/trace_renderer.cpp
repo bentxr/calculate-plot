@@ -858,8 +858,20 @@ void PdfTraceRenderer::drawText(const GC&, double, double, const std::string&, c
     unsupported("PDF: text is not supported yet");
 }
 
-void PdfTraceRenderer::drawImage(const GC&, double, double, const RgbaImage&, const std::optional<transforms::Matrix>&) {
-    unsupported("PDF: images are not supported yet");
+void PdfTraceRenderer::drawImage(const GC& gc, double x, double y, const RgbaImage& im,
+                                 const std::optional<transforms::Matrix>& transform) {
+    events_.beginObject();
+    events_.key("op").value("draw_image");
+    events_.key("gc");
+    writePdfGc(gc);
+    events_.key("x").value(x);
+    events_.key("y").value(y);
+    events_.key("image");
+    writeImage(im);
+    events_.key("transform");
+    if (transform) writeMatrix(*transform);
+    else events_.null();
+    events_.endObject();
 }
 
 void PdfTraceRenderer::drawGouraudTriangles(const GC& gc, const std::vector<std::array<std::array<double, 2>, 3>>& triangles,

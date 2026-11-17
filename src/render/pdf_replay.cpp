@@ -2,7 +2,10 @@
 
 #include "pdf/pdf_file.h"
 #include "render/trace_reader.hpp"
+#include "support/base64.hpp"
 #include "support/json.hpp"
+
+#include <algorithm>
 
 #include <memory>
 #include <optional>
@@ -229,6 +232,24 @@ PdfReplayResult replayPdfTrace(std::string_view traceJson, const std::string& fo
             const auto t = affine(in, in.field(e, "transform"));
             const auto f = face(in, in.field(e, "face"));
             if (in.error.empty()) r.drawMarkers(gc, mp, mt, p, t, f);
+        } else if (op == "draw_image") {
+            pdf::DrawGc gc = graphicsContext(in, in.field(e, "gc"));
+            const Json& image = in.field(e, "image");
+            const Json& shape = in.field(image, "shape");
+            std::string text = in.text(in.field(image, "base64"));
+            text.erase(std::remove(text.begin(), text.end(), '\n'), text.end());
+            const auto bytes = support::decodeBase64(text);
+            if (!shape.isArray() || shape.size() != 3 || !bytes) {
+                in.fail("bad image");
+            } else {
+                const int h = int(in.dimension(shape[0])), w = int(in.dimension(shape[1]));
+                if (in.dimension(shape[2]) != 4 || bytes->size() != std::size_t(w) * h * 4) in.fail("bad image size");
+                std::optional<svg::Affine> t;
+                if (!in.field(e, "transform").isNull()) t = affine(in, in.field(e, "transform"));
+                if (in.error.empty())
+                    r.drawImage(gc, in.number(in.field(e, "x")), in.number(in.field(e, "y")), w, h,
+                                std::vector<unsigned char>(bytes->begin(), bytes->end()), t);
+            }
         } else if (op == "draw_gouraud_triangles") {
             pdf::DrawGc gc = graphicsContext(in, in.field(e, "gc"));
             const auto points = rows(in, in.field(e, "points"), 6);

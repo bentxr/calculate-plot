@@ -21,6 +21,7 @@ std::string reprNumber(double x, std::string* error);  // a float: "%.10f" witho
 std::string reprInt(long long x);
 std::string reprName(const std::string& name);          // Name(name).pdfRepr()
 std::string reprString(const std::string& utf8);         // a str: ASCII as is, else UTF-16BE with its mark
+std::string reprBytes(const std::string& bytes);         // bytes: in parentheses, escaped
 std::string reprRef(int id);                             // Reference(id).pdfRepr()
 std::string fill(const std::vector<std::string>& strings, std::size_t linelen = 75);
 std::string reprList(const std::vector<std::string>& items);
@@ -64,6 +65,8 @@ public:
     // RGBA vertex colours (their alpha is not written); its name
     std::string addGouraudTriangles(const std::vector<std::array<std::array<double, 2>, 3>>& points,
                                     const std::vector<std::array<std::array<double, 4>, 3>>& colors);
+    // imageObject: an image XObject's name (I1, I2, ...) for an RGBA image of `width` x `height`
+    std::string imageObject(int width, int height, std::vector<unsigned char> rgba);
     std::string pathCollectionObject(const std::string& joinstyle, const std::string& capstyle,
                                      const svg::PathData& path, const svg::Affine& trans, double padding,
                                      bool filled, bool stroked);
@@ -80,6 +83,9 @@ private:
     void writeTrailer();
     void writeHatches();
     void writeGouraudTriangles();
+    void writeImages();
+    void writeImg(const std::vector<unsigned char>& data, int width, int height, int channels, int id,
+                  std::optional<int> smask);
     void writeMarkers();
     void writePathCollectionTemplates();
 
@@ -107,6 +113,13 @@ private:
         double lw;
     };
     std::vector<Marker> markers_;
+    struct ImageEntry {
+        int width, height;
+        std::vector<unsigned char> rgba;
+        std::string name;
+        int ob;
+    };
+    std::vector<ImageEntry> images_;
     struct HatchPattern {
         std::optional<std::vector<double>> edge, face;
         std::string hatch;
@@ -170,7 +183,6 @@ struct DrawGc {
 
 class RendererPdf {
 public:
-    // (image_dpi is taken by draw_image, not written yet)
     RendererPdf(PdfFile& file, double imageDpi, double hatchLinewidth, bool inheritColor);
     // (check_gc's set_foreground of a missing colour stays on the caller's context, as in matplotlib)
     void drawPath(DrawGc& gc, const svg::PathData& path, const svg::Affine& transform,
@@ -179,6 +191,8 @@ public:
                      const svg::PathData& path, const svg::Affine& trans,
                      const std::optional<std::vector<double>>& rgbFace);
     void drawPathCollection(const DrawGc& gc, const svg::RendererSVG::Collection& c);
+    void drawImage(DrawGc& gc, double x, double y, int width, int height, std::vector<unsigned char> rgba,
+                   const std::optional<svg::Affine>& transform);
     void drawGouraudTriangles(DrawGc& gc, const std::vector<std::array<std::array<double, 2>, 3>>& points,
                               const std::vector<std::array<std::array<double, 4>, 3>>& colors, const svg::Affine& trans);
     void finalize();
@@ -198,6 +212,7 @@ private:
     std::string num(double x);
 
     PdfFile& file_;
+    double imageDpi_;
     bool inheritColor_;
     GcState gc_;                   // the state the content stream is in
     std::vector<GcState> parents_;  // the states saved by q
